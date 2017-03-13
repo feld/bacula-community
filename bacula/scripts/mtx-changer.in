@@ -265,7 +265,7 @@ case $cmd in
       ${MTX} -f $ctl status >${TMPFILE}
       rtn=$?
       if test ${vxa_packetloader} -ne 0 ; then
-	cat ${TMPFILE} | grep " *Storage Element [0-9]*:.*Full" | sed "s/ Storage Element //" | sed "s/Full :VolumeTag=//"
+	cat ${TMPFILE} | grep " *Storage Element [0-9]*:.*Full" | sed "s/ *Storage Element //" | sed "s/Full :VolumeTag=//"
       else
 	cat ${TMPFILE} | grep " Storage Element [0-9]*:.*Full" | awk "{print \$3 \$4}" | sed "s/Full *\(:VolumeTag=\)*//"
       fi
