@@ -161,7 +161,7 @@ bool fixup_device_block_write_error(DCR *dcr, int retries)
    Dmsg0(190, "write label block to dev\n");
    if (!dcr->write_block_to_dev()) {
       berrno be;
-      Pmsg1(0, _("write_block_to_device Volume label failed. ERR=%s"),
+      Pmsg1(0, _("write_block_to_device Volume label failed. ERR=%s\n"),
         be.bstrerror(dev->dev_errno));
       dev->free_dcr_blocks(dcr);
       dcr->block = block;
@@ -187,12 +187,12 @@ bool fixup_device_block_write_error(DCR *dcr, int retries)
    }
    if (!dcr->write_block_to_dev()) {
       berrno be;
-      Dmsg1(0, _("write_block_to_device overflow block failed. ERR=%s"),
+      Dmsg1(0, _("write_block_to_device overflow block failed. ERR=%s\n"),
         be.bstrerror(dev->dev_errno));
       /* Note: recursive call */
       if (retries-- <= 0 || !fixup_device_block_write_error(dcr, retries)) {
          Jmsg2(jcr, M_FATAL, 0,
-              _("Catastrophic error. Cannot write overflow block to device %s. ERR=%s"),
+              _("Catastrophic error. Cannot write overflow block to device %s. ERR=%s\n"),
               dev->print_name(), be.bstrerror(dev->dev_errno));
          goto bail_out;
       }
