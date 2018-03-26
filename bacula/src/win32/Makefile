@@ -14,6 +14,9 @@
 #     built.
 #
 
+# ignore "make -j N" option at this level
+.NOTPARALLEL:
+
 ECHO_CMD=@
 
 WIN32_DIRS=lib filed filed/plugins console scripts stored
@@ -66,6 +69,14 @@ release64/bat.exe: is_depkgs_set
 	test -f release64/bat.exe
 
 bat64: release64/bat.exe
+
+# a target that quickly build windows bacula-fd.exe
+winfiled:
+	@for I in lib filed filed/plugins console; \
+	  do (cd $$I; echo "==>Entering directory `pwd`"; \
+	      $(MAKE) DESTDIR=$(DESTDIR)  || (echo ""; echo ""; echo "  ====== Error in `pwd` ======"; \
+	                    echo ""; echo ""; false ) || false) || exit 1; \
+	done
 
 full_win32_installer:
 	@if test -f Makefile.inc; then \
