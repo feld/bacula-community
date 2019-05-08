@@ -21,19 +21,19 @@ WIN64_DIRS=lib filed filed/plugins console scripts stored
 ifeq ($(win64),yes)
 	 DIRS=$(WIN64_DIRS)
 	 INSTALLER=win64_installer
-	 SPECIAL=bat64 bsmtp
+	 SPECIAL=bat64 bsmtp tools
 else
 	 DIRS=$(WIN32_DIRS)
 	 INSTALLER=win32_installer
-	 SPECIAL=bat32 bsmtp
+	 SPECIAL=bat32 bsmtp tools
 endif
 
 ifeq ($(bat),no)
-	 SPECIAL=bsmtp
+	 SPECIAL=bsmtp tools
 endif	
 
 .PHONY: $(DIRS) clean all Makefile.inc win32_installer full_win32_installer \
-	 win64_installer bsmtp distclean
+	 win64_installer bsmtp tools distclean
 
 all: Makefile.inc $(DIRS) $(SPECIAL) $(INSTALLER)
 
@@ -122,7 +122,14 @@ bsmtp:
 	   fi ; \
 	fi
 
-
+tools:
+	@if test -f Makefile.inc; then \
+	   if $(MAKE) -C tools all $(MAKECMDGOALS); then \
+		echo "\n===== Make of tools/all succeeded =====\n\n" ; \
+	   else  \
+		echo "\n!!!!! Make of tools/all failed !!!!!\n\n" ; exit 1; \
+	   fi ; \
+	fi
 
 Makefile.inc:
 	@echo Creating $@

@@ -30,6 +30,8 @@ BACULABINARIES := \
 	bacula.dll \
 	alldrives-fd.dll \
 	exchange-fd.dll \
+	cdp-fd.dll \
+	cdp-client.exe \
 	bacula-fd.exe \
 	bconsole.exe \
 	bsleep.exe \

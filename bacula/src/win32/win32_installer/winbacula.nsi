@@ -664,20 +664,11 @@ SectionGroup "Documentation" SecGroupDocumentation
 Section "Documentation (Acrobat Format)" SecDocPdf
   SectionIn 1 2 3
 
-  SetOutPath "$INSTDIR\doc"
-  CreateDirectory "$INSTDIR\doc"
-
-  File "${SRC_DIR}\docs\manuals\en\console\console.pdf"
-  File "${SRC_DIR}\docs\manuals\en\misc\misc.pdf"
-  File "${SRC_DIR}\docs\manuals\en\main\main.pdf"
-  File "${SRC_DIR}\docs\manuals\en\utility\utility.pdf"
-  File "${SRC_DIR}\docs\manuals\en\problems\problems.pdf"
-  CreateShortCut "$SMPROGRAMS\Bacula\Documentation\Console.lnk" '"$INSTDIR\doc\console.pdf"'
-  CreateShortCut "$SMPROGRAMS\Bacula\Documentation\Main.lnk" '"$INSTDIR\doc\main.pdf"'
-  CreateShortCut "$SMPROGRAMS\Bacula\Documentation\Misc.lnk" '"$INSTDIR\doc\misc.pdf"'
-  CreateShortCut "$SMPROGRAMS\Bacula\Documentation\Utility.lnk" '"$INSTDIR\doc\utility.pdf"'
-  CreateShortCut "$SMPROGRAMS\Bacula\Documentation\Problems.lnk" '"$INSTDIR\doc\problems.pdf"'
+  SetOutPath "$INSTDIR\plugins"
+  File "${SRC_DIR}\cdp-fd.dll"
   SetOutPath "$INSTDIR"
+  File "${SRC_DIR}\cdp-client.exe"
+  
 SectionEnd
 
 ;Section "Documentation (HTML Format)" SecDocHtml
@@ -739,8 +730,8 @@ LangString DESC_SecConsole ${LANG_ENGLISH} "Install bconsole program on this sys
 LangString DESC_SecBatConsole ${LANG_ENGLISH} "Install Bat graphical console program on this system."
 LangString DESC_SecTrayMonitor ${LANG_ENGLISH} "Install Tray Monitor graphical program on this system."
 LangString DESC_SecAllDrivesPlugin ${LANG_ENGLISH} "Install alldrives Plugin on this system."
-; LangString DESC_SecWinBMRPlugin ${LANG_ENGLISH} "Install winbmr Plugin on this system."
-LangString DESC_SecOldExchangePlugin ${LANG_ENGLISH} "Install old (deprecated) Exchange Plugin on this system."
+LangString DESC_SecWinBMRPlugin ${LANG_ENGLISH} "Install winbmr Plugin on this system."
+LangString DESC_SecCDPPlugin ${LANG_ENGLISH} "Install CDP Plugin and CDP client on this system."
 
 
 LangString TITLE_ConfigPage1 ${LANG_ENGLISH} "Configuration"
@@ -810,8 +801,8 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\*.sql"
   Delete /REBOOTOK "$INSTDIR\help\*"
   Delete /REBOOTOK "$INSTDIR\plugins\alldrives-fd.dll"
-  Delete /REBOOTOK "$INSTDIR\plugins\exchange-fd.dll"
-;  Delete /REBOOTOK "$INSTDIR\plugins\winbmr-fd.dll"
+  Delete /REBOOTOK "$INSTDIR\plugins\cdp-fd.dll"
+  Delete /REBOOTOK "$INSTDIR\cdp-client.exe"
 
   ; Check for existing installation
   IfSilent +2

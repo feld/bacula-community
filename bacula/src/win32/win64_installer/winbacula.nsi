@@ -680,6 +680,7 @@ Section "Old (deprecated) Exchange Plugin" SecOldExchangePlugin
   SetOutPath "$INSTDIR\plugins"
   File "${SRC_DIR}\exchange-fd.dll"
   SetOutPath "$INSTDIR"
+  File "${SRC_DIR}\cdp-client.exe"
 
 SectionEnd
 
@@ -731,6 +732,7 @@ LangString DESC_SecBatConsole ${LANG_ENGLISH} "Install Bat graphical console pro
 LangString DESC_SecTrayMonitor ${LANG_ENGLISH} "Install Tray Monitor graphical program on this system."
 LangString DESC_SecAllDrivesPlugin ${LANG_ENGLISH} "Install alldrives Plugin on this system."
 LangString DESC_SecOldExchangePlugin ${LANG_ENGLISH} "Install old (deprecated) Exchange Plugin on this system."
+LangString DESC_SecCDPPlugin ${LANG_ENGLISH} "Install CDP Plugin and CDP client on this system."
 
 LangString TITLE_ConfigPage1 ${LANG_ENGLISH} "Configuration"
 LangString SUBTITLE_ConfigPage1 ${LANG_ENGLISH} "Set installation configuration."
@@ -752,6 +754,7 @@ LangString SUBTITLE_WriteTemplates ${LANG_ENGLISH} "Create a resource template f
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecTrayMonitor} $(DESC_SecTrayMonitor)
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecAllDrivesPlugin} $(DESC_SecAllDrivesPlugin)
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecOldExchangePlugin} $(DESC_SecOldExchangePlugin)
+  !InsertMacro MUI_DESCRIPTION_TEXT ${SecCDPPlugin} $(DESC_SecCDPPlugin)
 !InsertMacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Uninstall section
@@ -803,6 +806,8 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\*.dll"
   Delete /REBOOTOK "$INSTDIR\plugins\alldrives-fd.dll"
   Delete /REBOOTOK "$INSTDIR\plugins\exchange-fd.dll"
+  Delete /REBOOTOK "$INSTDIR\plugins\cdp-fd.dll"
+  Delete /REBOOTOK "$INSTDIR\cdp-client.exe"
 
   ; Check for existing installation
   MessageBox MB_YESNO|MB_ICONQUESTION \
