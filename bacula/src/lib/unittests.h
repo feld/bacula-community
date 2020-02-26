@@ -31,6 +31,8 @@
 #define is(x, y, label) _is(__FILE__, __LINE__, #x, (x), (y), label)
 #define isnt(x, y, label) _isnt(__FILE__, __LINE__, #x, (x), (y), label)
 
+#define rok(x, label) { bool v=(x); if (!v) { _ok(__FILE__, __LINE__, #x, v, label); return 1; } }
+
 /* TODO: log() ported from BEE it should be updated. */
 #ifdef RTEST_LOG_THREADID
 #define log(format, ...)  do { \
