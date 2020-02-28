@@ -84,15 +84,15 @@ bool _ok(const char *file, int l, const char *op, int value, const char *label)
 {
    nb++;
    if (!value) {
-      err++;
       if (err < 1000) {
          Pmsg4(-1, "ERR %.80s %s:%i on %s\n", label, file, l, op);
       } else if (err == 1000) {
          Pmsg0(-1, "ERR Too much errors\n");
       }
       if (print_var) {
-         gdb_print_local(1);
+         gdb_print_local(1); // make sure this line is not the last operation before the return
       }
+      err++; // keep this line AFTER the gdb_print_local() to avoid "tail call" optimization
    } else if (!quiet) {
       Pmsg1(-1, "OK  %.80s\n", label);
    }
