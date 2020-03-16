@@ -550,6 +550,39 @@ process_dvd_rw_tools()
    m4 -DOS=XMINGW32 Makefile.m4 | make -f - prefix=${DEPPKG_DIR} manprefix=${DEPPKG_DIR} install >>make.log 2>&1
 }
 
+process_qt5()
+{
+    if get_source "${URL_Qt5}" "${DIR_Qt5}" "${MKD_Qt5}"
+   then
+      echo Patching Qt5
+   fi
+    ./configure -xplatform win32-g++ -device-option CROSS_COMPILE=/usr/bin/x86_64-w64-mingw32- \
+                -prefix ${DEPPKG_DIR}/qt-out -opensource  -no-compile-examples \
+                -no-openvg -no-sm -no-opengl \
+                -skip qtactiveqt -skip qtcharts -skip qtdoc -skip qtlocation \
+                -skip qtremoteobjects -skip qtserialbus -skip qtwebchannel \
+                -skip qtwebview -skip qtandroidextras -skip qtconnectivity \
+                -skip qtgamepad -skip qtmacextras -skip qtpurchasing -skip qtscript \
+                -skip qttranslations -skip qtwebengine -skip qtwinextras \
+                -skip qtdatavis3d -skip qtgraphicaleffects -skip qtmultimedia \
+                -skip qtquickcontrols -skip qtscxml -skip qtspeech \
+                -skip qtvirtualkeyboard -skip qtwebglplugin -skip qtx11extras \
+                -skip qt3d -skip qtcanvas3d -skip qtdeclarative \
+                -skip qtimageformats -skip qtnetworkauth -skip qtquickcontrols2 \
+                -skip qtsensors -skip qtwayland -skip qtwebsockets -silent -nomake examples
+
+    make
+    rm -rf ${DEPPKG_DIR}/include/qt ${DEPPKG_DIR}/lib/qt
+    mkdir -p ${DEPPKG_DIR}/include/qt ${DEPPKG_DIR}/lib/qt
+    cd $DEPPKG_DIR/qt-out
+    cp -rf include/* ${DEPPKG_DIR}/include/qt
+    cp -rf lib/* ${DEPPKG_DIR}/lib/qt
+    cp -rf src/corelib ${DEPPKG_DIR}/src/
+    cp -rf src/gui ${DEPPKG_DIR}/src/
+    cp -rf bin/Qt5Widgets.dll bin/libqtmain.a bin/Qt5Core.dll bin/Qt5Gui.dll bin/Qt5Network.dll ${DEPPKG_DIR}/bin/
+    cp -rf bin/Qt5Widgets.dll bin/libqtmain.a bin/Qt5Core.dll bin/Qt5Gui.dll bin/Qt5Network.dll ${DEPPKG_DIR}/lib/qt/
+}
+
 process_qt4()
 {
    if get_source "${URL_Qt4}" "${DIR_Qt4}" "${MKD_Qt4}"
@@ -562,7 +595,7 @@ process_qt4()
       patch -p1 < ${SCRIPT_DIR}/patches/qt4-compilation.patch
    fi
    echo "Configuring Qt4"
-   ./configure -opensource -confirm-license -fast -xplatform win32-g++-4.6 \
+   ./configure -opensource -confirm-license -fast -xplatform win32-g++-8.3 \
    -device-option CROSS_COMPILE=i686-w64-mingw32- -device-option \
    PKG_CONFIG='i686-w64-mingw32-pkg-config' -force-pkg-config -release \
    -exceptions -shared -prefix ${DEPPKG_DIR}/qt-out -prefix-install -no-script \
@@ -575,15 +608,6 @@ process_qt4()
    -no-openvg -no-openssl -no-nas-sound -no-audio-backend -no-sm -no-opengl \
    -no-javascript-jit -no-qt3support -nomake tools \
    -no-xmlpatterns -no-multimedia -nomake tools -silent
-
-   local qt_source_dir=`pwd`
-   # Required libz.dll.a, zlib.h and zconf.h for proper Qt build purpose
-   process_zlib
-   cd "${qt_source_dir}"
-   local zlib_dir=`basename "${URL_ZLIB}" | sed 's/.tar.gz//'`
-   cp "../${zlib_dir}/libz.dll.a" ./lib/
-   cp "../${zlib_dir}/zlib.h" ./include/
-   cp "../${zlib_dir}/zconf.h" ./include/
 
    make
 

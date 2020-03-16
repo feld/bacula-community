@@ -326,8 +326,9 @@ process_qt4()
    cp -rf lib/* ${DEPPKG_DIR}/lib/qt
    cp -rf src/corelib ${DEPPKG_DIR}/src/
    cp -rf src/gui ${DEPPKG_DIR}/src/
-   cp -rf lib/QtCore4.dll lib/QtGui4.dll ${DEPPKG_DIR}/bin/
-   cp -rf lib/QtCore4.dll lib/QtGui4.dll ${DEPPKG_DIR}/lib/qt/
+   cp -rf src/network ${DEPPKG_DIR}/src/
+   cp -rf bin/Qt5Widgets.dll bin/libqtmain.a lib/Qt5Core.dll lib/Qt5Gui.dll lib/Qt5Network.dll ${DEPPKG_DIR}/bin/
+   cp -rf bin/Qt5Widgets.dll bin/libqtmain.a lib/Qt5Core.dll lib/Qt5Gui.dll lib/Qt5Network.dll ${DEPPKG_DIR}/lib/qt/
 }
 
 
