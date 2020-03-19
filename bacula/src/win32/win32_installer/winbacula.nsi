@@ -298,8 +298,8 @@ Function .onInit
 ; PLUGINSDIR refers to temporary helper programs and not Bacula plugins!
   InitPluginsDir
   File "/oname=$PLUGINSDIR\openssl.exe"  "${SRC_DIR}\openssl.exe"
-  File "/oname=$PLUGINSDIR\libeay32.dll" "${SRC_DIR}\libeay32.dll"
-  File "/oname=$PLUGINSDIR\ssleay32.dll" "${SRC_DIR}\ssleay32.dll"
+  File "/oname=$PLUGINSDIR\libssl-1_1.dll" "${SRC_DIR}\libssl-1_1.dll"
+  File "/oname=$PLUGINSDIR\libcrypto-1_1.dll" "${SRC_DIR}\libcrypto-1_1.dll"
   File "/oname=$PLUGINSDIR\sed.exe"      "${SRC_DIR}\sed.exe"
 
   !InsertMacro MUI_INSTALLOPTIONS_EXTRACT "InstallType.ini"
@@ -357,17 +357,15 @@ Function InstallCommonFiles
 
     SetOutPath "$INSTDIR"
 !if "${BUILD_TOOLS}" == "MinGW32"
-    File "${SRC_DIR}\pthreadGCE2.dll"
-    File "${SRC_DIR}\ssleay32.dll"
-    File "${SRC_DIR}\libeay32.dll"
+    File "${SRC_DIR}\libcrypto-1_1.dll"
+    File "${SRC_DIR}\libssl-1_1.dll"
     File "${SRC_DIR}\libwinpthread-1.dll"
     File "${SRC_DIR}\libgcc_s_sjlj-1.dll"
     File "${SRC_DIR}\libstdc++-6.dll"
 !endif
 !if "${BUILD_TOOLS}" == "MinGW64"
-    File "${SRC_DIR}\pthreadGCE.dll"
-    File "${SRC_DIR}\cryptoeay32-0.9.8.dll"
-    File "${SRC_DIR}\ssleay32-0.9.8.dll"
+    File "${SRC_DIR}\libssl-1_1.dll"
+    File "${SRC_DIR}\libcrypto-1_1.dll"
 !endif
     File "${SRC_DIR}\zlib1.dll"
     File "${SRC_DIR}\bacula.dll"
@@ -569,16 +567,21 @@ Section "Bat Console" SecBatConsole
 
 !if "${BUILD_BAT}" == "yes"
   Call InstallCommonFiles
-  File "${SRC_DIR}\QtCore4.dll"
-  File "${SRC_DIR}\QtGui4.dll"
+  File "${SRC_DIR}\Qt5Core.dll"
+  File "${SRC_DIR}\Qt5Gui.dll"
+  File "${SRC_DIR}\Qt5Network.dll"
+  File "${SRC_DIR}\Qt5Widgets.dll"
   File "${SRC_DIR}\libgcc_s_sjlj-1.dll"
 
   File "${SRC_DIR}\bat.exe"
-
   File "/oname=$PLUGINSDIR\bat.conf" "bat.conf.in"
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bat.conf
   Call ConfigEditAndCopy
+
+  SetOutPath "$INSTDIR\platforms"
+  File "${SRC_DIR}\qwindows.dll"
+  SetOutPath "$INSTDIR"
 
   SetOutPath "$INSTDIR\help"
   File "${SRC_DIR}\help\*"
@@ -598,10 +601,18 @@ Section "Bacula Tray Monitor" SecTrayMonitor
 
 !if "${BUILD_BAT}" == "yes"
   Call InstallCommonFiles
-  File "${SRC_DIR}\QtCore4.dll"
-  File "${SRC_DIR}\QtGui4.dll"
+  File "${SRC_DIR}\libssl-1_1.dll"
+  File "${SRC_DIR}\libcrypto-1_1.dll"
+  File "${SRC_DIR}\Qt5Gui.dll"
+  File "${SRC_DIR}\Qt5Core.dll"
+  File "${SRC_DIR}\Qt5Network.dll"
+  File "${SRC_DIR}\Qt5Widgets.dll"
   File "${SRC_DIR}\libgcc_s_sjlj-1.dll"
   File "${SRC_DIR}\bacula-tray-monitor.exe"
+
+ SetOutPath "$INSTDIR\platforms"
+ File "${SRC_DIR}\qwindows.dll"
+ SetOutPath "$INSTDIR"
 
   ;File "/oname=$PLUGINSDIR\bacula-tray-monitor.conf" "bacula-tray-monitor.conf.in"
   StrCpy $0 "$INSTDIR"
@@ -787,6 +798,9 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\doc\*"
   Delete /REBOOTOK "$INSTDIR\openssl.exe"
   Delete /REBOOTOK "$INSTDIR\bacula-fd.exe"
+  Delete /REBOOTOK "$INSTDIR\bat.exe"
+  Delete /REBOOTOK "$INSTDIR\RegitrationWizard.exe"
+  Delete /REBOOTOK "$INSTDIR\bacula-tray-monitor.exe"
   Delete /REBOOTOK "$INSTDIR\bsleep.exe"
   Delete /REBOOTOK "$INSTDIR\bsmtp.exe"
   Delete /REBOOTOK "$INSTDIR\bconsole.exe"

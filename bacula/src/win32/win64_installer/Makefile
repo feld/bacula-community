@@ -45,15 +45,17 @@ DEPKGS_BINARIES := \
 	sed.exe \
 	expr64.exe \
 	snooze.exe \
-	QtCore4.dll \
-	QtGui4.dll  \
-	pthreadGCE2.dll \
+	Qt5Core.dll \
+	Qt5Gui.dll  \
+	Qt5Network.dll  \
+	Qt5Widgets.dll  \
+	qwindows.dll \
 	libwinpthread-1.dll \
 	libgcc_s_seh-1.dll \
 	libstdc++-6.dll \
-	libeay32.dll \
-	ssleay32.dll \
-	zlib1.dll
+	libcrypto-1_1-x64.dll \
+	libssl-1_1-x64.dll \
+	zlib1.dll \
 
 #	libgcc_s_dw2-1.dll
 
@@ -112,7 +114,7 @@ ifeq ($(bat),no)
 	BACULA_BINARIES=$(BACULABINARIES)
 	HELP=
 else
-	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe
+	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe RegistrationWizard.exe
 	HELP=help
 endif
 

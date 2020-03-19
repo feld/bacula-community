@@ -45,7 +45,7 @@ ifeq ($(bat),no)
 	BACULA_BINARIES=$(BACULABINARIES)
 	HELP=
 else
-	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe
+	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe RegistrationWizard.exe
 	HELP=help
 endif
 
@@ -55,16 +55,18 @@ EXTRA=
 
 
 DEPKGS_BINARIES := \
-	libeay32.dll \
-	pthreadGCE2.dll \
+	libcrypto-1_1.dll \
 	zlib1.dll \
-	ssleay32.dll \
+	libssl-1_1.dll \
 	openssl.exe \
 	sed.exe \
 	expr64.exe \
 	snooze.exe \
-	QtCore4.dll \
-	QtGui4.dll  \
+	Qt5Core.dll \
+	Qt5Gui.dll  \
+	Qt5Network.dll  \
+	Qt5Widgets.dll  \
+	qwindows.dll \
 	libwinpthread-1.dll \
 	libgcc_s_sjlj-1.dll \
 	libstdc++-6.dll

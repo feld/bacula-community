@@ -317,14 +317,12 @@ Function .onInit
   StrCpy $ConfigMonitorName              "$HostName-mon"
   ;StrCpy $ConfigMonitorPassword
 
-; TEMP refers to temporary helper programs and not Bacula plugins!
-;  InitTEMP
-  CreateDirectory "$INSTDIR"
-  CreateDirectory "$INSTDIR\working"
-  File "/oname=$INSTDIR\working\openssl.exe"  "${SRC_DIR}\openssl.exe"
-  File "/oname=$INSTDIR\working\libeay32.dll" "${SRC_DIR}\libeay32.dll"
-  File "/oname=$INSTDIR\working\ssleay32.dll" "${SRC_DIR}\ssleay32.dll"
-  File "/oname=$INSTDIR\working\sed.exe"      "${SRC_DIR}\sed.exe"
+; PLUGINSDIR refers to temporary helper programs and not Bacula plugins!
+  InitPluginsDir
+  File "/oname=$PLUGINSDIR\openssl.exe"  "${SRC_DIR}\openssl.exe"
+  File "/oname=$PLUGINSDIR\libssl-1_1-x64.dll" "${SRC_DIR}\libssl-1_1-x64.dll"
+  File "/oname=$PLUGINSDIR\libcrypto-1_1-x64.dll" "${SRC_DIR}\libcrypto-1_1-x64.dll"
+  File "/oname=$PLUGINSDIR\sed.exe"      "${SRC_DIR}\sed.exe"
 
   !InsertMacro MUI_INSTALLOPTIONS_EXTRACT "InstallType.ini"
   !InsertMacro MUI_INSTALLOPTIONS_EXTRACT "WriteTemplates.ini"
@@ -384,11 +382,11 @@ Function InstallCommonFiles
     File "${SRC_DIR}\mingwm10.dll"
 !endif
     File "${SRC_DIR}\libwinpthread-1.dll"
-    File "${SRC_DIR}\pthreadGCE2.dll"
+#    File "${SRC_DIR}\libgcc_s_dw2-1.dll"
     File "${SRC_DIR}\libgcc_s_seh-1.dll"
     File "${SRC_DIR}\libstdc++-6.dll"
-    File "${SRC_DIR}\ssleay32.dll"
-    File "${SRC_DIR}\libeay32.dll"
+    File "${SRC_DIR}\libssl-1_1-x64.dll"
+    File "${SRC_DIR}\libcrypto-1_1-x64.dll"
     File "${SRC_DIR}\zlib1.dll"
     File "${SRC_DIR}\bacula.dll"
 
@@ -617,14 +615,27 @@ Section "Bat Console" SecBatConsole
 
 !if "${BUILD_BAT}" == "yes"
   Call InstallCommonFiles
-  File "${SRC64_DIR}\QtCore4.dll"
-  File "${SRC64_DIR}\QtGui4.dll"
+  File "${SRC64_DIR}\Qt5Core.dll"
+  File "${SRC64_DIR}\Qt5Gui.dll"
+  File "${SRC64_DIR}\Qt5Network.dll"
+  File "${SRC64_DIR}\Qt5Widgets.dll"
+  File "${SRC64_DIR}\libwinpthread-1.dll"
+#  File "${SRC64_DIR}\libgcc_s_dw2-1.dll"
+  File "${SRC64_DIR}\libgcc_s_seh-1.dll"
+  File "${SRC64_DIR}\libssl-1_1-x64.dll"
+  File "${SRC64_DIR}\libcrypto-1_1-x64.dll"
   File "${SRC64_DIR}\bat.exe"
+  File "/oname=$INSTDIR\bacula.dll" "${SRC64_DIR}\bacula.dll"
+  File "/oname=$INSTDIR\zlib1.dll" "${SRC64_DIR}\zlib1.dll"
 
   File "/oname=$INSTDIR\working\bat.conf.in" "bat.conf.in"
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bat.conf
   Call ConfigEditAndCopy
+
+  SetOutPath "$INSTDIR\platforms"
+  File "${SRC64_DIR}\qwindows.dll"
+  SetOutPath "$INSTDIR"
 
   SetOutPath "$INSTDIR\help"
   File "${SRC64_DIR}\help\*"
@@ -645,11 +656,24 @@ Section "Tray Monitor" SecTrayMonitor
 
 !if "${BUILD_BAT}" == "yes"
   Call InstallCommonFiles
-  File "${SRC64_DIR}\QtCore4.dll"
-  File "${SRC64_DIR}\QtGui4.dll"
+  File "${SRC64_DIR}\Qt5Core.dll"
+  File "${SRC64_DIR}\Qt5Gui.dll"
+  File "${SRC64_DIR}\Qt5Network.dll"
+  File "${SRC64_DIR}\Qt5Widgets.dll"
+  File "${SRC64_DIR}\libssl-1_1-x64.dll"
+  File "${SRC64_DIR}\libcrypto-1_1-x64.dll"
+  File "${SRC64_DIR}\libwinpthread-1.dll"
+#  File "${SRC64_DIR}\libgcc_s_dw2-1.dll"
+  File "${SRC64_DIR}\libgcc_s_seh-1.dll"
   File "${SRC64_DIR}\bacula-tray-monitor.exe"
+  File "/oname=$INSTDIR\bacula.dll" "${SRC64_DIR}\bacula.dll"
+  File "/oname=$INSTDIR\zlib1.dll" "${SRC64_DIR}\zlib1.dll"
 
-  File "/oname=$INSTDIR\working\bacula-tray-monitor.conf.in" "bacula-tray-monitor.conf.in"
+  SetOutPath "$INSTDIR\platforms"
+  File "${SRC64_DIR}\qwindows.dll"
+  SetOutPath "$INSTDIR"
+
+  File "/oname=$PLUGINSDIR\bacula-tray-monitor.conf" "bacula-tray-monitor.conf.in"
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bacula-tray-monitor.conf
   Call ConfigEditAndCopy

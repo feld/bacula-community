@@ -554,11 +554,13 @@ process_qt5()
 {
     if get_source "${URL_Qt5}" "${DIR_Qt5}" "${MKD_Qt5}"
    then
-      echo Patching Qt5
-   fi
-    ./configure -xplatform win32-g++ -device-option CROSS_COMPILE=/usr/bin/x86_64-w64-mingw32- \
-                -prefix ${DEPPKG_DIR}/qt-out -opensource  -no-compile-examples \
-                -no-openvg -no-sm -no-opengl \
+       echo Patching Qt5
+       do_patch qt5-qaction.patch
+    fi
+    export OPENSSL_LIBS="-lssl -lcrypto"
+    echo y | ./configure -xplatform win32-g++ -device-option CROSS_COMPILE=/usr/bin/i686-w64-mingw32- \
+                -prefix ${DEPPKG_DIR} -opensource  -no-compile-examples \
+                -no-openvg -no-sm -no-opengl -nomake examples -nomake tests \
                 -skip qtactiveqt -skip qtcharts -skip qtdoc -skip qtlocation \
                 -skip qtremoteobjects -skip qtserialbus -skip qtwebchannel \
                 -skip qtwebview -skip qtandroidextras -skip qtconnectivity \
@@ -568,19 +570,21 @@ process_qt5()
                 -skip qtquickcontrols -skip qtscxml -skip qtspeech \
                 -skip qtvirtualkeyboard -skip qtwebglplugin -skip qtx11extras \
                 -skip qt3d -skip qtcanvas3d -skip qtdeclarative \
-                -skip qtimageformats -skip qtnetworkauth -skip qtquickcontrols2 \
-                -skip qtsensors -skip qtwayland -skip qtwebsockets -silent -nomake examples
+                -skip qtimageformats -skip qtquickcontrols2 \
+                -skip qtsensors -skip qtwayland -skip qtwebsockets -silent -openssl-linked \
+                -I $DEPPKG_DIR/include -L $DEPPKG_DIR/lib
 
     make
-    rm -rf ${DEPPKG_DIR}/include/qt ${DEPPKG_DIR}/lib/qt
-    mkdir -p ${DEPPKG_DIR}/include/qt ${DEPPKG_DIR}/lib/qt
-    cd $DEPPKG_DIR/qt-out
-    cp -rf include/* ${DEPPKG_DIR}/include/qt
-    cp -rf lib/* ${DEPPKG_DIR}/lib/qt
+    make install
+
+    cd qtbase
+    cp -f ./plugins/platforms/qwindows.dll $DEPPKG_DIR/bin
+    cp -r ./plugins/platforms $DEPPKG_DIR/bin
+    cp -r ./plugins/platforms $DEPPKG_DIR/lib
+
     cp -rf src/corelib ${DEPPKG_DIR}/src/
     cp -rf src/gui ${DEPPKG_DIR}/src/
-    cp -rf bin/Qt5Widgets.dll bin/libqtmain.a bin/Qt5Core.dll bin/Qt5Gui.dll bin/Qt5Network.dll ${DEPPKG_DIR}/bin/
-    cp -rf bin/Qt5Widgets.dll bin/libqtmain.a bin/Qt5Core.dll bin/Qt5Gui.dll bin/Qt5Network.dll ${DEPPKG_DIR}/lib/qt/
+    cd $DEPPKG_DIR/src
 }
 
 process_qt4()
@@ -605,7 +609,7 @@ process_qt4()
    -no-libmng -no-libtiff -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci \
    -no-sql-odbc -no-sql-psql -no-sql-sqlite -no-sql-sqlite2 \
    -no-sql-sqlite_symbian -no-sql-symsql -no-sql-tds -no-nis -no-cups -no-dbus \
-   -no-openvg -no-openssl -no-nas-sound -no-audio-backend -no-sm -no-opengl \
+   -no-openvg -no-nas-sound -no-audio-backend -no-sm -no-opengl \
    -no-javascript-jit -no-qt3support -nomake tools \
    -no-xmlpatterns -no-multimedia -nomake tools -silent
 
@@ -657,7 +661,7 @@ then
    process_lzo
    process_zlib
    process_rsync
-   process_pthreads
+   #process_pthreads
    process_openssl
    process_stab2cv
    process_sed
@@ -674,7 +678,7 @@ then
 #   process_mt
 #   process_mkisofs
 #   process_dvd_rw_tools
-   process_qt4
+   process_qt5
 else
    for dependency in "$@"
    do

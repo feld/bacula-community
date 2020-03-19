@@ -293,42 +293,39 @@ process_qt4()
       patch -p1 < ${SCRIPT_DIR}/patches/qt4-compilation-see.patch
       patch -p1 < ${SCRIPT_DIR}/patches/qt4-compilation.patch
    fi
-   echo "Configuring Qt4"
-   ./configure -opensource -confirm-license -fast -xplatform win32-g++-4.6 \
-   -device-option CROSS_COMPILE=x86_64-w64-mingw32- -device-option \
-   PKG_CONFIG='x86_64-w64-mingw32-pkg-config' -force-pkg-config -release \
-   -exceptions -shared -prefix ${DEPPKG_DIR}/qt-out -prefix-install -no-script \
-   -no-iconv -no-webkit -no-glib -no-gstreamer -no-phonon -no-phonon-backend \
-   -accessibility -no-reduce-exports -no-rpath -make libs -nomake demos \
-   -nomake docs -nomake examples -system-zlib -no-mitshm -no-libjpeg \
-   -no-libmng -no-libtiff -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci \
-   -no-sql-odbc -no-sql-psql -no-sql-sqlite -no-sql-sqlite2 \
-   -no-sql-sqlite_symbian -no-sql-symsql -no-sql-tds -no-nis -no-cups -no-dbus \
-   -no-openvg -no-openssl -no-nas-sound -no-audio-backend -no-sm -no-opengl \
-   -no-javascript-jit -no-qt3support -nomake tools \
-   -no-xmlpatterns -no-multimedia -nomake tools -silent
-
-   local qt_source_dir=`pwd`
-   # Required libz.dll.a, zlib.h and zconf.h for proper Qt build purpose
-   process_zlib
-   cd "${qt_source_dir}"
-   local zlib_dir=`basename "${URL_ZLIB}" | sed 's/.tar.gz//'`
-   cp "../${zlib_dir}/libz.dll.a" ./lib/
-   cp "../${zlib_dir}/zlib.h" ./include/
-   cp "../${zlib_dir}/zconf.h" ./include/
+   echo "Configuring Qt5"
+   export OPENSSL_LIBS="-lssl -lcrypto"
+   echo y | ./configure \
+-xplatform win32-g++  \
+-device-option CROSS_COMPILE=/usr/bin/x86_64-w64-mingw32-  \
+-prefix ${DEPKGS_DIR}/  \
+-opensource -confirm-license \
+-no-compile-examples -nomake examples -nomake tests \
+-skip qtactiveqt -skip qtcharts -skip qtdoc -skip qtlocation \
+-skip qtremoteobjects -skip qtserialbus -skip qtwebchannel \
+-skip qtwebview -skip qtandroidextras -skip qtconnectivity \
+-skip qtgamepad -skip qtmacextras -skip qtpurchasing -skip qtscript \
+-skip qttranslations -skip qtwebengine -skip qtwinextras \
+-skip qtdatavis3d -skip qtgraphicaleffects -skip qtmultimedia \
+-skip qtquickcontrols -skip qtscxml -skip qtspeech \
+-skip qtvirtualkeyboard -skip qtwebglplugin -skip qtx11extras \
+-skip qt3d -skip qtcanvas3d -skip qtdeclarative \
+-skip qtimageformats -skip qtquickcontrols2  -no-opengl \
+-skip qtsensors -skip qtwayland -skip qtwebsockets -I ${DEPKGS_DIR}/include -L ${DEPKGS_DIR}/lib
 
    make
-
-   echo "Installing Qt4"
-   rm -rf ${DEPPKG_DIR}/include/qt ${DEPPKG_DIR}/lib/qt
-   mkdir -p ${DEPPKG_DIR}/include/qt ${DEPPKG_DIR}/lib/qt
-   cp -rf include/* ${DEPPKG_DIR}/include/qt
-   cp -rf lib/* ${DEPPKG_DIR}/lib/qt
+   make install
+   
+   echo "Installing Qt5"
+   # TODO: Not working
+   cd qtbase
+   cp -f ./plugins/platforms/qwindows.dll $DEPPKG_DIR/bin
+   cp -r ./plugins/platforms $DEPPKG_DIR/bin
+   cp -r ./plugins/platforms $DEPPKG_DIR/lib
    cp -rf src/corelib ${DEPPKG_DIR}/src/
    cp -rf src/gui ${DEPPKG_DIR}/src/
    cp -rf src/network ${DEPPKG_DIR}/src/
-   cp -rf bin/Qt5Widgets.dll bin/libqtmain.a lib/Qt5Core.dll lib/Qt5Gui.dll lib/Qt5Network.dll ${DEPPKG_DIR}/bin/
-   cp -rf bin/Qt5Widgets.dll bin/libqtmain.a lib/Qt5Core.dll lib/Qt5Gui.dll lib/Qt5Network.dll ${DEPPKG_DIR}/lib/qt/
+   cd $DEPPKG_DIR/src
 }
 
 
@@ -436,7 +433,7 @@ then
    process_lzo
    process_zlib
 #   process_pcre
-   process_pthreads
+#   process_pthreads
    process_openssl
    process_qt4
    process_sed

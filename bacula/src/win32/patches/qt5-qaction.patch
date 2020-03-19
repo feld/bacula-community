@@ -1,0 +1,10 @@
+--- qtbase/src/widgets/kernel/qaction.cpp.org   2020-04-01 11:44:14.293432810 +0200
++++ qtbase/src/widgets/kernel/qaction.cpp       2020-04-01 11:37:20.391428062 +0200
+@@ -48,6 +48,7 @@
+ #include "qstylehints.h"
+ #include <private/qshortcutmap_p.h>
+ #include <private/qguiapplication_p.h>
++#include "qwidget_p.h"
+ #if QT_CONFIG(menu)
+ #include <private/qmenu_p.h>
+ #endif
