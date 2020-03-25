@@ -25,6 +25,7 @@
 #include "stored.h"
 #include "prepare.h"
 
+bool is_dedup_server_side(DEVICE *dev, int32_t stream, uint64_t stream_len);
 
 /* Responses sent to the File daemon */
 static char OK_data[]    = "3000 OK data\n";

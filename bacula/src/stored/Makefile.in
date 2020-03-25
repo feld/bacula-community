@@ -110,9 +110,7 @@ CLOUDTESTOBJS = cloud_test.o $(SDCORE_OBJS)
 CLOUDCLIOBJS = bcloud.o $(SDCORE_OBJS) $(CLOUD_ALL_LOBJS)
 
 DEDUP_SRCS = \
-   bitarray.c dde_cmd.c dde_status.c dde_vacuum.c \
-   dedupstored.c dedupengine.c dde_scrub.c \
-   dedup_dev.c
+   dedup_dev.c dedupengine.c dedup_interface.c
 
 DEDUP_OBJS = $(DEDUP_SRCS:.c=.o)
 DEDUP_LOBJS = $(DEDUP_SRCS:.c=.lo)
@@ -137,9 +135,6 @@ LIBBACSD_SRCS = \
 LIBBACSD_OBJS = $(LIBBACSD_SRCS:.c=.o)
 LIBBACSD_LOBJS = $(LIBBACSD_SRCS:.c=.lo)
 LIBBACSD_LT_RELEASE = @LIBBAC_LT_RELEASE@
-
-
-TUNEDDEOBJS = bitarray.o dedupengine.o dde_scrub.o tune-dde.o
 
 
 # these are the objects that are changed by the .configure process
@@ -241,10 +236,14 @@ bacula-sd-cloud-gs-driver.la: Makefile $(CLOUD_GENERIC_LOBJS)
 bacula-sd-cloud-swift-driver.la: Makefile $(CLOUD_GENERIC_LOBJS)
 	 $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(CLOUD_GENERIC_LOBJS) -o $@ -R $(libdir) -rpath $(libdir) -module -export-dynamic -release $(LIBBACSD_LT_RELEASE)
 
-bacula-sd-dedup-driver.la: Makefile $(DEDUP_LOBJS)
-	 $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(DEDUP_LOBJS) -o $@ -rpath $(libdir) -module -export-dynamic -release $(LIBBACSD_LT_RELEASE) \
-	  $(TOKYOCABINET_LIBS)
-  
+dedup1/libdedup1.la:
+	(cd dedup1 && make libdedup1.la || exit 1)
+
+bacula-sd-dedup-driver.la: Makefile $(DEDUP_LOBJS) dedup1/libdedup1.la
+	@echo "Making $@ ..."
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(DEDUP_LOBJS) dedup1/libdedup1.la -o $@ -rpath $(plugindir) -module -export-dynamic -release $(LIBBACSD_LT_RELEASE) \
+	$(TOKYOCABINET_LIBS)
+
 bacula-sd-aligned-driver.la: Makefile $(ALIGNED_LOBJS)
 	 $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(ALIGNED_LOBJS) -o $@ -rpath $(plugindir) \
 	     -module -export-dynamic -release $(LIBBACSD_LT_RELEASE)
@@ -328,12 +327,6 @@ bcopy.o: bcopy.c
 bcopy:	Makefile $(COPYOBJS) libbacsd.la drivers ../findlib/libbacfind$(DEFAULT_ARCHIVE_TYPE) ../lib/libbaccfg$(DEFAULT_ARCHIVE_TYPE) ../lib/libbac$(DEFAULT_ARCHIVE_TYPE)
 	$(LIBTOOL_LINK) $(CXX) $(TTOOL_LDFLAGS) $(LDFLAGS) -L../lib -L../findlib -o $@ $(COPYOBJS) \
 	   $(SD_LIBS) -lm $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
-
-tune-dde: Makefile $(TUNEDDEOBJS) ../lib/libbac$(DEFAULT_ARCHIVE_TYPE)
-	@echo "Linking $@ ..."
-	$(LIBTOOL_LINK) $(CXX) $(WLDFLAGS) $(LDFLAGS) -L../lib -o $@ $(TUNEDDEOBJS) $(ZLIBS) \
-	   -lbac -lm $(DLIB) $(LIBS) $(TOKYOCABINET_LIBS) \
-	$(GETTEXT_LIBS)
 
 cloud_parts_test: Makefile cloud_parts.c
 	$(RMF) cloud_parts.o
@@ -464,7 +457,7 @@ install-aligned:  bacula-sd-aligned-driver.la
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bacula-sd-aligned-driver$(DEFAULT_SHARED_OBJECT_TYPE) $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bacula-sd-aligned-driver.la
 
-install-dedup: bacula-sd-dedup-driver.la 
+install-dedup: bacula-sd-dedup-driver.la
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bacula-sd-dedup-driver$(DEFAULT_SHARED_OBJECT_TYPE) $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bacula-sd-dedup-driver.la
@@ -484,10 +477,12 @@ libtool-clean:
 	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
 	@$(RMF) -r .libs _libs
 	@$(RMF) *.la
+	(cd dedup1 && make libtool-clean)
 
 clean:	libtool-clean
 	@$(RMF) bacula-sd stored bls bextract bpool btape shmfree core core.* a.out *.o *.bak *~ *.intpro *.extpro 1 2 3
 	@$(RMF) bscan bsdjson bcopy static-bacula-sd acsls-changer
+	(cd dedup1 && make clean)
 
 realclean: clean
 	@$(RMF) tags bacula-sd.conf acsls-changer.conf
@@ -495,6 +490,7 @@ realclean: clean
 distclean: realclean
 	if test $(srcdir) = .; then $(MAKE) realclean; fi
 	(cd $(srcdir); $(RMF) Makefile)
+	(cd dedup1 && make distclean)
 
 devclean: realclean
 	if test $(srcdir) = .; then $(MAKE) realclean; fi
@@ -517,6 +513,7 @@ depend:
 	   $(MV) Makefile.bak Makefile; \
 	   echo " ======= Something went wrong with make depend. ======="; \
 	fi
+	(cd dedup1 && make depend)
 
 # -----------------------------------------------------------------------
 # DO NOT DELETE: nice dependency list follows

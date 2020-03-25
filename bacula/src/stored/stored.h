@@ -73,7 +73,7 @@ const int sd_dbglvl = 300;
 #include "vol_mgr.h"
 #include "reserve.h"
 #include "protos.h"
-#include "dedupstored.h"
+#include "dedup_interface.h"
 #ifdef HAVE_LIBZ
 #include <zlib.h>                     /* compression headers */
 #else

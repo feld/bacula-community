@@ -25,7 +25,7 @@
 
 #include "bacula.h"
 #include "stored.h"
-#include "dedupstored.h"
+#include "dedup_interface.h"
 /* Forward referenced subroutines */
 static bool read_record_cb(DCR *dcr, DEV_RECORD *rec);
 static bool mac_record_cb(DCR *dcr, DEV_RECORD *rec);

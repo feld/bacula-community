@@ -26,7 +26,6 @@
 
 #include "bacula.h"
 #include "stored.h"
-#include "dedupstored.h"
 #include "findlib/find.h"
 #include "lib/cmd_parser.h"
 

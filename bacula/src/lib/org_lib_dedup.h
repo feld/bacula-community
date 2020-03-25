@@ -65,6 +65,5 @@ int bhash_info(int hash_id, const char **hash_name);
 
 bool is_deduplicable_stream(int stream);
 bool is_client_rehydration_friendly_stream(int stream);
-void dedup_get_limits(int64_t *nofile, int64_t *memlock);
 
 #endif  /* ORG_LIB_DEDUP_H */

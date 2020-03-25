@@ -390,5 +390,3 @@ bool catreq_get_pool_info(JCR *jcr, BSOCK *bs);
 # define mark_access_denied(a)
 #endif
 
-/* dedup_util.c */
-bool is_dedup_ref(DEV_RECORD *rec, bool lazy);

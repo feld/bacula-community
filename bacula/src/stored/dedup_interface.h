@@ -20,96 +20,44 @@
 #ifndef DEDUP_INTERFACE_H_
 #define DEDUP_INTERFACE_H_
 
-class BufferedMsgSD: public DDEConnectionBackup, public BufferedMsgBase
+bool is_dedup_server_side(DEVICE *dev, int32_t stream, uint64_t stream_len);
+bool is_dedup_ref(DEV_RECORD *rec, bool lazy);
+void list_dedupengines(char *cmd, STATUS_PKT *sp);
+void dedup_get_limits(int64_t *nofile, int64_t *memlock);
+bool dedup_parse_filter(char *fltr);
+void dedup_filter_record(int verbose, DCR *dcr, DEV_RECORD *rec, char *dedup_msg, int len);
+
+/* Interface between DEDUP and SD */
+class DedupStoredInterfaceBase
 {
 public:
-   POOL_MEM block; // used for BNET_CMD_STO_BLOCK
-   BufferedMsgSD(DedupEngine *dedupengine, JCR *jcr, BSOCK *sock, const char *a_rec_header, int32_t bufsize, int capacity, int con_capacity);
-   virtual ~BufferedMsgSD();
-   virtual void *do_read_sock_thread(void);
-   virtual int commit(POOLMEM *&errmsg, uint32_t jobid)
-         { return DDEConnectionBackup::Commit(errmsg, jobid); };
-   virtual bool dedup_store_chunk(DEV_RECORD *rec, const char *rbuf, int rbuflen, char *dedup_ref_buf, char *wdedup_ref_buf, POOLMEM *&errmsg);
-};
 
+   DedupStoredInterfaceBase(JCR *jcr, DedupEngine *dedupengine) {};
+   virtual ~DedupStoredInterfaceBase() {};
 
-/*
- * DedupStoredInterface is the JCR->dedup component in charge of handling DEDUP
- * and REHYDRATION on the Storage side
- *
- * When doing backup, only the dedup part is in use, the rehydration part is not
- * used but don't take any resources. The same is true for the opposite.
- *
- */
-class DedupStoredInterface: public DedupStoredInterfaceBase, DDEConnectionRestore
-{
-public:
-   enum { di_rehydration_srv=1 };
-   JCR *jcr;
+      // deduplication
+   virtual int start_deduplication() {return -1;};
+   virtual void *wait_deduplication(bool emergency=false) {return NULL;};
+   virtual void *do_deduplication_thread(void){return NULL;};
 
-private:
-   bool _is_rehydration_srvside;
-   bool _is_thread_started;
-   POOLMEM *msgbuf;
-   POOLMEM *eblock;
+   // rehydration
+   virtual int start_rehydration(){return -1;};
+   virtual void *wait_rehydration(bool emergency=false){return NULL;};
+   virtual void *do_rehydration_thread(void){return NULL;};
+   virtual int handle_rehydration_command(BSOCK *fd){return -1;};
+   virtual bool wait_flowcontrol_rehydration(int free_rec_count, int timeoutms){return false;};
+   virtual bool do_flowcontrol_rehydration(int free_rec_count, int retry_timeoutms=250){return false;};
+   virtual void warn_rehydration_eod() {};
 
-public:
+   virtual int record_rehydration(DCR *dcr, DEV_RECORD *rec, char *buf, POOLMEM *&errmsg, bool despite_of_error, int *chunk_size){return -1;};
+   virtual int add_circular_buf(DCR *dcr, DEV_RECORD *rec){return -1;};
+   virtual void set_checksum_after_rehydration(bool val) {};
+   virtual void set_use_index_for_recall(bool val) {};
 
-   pthread_mutex_t mutex;
-   pthread_cond_t cond;
-
-   bool emergency_exit;
-   bool is_eod_sent;  /* end of backup, EOD has been sent */
-
-   /* deduplication */
-
-   /* rehydration */
-   int client_rec_capacity;  /* size of the buffer client on the other side, */
-                             /* don't send more rec before an ACK */
-   int64_t sent_rec_count, recv_ack_count; /* keep count of rec sent and received ACK */
-   pthread_t rehydration_thread;
-
-   bool do_checksum_after_rehydration; /* compute checksum after the rehydration ? */
-   bool use_index_for_recall;          /* Use index to restore a block (or use the volume information) */
-   int rehydra_check_hash;       /* copied from DedupEngine */
-   POOL_MEM m_errmsg;           /* error buffer used in record_rehydration */
-
-   struct DedupReference *circular_ref;
-   int circular_ref_count; /* number of ref in the circular buffer */
-   int circular_ref_pos; /* where to store the next ref sent to the "other" */
-   int circular_ref_search; /* pos of the last hit, start searching from here */
-
-   DedupStoredInterface(JCR *jcr, DedupEngine *dedupengine);
-   ~DedupStoredInterface();
-
-   /* rehydration / restore */
-   int start_rehydration();                      /* Start rehydration thread */
-   void *wait_rehydration(bool emergency=false); /* Stop rehydration thread */
-   void *do_rehydration_thread(void);            /* Actual thread startup function */
-   int handle_rehydration_command(BSOCK *fd);
-   bool wait_flowcontrol_rehydration(int free_rec_count, int timeoutms);
-   bool do_flowcontrol_rehydration(int free_rec_count, int retry_timeoutms=250);
-
-   void warn_rehydration_eod();        /* tell rehydration than EOD was sent */
-   int record_rehydration(DCR *dcr, DEV_RECORD *rec, char *buf, POOLMEM *&errmsg, bool despite_of_error, int *chunk_size);
-   int add_circular_buf(DCR *dcr, DEV_RECORD *rec);
-
-   /* Some tools like bextract may want to test the checksum after a rehydration. */
-   void set_checksum_after_rehydration(bool val) {
-      do_checksum_after_rehydration = val;
-   };
-
-   /* Use the index during restore, or the volume information */
-   void set_use_index_for_recall(bool val) {
-      use_index_for_recall = val;
-   };
-
-   POOLMEM *get_msgbuf() { return msgbuf; };
-   bool is_rehydration_srvside() { return _is_rehydration_srvside; };
-   bool is_thread_started() { return _is_thread_started; };
-
-   void set_rehydration_srvside() { _is_rehydration_srvside = true; };
-   void unset_rehydration_srvside() { _is_rehydration_srvside = false; };
+   virtual POOLMEM *get_msgbuf() { return NULL; };
+   virtual void unset_rehydration_srvside() { return; };
+   virtual bool is_rehydration_srvside() { return false; };
+   virtual bool is_thread_started() { return false; };
 
 };
 
