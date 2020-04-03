@@ -25,7 +25,8 @@
 
 /* enum loadable dedup drivers */
 enum {
-   D_LEGACY_DRIVER  = 1
+   D_LEGACY_DRIVER  = 1,
+   D_DEDUP2_DRIVER  = 2
 };
 
 class dedup_dev : public file_dev {

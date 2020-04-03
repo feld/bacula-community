@@ -703,11 +703,17 @@ static int check_resources()
 #ifdef SD_DEDUP_SUPPORT
    DEDUPRES *dedup;
    foreach_res(dedup, R_DEDUP) {
-      if (dedup->driver_type == D_LEGACY_DRIVER)
-      {
+      if (dedup->driver_type == D_LEGACY_DRIVER) {
          if (dedup->dedup_dir == NULL) {
             Jmsg(NULL, M_FATAL, 0,
-                 _("Failed to initialize Dedup. DedupDirectory not defined for Dedup \"%s\"\n"),
+                 _("Failed to initialize Dedup Legasy. DedupDirectory not defined for Dedup \"%s\"\n"),
+                 dedup->hdr.name);
+            OK = false;
+         }
+      } else if (dedup->driver_type == D_DEDUP2_DRIVER) {
+         if (dedup->dedup_dir == NULL) {
+            Jmsg(NULL, M_FATAL, 0,
+                 _("Failed to initialize Dedup2 . DedupDirectory not defined for Dedup \"%s\"\n"),
                  dedup->hdr.name);
             OK = false;
          }
