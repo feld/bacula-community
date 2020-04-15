@@ -50,8 +50,8 @@ static uint32_t num_files = 0;
 static ATTR *attr;
 static CONFIG *config;
 
-static bool filter = false;                  /* any filter set ? */
-static bool dedup = false;                   /* decode dedup reference */
+bool filter = false;                  /* any filter set ? */
+bool dedup = false;                   /* decode dedup reference */
 
 void *start_heap;
 #define CONFIG_FILE "bacula-sd.conf"
