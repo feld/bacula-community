@@ -15,9 +15,16 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
+   Bacula Systems(R) is a trademark of Bacula Systems SA.
+   Bacula Enterprise(TM) is a trademark of Bacula Systems SA.
 
-   Written by Eric Bollengier 2015
+   The licensor of Bacula Enterprise(TM) is Bacula Systems(R) SA,
+   Rue Galilee 5, 1400 Yverdon-les-Bains, Switzerland.
 */
+
+/*
+ *    Written by Eric Bollengier, 2015
+ */
 
 #ifndef FD_SNAPSHOT_H
 #define FD_SNAPSHOT_H
