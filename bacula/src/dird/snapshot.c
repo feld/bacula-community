@@ -15,6 +15,11 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
+   Bacula Systems(R) is a trademark of Bacula Systems SA.
+   Bacula Enterprise(TM) is a trademark of Bacula Systems SA.
+
+   The licensor of Bacula Enterprise(TM) is Bacula Systems(R) SA,
+   Rue Galilee 5, 1400 Yverdon-les-Bains, Switzerland.
 */
 
 #include "bacula.h"
@@ -179,7 +184,7 @@ int delete_snapshot(UAContext *ua)
 
    /* Try to connect for 15 seconds */
    ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
-                client->name(), client->address(buf.addr()), client->FDport);
+                client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
       ua->jcr->client = NULL;
@@ -227,7 +232,7 @@ int list_snapshot(UAContext *ua, alist *snap_list)
 
    /* Try to connect for 15 seconds */
    ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
-                client->name(), client->address(tmp.addr()), client->FDport);
+                client->name(), get_client_address(ua->jcr, client, tmp.addr()), client->FDport);
 
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
@@ -322,7 +327,7 @@ int prune_snapshot(UAContext *ua)
 
             /* Try to connect for 15 seconds */
             ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
-                         client->name(), client->address(tmp.addr()), client->FDport);
+                         client->name(), get_client_address(ua->jcr, client, tmp.addr()), client->FDport);
             if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
                ua->error_msg(_("Failed to connect to Client.\n"));
                free_bsock(ua->jcr->file_bsock);
