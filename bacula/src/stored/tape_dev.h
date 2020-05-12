@@ -1,4 +1,4 @@
-/*
+/*                                                              [vssfs.c] IQ
    Bacula(R) - The Network Backup Solution
 
    Copyright (C) 2000-2020 Kern Sibbald
@@ -15,6 +15,10 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
+   Bacula Systems(R) is a trademark of Bacula Systems SA.
+
+   The licensor of Bacula Enterprise(TM) is Bacula Systems(R) SA,
+   Rue Galilee 5, 1400 Yverdon-les-Bains, Switzerland.
 */
 /*
  * Inspired by vtape.h
