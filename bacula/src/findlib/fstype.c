@@ -419,7 +419,8 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
 #elif defined (__digital__) && defined (__unix__)  /* Tru64 */
 /* Tru64 */
 #include <sys/stat.h>
-#include <sys/mount.h>
+#include <sys/mount.h> 
+#include <sys/mnttab.h>
 
 /*
  * TODO: RPK: Tru64 is already dead!
