@@ -910,7 +910,7 @@ int vtape::d_open(const char *pathname, int uflags)
       Dmsg1(dbglevel, "Can't stat on %s\n", pathname);
       if (uflags & O_NONBLOCK) {
          online = false;
-         fd = ::open("/dev/null", O_RDWR | O_LARGEFILE, 0600);
+         fd = ::open("/dev/null", O_RDWR | O_LARGEFILE | O_CLOEXEC, 0600);
       }
    } else {
       fd = ::open(pathname, O_RDWR | O_LARGEFILE | O_CLOEXEC, 0600);
@@ -927,7 +927,7 @@ int vtape::d_open(const char *pathname, int uflags)
    strcpy(lockfile, pathname);
    strcat(lockfile, ".l");
 
-   lockfd = ::open(lockfile, O_CREAT | O_RDWR | O_LARGEFILE | O_CLOEXEC, 0600);
+   lockfd = ::open(lockfile, O_CREAT | O_RDWR | O_LARGEFILE, 0600);
    if (lockfd < 0) {
       berrno be;
       Dmsg2(0, "Unable to open vtape device lock %s ERR=%s\n", lockfile, be.bstrerror());
@@ -1011,4 +1011,4 @@ const char *vtape::print_type()
    return "Vtape";
 }
 
-#endif  /* ! USE_VTAPE */
+#endif  /* !USE_VTAPE */
