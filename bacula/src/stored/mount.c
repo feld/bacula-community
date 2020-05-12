@@ -28,11 +28,6 @@
 #include "bacula.h"                   /* pull in global headers */
 #include "stored.h"                   /* pull in Storage Deamon headers */
 
-/* Make sure some EROFS is defined */
-#ifndef EROFS                         /* read-only file system */
-#define EROFS -1                      /* make impossible errno */
-#endif
-
 static pthread_mutex_t mount_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 enum {
@@ -182,7 +177,9 @@ mount_next_vol:
       dev->VolHdr.VolumeName, dev->print_name());
 
    if (dev->poll && dev->has_cap(CAP_CLOSEONPOLL)) {
-      dev->close(this);
+      if (!dev->close(this)) {
+         Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+      }
       free_volume(dev);
    }
 
@@ -215,20 +212,13 @@ mount_next_vol:
             dev->print_type(), dev->print_name(), dcr->VolumeName, dev->bstrerror());
 
       /* If not removable, Volume is broken. This is a serious issue here. */
-      if (dev->is_file() && !dev->is_removable()) {
+      if(dev->is_file() && !dev->is_removable()) {
          Dmsg3(40, "Volume \"%s\" not loaded on %s device %s.\n",
                dcr->VolumeName, dev->print_type(), dev->print_name());
-         if (dev->dev_errno == EACCES || dev->dev_errno == EROFS) {
-            mark_volume_read_only();
-         } else {
-            mark_volume_in_error();
-         }
+         mark_volume_in_error();
 
       } else {
          Dmsg0(100, "set_unload\n");
-         if (dev->dev_errno == EACCES || dev->dev_errno == EROFS) {
-            mark_volume_read_only();
-         }
          dev->set_unload();              /* force ask sysop */
          ask = true;
       }
@@ -541,7 +531,9 @@ int DCR::check_volume_label(bool &ask, bool &autochanger)
       ask = true;
       /* Needed, so the medium can be changed */
       if (dev->requires_mount()) {
-         dev->close(this);
+         if (!dev->close(this)) {
+            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+         }
          free_volume(dev);
       }
       goto check_next_volume;
@@ -743,23 +735,6 @@ void DCR::mark_volume_in_error()
 }
 
 /*
- * Mark volume read_only in catalog
- */
-void DCR::mark_volume_read_only()
-{
-   Jmsg(jcr, M_INFO, 0, _("Marking Volume \"%s\" Read-Only in Catalog.\n"),
-        VolumeName);
-   dev->VolCatInfo = VolCatInfo;       /* structure assignment */
-   dev->setVolCatStatus("Read-Only");
-   Dmsg0(150, "dir_update_vol_info. Set Read-Only.\n");
-   dir_update_volume_info(this, false, false);
-   volume_unused(this);
-   Dmsg0(50, "set_unload\n");
-   dev->set_unload();                 /* must get a new volume */
-}
-
-
-/*
  * The Volume is not in the correct slot, so mark this
  *   Volume as not being in the Changer.
  */
@@ -790,7 +765,9 @@ void DCR::release_volume()
 
    if (dev->is_open() && (!dev->is_tape() || !dev->has_cap(CAP_ALWAYSOPEN))) {
       generate_plugin_event(jcr, bsdEventDeviceClose, this);
-      dev->close(this);
+      if (!dev->close(this)) {
+         Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+      }
    }
 
    /* If we have not closed the device, then at least rewind the tape */
@@ -870,7 +847,9 @@ bool mount_next_read_volume(DCR *dcr)
     */
    if (jcr->NumReadVolumes > 1 && jcr->CurReadVolume < jcr->NumReadVolumes) {
       dev->Lock();
-      dev->close(dcr);
+      if (!dev->close(dcr)) {
+         Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+      }
       dev->set_read();
       dcr->set_reserved_for_read();
       dev->Unlock();
