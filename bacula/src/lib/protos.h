@@ -110,7 +110,7 @@ int change_job_user(char *uname, char *gname, char *errmsg, int errlen);
 int       bmicrosleep            (int32_t sec, int32_t usec);
 char     *bfgets                 (char *s, int size, FILE *fd);
 char     *bfgets                 (POOLMEM *&s, FILE *fd);
-void      make_unique_filename   (POOLMEM **name, int Id, char *what);
+void      make_unique_filename   (POOLMEM **name, int Id, const char *what);
 #ifndef HAVE_STRTOLL
 long long int strtoll            (const char *ptr, char **endptr, int base);
 #endif

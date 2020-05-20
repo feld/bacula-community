@@ -942,7 +942,7 @@ char *bfgets(POOLMEM *&s, FILE *fd)
  *   without saving its name, and re-generate the name
  *   so that it can be deleted.
  */
-void make_unique_filename(POOLMEM **name, int Id, char *what)
+void make_unique_filename(POOLMEM **name, int Id, const char *what)
 {
    Mmsg(name, "%s/%s.%s.%d.tmp", working_directory, my_name, what, Id);
 }

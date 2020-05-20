@@ -1670,7 +1670,7 @@ static bool putfile_cmd(UAContext *ua, const char *cmd)
    }
 
    /* the (intptr_t)ua will allow one file per console session */
-   make_unique_filename(&name, (intptr_t)ua, (char *)key);
+   make_unique_filename(&name, (intptr_t)ua, key);
 
    fp = bfopen(name, "w");
    if (!fp) {

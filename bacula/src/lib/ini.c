@@ -178,7 +178,7 @@ bool ConfigFile::dump_string(const char *buf, int32_t len)
 
    if (!out_fname) {
       out_fname = get_pool_memory(PM_FNAME);
-      make_unique_filename(&out_fname, (int)(intptr_t)this, (char*)"configfile");
+      make_unique_filename(&out_fname, (int)(intptr_t)this, "configfile");
    }
 
    fp = bfopen(out_fname, "wb");
