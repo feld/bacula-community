@@ -19,8 +19,8 @@
  # now check if we are running under a proper shell
 if test "x/$(basename $0)" != "x/bash"
 then
-        echo "Regression script must use BASH for this utilities!"
-        exit 1
+   echo "Regression script must use BASH for this utilities!"
+   exit 1
 fi
 
 #
@@ -352,7 +352,6 @@ dn: cn=root,dc=$db_name,dc=bacula,dc=com
 objectClass: organizationalRole
 cn: root
 description: Directory Manager
-
 # The regress special object
 dn: cn=other/name,dc=$db_name,dc=bacula,dc=com
 objectClass: top
