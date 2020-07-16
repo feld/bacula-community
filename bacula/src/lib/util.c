@@ -1005,7 +1005,27 @@ POOLMEM *edit_job_codes(JCR *jcr, POOLMEM *&omsg, char *imsg, const char *to, jo
    return omsg;
 }
 
-void set_working_directory(char *wd)
+/* initialize working_directory with a valid value until read from the config
+ * file, to have valid directory for backtrace
+ */
+void init_working_directory()
+{
+#ifdef HAVE_WIN32
+   static char tmp[MAX_PATH+1];
+   int ret = GetTempPathA(sizeof(tmp), tmp);
+   if (ret != 0) {
+      working_directory = tmp;
+   }
+#else
+   /* TMPDIR is the POSIX env variable, this is a better candidate than TMP */
+   working_directory = getenv("TMPDIR");
+   if (working_directory == NULL) {
+      working_directory = "/tmp";
+   }
+#endif
+}
+
+void set_working_directory(const char *wd)
 {
    struct stat stat_buf;
 

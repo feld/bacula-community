@@ -95,6 +95,7 @@ int main (int argc, char *argv[])
    char *gid = NULL;
 
    mark_heap();
+   init_working_directory();
    setlocale(LC_ALL, "");
    bindtextdomain("bacula", LOCALEDIR);
    textdomain("bacula");

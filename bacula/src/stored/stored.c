@@ -132,6 +132,7 @@ int main (int argc, char *argv[])
    device_default_open_mode = omd_write;
 
    mark_heap();
+   init_working_directory();
    setlocale(LC_ALL, "");
    bindtextdomain("bacula", LOCALEDIR);
    textdomain("bacula");
