@@ -175,17 +175,13 @@ extern "C" void signal_handler(int sig)
          strcat(exepath, "/");
       }
       strcat(exepath, exename);
-      if (!working_directory) {
-         working_directory = buf;
-         *buf = 0;
-      }
-      if (*working_directory == 0) {
-         strcpy((char *)working_directory, "/tmp/");
+      if (working_directory == NULL) {
+         // We are still in the initialization part, working_directory is NULL
+         working_directory = "/tmp";
       }
       if (chdir(working_directory) != 0) {  /* dump in working directory */
          berrno be;
          Pmsg2(000, "chdir to %s failed. ERR=%s\n", working_directory,  be.bstrerror());
-         strcpy((char *)working_directory, "/tmp/");
       }
       unlink("./core");               /* get rid of any old core file */
 
