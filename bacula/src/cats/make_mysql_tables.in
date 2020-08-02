@@ -233,7 +233,7 @@ CREATE TABLE Job (
 
 -- Create a table like Job for long term statistics 
 CREATE TABLE JobHisto (
-   JobId INTEGER UNSIGNED NOT NULL,
+   JobId INTEGER UNSIGNED NOT NULL PRIMARY KEY,
    Job TINYBLOB NOT NULL,
    Name TINYBLOB NOT NULL,
    Type BINARY(1) NOT NULL,
@@ -287,8 +287,6 @@ CREATE TABLE LocationLog (
    PRIMARY KEY(LocLogId)
 );
 
-
-# 
 CREATE TABLE FileSet (
    FileSetId INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
    FileSet TINYBLOB NOT NULL,
@@ -321,7 +319,8 @@ CREATE TABLE FileMedia
     BlockAddress      bigint	UNSIGNED  default 0,
     RecordNo	      integer	UNSIGNED  default 0,
     FileOffset	      bigint	UNSIGNED  default 0,
-    INDEX (JobId, FileIndex)
+    INDEX (JobId, FileIndex),
+    FileMediaId   integer auto_increment primary key
 );
 
 CREATE TABLE Media (
@@ -548,7 +547,7 @@ CREATE UNIQUE INDEX snapshot_idx ON Snapshot (Device(255),
 
 
 CREATE TABLE Version (
-   VersionId INTEGER UNSIGNED NOT NULL 
+   VersionId INTEGER UNSIGNED NOT NULL PRIMARY KEY
    );
 
 -- Initialize Version
