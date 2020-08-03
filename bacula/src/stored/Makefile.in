@@ -162,11 +162,11 @@ SD_LIBS = -lbacsd -lbaccfg -lbac -lbacfind
 # inference rules
 .c.o:
 	@echo "Compiling $<"
-	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(TOKYOCABINET_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 .c.lo:
 	@echo "LT Compiling $<"
-	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(TOKYOCABINET_INC) $(S3_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(S3_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 
 #-------------------------------------------------------------------------
@@ -509,8 +509,8 @@ depend:
 	@$(MV) Makefile Makefile.bak
 	@$(SED) "/^# DO NOT DELETE:/,$$ d" Makefile.bak > Makefile
 	@$(ECHO) "# DO NOT DELETE: nice dependency list follows" >> Makefile
-	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) $(TOKYOCABINET_INC) -I$(srcdir) -I$(basedir) -I$(ACSLS_LIBDIR)/src/h *.c >> Makefile
-	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) $(TOKYOCABINET_INC) -I$(srcdir) -I$(basedir) -std=c++11 *.cpp >> Makefile || true
+	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) -I$(srcdir) -I$(basedir) -I$(ACSLS_LIBDIR)/src/h *.c >> Makefile
+	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) -I$(srcdir) -I$(basedir) -std=c++11 *.cpp >> Makefile || true
 	@if test -f Makefile ; then \
 	    $(RMF) Makefile.bak; \
 	else \
