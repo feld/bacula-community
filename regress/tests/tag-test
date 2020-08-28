@@ -1,0 +1,497 @@
+#!/bin/sh
+#
+# Run a couple of tests with bconsole and tags
+#
+TestName="tag-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+echo "$cwd/build/po" > $tmp/file-list
+
+change_jobname NightlySave $JobName
+
+$bperl -e "extract_resource('$conf/bacula-dir.conf', 'Client', '$HOST-fd')" \
+    > $tmp/1
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Tag', '\"#byresource\"', 'Job', 'MonsterSave')"
+
+sed "s/$HOST-fd/test1-fd/" $tmp/1 >> $conf/bacula-dir.conf
+sed "s/$HOST-fd/test2-fd/" $tmp/1 >> $conf/bacula-dir.conf
+sed "s/$HOST-fd/test-rst-fd/" $tmp/1 >> $conf/bacula-dir.conf
+sed "s/$HOST-fd/test-bkp-fd/" $tmp/1 >> $conf/bacula-dir.conf
+
+cat <<EOF >> $conf/bacula-dir.conf
+Pool {
+  Name = Test
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365d             # one year
+}
+Console {
+  Name = restricted
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = test1-fd, test2-fd
+  RestoreClientAcl = test-rst-fd
+  BackupClientAcl = test-bkp-fd  
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-job
+  Password = xxx
+  JobAcl    = $JobName
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-client
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = $HOST-fd
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-clients
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = $HOST-fd, test1-fd
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-pool
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = Test
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-fileset
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = "Full Set"
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf2
+Console {
+  Name = restricted
+  Password = xxx
+}
+EOF
+
+start_test
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=50 tags=sql trace=1 dir
+label volume=TestVolume001 pool=Default storage=File
+label volume=TestVolume002 pool=Test storage=File
+tag add name="#vol1" volume=TestVolume001
+tag add name="#vol2" volume=TestVolume002
+run job=Simple level=full pool=Test client=$HOST-fd yes
+run job=$JobName level=full client=$CLIENT yes
+run job=MonsterSave level=full client=$CLIENT pool=Default storage=File yes
+wait
+messages
+EOF
+
+sed 's/Password.*/Password = xxx/' $conf/bconsole.conf >> $tmp/bconsole.conf2
+
+for i in job pool client clients fileset
+do
+    sed "s/restricted/restricted-$i/" $tmp/bconsole.conf2 > $tmp/bconsole.conf.$i
+done
+
+# start the director
+run_bacula
+
+# jobid 1
+SimpleJob=`awk '/Job: +Simple/ { print $2 }' $tmp/log1.out`
+# jobid 2
+backupJob=`awk '/Job: +backup/ { print $2 }' $tmp/log1.out`
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log2.out
+tag add jobid=1 name=test1#
+tag add job="$SimpleJob" name="tagbyname"
+tag add client=test1-fd name=test1#
+tag add client=test2-fd name=#test2
+@$out $tmp/tag.1
+tag list job
+@$out $tmp/tag.2
+tag list client=test1-fd
+@$out $tmp/tag.3
+tag list client
+@$out $tmp/tag.4
+tag list client name=test1#
+@$out $tmp/tag.5
+tag list client name=#test2
+@$out $tmp/tag.6
+tag list client=test2-fd
+@$out $tmp/tag.7
+tag list job=MonsterSave
+quit
+EOF
+
+run_bconsole
+
+grep 'tagbyname' $tmp/tag.1 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find tagbyname tag into $tmp/tag.1"
+    estat=1
+fi
+
+grep 'test1#' $tmp/tag.1 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/tag.1"
+    estat=1
+fi
+
+grep 'test1#' $tmp/tag.2 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/tag.2"
+    estat=1
+fi
+
+grep '#test2' $tmp/tag.2 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find #test2 tag into $tmp/tag.2"
+    estat=1
+fi
+
+grep 'test1#' $tmp/tag.3 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/tag.3"
+    estat=1
+fi
+
+grep '#test2' $tmp/tag.3 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find #test2 tag into $tmp/tag.3"
+    estat=1
+fi
+
+grep test1-fd $tmp/tag.4 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1-fd client into $tmp/tag.4"
+    estat=1
+fi
+
+grep test2-fd $tmp/tag.4 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find test2-fd client into $tmp/tag.4"
+    estat=1
+fi
+
+grep test1-fd $tmp/tag.5 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find test1-fd client into $tmp/tag.5"
+    estat=1
+fi
+
+grep test2-fd $tmp/tag.5 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test2-fd client into $tmp/tag.5"
+    estat=1
+fi
+
+grep byresource $tmp/tag.7 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find #byresource job MonsterSave tag into $tmp/tag.7"
+    estat=1
+fi
+
+# put the restricted info into specific files
+sed -i s:tmp/tag:tmp/rtag: $tmp/bconcmds
+
+cat $tmp/bconcmds | $bin/bconsole -c $tmp/bconsole.conf.clients
+
+grep 'test1#' $tmp/rtag.1 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/rtag.1"
+    estat=1
+fi
+
+grep 'test1#' $tmp/rtag.2 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/rtag.2"
+    estat=1
+fi
+
+grep '#test2' $tmp/rtag.2 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find #test2 tag into $tmp/rtag.2"
+    estat=1
+fi
+
+grep 'test1#' $tmp/rtag.3 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/rtag.3"
+    estat=1
+fi
+
+grep '#test2' $tmp/rtag.3 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find #test2 tag into $tmp/rtag.3"
+    estat=1
+fi
+
+grep test1-fd $tmp/rtag.4 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1-fd client into $tmp/rtag.4"
+    estat=1
+fi
+
+grep test2-fd $tmp/rtag.4 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find test2-fd client into $tmp/rtag.4"
+    estat=1
+fi
+
+grep test1-fd $tmp/rtag.5 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find test1-fd client into $tmp/rtag.5"
+    estat=1
+fi
+
+grep "#test2" $tmp/rtag.6 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find #test2 tag into $tmp/rtag.6"
+    estat=1
+fi
+
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log2.out
+tag delete client=test2-fd name=#test2
+tag delete client=test1-fd name=test1#
+@$out $tmp/tag.10
+tag list client=test1-fd
+@$out $tmp/tag.11
+tag list client=test2-fd
+quit
+EOF
+
+run_bconsole
+
+grep "test1#" $tmp/tag.10 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find test1# tag into $tmp/tag.10"
+    estat=1
+fi
+
+grep "#test2" $tmp/tag.11 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find #test2 tag into $tmp/tag.11"
+    estat=1
+fi
+
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log2.out
+tag add jobid=1 name=#testok
+tag add jobid=1 name=testX
+tag add job=backup name=testX
+@$out $tmp/tag.20
+tag list job
+@$out $tmp/tag.21
+tag list jobid=1
+quit
+EOF
+
+cat $tmp/bconcmds | $bin/bconsole -c $tmp/bconsole.conf.job
+
+grep "testX" $tmp/tag.20 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find testX tag into $tmp/tag.20"
+    estat=1
+fi
+
+grep "testok" $tmp/tag.20 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find testok tag into $tmp/tag.20"
+    estat=1
+fi
+
+grep "test1#" $tmp/tag.21 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find test1# tag into $tmp/tag.21"
+    estat=1
+fi
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/tag.30
+tag list job
+quit
+EOF
+
+run_bconsole
+
+grep "testX" $tmp/tag.30 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find testX tag into $tmp/tag.30"
+    estat=1
+fi
+
+grep "test1#" $tmp/tag.30 > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find test1# tag into $tmp/tag.30"
+    estat=1
+fi
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/rtag.40
+tag list volume
+tag list volume=TestVolume001
+tag delete volume=TestVolume001
+tag list volume
+quit
+EOF
+
+cat $tmp/bconcmds | $bin/bconsole -c $tmp/bconsole.conf.pool
+
+grep "#vol1" $tmp/rtag.40 > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find #vol1 tag into $tmp/rtag.40 (pool not in ACL)"
+    estat=1
+fi
+
+nb=`grep "#vol2" $tmp/rtag.40 | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Should find #vol2 tag 2 times in $tmp/rtag.40"
+    estat=1
+fi
+
+sed s/rtag.40/tag.40/ $tmp/bconcmds > $tmp/bconcmds.2
+
+run_bconsole $tmp/bconcmds.2
+
+nb=`grep "#vol1" $tmp/tag.40 | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Should find two #vol1 tag into $tmp/tag.40"
+    estat=1
+fi
+
+# TODO: handle Object
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/tag.50
+tag
+1
+1
+1
+#tagviamenu1
+tag add
+1
+1
+#tagviamenu2
+tag client=$HOST-fd
+1
+#tagviamenu3
+tag jobid=1
+1
+#tagviamenu4
+tag add
+2
+1
+#tagviamenu5
+@$out $tmp/tag.50.client
+tag list client
+tag list
+1
+1
+@$out $tmp/tag.50.job
+tag list job
+tag list
+2
+1
+quit
+EOF
+
+run_bconsole
+
+nb=`grep "#tagviamenu" $tmp/tag.50.client | wc -l`
+if [ $nb != 6 ]; then
+    print_debug "ERROR: Should find 3 #tagviamenu tag into $tmp/tag.50.client"
+    estat=1
+fi
+
+nb=`grep "#tagviamenu" $tmp/tag.50.job | wc -l`
+if [ $nb != 4 ]; then
+    print_debug "ERROR: Should find 2 #tagviamenu tag into $tmp/tag.50.job"
+    estat=1
+fi
+
+
+stop_bacula
+end_test
