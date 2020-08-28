@@ -826,6 +826,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
          }
          db_list_events_records(ua->jcr,ua->db, &event, prtit, ua, llist);
 
+      } else if (strcasecmp(ua->argk[i], NT_("tag")) == 0) {
+         return tag_cmd(ua, cmd);
+
       } else if (strcasecmp(ua->argk[i], NT_("limit")) == 0
                  || strcasecmp(ua->argk[i], NT_("days")) == 0
                  || strcasecmp(ua->argk[i], NT_("joberrors")) == 0
@@ -838,6 +841,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                  || strcasecmp(ua->argk[i], NT_("long")) == 0
                  || strcasecmp(ua->argk[i], NT_("start")) == 0
                  || strcasecmp(ua->argk[i], NT_("end")) == 0
+                 || strcasecmp(ua->argk[i], NT_("name")) == 0
          ) {
          /* Ignore it */
       } else if (strcasecmp(ua->argk[i], NT_("snapshot")) == 0 ||

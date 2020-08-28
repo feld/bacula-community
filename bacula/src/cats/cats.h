@@ -548,6 +548,39 @@ public:
    uint64_t Size;                   /* Snapshot Size */
 };
 
+class TAG_DBR
+{
+public:
+   char    Client[MAX_NAME_LENGTH];  /* Client name */
+   char    Job[MAX_NAME_LENGTH];     /* Job name */
+   char    Pool[MAX_NAME_LENGTH];    /* Pool name */
+   char    Volume[MAX_NAME_LENGTH];  /* Volume name */
+   char    Comment[MAX_NAME_LENGTH]; /* Comment */
+   char    Name[MAX_NAME_LENGTH];    /* Name */
+   char    Object[MAX_NAME_LENGTH];  /* Object name */
+   JobId_t JobId;                    /* JobId */
+
+   bool    all;
+
+   TAG_DBR() {};
+   void zero() {
+      JobId = 0;
+      all = false;
+      *Object = *Client = *Job = *Pool = *Volume = *Comment = *Name = '\0';
+   };
+   virtual ~TAG_DBR(){};
+
+   /* Scan a TAG_DBR object to help with SQL queries */
+   void gen_sql(JCR *jcr, BDB *db,
+                const char **table, /* Table name (Client, Job, Media...) */
+                const char **name,  /* Name of the record (Name, VolumeName, JobId) */
+                const char **id,    /* Id of the record (ClientId, JobId, MediaId) */
+                char *esc,          /* Escaped name of the resource */
+                char *esc_name,     /* Escaped name of the tag */
+                uint64_t *aclbits,  /* ACL used */
+                uint64_t *aclbits_extra); /* Extra ACL used */
+};
+
 /* Call back context for getting a 32/64 bit value from the database */
 class db_int64_ctx {
 public:

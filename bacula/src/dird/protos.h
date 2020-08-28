@@ -215,6 +215,7 @@ bool acl_access_client_ok(UAContext *ua, const char *name, int32_t jobtype);
 bool acl_access_console_ok(UAContext *ua, const char *name);
 
 /* ua_cmds.c */
+int tag_cmd(UAContext *ua, const char *cmd);
 bool get_uid_gid_from_acl(UAContext *ua, alist **uid, alist **gid, alist **dir);
 bool do_a_command(UAContext *ua);
 bool do_a_dot_command(UAContext *ua);

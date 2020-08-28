@@ -514,6 +514,7 @@ public:
    bool PurgeMigrateJob;              /* Purges source job on completion */
    bool DeleteConsolidatedJobs;       /* Delete or not consolidated Virtual Full jobs */
 
+   alist *tag;                        /* tags defined for this Job */
    alist *base;                       /* Base jobs */
    int64_t max_bandwidth;             /* Speed limit on this job */
 

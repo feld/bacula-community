@@ -130,7 +130,7 @@ static struct cmdstruct commands[] = {                                      /* C
 
  { NT_("label"),      label_cmd,     _("Label a tape"), NT_("storage=<storage> volume=<vol> pool=<pool> slot=<slot> drive=<nb> barcodes"), false},
  { NT_("list"),       list_cmd,      _("List objects from catalog"),
-   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name>] [job=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [limit=<n>] [order=<asc|desc>]|\n"
+   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name>] [job=<name>] [tag=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [limit=<n>] [order=<asc|desc>]|\n"
        "\tjobtotals | pools | volume | media <pool=pool-name> | files [type=<deleted|all>] jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot | \n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
@@ -138,7 +138,7 @@ static struct cmdstruct commands[] = {                                      /* C
       ), false},
 
  { NT_("llist"),      llist_cmd,     _("Full or long list like list command"),
-   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name>] [job=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [order=<asc/desc>] [limit=<n>]|\n"
+   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name> [tag=<name>] [job=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [order=<asc/desc>] [limit=<n>]|\n"
        "\tjobtotals | pools | volume | media <pool=pool-name> | files jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot |\n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"), false},
@@ -205,6 +205,7 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("sqlquery"),   sqlquery_cmd,  _("Use SQL to query catalog"), NT_(""),          false},
  { NT_("statistics"),    collect_cmd,   _("Display daemon statistics data"), NT_("[ simple | full | json ] all | <metric>\n"
        "\t[ client=<client-name> | storage=<storage-name> ]"), true},
+ { NT_("tag"),        tag_cmd,       _("Manage tags"), NT_("[add|list|delete] [name=<str>] [job=<job>|jobid=<jobid>|client=<cli>|volume=<vol>]"), false},
  { NT_("time"),       time_cmd,      _("Print current time"),       NT_(""),          true},
  { NT_("trace"),      trace_cmd,     _("Turn on/off trace to file"), NT_("on | off"), true},
  { NT_("truncate"),   truncate_cmd,  _("Truncate one or more Volumes"), NT_("volume=<vol> [mediatype=<type> pool=<pool> allpools storage=<st> drive=<num>]"),  true},
@@ -1558,6 +1559,207 @@ bail_out:
    return 1;
 }
 
+class tag_mngt: public TAG_DBR
+{
+public:
+   int         action;          /* 1: create, 2: delete, 3: list, 0: nothing */
+   int         target;          /* 1: client, 2: job, 3: volume */
+
+   tag_mngt() {
+      zero();
+      action = 0;
+      target = 0;
+   };
+
+   int scan_command(UAContext *ua) {
+      for(int i = 0 ; i < ua->argc ; i++) {
+         if (strcasecmp(ua->argk[i], NT_("client")) == 0) {
+            if (is_name_valid(ua->argv[i], NULL)) {
+               bstrncpy(Client, ua->argv[i], sizeof(Client));
+
+            } else {
+               all = 1;
+               bstrncpy(Client, "*", sizeof(Client));
+            }
+            target = 1;
+
+         } else if (strcasecmp(ua->argk[i], NT_("job")) == 0 ||
+                    strcasecmp(ua->argk[i], NT_("jobs")) == 0) /* Compatible with list jobs tag= */
+         {
+            if (is_name_valid(ua->argv[i], NULL)) {
+               bstrncpy(Job, ua->argv[i], sizeof(Job));
+
+            } else {
+               all = 1;
+               bstrncpy(Job, "*", sizeof(Job));
+            }
+            target = 2;
+#if 0
+         } else if (strcasecmp(ua->argk[i], NT_("pool")) == 0) {
+            if (is_name_valid(ua->argv[i], NULL)) {
+               bstrncpy(Pool, ua->argv[i], sizeof(Pool));
+
+            } else {
+               all = 1;
+               bstrncpy(Pool, "*", sizeof(Pool));
+            }
+#endif
+
+         } else if (strcasecmp(ua->argk[i], NT_("volume")) == 0) {
+            if (is_name_valid(ua->argv[i], NULL)) {
+               bstrncpy(Volume, ua->argv[i], sizeof(Volume));
+
+            } else {
+               all = 1;
+               bstrncpy(Volume, "*", sizeof(Volume));
+            }
+            target = 3;
+
+         } else if (strcasecmp(ua->argk[i], NT_("jobid")) == 0 && is_a_number(ua->argv[i])) {
+            JobId = str_to_uint64(ua->argv[i]);
+            target = 2;
+
+         } else if (strcasecmp(ua->argk[i], NT_("name")) == 0 && is_name_valid(ua->argv[i], NULL, "#")) {
+            bstrncpy(Name, ua->argv[i], sizeof(Name));
+
+         } else if (strcasecmp(ua->argk[i], NT_("tag")) == 0 && is_name_valid(ua->argv[i], NULL, "#")) {
+            bstrncpy(Name, ua->argv[i], sizeof(Name));
+
+         } else if (strcasecmp(ua->argk[i], NT_("add")) == 0) {
+            action = 1;
+
+         } else if (strcasecmp(ua->argk[i], NT_("delete")) == 0) {
+            action = 2;
+
+         } else if (strcasecmp(ua->argk[i], NT_("list")) == 0) {
+            action = 3;
+         }
+      }
+      return 1;
+   };
+};
+
+/*
+ * tag management
+ */
+static int delete_tag(UAContext *ua)
+{
+   return 1;
+}
+
+/*
+ * tag management
+ */
+int tag_cmd(UAContext *ua, const char *cmd)
+{
+   tag_mngt t;
+   t.scan_command(ua);
+
+   if (!open_client_db(ua)) {
+      return 1;
+   }
+   if (t.action == 0) {
+      /*
+       * We didn't find an appropriate keyword above, so
+       * prompt the user.
+       */
+      start_prompt(ua, _("Available Tag operations:\n"));
+      add_prompt(ua, _("Add"));
+      add_prompt(ua, _("Delete"));
+      add_prompt(ua, _("List"));
+
+      t.action = 1 + do_prompt(ua, "", _("Select Tag operation"), NULL, 0);
+
+      if (t.action == 0) {
+         return 1;
+      }
+   }
+   if (t.target == 0) {
+      start_prompt(ua, _("Available Tag target:\n"));
+      add_prompt(ua, _("Client")); /* 1 */
+      add_prompt(ua, _("Job"));    /* 2 */
+      add_prompt(ua, _("Volume")); /* 3 */
+
+      t.target = 1 + do_prompt(ua, "", _("Select Tag target"), NULL, 0);
+
+      switch(t.target) {
+      case 1:
+      {
+         CLIENT *cl = get_client_resource(ua, JT_BACKUP_RESTORE);
+         if (cl) {
+            bstrncpy(t.Client, cl->name(), sizeof(t.Client)-1);
+         } else {
+            return 1;
+         }
+         break;
+      }
+      case 2:
+      {
+         JOB_DBR jr;
+         bmemset(&jr, 0, sizeof(jr));
+         t.JobId = get_job_dbr(ua, &jr);
+
+         if (t.JobId == 0) {
+            return 1;
+         }
+         break;
+      }
+      case 3:
+      {
+         MEDIA_DBR mr;
+         if (!select_media_dbr(ua, &mr)) {
+            return 1;
+         }
+         bstrncpy(t.Volume, mr.VolumeName, sizeof(t.Volume)-1);
+         break;
+      }
+      default:
+         return 1;
+      }
+   }
+
+   if (t.target == 0) {
+      return 1;
+   }
+
+   switch(t.action) {
+   case 1: /* create */
+      if (*t.Name == 0) {
+         if (!get_cmd(ua, _("Enter the Tag value: "), false)) {
+            return false;
+         }
+         if (strlen(ua->cmd) > sizeof(t.Name)-1) {
+            ua->error_msg(_("Invalid tag\n"));
+            return false;
+         }
+         bstrncpy(t.Name, ua->cmd, sizeof(t.Name)-1);
+      }
+      if (db_create_tag_record(ua->jcr, ua->db, &t)) {
+         ua->send_msg(_("1000 Tag added\n"));
+      } else {
+         ua->error_msg(_("1009 Unable to add specified Tag.\n"));
+      }
+      break;
+
+   case 2: /* delete */
+      if (db_delete_tag_record(ua->jcr, ua->db, &t)) {
+         ua->send_msg(_("1000 Tag deleted\n"));
+      } else {
+         ua->error_msg(_("1009 Unable to delete specified Tag\n"));
+      }
+      break;
+
+   case 3: /* list */
+      db_list_tag_records(ua->jcr, ua->db, &t, prtit, ua, HORZ_LIST);
+      break;
+
+   default:
+      return 0;
+   }
+   
+   return 1;
+}
+
 /*
  * print time
  */
@@ -1598,6 +1800,7 @@ static int delete_cmd(UAContext *ua, const char *cmd)
       NT_("jobid"),
       NT_("snapshot"),
       NT_("client"),
+      NT_("tag"),
       NULL};
 
    /* Deleting large jobs can take time! */
@@ -1625,6 +1828,12 @@ static int delete_cmd(UAContext *ua, const char *cmd)
    case 4:
       delete_client(ua);
       return 1;
+   case 5:
+      /* We don't want to manage tag deletion via the delete command, an
+       * accident can come very quickly (we have client, volume, etc... in the
+       * same) command line */
+
+      /* failback wanted */
    default:
       break;
    }
@@ -1648,6 +1857,9 @@ static int delete_cmd(UAContext *ua, const char *cmd)
       return 1;
    case 4:
       delete_client(ua);
+      return 1;
+   case 5:
+      delete_tag(ua);
       return 1;
    default:
       ua->warning_msg(_("Nothing done.\n"));

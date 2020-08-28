@@ -176,6 +176,7 @@ public:
    int bdb_purge_media_record(JCR *jcr, MEDIA_DBR *mr);
    int bdb_delete_snapshot_record(JCR *jcr, SNAPSHOT_DBR *sr);
    int bdb_delete_client_record(JCR *jcr, CLIENT_DBR *cr);
+   int bdb_delete_tag_record(JCR *jcr, TAG_DBR *tr);
 
    /* sql_find.c */
    bool bdb_find_last_job_end_time(JCR *jcr, JOB_DBR *jr, POOLMEM **etime, char *job);
@@ -186,6 +187,7 @@ public:
    bool bdb_find_failed_job_since(JCR *jcr, JOB_DBR *jr, POOLMEM *stime, int &JobLevel);
    
    /* sql_create.c */
+   bool bdb_create_tag_record(JCR *jcr, TAG_DBR *tr);
    bool bdb_create_log_record(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg);
    int bdb_create_events_record(JCR *jcr, EVENTS_DBR *rec);
    int bdb_create_path_record(JCR *jcr, ATTR_DBR *ar);
@@ -263,6 +265,7 @@ public:
    void bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_copies_records(JCR *jcr, uint32_t limit, char *jobids, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
+   void bdb_list_tag_records(JCR *jcr, TAG_DBR *rec, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_base_files_for_job(JCR *jcr, JobId_t jobid, DB_LIST_HANDLER *sendit, void *ctx);
    void bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);

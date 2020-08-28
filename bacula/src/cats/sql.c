@@ -1060,6 +1060,114 @@ void bdb_debug_print(JCR *jcr, FILE *fp)
    mdb->print_lock_info(fp); 
 } 
 
+
+/* Scan a TAG_DBR object to help with SQL queries */
+void TAG_DBR::gen_sql(JCR *jcr, BDB *db,
+                      const char **table_, /* Table name (Client, Job, Media...) */
+                      const char **name_,  /* Name of the record (Name, VolumeName, JobId) */
+                      const char **id_,    /* Id of the record (ClientId, MediaId, JobId) */
+                      char *esc,           /* Escaped name of the resource */
+                      char *esc_name,      /* Escaped name of the tag */
+                      uint64_t *aclbits_,  /* ACL used */
+                      uint64_t *aclbits_extra_ /* Extra ACLs (not already included in the join list) */)
+{
+   db->bdb_lock();
+   *esc = 0;
+   *esc_name = 0;
+   const char *name = NT_("Name");
+   const char *table = NULL;
+   const char *id = NULL;
+   uint64_t aclbits=0;          /* Used in the WHERE */
+   uint64_t aclbits_extra=0;    /* Used in the JOIN */
+
+   if (*Client) {
+      table = "Client";
+      id = "ClientId";
+      db->bdb_escape_string(jcr, esc, Client, strlen(Client));
+      aclbits |= DB_ACL_BIT(DB_ACL_CLIENT);
+
+   } else if (*Job) {
+      table = "Job";
+      name = "Name";
+      id = "JobId";
+      int len = strlen(Job);    /*                        01234567890123456789012 */
+      if (len > 23) {           /* Can be a full job name .2020-08-28_15.34.32_03 */
+         int idx=len-23;
+         if (Job[idx]   == '.' &&
+             B_ISDIGIT(Job[idx+1]) &&
+             B_ISDIGIT(Job[idx+2]) &&
+             B_ISDIGIT(Job[idx+3]) &&
+             B_ISDIGIT(Job[idx+4]) &&
+             Job[idx+5] == '-'     &&
+             B_ISDIGIT(Job[idx+6]) &&
+             B_ISDIGIT(Job[idx+7]) &&
+             Job[idx+8] == '-'     &&
+             B_ISDIGIT(Job[idx+9]) &&
+             B_ISDIGIT(Job[idx+10]) &&
+             Job[idx+11] == '_'     &&
+             B_ISDIGIT(Job[idx+12]) &&
+             B_ISDIGIT(Job[idx+13]) &&
+             Job[idx+14] == '.'     &&
+             B_ISDIGIT(Job[idx+15]) &&
+             B_ISDIGIT(Job[idx+16]) &&
+             Job[idx+17] == '.'     &&
+             B_ISDIGIT(Job[idx+18]) &&
+             B_ISDIGIT(Job[idx+19]) &&
+             Job[idx+20] == '_'     &&
+             B_ISDIGIT(Job[idx+21]) &&
+             B_ISDIGIT(Job[idx+22]) &&
+             B_ISDIGIT(Job[idx+23]) == 0)
+         {
+            name = "Job";
+         }
+      }
+      db->bdb_escape_string(jcr, esc, Job, strlen(Job));
+      aclbits |= DB_ACL_BIT(DB_ACL_JOB);
+
+   } else if (*Volume) {
+      table = "Media";
+      name = "VolumeName";
+      id = "MediaId";
+      db->bdb_escape_string(jcr, esc, Volume, strlen(Volume));
+      aclbits_extra |= DB_ACL_BIT(DB_ACL_POOL);
+      aclbits |= DB_ACL_BIT(DB_ACL_POOL);
+
+   } else if (*Pool) {
+      table = "Pool";
+      id = "PoolId";
+      db->bdb_escape_string(jcr, esc, Pool, strlen(Pool));
+      aclbits_extra |= DB_ACL_BIT(DB_ACL_POOL);
+      aclbits |= DB_ACL_BIT(DB_ACL_POOL);
+
+   } else if (*Object) {
+      table = "Object";
+      name = "ObjectName";
+      id = "ObjectId";
+      db->bdb_escape_string(jcr, esc, Object, strlen(Object));
+      aclbits |= DB_ACL_BIT(DB_ACL_JOB);
+      aclbits_extra |= DB_ACL_BIT(DB_ACL_JOB);
+   }
+
+   if (*Name) {
+      db->bdb_escape_string(jcr, esc_name, Name, strlen(Name));
+   }
+   db->bdb_unlock();
+
+   if (JobId > 0) {
+      table = "Job";
+      name = "JobId";
+      id = "JobId";
+      edit_uint64(JobId, esc);
+      aclbits |= DB_ACL_BIT(DB_ACL_JOB);
+   }
+
+   *table_ = table;
+   *name_ = name;
+   *id_ = id;
+   *aclbits_ = aclbits;
+   *aclbits_extra_ = aclbits_extra;
+}
+
 #ifdef COMMUNITY
 bool BDB::bdb_check_settings(JCR *jcr, int64_t *starttime, int val, int64_t val2) 
 {

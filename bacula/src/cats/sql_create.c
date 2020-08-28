@@ -1440,4 +1440,33 @@ bool BDB::bdb_create_log_record(JCR *jcr, JobId_t jobid, utime_t mtime, char *ms
    return ret; 
 } 
 
+bool BDB::bdb_create_tag_record(JCR *jcr, TAG_DBR *tag)
+{
+   uint64_t aclbits, aclbits_extra;
+   char esc[MAX_ESCAPE_NAME_LENGTH];
+   char esc_name[MAX_ESCAPE_NAME_LENGTH];
+   const char *name;
+   const char *table;
+   const char *id;
+   bool ret=false;
+
+   tag->gen_sql(jcr, this, &table, &name, &id, esc, esc_name, &aclbits, &aclbits_extra);
+
+   bdb_lock();
+   /* TODO: Need a special kind of ACL */
+   const char *whereand = get_acls(aclbits, false);
+   const char *join = get_acl_join_filter(aclbits_extra);
+
+   if (*esc_name && *esc) {             /* We have a tag name */
+      Mmsg(cmd, "INSERT INTO Tag%s (Tag, %s) VALUES ('%s', (SELECT %s FROM %s %s WHERE %s = '%s' %s))",
+           table, id, esc_name, id, table, join, (tag->JobId>0)?id:name, esc, whereand);
+      ret = bdb_sql_query(cmd, NULL, (void *)NULL);
+
+   } else {
+      Dmsg2(DT_SQL|50, "Tag invalid esc_name='%s' esc='%s'\n", esc_name, esc);
+   }
+   bdb_unlock();
+   return ret;
+}
+
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */

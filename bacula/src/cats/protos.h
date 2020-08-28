@@ -115,7 +115,9 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_create_log_record(jcr, jobid, mtime, msg)
 #define db_create_events_record(jcr, mdb, rec) \
            mdb->bdb_create_events_record(jcr, rec)
-#define db_create_path_record(jcr, mdb, ar) \
+#define db_create_tag_record(jcr, mdb, rec) \
+           mdb->bdb_create_tag_record(jcr, rec)
+#define db_create_path_record(jcr, mdb, ar)     \
            mdb->bdb_create_path_record(jcr, ar)
 #define db_create_file_attributes_record(jcr, mdb, ar) \
            mdb->bdb_create_file_attributes_record(jcr, ar)
@@ -172,6 +174,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_delete_snapshot_record(jcr, sr)
 #define db_delete_client_record(jcr, mdb, cr)         \
            mdb->bdb_delete_client_record(jcr, cr)
+#define db_delete_tag_record(jcr, mdb, tr)         \
+           mdb->bdb_delete_tag_record(jcr, tr)
 
 
 /* sql_find.c */
@@ -290,6 +294,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_snapshot_records(jcr, snapdbr, sendit, ua, llist)
 #define db_list_files(jcr, mdb, filedbr, sendit, ua) \
            mdb->bdb_list_files(jcr, filedbr, sendit, ua);
+#define db_list_tag_records(jcr, mdb, tagdbr, sendit, ua, llist)     \
+           mdb->bdb_list_tag_records(jcr, tagdbr, sendit, ua, llist);
 
 /* sql_update.c */
 #define db_update_job_start_record(jcr, mdb, jr) \

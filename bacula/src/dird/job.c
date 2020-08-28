@@ -170,6 +170,15 @@ bool setup_job(JCR *jcr)
       goto bail_out;
    }
    jcr->JobId = jcr->jr.JobId;
+   if (jcr->job->tag) {
+      char *tag;
+      TAG_DBR Tag;
+      Tag.JobId = jcr->JobId;
+      foreach_alist(tag, jcr->job->tag) {
+         bstrncpy(Tag.Name, tag, sizeof(Tag.Name)-1);
+         db_create_tag_record(jcr, jcr->db, &Tag);
+      }
+   }
    Dmsg4(100, "Created job record JobId=%d Name=%s Type=%c Level=%c\n",
        jcr->JobId, jcr->Job, jcr->jr.JobType, jcr->jr.JobLevel);
 

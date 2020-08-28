@@ -186,6 +186,9 @@ int BDB::bdb_delete_media_record(JCR *jcr, MEDIA_DBR *mr)
 
    Mmsg(cmd, "DELETE FROM Media WHERE MediaId=%lu", mr->MediaId);
    bdb_sql_query(cmd, NULL, (void *)NULL);
+
+   Mmsg(cmd, "DELETE FROM TagMedia WHERE MediaId=%lu", mr->MediaId);
+   bdb_sql_query(cmd, NULL, (void *)NULL);
    bdb_unlock();
    return 1;
 }
@@ -243,8 +246,47 @@ int BDB::bdb_delete_client_record(JCR *jcr, CLIENT_DBR *cr)
 
    Mmsg(cmd, "DELETE FROM Client WHERE ClientId=%d", cr->ClientId);
    bdb_sql_query(cmd, NULL, (void *)NULL);
+
+   Mmsg(cmd, "DELETE FROM TagClient WHERE ClientId=%d", cr->ClientId);
+   bdb_sql_query(cmd, NULL, (void *)NULL);
    bdb_unlock();
    return 1;
+}
+
+/* Delete Tag record */
+int BDB::bdb_delete_tag_record(JCR *jcr, TAG_DBR *tag)
+{
+   char esc[MAX_ESCAPE_NAME_LENGTH];
+   char esc_name[MAX_ESCAPE_NAME_LENGTH];
+   uint64_t aclbits, aclbits_extra;
+   const char *name;
+   const char *table;
+   const char *id;
+   bool ret = false;
+
+   tag->gen_sql(jcr, this, &table, &name, &id, esc, esc_name, &aclbits, &aclbits_extra);
+
+   bdb_lock();
+   /* TODO: Need a special kind of ACL */
+   const char *join = get_acl_join_filter(aclbits_extra);
+   const char *whereand = get_acls(aclbits, false);
+
+   if (*esc_name) {             /* We have a tag name */
+      if (tag->all) {
+         Mmsg(cmd, "DELETE FROM Tag%s WHERE Tag = '%s'", table, esc_name);
+
+      } else {
+         Mmsg(cmd, "DELETE FROM Tag%s WHERE Tag = '%s' AND %s IN (SELECT W.%sId FROM %s AS W %s WHERE W.%s = '%s' %s)",
+                                   table,      esc_name,   id,          table,    table,   join,    name, esc,  whereand);
+      }
+   } else {
+      Mmsg(cmd, "DELETE FROM Tag%s WHERE %sId IN (SELECT W.%s FROM %s AS W  %s   WHERE W.%s = '%s' %s)",
+                              table,     table,            id,  table, join,     name, esc, whereand);
+   }
+   Dmsg1(DT_SQL|50, "q=%s\n", cmd);
+   ret = bdb_sql_query(cmd, NULL, (void *)NULL);
+   bdb_unlock();
+   return ret;
 }
 
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */

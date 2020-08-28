@@ -669,6 +669,7 @@ RES_ITEM job_items[] = {
    {"DeleteConsolidatedJobs",  store_bool, ITEM(res_job.DeleteConsolidatedJobs), 0, ITEM_DEFAULT, false},
    {"PluginOptions", store_str, ITEM(res_job.PluginOptions), 0, 0, 0},
    {"Base", store_alist_res, ITEM(res_job.base),  R_JOB, 0, 0},
+   {"Tag",         store_alist_str, ITEM(res_job.tag), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -1854,6 +1855,9 @@ void free_resource(RES *rres, int type)
          free_runscripts(res->res_job.RunScripts);
          delete res->res_job.RunScripts;
       }
+      if (res->res_job.tag) {
+         delete res->res_job.tag;
+      }
       break;
    case R_MSGS:
       if (res->res_msgs.mail_cmd) {
@@ -2072,7 +2076,7 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
          res->res_job.jobdefs    = res_all.res_job.jobdefs;
          res->res_job.run_cmds   = res_all.res_job.run_cmds;
          res->res_job.RunScripts = res_all.res_job.RunScripts;
-
+         res->res_job.tag        = res_all.res_job.tag;
          /* TODO: JobDefs where/regexwhere doesn't work well (but this
           * is not very useful)
           * We have to set_bit(index, res_all.hdr.item_present);
