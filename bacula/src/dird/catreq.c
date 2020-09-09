@@ -560,6 +560,20 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
     *   Plugin_name
     *   Object_name
     *   Binary Object data
+    *
+    * Plugin Object
+    *   File_index
+    *   File_type
+    *   JobId
+    *   Path
+    *   File_name
+    *   Plugin_name
+    *   Object_name
+    *   Objest_type
+    *   Object_source
+    *   Object_UUID
+    *   Object_size
+    *
     */
 
    Dmsg1(400, "UpdCat msg=%s\n", msg);
@@ -623,6 +637,82 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
 
       Dmsg2(400, "dird<filed: stream=%d %s\n", Stream, fname);
       Dmsg1(400, "dird<filed: attr=%s\n", attr);
+
+   } else if (Stream == STREAM_PLUGIN_OBJECT) {
+      OBJECT_DBR obj_r;
+
+      skip_nonspaces(&p);                  /* skip FileIndex */
+      skip_spaces(&p);
+      skip_nonspaces(&p);                  /* skip FileType */
+      skip_spaces(&p);
+
+      obj_r.JobId = str_to_int32(p);
+      skip_nonspaces(&p);                  /* skip JobId */
+      skip_spaces(&p);
+
+      obj_r.Path = p;
+      skip_nonspaces(&p);                  /* skip Path */
+      skip_spaces(&p);
+      char *c = strpbrk(obj_r.Path, " ");
+      if (c) {
+         *c = '\0';
+      }
+
+      obj_r.Filename = p;
+      skip_nonspaces(&p);                  /* skip FileName */
+      skip_spaces(&p);
+      c = strpbrk(obj_r.Filename, " ");
+      if (c) {
+         *c = '\0';
+      }
+
+      obj_r.PluginName = p;
+      skip_nonspaces(&p);                  /* skip PluginName */
+      skip_spaces(&p);
+      c = strpbrk(obj_r.PluginName, " ");
+      if (c) {
+         *c = '\0';
+      }
+
+      char *obj_type = p;
+      skip_nonspaces(&p);                  /* skip ObjectType */
+      skip_spaces(&p);
+      c = strpbrk(obj_type, " ");
+      if (c) {
+         *c = '\0';
+      }
+      bstrncpy(obj_r.ObjectType, obj_type, sizeof(obj_r.ObjectType));
+
+      obj_r.ObjectName = p;
+      skip_nonspaces(&p);                  /* skip ObjectName */
+      skip_spaces(&p);
+      c = strpbrk(obj_r.ObjectName, " ");
+      if (c) {
+         *c = '\0';
+      }
+
+      obj_r.ObjectSource = p;
+      skip_nonspaces(&p);                  /* skip ObjectSource */
+      skip_spaces(&p);
+      c = strpbrk(obj_r.ObjectSource, " ");
+      if (c) {
+         *c = '\0';
+      }
+
+      obj_r.ObjectUUID = p;
+      skip_nonspaces(&p);                  /* skip ObjectUuid */
+      skip_spaces(&p);
+      c = strpbrk(obj_r.ObjectUUID, " ");
+      if (c) {
+         *c = '\0';
+      }
+
+      obj_r.ObjectSize = str_to_uint64(p);
+
+      if (!db_create_object_record(jcr, jcr->db, &obj_r)) {
+         Jmsg1(jcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(jcr->db));
+      }
+
 
    } else if (Stream == STREAM_RESTORE_OBJECT) {
       ROBJECT_DBR ro;

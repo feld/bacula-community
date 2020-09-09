@@ -248,7 +248,7 @@ public:
    char *Path;
    char *Filename;
    char *PluginName;
-   char *ObjectType;
+   char ObjectType[MAX_NAME_LENGTH];
    char *ObjectName;
    char *ObjectSource;
    char *ObjectUUID;

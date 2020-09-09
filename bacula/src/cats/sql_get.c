@@ -739,32 +739,66 @@ void db_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr)
    rr->object = rr->plugin_name = rr->object_name = NULL;
 }
 
+void db_free_pluginobject_record(JCR *jcr, OBJECT_DBR *obj_r)
+{
+      bfree_and_null(obj_r->Path);
+      bfree_and_null(obj_r->Filename);
+      bfree_and_null(obj_r->PluginName);
+      bfree_and_null(obj_r->ObjectName);
+      bfree_and_null(obj_r->ObjectSource);
+      bfree_and_null(obj_r->ObjectUUID);
+}
+
 /*
  *  TODO Update doc
  *  */
 bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
 {
    SQL_ROW row;
+   POOLMEM *where_str = get_pool_memory(PM_MESSAGE);
    int stat = false;
 
-   /*TODO Probably only specified
-         ObjectId/JobId records should be retrieved hennce Mmsg without additional args for now
-   */
+   Mmsg(where_str, "JobID=%lu AND ObjectID=%lu", obj_r->JobId, obj_r->ObjectId);
    Mmsg(cmd,
-         "SELECT JobId, Path, Filename, PluginName, "
+         "SELECT ObjectId, JobId, Path, Filename, PluginName, "
                  "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
-         "FROM Object");
+         "FROM Object WHERE %s", where_str);
 
    bdb_lock();
    if (QueryDB(jcr, cmd)) {
-         //TODO fill that part
+      if (sql_num_rows() > 1) {
+         char ed1[30];
+         Mmsg1(errmsg, _("Error got %s RestoreObjects but expected only one!\n"),
+            edit_uint64(sql_num_rows(), ed1));
+         sql_data_seek(sql_num_rows()-1);
+      }
+      if ((row = sql_fetch_row()) == NULL) {
+         Mmsg2(errmsg, _("PluginOjbect with JobId=%lu ObjectId=%lu not found.\n"),
+               obj_r->JobId, obj_r->ObjectId);
+      } else {
+         db_free_pluginobject_record(jcr, obj_r);
+
+         obj_r->ObjectId = str_to_uint64(row[0]);
+         obj_r->JobId = str_to_uint64(row[1]);
+         obj_r->Path = bstrdup(row[2]);
+         obj_r->Filename = bstrdup(row[3]);
+         obj_r->PluginName = bstrdup(row[4]);
+         bstrncpy(obj_r->ObjectType, row[5], 128);
+         obj_r->ObjectName = row[6];
+         obj_r->ObjectName = bstrdup(row[7]);
+         obj_r->ObjectSource = bstrdup(row[8]);
+         obj_r->ObjectUUID = bstrdup(row[8]);
+         obj_r->ObjectSize = str_to_uint64(row[9]);
          stat = true;
+      }
    } else {
-      //err
-      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+      Jmsg(jcr, M_ERROR, 0, _("PluginObject query %s failed!\n"), cmd);
    }
 
    bdb_unlock();
+
+bail_out:
+   free_pool_memory(where_str);
    return stat;
 }
 /*

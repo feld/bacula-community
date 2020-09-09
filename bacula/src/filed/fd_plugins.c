@@ -679,17 +679,29 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
           */
          ff_pkt->type = sp.type;
          if (IS_FT_OBJECT(sp.type)) {
-            if (!sp.restore_obj.object_name) {
+            if (sp.type != FT_PLUGIN_OBJECT && !sp.restore_obj.object_name) {
                Jmsg1(jcr, M_FATAL, 0, _("Command plugin \"%s\": no object_name in startBackupFile packet.\n"),
                   cmd);
                goto bail_out;
             }
             ff_pkt->fname = cmd;                 /* full plugin string */
-            ff_pkt->restore_obj.object_name = sp.restore_obj.object_name;
-            ff_pkt->restore_obj.index = sp.restore_obj.index;     /* restore object index */
-            ff_pkt->restore_obj.object_compression = 0;      /* no compression for now */
-            ff_pkt->restore_obj.object = sp.restore_obj.object;
-            ff_pkt->restore_obj.object_len = sp.restore_obj.object_len;
+            if (sp.type == FT_PLUGIN_OBJECT) {
+               ff_pkt->plugin_obj.JobId = jcr->JobId;
+               ff_pkt->plugin_obj.path = sp.plugin_obj.path;
+               ff_pkt->plugin_obj.filename = sp.plugin_obj.filename;
+               ff_pkt->plugin_obj.plugin_name = sp.plugin_obj.plugin_name;
+               ff_pkt->plugin_obj.object_type = sp.plugin_obj.object_type;
+               ff_pkt->plugin_obj.object_name = sp.plugin_obj.object_name;
+               ff_pkt->plugin_obj.object_source = sp.plugin_obj.object_source;
+               ff_pkt->plugin_obj.object_uuid = sp.plugin_obj.object_uuid;
+               ff_pkt->plugin_obj.object_size = sp.plugin_obj.object_size;
+            } else {
+               ff_pkt->restore_obj.object_name = sp.restore_obj.object_name;
+               ff_pkt->restore_obj.index = sp.restore_obj.index;     /* restore object index */
+               ff_pkt->restore_obj.object_compression = 0;      /* no compression for now */
+               ff_pkt->restore_obj.object = sp.restore_obj.object;
+               ff_pkt->restore_obj.object_len = sp.restore_obj.object_len;
+            }
          } else {
             Dsm_check(999);
             if (!sp.fname) {

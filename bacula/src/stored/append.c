@@ -443,6 +443,7 @@ bool send_attrs_to_dir(JCR *jcr, DEV_RECORD *rec)
    if (rec->maskedStream == STREAM_UNIX_ATTRIBUTES    ||
        rec->maskedStream == STREAM_UNIX_ATTRIBUTES_EX ||
        rec->maskedStream == STREAM_RESTORE_OBJECT     ||
+       rec->maskedStream == STREAM_PLUGIN_OBJECT ||
        crypto_digest_stream_type(rec->maskedStream) != CRYPTO_DIGEST_NONE) {
       if (!jcr->no_attributes) {
          BSOCK *dir = jcr->dir_bsock;

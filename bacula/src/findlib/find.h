@@ -174,6 +174,7 @@ struct FF_PKT {
    int32_t LinkFI;                    /* FileIndex of main hard linked file */
    int32_t delta_seq;                 /* Delta Sequence number */
    struct restore_object restore_obj;
+   struct plugin_object plugin_obj;
    struct f_link *linked;             /* Set if this file is hard linked */
    int type;                          /* FT_ type from above */
    int ff_errno;                      /* errno */

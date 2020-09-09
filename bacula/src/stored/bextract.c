@@ -472,6 +472,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       break;
 
    case STREAM_RESTORE_OBJECT:
+   case STREAM_PLUGIN_OBJECT:
       /* nothing to do */
       break;
 

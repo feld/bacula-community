@@ -297,6 +297,8 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
    case FT_PLUGIN_CONFIG:
       Dmsg1(100, "FT_PLUGIN_CONFIG saving: %s\n", ff_pkt->fname);
       break;
+   case FT_PLUGIN_OBJECT:
+      break;
    case FT_DIRBEGIN:
       jcr->num_files_examined--;      /* correct file count */
       return 1;                       /* not used */
@@ -948,8 +950,10 @@ bool encode_and_send_attributes(bctx_t &bctx)
    encode_stat(attribs, &ff_pkt->statp, sizeof(ff_pkt->statp), ff_pkt->LinkFI, bctx.data_stream);
 
    /** Now possibly extend the attributes */
-   if (IS_FT_OBJECT(ff_pkt->type)) {
+   if (ff_pkt->type != FT_PLUGIN_OBJECT && IS_FT_OBJECT(ff_pkt->type)) {
       attr_stream = STREAM_RESTORE_OBJECT;
+   } else if (ff_pkt->type == FT_PLUGIN_OBJECT) {
+      attr_stream = STREAM_PLUGIN_OBJECT;
    } else {
       attribsEx = attribsExBuf;
       attr_stream = encode_attribsEx(jcr, attribsEx, ff_pkt);
@@ -1066,6 +1070,13 @@ bool encode_and_send_attributes(bctx_t &bctx)
       }
       break;
    case FT_PLUGIN_OBJECT:
+      sd->msglen = Mmsg(sd->msg, "%d %d %d %s %s %s %s %s %s %s %llu",
+                        jcr->JobFiles, ff_pkt->type, ff_pkt->plugin_obj.JobId, ff_pkt->plugin_obj.path,
+                        ff_pkt->plugin_obj.filename,
+                        ff_pkt->plugin_obj.plugin_name, ff_pkt->plugin_obj.object_type,
+                        ff_pkt->plugin_obj.object_name, ff_pkt->plugin_obj.object_source,
+                        ff_pkt->plugin_obj.object_uuid, ff_pkt->plugin_obj.object_size);
+      stat = sd->send();
       break;
    case FT_REG:
       stat = sd->fsend("%ld %d %s%c%s%c%c%s%c%d%c", jcr->JobFiles,

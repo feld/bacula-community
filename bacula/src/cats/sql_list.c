@@ -144,15 +144,39 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
  */
 void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-
-   //TODO Fixup fields displayed
-   Mmsg(cmd,
-         "SELECT ObjectId, JobId, "
-                 "ObjectType, ObjectName "
-         "FROM Object");
-
+   char esc[MAX_ESCAPE_NAME_LENGTH];
 
    bdb_lock();
+
+   if (type == HORZ_LIST) {
+      if (obj_r->ObjectType[0] != 0) {
+         bdb_escape_string(jcr, esc, obj_r->ObjectType, strlen(obj_r->ObjectType));
+         Mmsg(cmd,
+            "SELECT ObjectId, JobId, "
+                    "ObjectType, ObjectName "
+            "FROM Object WHERE ObjectType='%s'",
+            esc);
+      } else {
+         Mmsg(cmd,
+               "SELECT ObjectId, JobId, "
+                       "ObjectType, ObjectName "
+               "FROM Object ORDER BY ObjectId");
+      }
+   } else {
+      if (obj_r->ObjectType[0] != 0) {
+         bdb_escape_string(jcr, esc, obj_r->ObjectType, strlen(obj_r->ObjectType));
+         Mmsg(cmd,
+            "SELECT ObjectId, JobId, Path, Filename, "
+                    "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
+            "FROM Object WHERE ObjectType='%s'", esc);
+      } else {
+         Mmsg(cmd,
+            "SELECT ObjectId, JobId, Path, Filename, "
+                    "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
+            "FROM Object ORDER BY ObjectId");
+      }
+   }
+
    if (!QueryDB(jcr, cmd)) {
       Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
       bdb_unlock();

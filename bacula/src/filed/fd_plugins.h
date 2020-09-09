@@ -99,6 +99,18 @@ struct restore_object {
    int32_t object_compression;        /* set to compression type */
 };
 
+struct plugin_object {
+   uint32_t JobId;
+   char *path;
+   char *filename;
+   char *plugin_name;
+   char *object_type;
+   char *object_name;
+   char *object_source;
+   char *object_uuid;
+   uint64_t object_size;
+};
+
 /*
  * This packet is used for file save info transfer.
 */
@@ -117,6 +129,7 @@ struct save_pkt {
    bool do_dedup;                     /* True if we deal with a dedup storage system */
    char *cmd;                         /* command */
    struct restore_object restore_obj; /* Info about restore object */
+   struct plugin_object plugin_obj;   /* Plugin Object */
    uint32_t delta_seq;                /* Delta sequence number */
    int32_t LinkFI;                    /* LinkFI if LINKSAVED */
    int32_t pkt_end;                   /* end packet sentinel */

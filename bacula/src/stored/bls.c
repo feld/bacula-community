@@ -451,6 +451,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       Dmsg1(100, "Plugin data: %s\n", data);
    } else if (rec->maskedStream == STREAM_RESTORE_OBJECT) {
       Dmsg0(100, "Restore Object record\n");
+   } else if (rec->maskedStream == STREAM_PLUGIN_OBJECT) {
+      Dmsg0(100, "Plugin Object record\n");
    } else if (rec->maskedStream == STREAM_ADATA_BLOCK_HEADER) {
       Dmsg0(000, "Adata block header\n");
    } else if (rec->maskedStream == STREAM_ADATA_RECORD_HEADER) {

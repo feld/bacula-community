@@ -326,6 +326,7 @@ bail_out:
  *  list nextvol job=xx  - list the next vol to be used by job
  *  list nextvolume job=xx - same as above.
  *  list copies jobid=x,y,z
+ *  list objects [type=objecttype] [job_id=n objectid=m] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
  *
@@ -660,6 +661,47 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
          db_free_restoreobject_record(ua->jcr, &rr);
          return 1;
+
+      } else if (strcasecmp(ua->argk[i], NT_("object")) == 0 ||
+                 strcasecmp(ua->argk[i], NT_("objects")) == 0) {
+         class OBJECT_DBR obj_r;
+         j = find_arg_with_value(ua, NT_("type"));
+         if (j >= 0) {
+            bstrncpy(obj_r.ObjectType, ua->argv[j], sizeof(obj_r.ObjectType));
+         }
+
+         for (j=i+1; j<ua->argc; j++) {
+            //TODO job_id arg should be handled different probably because of the collision with the 'list jobid=nn' cmd'
+            if (strcasecmp(ua->argk[j], NT_("job_id")) == 0 && ua->argv[j]) {
+               if (is_a_number(ua->argv[j])) {
+                  obj_r.JobId = str_to_uint64(ua->argv[j]);
+               } else {
+                  ua->error_msg(_("Invalid jobid argument\n"));
+                  return 1;
+               }
+            } else if ((strcasecmp(ua->argk[j], NT_("objectid")) == 0) &&
+                        ua->argv[j])
+            {
+               if (is_a_number(ua->argv[j])) {
+                  obj_r.ObjectId = str_to_uint64(ua->argv[j]);
+               } else {
+                  ua->error_msg(_("Invalid objectid argument\n"));
+                  return 1;
+               }
+            }
+         }
+
+         if (obj_r.JobId != 0 && obj_r.ObjectId != 0) {
+            db_get_plugin_object_record(ua->jcr, ua->db, &obj_r);
+            return 1;
+         }
+
+         int k = find_arg_with_value(ua, NT_("type"));
+         if (k >= 0) {
+            bstrncpy(obj_r.ObjectType, ua->argv[k], sizeof(obj_r.ObjectType));
+         }
+
+         db_list_plugin_objects(ua->jcr, ua->db, &obj_r, prtit, ua, llist);
 
       /* List MEDIA or VOLUMES */
       } else if (strcasecmp(ua->argk[i], NT_("media")) == 0 ||
