@@ -92,22 +92,25 @@ struct stream_pkt {
 };
 
 struct restore_object {
-   const char *object_name;                 /* Object name to create */
-   char *object;                            /* restore object data to save */
-   int32_t object_len;                      /* restore object length */
-   int32_t index;                           /* restore object index */
-   int32_t object_compression;              /* set to compression type */
+   char *object_name;                 /* Object name to create */
+   char *object;                      /* restore object data to save */
+   int32_t object_len;                /* restore object length */
+   int32_t index;                     /* restore object index */
+   int32_t object_compression;        /* set to compression type */
 };
 
+/* Types of plugin objects */
+//TODO probably more specific db types needed
+#define PLUGIN_OBJECT_DATABASE "database" /* For all database plugins */
+
 struct plugin_object {
-   uint32_t JobId;
-   const char *path;
-   const char *filename;
-   const char *plugin_name;
-   const char *object_type;
-   const char *object_name;
-   const char *object_source;
-   const char *object_uuid;
+   char *path;
+   char *plugin_name;
+   char *object_category;
+   char *object_type;
+   char *object_name;
+   char *object_source;
+   char *object_uuid;
    uint64_t object_size;
 };
 

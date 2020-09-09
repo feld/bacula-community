@@ -819,6 +819,7 @@ bool process_and_send_data(bctx_t &bctx)
 
    /* Debug code: check if we must hangup or blowup */
    if (handle_hangup_blowup(jcr, 0, jcr->ReadBytes)) {
+      sd->close();
       goto err;
    }
 
@@ -1069,14 +1070,38 @@ bool encode_and_send_attributes(bctx_t &bctx)
       }
       break;
    case FT_PLUGIN_OBJECT:
-      sd->msglen = Mmsg(sd->msg, "%d %d %d %s %s %s %s %s %s %s %llu",
-                        jcr->JobFiles, ff_pkt->type, ff_pkt->plugin_obj.JobId, ff_pkt->plugin_obj.path,
-                        ff_pkt->plugin_obj.filename,
-                        ff_pkt->plugin_obj.plugin_name, ff_pkt->plugin_obj.object_type,
-                        ff_pkt->plugin_obj.object_name, ff_pkt->plugin_obj.object_source,
-                        ff_pkt->plugin_obj.object_uuid, ff_pkt->plugin_obj.object_size);
-      stat = sd->send();
-      break;
+      {
+         POOL_MEM path;
+         POOL_MEM plugin_name;
+         POOL_MEM object_category;
+         POOL_MEM object_type;
+         POOL_MEM object_name;
+         POOL_MEM object_source;
+         POOL_MEM object_uuid;
+
+         pm_strcpy(path, ff_pkt->plugin_obj.path);
+         bash_spaces(path.c_str());
+         pm_strcpy(plugin_name, ff_pkt->plugin_obj.plugin_name);
+         bash_spaces(plugin_name.c_str());
+         pm_strcpy(object_type, ff_pkt->plugin_obj.object_type);
+         bash_spaces(object_type.c_str());
+         pm_strcpy(object_category, ff_pkt->plugin_obj.object_category);
+         bash_spaces(object_category.c_str());
+         pm_strcpy(object_name, ff_pkt->plugin_obj.object_name);
+         bash_spaces(object_name.c_str());
+         pm_strcpy(object_source, ff_pkt->plugin_obj.object_source);
+         bash_spaces(object_source.c_str());
+         pm_strcpy(object_uuid, ff_pkt->plugin_obj.object_uuid);
+         bash_spaces(object_uuid.c_str());
+
+         sd->msglen = Mmsg(sd->msg, "%s %s %s %s %s %s %s %llu",
+                           path.c_str(), plugin_name.c_str(), object_category.c_str(), object_type.c_str(),
+                           object_name.c_str(), object_source.c_str(), object_uuid.c_str(),
+                           ff_pkt->plugin_obj.object_size);
+         stat = sd->send();
+
+         break;
+      }
    case FT_REG:
       stat = sd->fsend("%ld %d %s%c%s%c%c%s%c%d%c", jcr->JobFiles,
                ff_pkt->type, ff_pkt->fname, 0, attribs, 0, 0, attribsEx, 0,

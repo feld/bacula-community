@@ -686,10 +686,9 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
             }
             ff_pkt->fname = cmd;                 /* full plugin string */
             if (sp.type == FT_PLUGIN_OBJECT) {
-               ff_pkt->plugin_obj.JobId = jcr->JobId;
                ff_pkt->plugin_obj.path = sp.plugin_obj.path;
-               ff_pkt->plugin_obj.filename = sp.plugin_obj.filename;
-               ff_pkt->plugin_obj.plugin_name = sp.plugin_obj.plugin_name;
+               ff_pkt->plugin_obj.plugin_name = cmd;
+               ff_pkt->plugin_obj.object_category = sp.plugin_obj.object_category;
                ff_pkt->plugin_obj.object_type = sp.plugin_obj.object_type;
                ff_pkt->plugin_obj.object_name = sp.plugin_obj.object_name;
                ff_pkt->plugin_obj.object_source = sp.plugin_obj.object_source;
