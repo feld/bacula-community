@@ -679,17 +679,17 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
           */
          ff_pkt->type = sp.type;
          if (IS_FT_OBJECT(sp.type)) {
-            if (!sp.object_name) {
+            if (!sp.restore_obj.object_name) {
                Jmsg1(jcr, M_FATAL, 0, _("Command plugin \"%s\": no object_name in startBackupFile packet.\n"),
                   cmd);
                goto bail_out;
             }
             ff_pkt->fname = cmd;                 /* full plugin string */
-            ff_pkt->object_name = sp.object_name;
-            ff_pkt->object_index = sp.index;     /* restore object index */
-            ff_pkt->object_compression = 0;      /* no compression for now */
-            ff_pkt->object = sp.object;
-            ff_pkt->object_len = sp.object_len;
+            ff_pkt->restore_obj.object_name = sp.restore_obj.object_name;
+            ff_pkt->restore_obj.index = sp.restore_obj.index;     /* restore object index */
+            ff_pkt->restore_obj.object_compression = 0;      /* no compression for now */
+            ff_pkt->restore_obj.object = sp.restore_obj.object;
+            ff_pkt->restore_obj.object_len = sp.restore_obj.object_len;
          } else {
             Dsm_check(999);
             if (!sp.fname) {
@@ -709,8 +709,8 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
 
          memcpy(&ff_pkt->statp, &sp.statp, sizeof(ff_pkt->statp));
          Dmsg2(dbglvl, "startBackup returned type=%d, fname=%s\n", sp.type, sp.fname);
-         if (sp.object) {
-            Dmsg2(dbglvl, "index=%d object=%s\n", sp.index, sp.object);
+         if (sp.restore_obj.object) {
+            Dmsg2(dbglvl, "index=%d object=%s\n", sp.restore_obj.index, sp.restore_obj.object);
          }
          /* Call Bacula core code to backup the plugin's file */
          save_file(jcr, ff_pkt, true);
@@ -805,7 +805,7 @@ int plugin_estimate(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
          sp.portable = true;
          sp.flags = 0;
          sp.cmd = cmd;
-         Dmsg3(dbglvl, "startBackup st_size=%p st_blocks=%p sp=%p\n", &sp.statp.st_size, &sp.statp.st_blocks,
+         Dmsg3(0, "startBackup st_size=%p st_blocks=%p sp=%p\n", &sp.statp.st_size, &sp.statp.st_blocks,
                 &sp);
          /* Get the file save parameters. I.e. the stat pkt ... */
          if (plug_func(plugin)->startBackupFile(jcr->plugin_ctx, &sp) != bRC_OK) {
@@ -858,8 +858,8 @@ int plugin_estimate(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
          }
 
          Dmsg2(dbglvl, "startBackup returned type=%d, fname=%s\n", sp.type, sp.fname);
-         if (sp.object) {
-            Dmsg2(dbglvl, "index=%d object=%s\n", sp.index, sp.object);
+         if (sp.restore_obj.object) {
+            Dmsg2(dbglvl, "index=%d object=%s\n", sp.restore_obj.index, sp.restore_obj.object);
          }
          bRC rc = plug_func(plugin)->endBackupFile(jcr->plugin_ctx);
          if (rc == bRC_More || rc == bRC_OK) {

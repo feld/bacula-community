@@ -1035,35 +1035,37 @@ bool encode_and_send_attributes(bctx_t &bctx)
       break;
    case FT_PLUGIN_CONFIG:
    case FT_RESTORE_FIRST:
-      comp_len = ff_pkt->object_len;
-      ff_pkt->object_compression = 0;
-      if (ff_pkt->object_len > 1000) {
+      comp_len = ff_pkt->restore_obj.object_len;
+      ff_pkt->restore_obj.object_compression = 0;
+      if (ff_pkt->restore_obj.object_len > 1000) {
          /* Big object, compress it */
-         comp_len = ff_pkt->object_len + 1000;
+         comp_len = ff_pkt->restore_obj.object_len + 1000;
          POOLMEM *comp_obj = get_memory(comp_len);
          /* *** FIXME *** check Zdeflate error */
-         Zdeflate(ff_pkt->object, ff_pkt->object_len, comp_obj, comp_len);
-         if (comp_len < ff_pkt->object_len) {
-            ff_pkt->object = comp_obj;
-            ff_pkt->object_compression = 1;    /* zlib level 9 compression */
+         Zdeflate(ff_pkt->restore_obj.object, ff_pkt->restore_obj.object_len, comp_obj, comp_len);
+         if (comp_len < ff_pkt->restore_obj.object_len) {
+            ff_pkt->restore_obj.object = comp_obj;
+            ff_pkt->restore_obj.object_compression = 1;    /* zlib level 9 compression */
          } else {
             /* Uncompressed object smaller, use it */
-            comp_len = ff_pkt->object_len;
+            comp_len = ff_pkt->restore_obj.object_len;
          }
-         Dmsg2(100, "Object compressed from %d to %d bytes\n", ff_pkt->object_len, comp_len);
+         Dmsg2(100, "Object compressed from %d to %d bytes\n", ff_pkt->restore_obj.object_len, comp_len);
       }
       sd->msglen = Mmsg(sd->msg, "%d %d %d %d %d %d %s%c%s%c",
-                        jcr->JobFiles, ff_pkt->type, ff_pkt->object_index,
-                        comp_len, ff_pkt->object_len, ff_pkt->object_compression,
-                        ff_pkt->fname, 0, ff_pkt->object_name, 0);
+                        jcr->JobFiles, ff_pkt->type, ff_pkt->restore_obj.index,
+                        comp_len, ff_pkt->restore_obj.object_len, ff_pkt->restore_obj.object_compression,
+                        ff_pkt->fname, 0, ff_pkt->restore_obj.object_name, 0);
       sd->msg = check_pool_memory_size(sd->msg, sd->msglen + comp_len + 2);
-      memcpy(sd->msg + sd->msglen, ff_pkt->object, comp_len);
+      memcpy(sd->msg + sd->msglen, ff_pkt->restore_obj.object, comp_len);
       /* Note send an extra byte so the SD can store zero after object */
       sd->msglen += comp_len + 1;
       stat = sd->send();
-      if (ff_pkt->object_compression) {
-         free_and_null_pool_memory(ff_pkt->object);
+      if (ff_pkt->restore_obj.object_compression) {
+         free_and_null_pool_memory(ff_pkt->restore_obj.object);
       }
+      break;
+   case FT_PLUGIN_OBJECT:
       break;
    case FT_REG:
       stat = sd->fsend("%ld %d %s%c%s%c%c%s%c%d%c", jcr->JobFiles,
@@ -1444,10 +1446,10 @@ static void close_vss_backup_session(JCR *jcr)
          ff_pkt->fname = (char *)"*all*"; /* for all plugins */
          ff_pkt->type = FT_RESTORE_FIRST;
          ff_pkt->LinkFI = 0;
-         ff_pkt->object_name = (char *)"job_metadata.xml";
+         ff_pkt->restore_obj.object_name = (char *)"job_metadata.xml";
          ff_pkt->object = (char *)metadata;
-         ff_pkt->object_len = (wcslen(metadata) + 1) * sizeof(WCHAR);
-         ff_pkt->object_index = (int)time(NULL);
+         ff_pkt->restore_obj.object_len = (wcslen(metadata) + 1) * sizeof(WCHAR);
+         ff_pkt->restore_obj.object_index = (int)time(NULL);
          save_file(jcr, ff_pkt, true);
      }
    }

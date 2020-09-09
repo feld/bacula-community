@@ -153,8 +153,6 @@ struct FF_PKT {
    char *fname;                       /* full filename */
    char *snap_fname;                  /* the path on the snapshot or fname */
    char *link;                        /* link if file linked */
-   char *object_name;                 /* Object name */
-   char *object;                      /* restore object */
    char *plugin;                      /* Current Options{Plugin=} name */
 
    /* Specific snapshot part */
@@ -175,9 +173,7 @@ struct FF_PKT {
    int32_t FileIndex;                 /* FileIndex of this file */
    int32_t LinkFI;                    /* FileIndex of main hard linked file */
    int32_t delta_seq;                 /* Delta Sequence number */
-   int32_t object_index;              /* Object index */
-   int32_t object_len;                /* Object length */
-   int32_t object_compression;        /* Type of compression for object */
+   struct restore_object restore_obj;
    struct f_link *linked;             /* Set if this file is hard linked */
    int type;                          /* FT_ type from above */
    int ff_errno;                      /* errno */

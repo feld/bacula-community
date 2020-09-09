@@ -91,6 +91,14 @@ struct stream_pkt {
    int32_t pkt_end;                   /* end packet sentinel */
 };
 
+struct restore_object {
+   char *object_name;                 /* Object name to create */
+   char *object;                      /* restore object data to save */
+   int32_t object_len;                /* restore object length */
+   int32_t index;                     /* restore object index */
+   int32_t object_compression;        /* set to compression type */
+};
+
 /*
  * This packet is used for file save info transfer.
 */
@@ -108,11 +116,8 @@ struct save_pkt {
    bool accurate_found;               /* Found in accurate list (valid after check_changes()) */
    bool do_dedup;                     /* True if we deal with a dedup storage system */
    char *cmd;                         /* command */
+   struct restore_object restore_obj; /* Info about restore object */
    uint32_t delta_seq;                /* Delta sequence number */
-   char *object_name;                 /* Object name to create */
-   char *object;                      /* restore object data to save */
-   int32_t object_len;                /* restore object length */
-   int32_t index;                     /* restore object index */
    int32_t LinkFI;                    /* LinkFI if LINKSAVED */
    int32_t pkt_end;                   /* end packet sentinel */
 };
