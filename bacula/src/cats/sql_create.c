@@ -1168,6 +1168,82 @@ bail_out:
 }
 
 /**
+ * Create Plugin Object record in BDB
+ *
+ */
+bool BDB::bdb_create_object_record(JCR *jcr, OBJECT_DBR *obj)
+{
+   bool ret = false;
+   int str_len;
+
+   POOLMEM *esc_path = get_pool_memory(PM_MESSAGE);
+   POOLMEM *esc_filename = get_pool_memory(PM_MESSAGE);
+   POOLMEM *esc_plugin_name = get_pool_memory(PM_MESSAGE);
+   POOLMEM *esc_obj_type = get_pool_memory(PM_MESSAGE);
+   POOLMEM *esc_obj_name = get_pool_memory(PM_MESSAGE);
+   POOLMEM *esc_obj_source = get_pool_memory(PM_MESSAGE);
+   POOLMEM *esc_obj_uuid = get_pool_memory(PM_MESSAGE);
+
+   str_len = strlen(obj->Path);
+   esc_path = check_pool_memory_size(esc_path, str_len*2+1);
+   bdb_escape_string(jcr, esc_path, obj->Path, str_len);
+
+   str_len = strlen(obj->Filename);
+   esc_filename = check_pool_memory_size(esc_filename, str_len*2+1);
+   bdb_escape_string(jcr, esc_filename, obj->Filename, str_len);
+
+   str_len = strlen(obj->PluginName);
+   esc_plugin_name = check_pool_memory_size(esc_plugin_name, str_len*2+1);
+   bdb_escape_string(jcr, esc_plugin_name, obj->PluginName, str_len);
+
+   str_len = strlen(obj->ObjectType);
+   esc_obj_type = check_pool_memory_size(esc_obj_type, str_len*2+1);
+   bdb_escape_string(jcr, esc_obj_type, obj->ObjectType, str_len);
+
+   str_len = strlen(obj->ObjectName);
+   esc_obj_name = check_pool_memory_size(esc_obj_name, str_len*2+1);
+   bdb_escape_string(jcr, esc_obj_name, obj->ObjectName, str_len);
+
+   str_len = strlen(obj->ObjectSource);
+   esc_obj_source = check_pool_memory_size(esc_obj_source, str_len*2+1);
+   bdb_escape_string(jcr, esc_obj_source, obj->ObjectSource, str_len);
+
+   str_len = strlen(obj->ObjectUUID);
+   esc_obj_uuid= check_pool_memory_size(esc_obj_uuid, str_len*2+1);
+   bdb_escape_string(jcr, esc_obj_uuid, obj->ObjectUUID, str_len);
+
+   bdb_lock();
+   Mmsg(cmd,
+         "INSERT INTO Object (JobId, Path, Filename, PluginName, "
+         "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize) "
+         "VALUES (%u, '%s', '%s', '%s', '%s', '%s', '%s', '%s', %llu)",
+         obj->JobId, esc_path, esc_filename, esc_plugin_name,
+         esc_obj_type, esc_obj_name, esc_obj_source, esc_obj_uuid,
+         obj->ObjectSize);
+
+   obj->ObjectId = sql_insert_autokey_record(cmd, NT_("Object"));
+   if (obj->ObjectId == 0) {
+      Mmsg2(&errmsg, _("Create database Plugin Object record %s failed. ERR=%s"),
+         cmd, sql_strerror());
+      Jmsg(jcr, M_FATAL, 0, "%s", errmsg);
+      ret = false;
+   } else {
+      ret = true;
+   }
+   bdb_unlock();
+
+   free_pool_memory(esc_path);
+   free_pool_memory(esc_filename);
+   free_pool_memory(esc_plugin_name);
+   free_pool_memory(esc_obj_type);
+   free_pool_memory(esc_obj_name);
+   free_pool_memory(esc_obj_source);
+   free_pool_memory(esc_obj_uuid);
+
+   return ret;
+}
+
+/**
  * Create Restore Object record in BDB
  *
  */

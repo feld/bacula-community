@@ -203,6 +203,7 @@ public:
    bool bdb_create_mediatype_record(JCR *jcr, MEDIATYPE_DBR *mr);
    bool bdb_create_attributes_record(JCR *jcr, ATTR_DBR *ar);
    bool bdb_create_restore_object_record(JCR *jcr, ROBJECT_DBR *ar);
+   bool bdb_create_object_record(JCR *jcr, OBJECT_DBR *obj_r);
    bool bdb_create_base_file_attributes_record(JCR *jcr, ATTR_DBR *ar);
    bool bdb_commit_base_file_attributes_record(JCR *jcr);
    bool bdb_create_base_file_list(JCR *jcr, char *jobids);
@@ -244,6 +245,7 @@ public:
    bool bdb_get_accurate_jobids(JCR *jcr, JOB_DBR *jr, db_list_ctx *jobids);
    bool bdb_get_used_base_jobids(JCR *jcr, POOLMEM *jobids, db_list_ctx *result);
    bool bdb_get_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
+   bool bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r);
    int  bdb_get_num_restoreobject_records(JCR *jcr, ROBJECT_DBR *rr);
    bool bdb_get_job_statistics(JCR *jcr, JOB_DBR *jr);
    bool bdb_get_client_pool(JCR *jcr, alist *results);
@@ -263,6 +265,7 @@ public:
    void bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_base_files_for_job(JCR *jcr, JobId_t jobid, DB_LIST_HANDLER *sendit, void *ctx);
    void bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
+   void bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
               DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_files(JCR *jcr, FILE_DBR *fr, DB_RESULT_HANDLER *sendit, void *ctx);

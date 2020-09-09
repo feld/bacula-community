@@ -740,6 +740,34 @@ void db_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr)
 }
 
 /*
+ *  TODO Update doc
+ *  */
+bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
+{
+   SQL_ROW row;
+   int stat = false;
+
+   /*TODO Probably only specified
+         ObjectId/JobId records should be retrieved hennce Mmsg without additional args for now
+   */
+   Mmsg(cmd,
+         "SELECT JobId, Path, Filename, PluginName, "
+                 "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
+         "FROM Object");
+
+   bdb_lock();
+   if (QueryDB(jcr, cmd)) {
+         //TODO fill that part
+         stat = true;
+   } else {
+      //err
+      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+   }
+
+   bdb_unlock();
+   return stat;
+}
+/*
  * Get RestoreObject  Record
  * If the RestoreObjectId is non-zero, we get its record
  *

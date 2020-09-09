@@ -238,6 +238,23 @@ struct ATTR_DBR {
    int DigestType;
 };
 
+class OBJECT_DBR {
+public:
+   OBJECT_DBR() { bmemset(this, 0, sizeof(OBJECT_DBR)); };
+   ~OBJECT_DBR() { };
+
+   DBId_t ObjectId;
+   JobId_t  JobId;
+   char *Path;
+   char *Filename;
+   char *PluginName;
+   char *ObjectType;
+   char *ObjectName;
+   char *ObjectSource;
+   char *ObjectUUID;
+   uint64_t ObjectSize;
+};
+
 struct ROBJECT_DBR {
    char *object_name;
    char *object;

@@ -138,6 +138,33 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
    bdb_unlock();
 }
 
+
+/*
+ * List plugin objects
+ */
+void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
+{
+
+   //TODO Fixup fields displayed
+   Mmsg(cmd,
+         "SELECT ObjectId, JobId, "
+                 "ObjectType, ObjectName "
+         "FROM Object");
+
+
+   bdb_lock();
+   if (!QueryDB(jcr, cmd)) {
+      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+      bdb_unlock();
+      return;
+   }
+
+   list_result(jcr, this, sendit, ctx, type);
+
+   sql_free_result();
+   bdb_unlock();
+}
+
 /*
  * List restore objects
  *

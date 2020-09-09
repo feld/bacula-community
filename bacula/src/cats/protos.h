@@ -146,6 +146,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_create_attributes_record(jcr, ar)
 #define db_create_restore_object_record(jcr, mdb, ar) \
            mdb->bdb_create_restore_object_record(jcr, ar)
+#define db_create_object_record(jcr, mdb, obj_r) \
+           mdb->bdb_create_object_record(jcr, obj_r)
 #define db_create_base_file_attributes_record(jcr, mdb, ar) \
            mdb->bdb_create_base_file_attributes_record(jcr, ar)
 #define db_commit_base_file_attributes_record(jcr, mdb) \
@@ -240,6 +242,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_get_used_base_jobids(jcr, jobids, result)
 #define db_get_restoreobject_record(jcr, mdb, rr) \
            mdb->bdb_get_restoreobject_record(jcr, rr)
+#define db_get_plugin_object_record(jcr, mdb, obj_r) \
+           mdb->bdb_get_plugin_object_record(jcr, obj_r)
 #define db_get_num_restoreobject_records(jcr, mdb, rr) \
            mdb->bdb_get_num_restoreobject_records(jcr, rr)
 #define db_get_type_index(mdb) \
@@ -277,6 +281,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_events_records(jcr, rec, sendit, ctx, type)
 #define db_list_base_files_for_job(jcr, mdb, jobid, sendit, ctx) \
            mdb->bdb_list_base_files_for_job(jcr, jobid, sendit, ctx)
+#define db_list_plugin_objects(jcr, mdb, obj_r, sendit, ctx, type) \
+           mdb->bdb_list_plugin_objects(jcr, obj_r, sendit, ctx, type)
 #define db_list_restore_objects(jcr, mdb, rr, sendit, ctx, type) \
            mdb->bdb_list_restore_objects(jcr, rr, sendit, ctx, type)
 #define db_list_snapshot_records(jcr, mdb, snapdbr, sendit, ua, llist) \
