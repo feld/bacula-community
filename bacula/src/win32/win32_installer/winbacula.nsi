@@ -276,24 +276,174 @@ Function .onInit
 
   ; Configuration Defaults
 
-  StrCpy $ConfigClientName               "$HostName-fd"
-  StrCpy $ConfigClientPort               9102
-  StrCpy $ConfigClientMaxJobs            10
-  ;StrCpy $ConfigClientPassword
-  StrCpy $ConfigClientInstallService     "$OptService"
-  StrCpy $ConfigClientStartService       "$OptStart"
-
-  StrCpy $ConfigStorageName              "$HostName-sd"
-  StrCpy $ConfigStoragePort              9103
-  StrCpy $ConfigStorageMaxJobs           10
-  ;StrCpy $ConfigStoragePassword
-  StrCpy $ConfigStorageInstallService    "$OptService"
-  StrCpy $ConfigStorageStartService      "$OptStart"
-
-  StrCpy $ConfigDirectorPort             9101
-
-  StrCpy $ConfigMonitorName              "$HostName-mon"
-  ;StrCpy $ConfigMonitorPassword
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientName" $ConfigClientName
+  IfErrors 0 +2
+    StrCpy $ConfigClientName               "$HostName-fd"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientPort" $ConfigClientPort
+  IfErrors 0 +2
+    StrCpy $ConfigClientPort               9102
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientMaxJobs" $ConfigClientMaxJobs
+  IfErrors 0 +2
+    StrCpy $ConfigClientMaxJobs            5
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientPassword" $ConfigClientPassword
+  IfErrors 0 +2
+    StrCpy $ConfigClientPassword          ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientInstallService" $ConfigClientInstallService
+  IfErrors 0 +2
+    StrCpy $ConfigClientInstallService     "$OptService"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientStartService" $ConfigClientStartService
+  IfErrors 0 +2
+    StrCpy $ConfigClientStartService       "$OptStart"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageName" $ConfigStorageName
+  IfErrors 0 +2
+    StrCpy $ConfigStorageName              "$HostName-sd"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStoragePort" $ConfigStoragePort
+  IfErrors 0 +2
+    StrCpy $ConfigStoragePort              9103
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageMaxJobs" $ConfigStorageMaxJobs
+  IfErrors 0 +2
+    StrCpy $ConfigStorageMaxJobs           10
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStoragePassword" $ConfigStoragePassword
+  IfErrors 0 +2
+    StrCpy $ConfigStoragePassword          ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageInstallService" $ConfigStorageInstallService
+  IfErrors 0 +2
+    StrCpy $ConfigStorageInstallService    "$OptService"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageStartService" $ConfigStorageStartService
+  IfErrors 0 +2
+    StrCpy $ConfigStorageStartService      "$OptStart"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorName" $ConfigDirectorName
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorName            "$HostName-dir"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorPort" $ConfigDirectorPort
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorPort             9101
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorMaxJobs" $ConfigDirectorMaxJobs
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorMaxJobs          1
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorPassword" $ConfigDirectorPassword
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorPassword         ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorDB" $ConfigDirectorDB
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorDB               0
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorInstallService" $ConfigDirectorInstallService
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorInstallService   "$OptService"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorStartService" $ConfigDirectorStartService
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorStartService     "$OptStart"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigMonitorName" $ConfigMonitorName
+  IfErrors 0 +2
+    StrCpy $ConfigMonitorName              "$HostName-mon"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigMonitorPassword" $ConfigMonitorPassword
+  IfErrors 0 +2
+    StrCpy $ConfigMonitorPassword          ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientName" $ConfigClientName
+  IfErrors 0 +2
+    StrCpy $ConfigClientName               "$HostName-fd"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientPort" $ConfigClientPort
+  IfErrors 0 +2
+    StrCpy $ConfigClientPort               9102
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientMaxJobs" $ConfigClientMaxJobs
+  IfErrors 0 +2
+    StrCpy $ConfigClientMaxJobs            5
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientPassword" $ConfigClientPassword
+  IfErrors 0 +2
+    ;StrCpy $ConfigClientPassword          ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientInstallService" $ConfigClientInstallService
+  IfErrors 0 +2
+    StrCpy $ConfigClientInstallService     "$OptService"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigClientStartService" $ConfigClientStartService
+  IfErrors 0 +2
+    StrCpy $ConfigClientStartService       "$OptStart"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageName" $ConfigStorageName
+  IfErrors 0 +2
+    StrCpy $ConfigStorageName              "$HostName-sd"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStoragePort" $ConfigStoragePort
+  IfErrors 0 +2
+    StrCpy $ConfigStoragePort              9103
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageMaxJobs" $ConfigStorageMaxJobs
+  IfErrors 0 +2
+    StrCpy $ConfigStorageMaxJobs           10
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStoragePassword" $ConfigStoragePassword
+  IfErrors 0 +2
+    StrCpy $ConfigStoragePassword          ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageInstallService" $ConfigStorageInstallService
+  IfErrors 0 +2
+    StrCpy $ConfigStorageInstallService    "$OptService"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigStorageStartService" $ConfigStorageStartService
+  IfErrors 0 +2
+    StrCpy $ConfigStorageStartService      "$OptStart"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorName" $ConfigDirectorName
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorName            "$HostName-dir"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorPort" $ConfigDirectorPort
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorPort             9101
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorMaxJobs" $ConfigDirectorMaxJobs
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorMaxJobs          1
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorPassword" $ConfigDirectorPassword
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorPassword         ""
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorDB" $ConfigDirectorDB
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorDB               0
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorInstallService" $ConfigDirectorInstallService
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorInstallService   "$OptService"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigDirectorStartService" $ConfigDirectorStartService
+  IfErrors 0 +2
+    StrCpy $ConfigDirectorStartService     "$OptStart"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigMonitorName" $ConfigMonitorName
+  IfErrors 0 +2
+    StrCpy $ConfigMonitorName              "$HostName-mon"
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ConfigMonitorPassword" $ConfigMonitorPassword
+  IfErrors 0 +2
+    StrCpy $ConfigMonitorPassword          ""
 
 ; PLUGINSDIR refers to temporary helper programs and not Bacula plugins!
   InitPluginsDir
