@@ -134,7 +134,6 @@ struct plugin_ctx {
    int nb;                            /* used in queryParameter */
    char *query_buf;                   /* buffer used to not loose memory */
    POOLMEM *buf;                      /* store ConfigFile */
-   POOLMEM *object_buf;               /* Used for storing plugin object filename */
 };
 
 /*
@@ -194,9 +193,6 @@ static bRC freePlugin(bpContext *ctx)
    }
    if (p_ctx->buf) {
       free_pool_memory(p_ctx->buf);
-   }
-   if (p_ctx->object_buf) {
-      free_pool_memory(p_ctx->object_buf);
    }
    if (p_ctx->query_buf) {
       free(p_ctx->query_buf);
@@ -620,19 +616,29 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->type = FT_REG;
       sp->link = sp->fname = p_ctx->fname;
    } else if (p_ctx->nb_obj == 4) {
-      sp->plugin_obj.path = "/dummy/path/testfilename";
-      p_ctx->object_buf = get_pool_memory(PM_FNAME);
-      Mmsg(p_ctx->object_buf, "%s", p_ctx->fname);
-      sp->plugin_obj.plugin_name = "test-plugin-name";
-      sp->plugin_obj.object_type = "test-obj-type";
-      sp->plugin_obj.object_name = "test-object";
-      sp->plugin_obj.object_source = "test-plugin-source";
-      sp->plugin_obj.object_uuid = "1234-abc-testplugin";
+      sp->plugin_obj.path = (char *)NT_("/@testplugin/test.zero");
+      sp->plugin_obj.plugin_name = (char *)NT_("Test Plugin");
+      sp->plugin_obj.object_category = (char *)NT_("Virtual Machine");
+      sp->plugin_obj.object_type = (char *)NT_("VMWare");
+      sp->plugin_obj.object_name = (char *)NT_("test vm");
+      sp->plugin_obj.object_source = (char *)NT_("test plugin source");
+      sp->plugin_obj.object_uuid = (char *)NT_("1234-abc-testplugin");
       sp->plugin_obj.object_size = 100;
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;
       return bRC_OK;
-
+   } else if (p_ctx->nb_obj == 5) {
+      sp->plugin_obj.path = (char *)NT_("/@testplugin/test.zero");
+      sp->plugin_obj.plugin_name = (char *)NT_("Test Plugin");
+      sp->plugin_obj.object_category = (char *)NT_("Database");
+      sp->plugin_obj.object_type = (char *)NT_("PostgreSQL");
+      sp->plugin_obj.object_name = (char *)NT_("test db");
+      sp->plugin_obj.object_source = (char *)NT_("test plugin source");
+      sp->plugin_obj.object_uuid = (char *)NT_("5678-abc-testplugin");
+      sp->plugin_obj.object_size = 100;
+      sp->type = FT_PLUGIN_OBJECT;
+      p_ctx->nb_obj++;
+      return bRC_OK;
    }
 
    if (p_ctx->nb_obj < 2) {
@@ -673,7 +679,7 @@ static bRC endBackupFile(bpContext *ctx)
     * We would return bRC_More if we wanted startBackupFile to be
     * called again to backup another file
     */
-   if (p_ctx->nb_obj >= 5) {
+   if (p_ctx->nb_obj >= 6) {
       return bRC_OK;
 
    } else {
