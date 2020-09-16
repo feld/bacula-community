@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test if Plugin Objects are created and correctly deleted during volume purging.
+#
+TestName="plugin-object-test"
+JobName=pluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-plugin-confs
+make -C $src/src/plugins/fd install install-test-plugin
+if [ $? -ne 0 ]; then
+    print_debug "Failed to build and install test-plugin!"
+    exit 1
+fi
+
+file=encrypt-bug.jpg
+rm -rf ${cwd}/tmp/*
+echo "${cwd}/README" >${cwd}/tmp/file-list
+
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumFileIndex", "48KB", "Device")'
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+run job=TestPluginTest storage=File1 yes
+wait
+status client=$CLIENT
+messages
+@$out ${cwd}/tmp/log2.out
+list objects
+@$out ${cwd}/tmp/log3.out
+llist objects
+quit
+END_OF_DATA
+
+run_bacula
+
+#TODO add check for fileds in llist output
+objects_lines=`cat ${cwd}/tmp/log2.out | grep 'test-obj-type' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+fi
+
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+messages
+@# now do a restore
+@$out ${cwd}/tmp/log4.out
+restore where=${cwd}/tmp select all storage=File1 done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log5.out
+purge volume=TestVolume001
+@$out ${cwd}/tmp/log6.out
+list objects
+END_OF_DATA
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log6.out | grep 'test-obj-type' | wc -l`
+if [ ${objects_lines} -ne 0 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+fi
+
+end_test
