@@ -26,11 +26,11 @@
 #include "bacula.h"
 #include "fd_plugins.h"
 #include "lib/ini.h"
+#include "fileopts.h"
 #include <wchar.h>
 
-#undef malloc
-#undef free
-#undef strdup
+#define USE_CMD_PARSER
+#include "fd_common.h"
 
 #define fi __FILE__
 #define li __LINE__
@@ -43,8 +43,8 @@ static const int dbglvl = 000;
 
 #define PLUGIN_LICENSE      "AGPLv3"
 #define PLUGIN_AUTHOR       "Kern Sibbald"
-#define PLUGIN_DATE         "May 2011"
-#define PLUGIN_VERSION      "3"
+#define PLUGIN_DATE         "September 2017"
+#define PLUGIN_VERSION      "4"
 #define PLUGIN_DESCRIPTION  "Bacula Test File Daemon Plugin"
 
 /* Forward referenced functions */
@@ -61,7 +61,9 @@ static bRC endRestoreFile(bpContext *ctx);
 static bRC createFile(bpContext *ctx, struct restore_pkt *rp);
 static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
 static bRC checkFile(bpContext *ctx, char *fname);
+static bRC restoreFileList(bpContext *ctx, struct restore_filelist_pkt *rp);
 static bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
+static bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
 
 /* Pointers to Bacula functions */
 static bFuncs *bfuncs = NULL;
@@ -98,7 +100,10 @@ static pFuncs pluginFuncs = {
    createFile,
    setFileAttributes,
    checkFile,
-   handleXACLdata
+   handleXACLdata,
+   restoreFileList,
+   NULL,                         /* No checkStream */
+   queryParameter
 };
 
 static struct ini_items test_items[] = {
@@ -106,8 +111,9 @@ static struct ini_items test_items[] = {
    { "string1",  ini_store_str,  "Special String",    1},
    { "string2",  ini_store_str,  "2nd String",        0},
    { "ok",       ini_store_bool, "boolean",           0},
+   { "req",      ini_store_bool, "boolean",           1, "yes"},
 
-// We can also use the ITEMS_DEFAULT
+// We can also use the ITEMS_DEFAULT  
 // { "ok",       ini_store_bool, "boolean",           0, ITEMS_DEFAULT},
    { NULL,       NULL,           NULL,                0}
 };
@@ -122,12 +128,13 @@ struct plugin_ctx {
    char *fname;                       /* filename to "backup/restore" */
    char *reader;                      /* reader program for backup */
    char *writer;                      /* writer program for backup */
-
-   char where[1000];
+   char where[512];
    int replace;
-
    int nb_obj;                        /* Number of objects created */
+   int nb;                            /* used in queryParameter */
+   char *query_buf;                   /* buffer used to not loose memory */
    POOLMEM *buf;                      /* store ConfigFile */
+   POOLMEM *object_buf;               /* Used for storing plugin object filename */
 };
 
 /*
@@ -149,16 +156,16 @@ bRC loadPlugin(bInfo *lbinfo, bFuncs *lbfuncs, pInfo **pinfo, pFuncs **pfuncs)
 }
 
 /*
- * External entry point to unload the plugin
+ * External entry point to unload the plugin 
  */
-bRC unloadPlugin()
+bRC unloadPlugin() 
 {
 // printf("test-plugin-fd: Unloaded\n");
    return bRC_OK;
 }
 
 /*
- * The following entry points are accessed through the function
+ * The following entry points are accessed through the function 
  *   pointers we supplied to Bacula. Each plugin type (dir, fd, sd)
  *   has its own set of entry points that the plugin must define.
  */
@@ -188,6 +195,12 @@ static bRC freePlugin(bpContext *ctx)
    if (p_ctx->buf) {
       free_pool_memory(p_ctx->buf);
    }
+   if (p_ctx->object_buf) {
+      free_pool_memory(p_ctx->object_buf);
+   }
+   if (p_ctx->query_buf) {
+      free(p_ctx->query_buf);
+   }
    if (p_ctx->cmd) {
       free(p_ctx->cmd);                  /* free any allocated command string */
    }
@@ -199,7 +212,7 @@ static bRC freePlugin(bpContext *ctx)
 /*
  * Return some plugin value (none defined)
  */
-static bRC getPluginValue(bpContext *ctx, pVariable var, void *value)
+static bRC getPluginValue(bpContext *ctx, pVariable var, void *value) 
 {
    return bRC_OK;
 }
@@ -207,7 +220,7 @@ static bRC getPluginValue(bpContext *ctx, pVariable var, void *value)
 /*
  * Set a plugin value (none defined)
  */
-static bRC setPluginValue(bpContext *ctx, pVariable var, void *value)
+static bRC setPluginValue(bpContext *ctx, pVariable var, void *value) 
 {
    return bRC_OK;
 }
@@ -259,7 +272,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          break;
       }
       rop = (restore_object_pkt *)value;
-      bfuncs->DebugMessage(ctx, fi, li, dbglvl,
+      bfuncs->DebugMessage(ctx, fi, li, dbglvl, 
                            "Get RestoreObject len=%d JobId=%d oname=%s type=%d data=%.127s\n",
                            rop->object_len, rop->JobId, rop->object_name, rop->object_type,
                            rop->object);
@@ -271,7 +284,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 
       bfuncs->getBaculaValue(ctx, bVarWorkingDir, &working);
       Mmsg(q, "%s/restore.%d", working, _nb++);
-      if ((fp = fopen(q, "w")) != NULL) {
+      if ((fp = bfopen(q, "w")) != NULL) {
          fwrite(rop->object, rop->object_len, 1, fp);
          fclose(fp);
       }
@@ -285,7 +298,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          }
          ini.register_items(test_items, sizeof(struct ini_items));
          if (ini.parse(ini.out_fname)) {
-            bfuncs->JobMessage(ctx, fi, li, M_INFO, 0, "string1 = %s\n",
+            bfuncs->JobMessage(ctx, fi, li, M_INFO, 0, "string1 = %s\n", 
                                ini.items[0].val.strval);
          } else {
             bfuncs->JobMessage(ctx, fi, li, M_ERROR, 0, "Can't parse config\n");
@@ -303,7 +316,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    {
       char *p;
       bfuncs->DebugMessage(ctx, fi, li, dbglvl, "test-plugin-fd: pluginEvent cmd=%s\n", (char *)value);
-      p_ctx->cmd = strdup((char *)value);
+      p_ctx->cmd = bstrdup((char *)value);
       p = strchr(p_ctx->cmd, ':');
       if (!p) {
          bfuncs->JobMessage(ctx, fi, li, M_FATAL, 0, "Plugin terminator not found: %s\n", (char *)value);
@@ -325,7 +338,8 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       }
       *p++ = 0;           /* terminate reader string */
       p_ctx->writer = p;
-      printf("test-plugin-fd: plugin=%s fname=%s reader=%s writer=%s\n",
+      p_ctx->nb_obj = MIN(p_ctx->nb_obj, 3);
+      printf("test-plugin-fd: plugin=%s fname=%s reader=%s writer=%s\n", 
           p_ctx->cmd, p_ctx->fname, p_ctx->reader, p_ctx->writer);
       break;
    }
@@ -336,7 +350,10 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    case bEventComponentInfo:
       printf("plugin: Component=%s\n", NPRT((char *)value));
       break;
-
+   case bEventFeatures:
+      *((const char **)value) = PLUGIN_FEATURE_RESTORELISTFILES;
+      printf("test-plugin-fd: Send plugin feature\n");
+      break;
    default:
       printf("test-plugin-fd: unknown event=%d\n", event->eventType);
       break;
@@ -344,7 +361,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    return bRC_OK;
 }
 
-/*
+/* 
  * Start the backup of a specific file
  */
 static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
@@ -353,18 +370,18 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
    if (!p_ctx) {
       return bRC_Error;
    }
-
+   Dmsg1(0, "nb_obj = %d\n", p_ctx->nb_obj);
    if (p_ctx->nb_obj == 0) {
       sp->fname = (char *)"takeme.h";
-      bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n",
+      bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n", 
                            sp->fname, bfuncs->AcceptFile(ctx, sp));
 
       sp->fname = (char *)"/path/to/excludeme.o";
-      bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n",
+      bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n", 
                            sp->fname, bfuncs->AcceptFile(ctx, sp));
 
       sp->fname = (char *)"/path/to/excludeme.c";
-      bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n",
+      bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n", 
                            sp->fname, bfuncs->AcceptFile(ctx, sp));
    }
 
@@ -579,7 +596,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
          fclose(fp);
       }
       free_pool_memory(q);
-
+   
    } else if (p_ctx->nb_obj == 1) {
       ConfigFile ini;
       p_ctx->buf = get_pool_memory(PM_BSOCK);
@@ -602,6 +619,20 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->flags |= FO_OFFSETS;
       sp->type = FT_REG;
       sp->link = sp->fname = p_ctx->fname;
+   } else if (p_ctx->nb_obj == 4) {
+      sp->plugin_obj.path = "/dummy/path/testfilename";
+      p_ctx->object_buf = get_pool_memory(PM_FNAME);
+      Mmsg(p_ctx->object_buf, "%s", p_ctx->fname);
+      sp->plugin_obj.plugin_name = "test-plugin-name";
+      sp->plugin_obj.object_type = "test-obj-type";
+      sp->plugin_obj.object_name = "test-object";
+      sp->plugin_obj.object_source = "test-plugin-source";
+      sp->plugin_obj.object_uuid = "1234-abc-testplugin";
+      sp->plugin_obj.object_size = 100;
+      sp->type = FT_PLUGIN_OBJECT;
+      p_ctx->nb_obj++;
+      return bRC_OK;
+
    }
 
    if (p_ctx->nb_obj < 2) {
@@ -634,11 +665,20 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
  */
 static bRC endBackupFile(bpContext *ctx)
 {
+   struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
+   if (!p_ctx) {
+      return bRC_Error;
+   }
    /*
     * We would return bRC_More if we wanted startBackupFile to be
     * called again to backup another file
     */
-   return bRC_OK;
+   if (p_ctx->nb_obj >= 5) {
+      return bRC_OK;
+
+   } else {
+      return bRC_More;
+   }
 }
 
 
@@ -651,9 +691,68 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
    if (!p_ctx) {
       return bRC_Error;
    }
-
    io->status = 0;
    io->io_errno = 0;
+   switch(io->func) {
+   case IO_OPEN:
+      if (p_ctx->nb_obj == 4 && p_ctx->reader) {
+         p_ctx->fd = bfopen(p_ctx->reader, "r");
+         if (p_ctx->fd) {
+            io->status = fileno(p_ctx->fd);
+         } else {
+            io->status = -1;
+         }
+      } else {
+         io->status = 1;        /* dummy file */
+      }
+      p_ctx->offset = 0;
+      break;
+
+   case IO_READ:
+      if (p_ctx->fd) {
+         io->offset = ftell(p_ctx->fd);
+         io->status = fread(io->buf, 1, io->count, p_ctx->fd);
+      } else {
+         if (p_ctx->offset > 3000000) {
+            io->status = 0;        /* EOF */
+         } else {
+            memset(io->buf, 0x55, io->count);
+            io->offset = p_ctx->offset;
+            io->status = io->count;
+            p_ctx->offset += io->count;
+         }
+      }
+      break;
+
+   case IO_WRITE:
+      if (p_ctx->fd) {
+         io->status = fwrite(io->buf, 1, io->count, p_ctx->fd);
+
+      } else {
+         io->status = -1;
+      }
+      break;
+
+   /* Cleanup things during close */
+   case IO_CLOSE:
+      if (p_ctx->fd) {
+         fclose(p_ctx->fd);
+         p_ctx->fd = NULL;
+      }
+      io->status = 0;
+      break;
+
+   case IO_SEEK:
+      if (p_ctx->nb_obj == 4) {
+         io->status = fwrite(io->buf, 1, io->count, p_ctx->fd);
+
+      } else {
+         io->status = -1;
+      }
+      io->status = io->offset;
+      break;
+   }
+
    return bRC_OK;
 }
 
@@ -680,7 +779,7 @@ static bRC endRestoreFile(bpContext *ctx)
 /*
  * This is called during restore to create the file (if necessary)
  * We must return in rp->create_status:
- *
+ *   
  *  CF_ERROR    -- error
  *  CF_SKIP     -- skip processing this file
  *  CF_EXTRACT  -- extract the file (i.e.call i/o routines)
@@ -689,10 +788,10 @@ static bRC endRestoreFile(bpContext *ctx)
  */
 static bRC createFile(bpContext *ctx, struct restore_pkt *rp)
 {
-   struct plugin_ctx *pctx = (struct plugin_ctx *)ctx->pContext;
+   struct plugin_ctx *pctx=(struct plugin_ctx *)ctx->pContext;
    printf("test-plugin-fd: createFile\n");
-   if (strlen(rp->where) > 990) {
-      printf("Restore target dir too long. Restricting to first 990 bytes.\n");
+   if (strlen(rp->where) > 512) {
+      printf("Restore target dir too long. Restricting to first 512 bytes.\n");
    }
    bstrncpy(pctx->where, rp->where, sizeof(pctx->where));
    pctx->replace = rp->replace;
@@ -713,6 +812,21 @@ static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp)
 /* When using Incremental dump, all previous dumps are necessary */
 static bRC checkFile(bpContext *ctx, char *fname)
 {
+   if (strncmp(fname, "/@testplugin/", strlen("/@testplugin/")) == 0) {
+      return bRC_Seen;
+   } else {
+      return bRC_OK;
+   }
+}
+
+/* Called for each file with the RestoreFileList feature at the start of a
+ * restore 
+ */
+static bRC restoreFileList(bpContext *ctx, struct restore_filelist_pkt *rp)
+{
+   if (rp) {
+      Dmsg1(0, "Will restore fname=%s\n", rp->ofname);
+   }
    return bRC_OK;
 }
 
@@ -722,6 +836,76 @@ static bRC checkFile(bpContext *ctx, char *fname)
 static bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
 {
    return bRC_OK;
+}
+
+/* QueryParameter interface */
+static bRC queryParameter(bpContext *ctx, struct query_pkt *qp)
+{
+   OutputWriter ow(qp->api_opts);
+   cmd_parser a;
+   bRC ret = bRC_OK;
+   int nb = 3;
+   int sleepval = 3;
+   int i;
+   struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
+   if (!p_ctx) {
+      return bRC_Error;
+   }
+   a.parse_cmd(qp->command);
+   if ((i = a.find_arg_with_value("nb")) > 0) {
+      nb = str_to_int64(a.argv[i]);
+   }
+
+   if ((i = a.find_arg_with_value("sleep")) > 0) {
+      sleepval = str_to_int64(a.argv[i]);
+   }
+   if (strcasecmp(qp->parameter, "int") == 0) {
+      ow.get_output(OT_INT32, "int", 1,
+                    OT_INT32, "int", 2,
+                    OT_INT32, "int", 3,
+                    OT_INT32, "int", 4,
+                    OT_INT32, "int", 5,
+                    OT_INT32, "int", 6,
+                    OT_INT32, "int", 7,
+                    OT_INT32, "int", 8,
+                    OT_INT32, "int", 9,
+                    OT_INT32, "int", 10,
+                    OT_END);
+      goto bail_out;
+   }
+
+   if (strcasecmp(qp->parameter, "string") == 0) {
+      ow.get_output(OT_STRING, "string", "string1",
+                    OT_STRING, "string", "string2",
+                    OT_STRING, "string", "string3",
+                    OT_STRING, "string", "string4",
+                    OT_STRING, "string", "string5",
+                    OT_STRING, "string", "string6",
+                    OT_STRING, "string", "string7",
+                    OT_STRING, "string", "string8",
+                    OT_STRING, "string", "string9",
+                    OT_STRING, "string", "string10",
+                    OT_END);
+      goto bail_out;
+   }
+
+   if (strcasecmp(qp->parameter, "withsleep") == 0) {
+      if (p_ctx->nb++ < nb) {
+         ow.get_output(OT_INT32, "withsleep", p_ctx->nb, OT_END);
+         bmicrosleep(sleepval, 0);
+      }
+      if (p_ctx->nb < nb) {
+         ret = bRC_More;
+      }
+      goto bail_out;
+   }
+
+bail_out:
+   if (p_ctx->query_buf) {
+      free(p_ctx->query_buf);
+   }
+   qp->result = p_ctx->query_buf = bstrdup(ow.get_output(OT_END));
+   return ret;
 }
 
 #ifdef __cplusplus
