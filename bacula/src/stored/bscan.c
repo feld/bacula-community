@@ -92,6 +92,7 @@ static int num_jobs = 0;
 static int num_pools = 0;
 static int num_media = 0;
 static int num_files = 0;
+static int num_plugin_objects = 0;
 
 static CONFIG *config;
 #define CONFIG_FILE "bacula-sd.conf"
@@ -331,11 +332,12 @@ int main (int argc, char *argv[])
 
    do_scan();
    if (update_db) {
-      printf("Records added or updated in the catalog:\n%7d Media\n%7d Pool\n%7d Job\n%7d File\n",
-         num_media, num_pools, num_jobs, num_files);
+      printf("Records added or updated in the catalog:\n%7d Media\n%7d Pool\n%7d Job\n%7d File\n%7d PluginObjects\n",
+         num_media, num_pools, num_jobs, num_files, num_plugin_objects);
    } else {
-      printf("Records would have been added or updated in the catalog:\n%7d Media\n%7d Pool\n%7d Job\n%7d File\n",
-         num_media, num_pools, num_jobs, num_files);
+      printf("Records would have been added or updated in the catalog:\n%7d Media\n%7d Pool\n%7d Job\n%7d File\n"
+            "%7d Plugin Objects\n",
+         num_media, num_pools, num_jobs, num_files, num_plugin_objects);
    }
 
    bjcr->read_dcr->dev->free_dedup_rehydration_interface(bjcr->read_dcr);
@@ -750,6 +752,46 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
    /* ****FIXME*****/
       /* Implement putting into catalog */
       break;
+
+   case STREAM_PLUGIN_OBJECT:
+      {
+         OBJECT_DBR obj_r;
+         char *buf = rec->data;
+         num_plugin_objects++;
+
+         skip_nonspaces(&buf);   /* Skip FileIndex */
+         skip_spaces(&buf);
+         skip_nonspaces(&buf);   /* Skip FileType */
+         skip_spaces(&buf);
+
+         parse_plugin_object_string(&buf, &obj_r);
+
+         // Need to get new jobId if possible
+         mjcr = get_jcr_by_session(rec->VolSessionId, rec->VolSessionTime);
+         if (!mjcr) {
+            Pmsg2(000, _("Could not find SessId=%d SessTime=%d for PluginObject record.\n"),
+                  rec->VolSessionId, rec->VolSessionTime);
+            break;
+         }
+
+         obj_r.JobId = mjcr->JobId;
+
+         if (db_get_plugin_object_record(mjcr, db, &obj_r)) {
+            if (verbose) {
+               Pmsg1(0, _("RESTORE_OBJECT: Found Plugin Object \"%s\" in the catalog\n"), obj_r.ObjectName);
+            }
+         } else if (update_db) {
+            /* Send it */
+            Pmsg1(0, _("PLUGIN_OBJECT: Inserting Plugin Object \"%s\" into the catalog\n"), obj_r.ObjectName);
+            if (!db_create_object_record(mjcr, db, &obj_r)) {
+               Jmsg1(mjcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(db));
+            }
+         } else {
+            Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object \"%s\" on the volume\n"), obj_r.ObjectName);
+         }
+
+         break;
+      }
 
    /* Data stream */
    case STREAM_WIN32_DATA:

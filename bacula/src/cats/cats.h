@@ -661,4 +661,7 @@ int InsertDB(const char *file, int line, JCR *jcr, BDB *db, char *select_cmd);
 int DeleteDB(const char *file, int line, JCR *jcr, BDB *db, char *delete_cmd);
 void split_path_and_file(JCR *jcr, BDB *mdb, const char *fname);
 
+/* Helper functions */
+void parse_plugin_object_string(char **obj_str, OBJECT_DBR *obj_r);
+
 #endif  /* __CATS_H_ */

@@ -646,68 +646,7 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
       skip_nonspaces(&p);                  /* skip FileType */
       skip_spaces(&p);
 
-      obj_r.JobId = str_to_int32(p);
-      skip_nonspaces(&p);                  /* skip JobId */
-      skip_spaces(&p);
-
-      obj_r.Path = p;
-      skip_nonspaces(&p);                  /* skip Path */
-      skip_spaces(&p);
-      char *c = strpbrk(obj_r.Path, " ");
-      if (c) {
-         *c = '\0';
-      }
-
-      obj_r.Filename = p;
-      skip_nonspaces(&p);                  /* skip FileName */
-      skip_spaces(&p);
-      c = strpbrk(obj_r.Filename, " ");
-      if (c) {
-         *c = '\0';
-      }
-
-      obj_r.PluginName = p;
-      skip_nonspaces(&p);                  /* skip PluginName */
-      skip_spaces(&p);
-      c = strpbrk(obj_r.PluginName, " ");
-      if (c) {
-         *c = '\0';
-      }
-
-      char *obj_type = p;
-      skip_nonspaces(&p);                  /* skip ObjectType */
-      skip_spaces(&p);
-      c = strpbrk(obj_type, " ");
-      if (c) {
-         *c = '\0';
-      }
-      bstrncpy(obj_r.ObjectType, obj_type, sizeof(obj_r.ObjectType));
-
-      obj_r.ObjectName = p;
-      skip_nonspaces(&p);                  /* skip ObjectName */
-      skip_spaces(&p);
-      c = strpbrk(obj_r.ObjectName, " ");
-      if (c) {
-         *c = '\0';
-      }
-
-      obj_r.ObjectSource = p;
-      skip_nonspaces(&p);                  /* skip ObjectSource */
-      skip_spaces(&p);
-      c = strpbrk(obj_r.ObjectSource, " ");
-      if (c) {
-         *c = '\0';
-      }
-
-      obj_r.ObjectUUID = p;
-      skip_nonspaces(&p);                  /* skip ObjectUuid */
-      skip_spaces(&p);
-      c = strpbrk(obj_r.ObjectUUID, " ");
-      if (c) {
-         *c = '\0';
-      }
-
-      obj_r.ObjectSize = str_to_uint64(p);
+      parse_plugin_object_string(&p, &obj_r);
 
       if (!db_create_object_record(jcr, jcr->db, &obj_r)) {
          Jmsg1(jcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(jcr->db));
