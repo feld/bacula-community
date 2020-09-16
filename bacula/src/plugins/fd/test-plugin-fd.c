@@ -369,8 +369,8 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
    }
 
    if (p_ctx->nb_obj == 0) {
-      sp->object_name = (char *)"james.xml";
-      sp->object = (char *)"This is test data for the restore object. "
+      sp->restore_obj.object_name = (char *)"james.xml";
+      sp->restore_obj.object = (char *)"This is test data for the restore object. "
   "garbage=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -564,7 +564,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   "\0secret";
-      sp->object_len = strlen(sp->object)+1+6+1; /* str + 0 + secret + 0 */
+      sp->restore_obj.object_len = strlen(sp->restore_obj.object)+1+6+1; /* str + 0 + secret + 0 */
       sp->type = FT_RESTORE_FIRST;
 
       static int _nb=0;
@@ -574,8 +574,8 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
 
       bfuncs->getBaculaValue(ctx, bVarWorkingDir, &working);
       Mmsg(q, "%s/torestore.%d", working, _nb++);
-      if ((fp = fopen(q, "w")) != NULL) {
-         fwrite(sp->object, sp->object_len, 1, fp);
+      if ((fp = bfopen(q, "w")) != NULL) {
+         fwrite(sp->restore_obj.object, sp->restore_obj.object_len, 1, fp);
          fclose(fp);
       }
       free_pool_memory(q);
@@ -585,26 +585,45 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       p_ctx->buf = get_pool_memory(PM_BSOCK);
       ini.register_items(test_items, sizeof(struct ini_items));
 
-      sp->object_name = (char*)INI_RESTORE_OBJECT_NAME;
-      sp->object_len = ini.serialize(&p_ctx->buf);
-      sp->object = p_ctx->buf;
+      sp->restore_obj.object_name = (char*)INI_RESTORE_OBJECT_NAME;
+      sp->restore_obj.object_len = ini.serialize(&p_ctx->buf);
+      sp->restore_obj.object = p_ctx->buf;
       sp->type = FT_PLUGIN_CONFIG;
 
       Dmsg1(0, "RestoreOptions=<%s>\n", p_ctx->buf);
+
+   } else if (p_ctx->nb_obj == 2) {
+      sp->flags |= FO_OFFSETS;
+      sp->type = FT_REG;
+      sp->link = sp->fname = (char *)"/@testplugin/test.zero";
+      Dmsg1(0, "Create virtual file with index information flags=%llx\n", sp->flags);
+
+   } else if (p_ctx->nb_obj == 3) {
+      sp->flags |= FO_OFFSETS;
+      sp->type = FT_REG;
+      sp->link = sp->fname = p_ctx->fname;
    }
 
-   time_t now = time(NULL);
-   sp->index = ++p_ctx->nb_obj;
-   sp->statp.st_mode = 0700 | S_IFREG;
-   sp->statp.st_ctime = now;
-   sp->statp.st_mtime = now;
-   sp->statp.st_atime = now;
-   sp->statp.st_size = sp->object_len;
-   sp->statp.st_blksize = 4096;
-   sp->statp.st_blocks = 1;
-   bfuncs->DebugMessage(ctx, fi, li, dbglvl,
-                        "Creating RestoreObject len=%d oname=%s data=%.127s\n",
-                        sp->object_len, sp->object_name, sp->object);
+   if (p_ctx->nb_obj < 2) {
+      time_t now = time(NULL);
+      sp->statp.st_mode = 0700 | S_IFREG;
+      sp->statp.st_ctime = now;
+      sp->statp.st_mtime = now;
+      sp->statp.st_atime = now;
+      sp->statp.st_size = sp->restore_obj.object_len;
+      sp->statp.st_blksize = 4096;
+      sp->statp.st_blocks = 1;
+   } else {
+      stat(p_ctx->reader, &sp->statp);
+   }
+
+   sp->restore_obj.index = ++p_ctx->nb_obj;
+
+   if (sp->type != FT_REG) {
+      bfuncs->DebugMessage(ctx, fi, li, dbglvl,
+                           "Creating RestoreObject len=%d oname=%s data=%.127s\n", 
+                           sp->restore_obj.object_len, sp->restore_obj.object_name, sp->restore_obj.object);
+   }
 
    printf("test-plugin-fd: startBackupFile\n");
    return bRC_OK;
