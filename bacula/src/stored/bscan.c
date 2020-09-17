@@ -749,9 +749,40 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       break;
 
    case STREAM_RESTORE_OBJECT:
-   /* ****FIXME*****/
-      /* Implement putting into catalog */
-      break;
+      {
+         char *buf = rec->data;
+         ROBJECT_DBR ro;
+         bmemset(&ro, 0, sizeof(ro));
+
+         ro.Stream = rec->maskedStream;
+         parse_restore_object_string(&buf, &ro);
+
+         // Need to get new jobId if possible
+         mjcr = get_jcr_by_session(rec->VolSessionId, rec->VolSessionTime);
+         if (!mjcr) {
+            Pmsg2(000, _("Could not find SessId=%d SessTime=%d for RestoreObject record.\n"),
+                  rec->VolSessionId, rec->VolSessionTime);
+            break;
+         }
+
+         ro.JobId = mjcr->JobId;
+
+         if (db_get_restoreobject_record(mjcr, db, &ro)) {
+            if (verbose) {
+               Pmsg1(0, _("RESTORE_OBJECT: Found Restore Object \"%s\" in the catalog\n"), ro.object_name);
+            }
+         } else if (update_db) {
+            /* Send it */
+            Pmsg1(0, _("RESTORE_OBJECT: Inserting Restore Object \"%s\" into the catalog\n"), ro.object_name);
+            if (!db_create_restore_object_record(mjcr, db, &ro)) {
+               Jmsg1(mjcr, M_FATAL, 0, _("Restore object create error. %s"), db_strerror(db));
+            }
+         } else {
+            Pmsg1(0, _("RESTORE_OBJECT: Found Restore Object \"%s\" on the volume\n"), ro.object_name);
+         }
+
+         break;
+      }
 
    case STREAM_PLUGIN_OBJECT:
       {

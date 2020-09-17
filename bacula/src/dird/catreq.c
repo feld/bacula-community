@@ -655,10 +655,9 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
 
    } else if (Stream == STREAM_RESTORE_OBJECT) {
       ROBJECT_DBR ro;
-
       bmemset(&ro, 0, sizeof(ro));
+
       ro.Stream = Stream;
-      ro.FileIndex = FileIndex;
       if (jcr->wjcr) {
          ro.JobId = jcr->wjcr->JobId;
          Dmsg1(100, "=== set JobId=%ld\n", ar->JobId);
@@ -668,33 +667,8 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
 
       Dmsg1(100, "Robj=%s\n", p);
 
-      skip_nonspaces(&p);                  /* skip FileIndex */
-      skip_spaces(&p);
-      ro.FileType = str_to_int32(p);        /* FileType */
-      skip_nonspaces(&p);
-      skip_spaces(&p);
-      ro.object_index = str_to_int32(p);    /* Object Index */
-      skip_nonspaces(&p);
-      skip_spaces(&p);
-      ro.object_len = str_to_int32(p);      /* object length possibly compressed */
-      skip_nonspaces(&p);
-      skip_spaces(&p);
-      ro.object_full_len = str_to_int32(p); /* uncompressed object length */
-      skip_nonspaces(&p);
-      skip_spaces(&p);
-      ro.object_compression = str_to_int32(p); /* compression */
-      skip_nonspaces(&p);
-      skip_spaces(&p);
+      parse_restore_object_string(&p, &ro);
 
-      ro.plugin_name = p;                      /* point to plugin name */
-      len = strlen(ro.plugin_name);
-      ro.object_name = &ro.plugin_name[len+1]; /* point to object name */
-      len = strlen(ro.object_name);
-      ro.object = &ro.object_name[len+1];      /* point to object */
-      ro.object[ro.object_len] = 0;            /* add zero for those who attempt printing */
-      Dmsg7(100, "oname=%s stream=%d FT=%d FI=%d JobId=%ld, obj_len=%d\nobj=\"%s\"\n",
-         ro.object_name, ro.Stream, ro.FileType, ro.FileIndex, ro.JobId,
-         ro.object_len, ro.object);
       /* Send it */
       if (!db_create_restore_object_record(jcr, jcr->db, &ro)) {
          Jmsg1(jcr, M_FATAL, 0, _("Restore object create error. %s"), db_strerror(jcr->db));

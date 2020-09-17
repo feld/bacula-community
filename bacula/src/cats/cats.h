@@ -663,5 +663,6 @@ void split_path_and_file(JCR *jcr, BDB *mdb, const char *fname);
 
 /* Helper functions */
 void parse_plugin_object_string(char **obj_str, OBJECT_DBR *obj_r);
+void parse_restore_object_string(char **obj_str, ROBJECT_DBR *r_r);
 
 #endif  /* __CATS_H_ */
