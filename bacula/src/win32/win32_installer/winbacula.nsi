@@ -182,6 +182,7 @@ Var InstallType
 Var OldInstallDir
 Var PreviousComponents
 Var NewComponents
+Var TmpComponent
 
 ; Bit 0 = File Service
 ;     1 = Storage Service
@@ -375,7 +376,7 @@ Function .onInit
   ClearErrors
   ${GetOptions} $CMDLINE "-ConfigClientPassword" $ConfigClientPassword
   IfErrors 0 +2
-    ;StrCpy $ConfigClientPassword          ""
+    StrCpy $ConfigClientPassword          ""
   ClearErrors
   ${GetOptions} $CMDLINE "-ConfigClientInstallService" $ConfigClientInstallService
   IfErrors 0 +2
@@ -444,6 +445,9 @@ Function .onInit
   ${GetOptions} $CMDLINE "-ConfigMonitorPassword" $ConfigMonitorPassword
   IfErrors 0 +2
     StrCpy $ConfigMonitorPassword          ""
+  ClearErrors
+  IfSilent 0 +2
+    Call SilentSelectComponents
 
 ; PLUGINSDIR refers to temporary helper programs and not Bacula plugins!
   InitPluginsDir
@@ -1163,80 +1167,81 @@ Function LeaveInstallPage
   Call DumpLog
 FunctionEnd
 
-Function EnterWriteTemplates
-  Push $R0
-  Push $R1
-
-  Call GetSelectedComponents
-  Pop $R0
-
-  IntOp $R0 $R0 & ${ComponentDirector}
-  IntOp $R1 $NewComponents & ${ComponentsFileAndStorage}
-
-  ${If} $R0 <> 0
-  ${OrIf} $R1 = 0
-    Pop $R1
-    Pop $R0
-    Abort
-  ${EndIf}
-
-  IntOp $R0 $NewComponents & ${ComponentFile}
-  ${If} $R0 = 0
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 2" State 0
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 2" Flags DISABLED
-    DeleteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 3" State
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 3" Flags REQ_SAVE|FILE_EXPLORER|WARN_IF_EXIST|DISABLED
+; in silent mode, we manually select or deselect modules, depending on cmdline parameter
+Function SilentSelectComponents
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentFile" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecFileDaemon}
+    !InsertMacro SetSectionFlag ${SecFileDaemon} ${SF_RO}
   ${Else}
-    ;; TODO: See why this procedure causes a problem on Windows 2012
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 2" State 0
-    DeleteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 2" Flags
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 3" State "$INSTDIR\$ConfigClientName.conf"
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 5" Flags REQ_SAVE|FILE_EXPLORER|WARN_IF_EXIST
-
+    !InsertMacro UnselectSection ${SecFileDaemon}
+    !InsertMacro ClearSectionFlag ${SecFileDaemon} ${SF_RO}
   ${EndIf}
-
-  IntOp $R0 $NewComponents & ${ComponentStorage}
-  ${If} $R0 = 0
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 4" State 0
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 4" Flags DISABLED
-    DeleteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 5" State
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 5" Flags REQ_SAVE|FILE_EXPLORER|WARN_IF_EXIST|DISABLED
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentStorage" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecStorageDaemon}
+    !InsertMacro SetSectionFlag ${SecStorageDaemon} ${SF_RO}
   ${Else}
-    ;; TODO: See why this procedure causes a problem on Windows 2012
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 4" State 0
-    DeleteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 4" Flags
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 5" State "$INSTDIR\$ConfigStorageName.conf"
-    WriteINIStr "$PLUGINSDIR\WriteTemplates.ini" "Field 5" Flags REQ_SAVE|FILE_EXPLORER|WARN_IF_EXIST
+    !InsertMacro UnselectSection ${SecStorageDaemon}
+    !InsertMacro ClearSectionFlag ${SecStorageDaemon} ${SF_RO}
   ${EndIf}
-
-  !InsertMacro MUI_HEADER_TEXT "$(TITLE_WriteTemplates)" "$(SUBTITLE_WriteTemplates)"
-  !InsertMacro MUI_INSTALLOPTIONS_DISPLAY "WriteTemplates.ini"
-
-  !InsertMacro MUI_INSTALLOPTIONS_READ $R0 "WriteTemplates.ini" "Field 2" State
-  ${If} $R0 <> 0
-    File "/oname=$PLUGINSDIR\client.conf.in" "client.conf.in"
-
-    nsExec::ExecToLog '$PLUGINSDIR\sed.exe -f "$PLUGINSDIR\config.sed" -i.bak "$PLUGINSDIR\client.conf.in"'
-    !InsertMacro MUI_INSTALLOPTIONS_READ $R0 "WriteTemplates.ini" "Field 3" State
-    ${If} $R0 != ""
-      CopyFiles "$PLUGINSDIR\client.conf.in" "$R0"
-    ${EndIf}
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentTextConsole" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecConsole}
+    !InsertMacro SetSectionFlag ${SecConsole} ${SF_RO}
+  ${Else}
+    !InsertMacro UnselectSection ${SecConsole}
+    !InsertMacro ClearSectionFlag ${SecConsole} ${SF_RO}
   ${EndIf}
-
-
-  !InsertMacro MUI_INSTALLOPTIONS_READ $R0 "WriteTemplates.ini" "Field 4" State
-  ${If} $R0 <> 0
-    File "/oname=$PLUGINSDIR\storage.conf.in" "storage.conf.in"
-
-    nsExec::ExecToLog '$PLUGINSDIR\sed.exe -f "$PLUGINSDIR\config.sed" -i.bak "$PLUGINSDIR\storage.conf.in"'
-    !InsertMacro MUI_INSTALLOPTIONS_READ $R0 "WriteTemplates.ini" "Field 5" State
-    ${If} $R0 != ""
-      CopyFiles "$PLUGINSDIR\storage.conf.in" "$R0"
-    ${EndIf}
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentBatConsole" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecBatConsole}
+    !InsertMacro SetSectionFlag ${SecBatConsole} ${SF_RO}
+  ${Else}
+    !InsertMacro UnselectSection ${SecBatConsole}
+    !InsertMacro ClearSectionFlag ${SecBatConsole} ${SF_RO}
   ${EndIf}
-
-  Pop $R1
-  Pop $R0
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentTrayMonitor" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecTrayMonitor}
+    !InsertMacro SetSectionFlag ${SecTrayMonitor} ${SF_RO}
+  ${Else}
+    !InsertMacro UnselectSection ${SecTrayMonitor}
+    !InsertMacro ClearSectionFlag ${SecTrayMonitor} ${SF_RO}
+  ${EndIf}
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentAllDrivesPlugin" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecAllDrivesPlugin}
+    !InsertMacro SetSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
+  ${Else}
+    !InsertMacro UnselectSection ${SecAllDrivesPlugin}
+    !InsertMacro ClearSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
+  ${EndIf}
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentWinBMRPlugin" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecWinBMRPlugin}
+    !InsertMacro SetSectionFlag ${SecWinBMRPlugin} ${SF_RO}
+  ${Else}
+    !InsertMacro UnselectSection ${SecWinBMRPlugin}
+    !InsertMacro ClearSectionFlag ${SecWinBMRPlugin} ${SF_RO}
+  ${EndIf}
+  ClearErrors
+  ${GetOptions} $CMDLINE "-ComponentCDPPlugin" $TmpComponent
+  ${IfNot} ${Errors}
+    !InsertMacro SelectSection ${SecCDPPlugin}
+    !InsertMacro SetSectionFlag ${SecCDPPlugin} ${SF_RO}
+  ${Else}
+    !InsertMacro UnselectSection ${SecCDPPlugin}
+    !InsertMacro ClearSectionFlag ${SecCDPPlugin} ${SF_RO}
+  ${EndIf}
+  ClearErrors
 FunctionEnd
 
 Function SelectPreviousComponents
