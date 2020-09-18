@@ -563,13 +563,13 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
             /* Job record already exists in DB */
             update_db = false;  /* don't change db in create_job_record */
             if (verbose) {
-               Pmsg1(000, _("SOS_LABEL: Found Job record for JobId: %d\n"), jr.JobId);
+               Pmsg1(000, _("SOS_LABEL: Found Job record for Job: %s\n"), jr.Job);
             }
          } else {
             /* Must create a Job record in DB */
             if (!update_db) {
-               Pmsg1(000, _("SOS_LABEL: Job record not found for JobId: %d\n"),
-                  jr.JobId);
+               Pmsg1(000, _("SOS_LABEL: Job record not found for Job: %s\n"),
+                  jr.Job);
             }
          }
 
