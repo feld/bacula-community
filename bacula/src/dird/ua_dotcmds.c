@@ -2265,7 +2265,7 @@ static bool mediatypescmd(UAContext *ua, const char *cmd)
       return true;
    }
    if (!db_sql_query(ua->db,
-           "SELECT DISTINCT MediaType FROM MediaType ORDER BY MediaType",
+           "SELECT MediaType FROM MediaType ORDER BY MediaType",
            one_handler, (void *)ua))
    {
       ua->error_msg(_("List MediaType failed: ERR=%s\n"), db_strerror(ua->db));
@@ -2275,12 +2275,19 @@ static bool mediatypescmd(UAContext *ua, const char *cmd)
 
 static bool mediacmd(UAContext *ua, const char *cmd)
 {
+   POOL_MEM query;
    if (!open_client_db(ua)) {
       return true;
    }
+
+   /* If ACLs are used, we restrict the volume list to the pool we can access */
+   const char *where = ua->db->get_acl(DB_ACL_POOL, true);
+   const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_POOL)) : "";
+
+   Mmsg(query, "SELECT Media.VolumeName FROM Media %s %s ORDER BY VolumeName", join, where);
    if (!db_sql_query(ua->db,
-          "SELECT DISTINCT Media.VolumeName FROM Media ORDER BY VolumeName",
-          one_handler, (void *)ua))
+                     query.c_str(),
+                     one_handler, (void *)ua))
    {
       ua->error_msg(_("List Media failed: ERR=%s\n"), db_strerror(ua->db));
    }
@@ -2293,7 +2300,7 @@ static bool locationscmd(UAContext *ua, const char *cmd)
       return true;
    }
    if (!db_sql_query(ua->db,
-           "SELECT DISTINCT Location FROM Location ORDER BY Location",
+           "SELECT Location FROM Location ORDER BY Location",
            one_handler, (void *)ua))
    {
       ua->error_msg(_("List Location failed: ERR=%s\n"), db_strerror(ua->db));
