@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup using bpipe, purge the volume and run
+# bscan to see if restore objects were restored.
+
+TestName="bscan-restore-object-test"
+JobName=pluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-plugin-confs
+
+file=encrypt-bug.jpg
+rm -rf ${cwd}/tmp/*
+echo "${cwd}/README" >${cwd}/tmp/file-list
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+@#setdebug level=50 traclient=$CLIENT
+run job=$JobName storage=File1 yes
+wait
+@#setdebug level=50 client=$CLIENT
+run job=$JobName storage=File1 yes
+wait
+status client=$CLIENT
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+list jobs
+@$out $tmp/list
+llist pluginrestoreconf jobid=1
+END_OF_DATA
+
+run_bconsole
+
+nb=`grep $file $tmp/list | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: Should find the RestoreObject for $file in $tmp/list"
+    bstat=1
+fi
+
+nb=`grep Makefile $tmp/list | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: Should find the RestoreObject for Makefile in $tmp/list"
+    bstat=1
+fi
+
+
+# Purge volume to delete plugin objects from db
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log3.out
+purge volume=TestVolume001
+@$out ${cwd}/tmp/log4.out
+list objects
+END_OF_DATA
+
+run_bconsole
+
+# Check if restore objects are no longer in db
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+list jobs
+@$out $tmp/list_after_purge
+llist pluginrestoreconf jobid=1
+END_OF_DATA
+
+run_bconsole
+
+nb=`grep $file $tmp/list_after_purge | wc -l`
+if [ $nb -ne 0 ]; then
+    print_debug "ERROR: Should not find the RestoreObject after purge for $file in $tmp/list"
+    bstat=1
+fi
+
+nb=`grep Makefile $tmp/list_after_purge | wc -l`
+if [ $nb -ne 0 ]; then
+    print_debug "ERROR: Should not find the RestoreObject after purge for Makefile in $tmp/list"
+    bstat=1
+fi
+
+# Run bscan
+echo "volume=TestVolume001" >tmp/bscan.bsr
+
+bscan_libdbi
+
+# If the database has a password pass it to bscan
+if test "x${db_password}" = "x"; then
+  PASSWD=
+else
+  PASSWD="-P ${db_password}"
+fi
+
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log5.out 2>&1
+fi
+
+# Check if plugin objects restored successfully
+# Get new correct JobId
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out tmp/list_job_after_bscan
+list jobs
+END_OF_DATA
+
+run_bconsole
+newJobId=`cat tmp/list_job_after_bscan | grep 'pluginTest' -m 1 | cut -d '|' -f 2 | xargs`
+if [ $newJobId -eq 0 ]; then
+    print_debug "ERROR: Could not get JobId after bscan!"
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out $tmp/list_after_bscan
+llist pluginrestoreconf jobid=$newJobId
+END_OF_DATA
+
+run_bconsole
+
+nb=`grep $file $tmp/list_after_bscan | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: Should find the RestoreObject for $file in $tmp/list"
+    bstat=1
+fi
+
+nb=`grep Makefile $tmp/list_after_bscan | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: Should find the RestoreObject for Makefile in $tmp/list"
+    bstat=1
+fi
+
+run_bconsole
+
+end_test
