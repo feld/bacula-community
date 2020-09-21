@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup using test-plugin, purge the volume and run
+# bscan to see if plugin objects were restored.
+
+TestName="bscan-plugin-object-test"
+JobName=PluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-plugin-confs
+
+make -C $src/src/plugins/fd install install-test-plugin
+if [ $? -ne 0 ]; then
+    print_debug "Failed to build and install test-plugin!"
+    exit 1
+fi
+
+file=encrypt-bug.jpg
+rm -rf ${cwd}/tmp/*
+echo "${cwd}/README" >${cwd}/tmp/file-list
+
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumFileIndex", "48KB", "Device")'
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+run job=TestPluginTest storage=File1 yes
+wait
+status client=$CLIENT
+messages
+@$out ${cwd}/tmp/log2.out
+list objects
+quit
+END_OF_DATA
+
+run_bacula
+
+objects_lines=`cat ${cwd}/tmp/log2.out | grep 'test-obj-type' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+fi
+
+# Purge volume to delete plugin objects from db
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log3.out
+purge volume=TestVolume001
+@$out ${cwd}/tmp/log4.out
+list objects
+END_OF_DATA
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log4.out | grep 'test-obj-type' | wc -l`
+if [ ${objects_lines} -ne 0 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+fi
+
+
+echo "volume=TestVolume001" >tmp/bscan.bsr
+
+bscan_libdbi
+
+# If the database has a password pass it to bscan
+if test "x${db_password}" = "x"; then
+  PASSWD=
+else
+  PASSWD="-P ${db_password}"
+fi
+
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log5.out 2>&1
+fi
+
+# Check if plugin objects restored successfully
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log6.out
+list objects
+END_OF_DATA
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log6.out | grep 'test-obj-type' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count after bscan found in output: ${objects_lines}, expected 2"
+fi
+
+end_test
