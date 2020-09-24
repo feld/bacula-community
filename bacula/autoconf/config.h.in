@@ -7,7 +7,7 @@
  * Copyright (C) 2000-2020 Kern Sibbald
  * License: BSD 2-Clause; see file LICENSE-FOSS
  */
-   
+
 /* Define if you want to use MySQL as Catalog database */
 #undef USE_MYSQL_DB
 
@@ -97,13 +97,13 @@
 #undef HAVE_U_INT64_T
 #undef HAVE_INTMAX_T
 #undef HAVE_U_INTMAX_T
- 
+
 /* Define if you want TCP Wrappers support */
 #undef HAVE_LIBWRAP
 
 /* Define if you have sys/bitypes.h */
 #undef HAVE_SYS_BITYPES_H
- 
+
 /* Directory for PID files */
 #undef _PATH_BACULA_PIDDIR
 
@@ -155,7 +155,7 @@
 #undef lld
 #undef llu
 
-#undef HAVE_READLINE 
+#undef HAVE_READLINE
 
 #undef HAVE_GMP
 
@@ -182,7 +182,7 @@
 
 #undef HAVE_OLD_SOCKOPT
 #undef USE_THR_SETCONCURRENCY
- 
+
 /* Defined if Gtk+-2.4 or greater is present */
 #undef HAVE_GTK_2_4
 
@@ -1115,6 +1115,12 @@
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
+
+/* Define to 1 if you have working ldap libraries */
+#undef HAVE_LDAP
+
+/* Define to 1 if you have ldap_start_tls() in ldap libraries */
+#undef HAVE_LDAP_START_TLS
 
 /* Define to 1 if you have the `__argz_count' function. */
 #undef HAVE___ARGZ_COUNT
