@@ -1231,9 +1231,9 @@ bRC DOCKER::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       }
 
       ini.register_items(plugin_items_dump, sizeof(struct ini_items));
-      sp->object_name = (char *)INI_RESTORE_OBJECT_NAME;
-      sp->object_len = ini.serialize(&robjbuf);
-      sp->object = robjbuf;
+      sp->restore_obj.object_name = (char *)INI_RESTORE_OBJECT_NAME;
+      sp->restore_obj.object_len = ini.serialize(&robjbuf);
+      sp->restore_obj.object = robjbuf;
       sp->type = FT_PLUGIN_CONFIG;
       DMSG0(ctx, DINFO, "Prepared RestoreObject sent.\n");
       return bRC_OK;
