@@ -92,22 +92,22 @@ struct stream_pkt {
 };
 
 struct restore_object {
-   char *object_name;                 /* Object name to create */
-   char *object;                      /* restore object data to save */
-   int32_t object_len;                /* restore object length */
-   int32_t index;                     /* restore object index */
-   int32_t object_compression;        /* set to compression type */
+   const char *object_name;                 /* Object name to create */
+   char *object;                            /* restore object data to save */
+   int32_t object_len;                      /* restore object length */
+   int32_t index;                           /* restore object index */
+   int32_t object_compression;              /* set to compression type */
 };
 
 struct plugin_object {
    uint32_t JobId;
-   char *path;
-   char *filename;
-   char *plugin_name;
-   char *object_type;
-   char *object_name;
-   char *object_source;
-   char *object_uuid;
+   const char *path;
+   const char *filename;
+   const char *plugin_name;
+   const char *object_type;
+   const char *object_name;
+   const char *object_source;
+   const char *object_uuid;
    uint64_t object_size;
 };
 
