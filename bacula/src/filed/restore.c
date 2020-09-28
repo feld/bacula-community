@@ -1040,7 +1040,6 @@ void do_restore(JCR *jcr)
 
       /* Debug code: check if we must hangup or blowup */
       if (handle_hangup_blowup(jcr, jcr->JobFiles, jcr->JobBytes)) {
-         sd->close();
          goto get_out;
       }
 
