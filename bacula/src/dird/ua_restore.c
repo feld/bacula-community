@@ -1265,6 +1265,7 @@ static bool insert_file_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *f
       rx->JobIds[0] = 0;
    }
    rx->found = false;
+   rx->JobId = 0;
    /* Find and insert jobid and File Index */
    if (!db_sql_query(ua->db, rx->query, jobid_fileindex_handler, (void *)rx)) {
       ua->error_msg(_("Query failed: %s. ERR=%s\n"),
@@ -1293,7 +1294,6 @@ static bool insert_dir_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *di
       Mmsg(rx->query, uar_jobid_fileindex_from_dir[db_get_type_index(ua->db)], rx->JobIds, dir, rx->ClientName);
    }
    rx->found = false;
-   rx->JobId = 0; /* The jobid_fileindex_handler uses JobId to fill JobIds if needed */
 
    /* Find and insert jobid and File Index */
    if (!db_sql_query(ua->db, rx->query, jobid_fileindex_handler, (void *)rx)) {
@@ -1332,6 +1332,7 @@ bool insert_table_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *table)
    Mmsg(rx->query, uar_jobid_fileindex_from_table, table);
 
    rx->found = false;
+
    /* Find and insert jobid and File Index. The JobIds are stored in rx->JobIds */
    if (!db_sql_query(ua->db, rx->query, jobid_fileindex_handler, (void *)rx)) {
       ua->error_msg(_("Query failed: %s. ERR=%s\n"),
@@ -1881,10 +1882,10 @@ static int jobid_fileindex_handler(void *ctx, int num_fields, char **row)
     *
     * It will permit to find restore objects to send during the restore
     */
-   if (rx->JobId == 0) {        /* Avoid to duplicate the JobId inside JobIds */
+   if (!rx->found) {
       rx->JobId = JobId;
    }
-   if (rx->JobId != JobId) {
+   if (*rx->JobIds == '\0' || rx->JobId != JobId) {
       if (*rx->JobIds) {
          pm_strcat(rx->JobIds, ",");
       }
