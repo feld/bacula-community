@@ -249,6 +249,7 @@ bool do_a_command(UAContext *ua)
    int len;
    bool ok = false;
    bool found = false;
+   const char *kw = NULL;
 
    Dmsg1(900, "Command: %s\n", ua->argk[0]);
    if (ua->argc == 0) {
@@ -261,18 +262,25 @@ bool do_a_command(UAContext *ua)
       }
    }
 
-   len = strlen(ua->argk[0]);
+   /* We allow the "help command" and "command help" */
+   kw = ua->argk[0];
+   if (ua->argc == 2) {
+      if (strcasecmp(ua->argk[1], NT_("help")) == 0) {
+         kw = ua->argk[1];
+      }
+   }
+   len = strlen(kw);
    for (i=0; i<comsize; i++) {     /* search for command */
-      if (strncasecmp(ua->argk[0],  commands[i].key, len) == 0) {
+      if (strncasecmp(kw,  commands[i].key, len) == 0) {
          ua->cmd_index = i;
          /* Check if command permitted, but "quit" is always OK */
-         if (strcmp(ua->argk[0], NT_("quit")) != 0 &&
-             !acl_access_ok(ua, Command_ACL, ua->argk[0], len)) {
+         if (strcmp(kw, NT_("quit")) != 0 &&
+             !acl_access_ok(ua, Command_ACL, kw, len)) {
             break;
          }
          /* Check if this command is authorized in RunScript */
          if (ua->runscript && !commands[i].use_in_rs) {
-            ua->error_msg(_("Can't use %s command in a runscript"), ua->argk[0]);
+            ua->error_msg(_("Can't use %s command in a runscript"), kw);
             break;
          }
          if (ua->api) ua->signal(BNET_CMD_BEGIN);
@@ -283,7 +291,7 @@ bool do_a_command(UAContext *ua)
       }
    }
    if (!found) {
-      ua->error_msg(_("%s: is an invalid command.\n"), ua->argk[0]);
+      ua->error_msg(_("%s: is an invalid command.\n"), kw);
       ok = false;
    }
    return ok;
@@ -2526,10 +2534,19 @@ int wait_cmd(UAContext *ua, const char *cmd)
 static int help_cmd(UAContext *ua, const char *cmd)
 {
    int i;
+   const char *kw = ua->argk[1];
+   if (ua->argc == 2) {
+      if (strcasecmp(ua->argk[0], NT_("help")) == 0) {
+         kw = ua->argk[1];
+
+      } else {
+         kw = ua->argk[0];
+      }
+   }
    ua->send_msg(_("  Command       Description\n  =======       ===========\n"));
    for (i=0; i<comsize; i++) {
       if (ua->argc == 2) {
-         if (!strcasecmp(ua->argk[1], commands[i].key)) {
+         if (!strcasecmp(kw, commands[i].key)) {
             ua->send_msg(_("  %-13s %s\n\nArguments:\n\t%s\n"), commands[i].key,
                          commands[i].help, commands[i].usage);
             break;
@@ -2539,7 +2556,7 @@ static int help_cmd(UAContext *ua, const char *cmd)
       }
    }
    if (i == comsize && ua->argc == 2) {
-      ua->send_msg(_("\nCan't find %s command.\n\n"), ua->argk[1]);
+      ua->send_msg(_("\nCan't find %s command.\n\n"), kw);
    }
    ua->send_msg(_("\nWhen at a prompt, entering a period cancels the command.\n\n"));
    return 1;
