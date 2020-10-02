@@ -1108,15 +1108,15 @@ FunctionEnd
 
 ; in silent mode, we manually select or deselect modules, depending on cmdline parameter
 Function SilentSelectComponents
-  ClearErrors
-  ${GetOptions} $CMDLINE "-ComponentFile" $TmpComponent
-  ${IfNot} ${Errors}
-    !InsertMacro SelectSection ${SecFileDaemon}
-    !InsertMacro SetSectionFlag ${SecFileDaemon} ${SF_RO}
-  ${Else}
-    !InsertMacro UnselectSection ${SecFileDaemon}
-    !InsertMacro ClearSectionFlag ${SecFileDaemon} ${SF_RO}
-  ${EndIf}
+  ; by default fd and plugins are selected
+  !InsertMacro SelectSection ${SecFileDaemon}
+  !InsertMacro SetSectionFlag ${SecFileDaemon} ${SF_RO}
+  !InsertMacro SelectSection ${SecAllDrivesPlugin}
+  !InsertMacro SetSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
+  !InsertMacro SelectSection ${SecWinBMRPlugin}
+  !InsertMacro SetSectionFlag ${SecWinBMRPlugin} ${SF_RO}
+  !InsertMacro SelectSection ${SecCDPPlugin}
+  !InsertMacro SetSectionFlag ${SecCDPPlugin} ${SF_RO}
   ClearErrors
   ${GetOptions} $CMDLINE "-ComponentStorage" $TmpComponent
   ${IfNot} ${Errors}
@@ -1152,33 +1152,6 @@ Function SilentSelectComponents
   ${Else}
     !InsertMacro UnselectSection ${SecTrayMonitor}
     !InsertMacro ClearSectionFlag ${SecTrayMonitor} ${SF_RO}
-  ${EndIf}
-  ClearErrors
-  ${GetOptions} $CMDLINE "-ComponentAllDrivesPlugin" $TmpComponent
-  ${IfNot} ${Errors}
-    !InsertMacro SelectSection ${SecAllDrivesPlugin}
-    !InsertMacro SetSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
-  ${Else}
-    !InsertMacro UnselectSection ${SecAllDrivesPlugin}
-    !InsertMacro ClearSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
-  ${EndIf}
-  ClearErrors
-  ${GetOptions} $CMDLINE "-ComponentWinBMRPlugin" $TmpComponent
-  ${IfNot} ${Errors}
-    !InsertMacro SelectSection ${SecWinBMRPlugin}
-    !InsertMacro SetSectionFlag ${SecWinBMRPlugin} ${SF_RO}
-  ${Else}
-    !InsertMacro UnselectSection ${SecWinBMRPlugin}
-    !InsertMacro ClearSectionFlag ${SecWinBMRPlugin} ${SF_RO}
-  ${EndIf}
-  ClearErrors
-  ${GetOptions} $CMDLINE "-ComponentCDPPlugin" $TmpComponent
-  ${IfNot} ${Errors}
-    !InsertMacro SelectSection ${SecCDPPlugin}
-    !InsertMacro SetSectionFlag ${SecCDPPlugin} ${SF_RO}
-  ${Else}
-    !InsertMacro UnselectSection ${SecCDPPlugin}
-    !InsertMacro ClearSectionFlag ${SecCDPPlugin} ${SF_RO}
   ${EndIf}
   ClearErrors
 FunctionEnd
