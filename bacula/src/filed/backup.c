@@ -1457,9 +1457,9 @@ static void close_vss_backup_session(JCR *jcr)
          ff_pkt->type = FT_RESTORE_FIRST;
          ff_pkt->LinkFI = 0;
          ff_pkt->restore_obj.object_name = (char *)"job_metadata.xml";
-         ff_pkt->object = (char *)metadata;
+         ff_pkt->restore_obj.object = (char *)metadata;
          ff_pkt->restore_obj.object_len = (wcslen(metadata) + 1) * sizeof(WCHAR);
-         ff_pkt->restore_obj.object_index = (int)time(NULL);
+         ff_pkt->restore_obj.index = (int)time(NULL);
          save_file(jcr, ff_pkt, true);
      }
    }
