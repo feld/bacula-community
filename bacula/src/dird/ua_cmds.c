@@ -1728,7 +1728,7 @@ int tag_cmd(UAContext *ua, const char *cmd)
          if (!get_cmd(ua, _("Enter the Tag value: "), false)) {
             return false;
          }
-         if (strlen(ua->cmd) > sizeof(t.Name)-1) {
+         if (strlen(ua->cmd) > sizeof(t.Name)-1 || !is_name_valid(ua->cmd, NULL, "#")) {
             ua->error_msg(_("Invalid tag\n"));
             return false;
          }
