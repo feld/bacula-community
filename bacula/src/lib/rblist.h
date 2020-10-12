@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef RBLIST_H
+#define RBLIST_H
+
 #define M_ABORT 1
 
 /*
@@ -154,3 +157,4 @@ inline bool rblist::red(const void *item) const
 {
    return ((rblink *)(((char *)item)+loffset))->red;
 }
+#endif /* RBLIST_H */

@@ -2190,18 +2190,21 @@ static void list_drives(findFILESET *fileset, dlist *name_list, MTab *mtab)
  *
  */
 static int
-get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
+get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
 {
    int nCount = 0;
-
 #ifdef HAVE_WIN32
    findFILESET *fileset = ff->fileset;
    findINCEXE *alldrives = NULL, *inc = NULL;
    uint64_t    flags = 0;
    char drive[4];
 
-   MTab mtab;
-   mtab.get();                  /* read the disk structure */
+   /* give it our best shot */
+   MTab *mtab = (MTab*) mtab_def;
+   if (!mtab_def) {
+      mtab = New(MTab());
+      mtab->get();
+   }
 
    /* We check if we need to complete the fileset with File=/ */
    if (fileset) {
@@ -2216,7 +2219,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
              * sub volumes are added in the second part if needed
              */
             alldrives = incexe; /* Keep it if MULTIFS is set */
-            list_drives(fileset, &incexe->name_list, &mtab);
+            list_drives(fileset, &incexe->name_list, mtab);
          }
       }
    }
@@ -2226,7 +2229,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
       strcpy(drive, "c:\\");
       for (int i=0; szDrives[i] ; i++) {
          drive[0] = szDrives[i];
-         if (mtab.addInSnapshotSet(drive)) { /* When all volumes are selected, we can stop */
+         if (mtab->addInSnapshotSet(drive)) { /* When all volumes are selected, we can stop */
             Dmsg0(DT_VOLUME|50, "All Volumes are marked, stopping the loop here\n");
             goto all_included;
          }
@@ -2234,6 +2237,11 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
    }
 
    if (fileset) {
+
+      /* Writer dictates the snapshot included components
+       * but we still give the chanche to include extra files to
+       * the snapshot set via fileset include_list
+       */
       dlistString *node;
 
       for (int i=0; i<fileset->include_list.size(); i++) {
@@ -2242,7 +2250,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
          /* look through all files */
          foreach_dlist(node, &incexe->name_list) {
             char *fname = node->c_str();
-            if (mtab.addInSnapshotSet(fname)) {
+            if (mtab->addInSnapshotSet(fname)) {
                /* When all volumes are selected, we can stop */
                Dmsg0(DT_VOLUME|50, "All Volumes are marked, stopping the loop here\n");
                goto all_included;
@@ -2261,7 +2269,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
 
          Dmsg0(DT_VOLUME|50, "OneFS is set, looking for remaining volumes\n");
 
-         foreach_rblist(elt, mtab.entries) {
+         foreach_rblist(elt, mtab->entries) {
             if (elt->in_SnapshotSet) {
                continue;         /* Already in */
             }
@@ -2281,15 +2289,17 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
                /* First thing is to look in the exclude list to see if this directory
                 * is explicitly excluded
                 */
-               if (is_excluded(fileset, fn)) {
+               if (!is_excluded(fileset, fn)) {
+                  elt->setInSnapshotSet();
+               } else {
                   Dmsg1(DT_VOLUME|50, "Looks to be excluded %s\n", fn);
                   continue;
                }
 
                /* c:/vol/vol2/vol3
-                * will look c:/, then c:/vol/, then c:/vol2/ and if one of them
-                * is selected, the sub volume will be directly marked.
-                */
+               * will look c:/, then c:/vol/, then c:/vol2/ and if one of them
+               * is selected, the sub volume will be directly marked.
+               */
                for (char *p1 = fn ; *p1 && !elt->in_SnapshotSet ; p1++) {
                   if (IsPathSeparator(*p1)) {
                      bool to_add=false; /* Add this volume to the FileSet ? */
@@ -2297,10 +2307,10 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
                      *(p1 + 1) = 0;
 
                      /* We look for the previous directory, and if marked, we mark
-                      * the current one as well
-                      */
+                     * the current one as well
+                     */
                      Dmsg1(DT_VOLUME|50, "Looking for %s\n", fn);
-                     elt2 = mtab.search(fn);
+                     elt2 = mtab->search(fn);
                      if (elt2 && elt2->in_SnapshotSet) {
                         Dmsg0(DT_VOLUME|50, "Put volume in SnapshotSet\n");
                         elt->setInSnapshotSet();
@@ -2308,8 +2318,8 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
                      }
 
                      /* Find where to add the new volume, normally near the
-                      * root volume, or if we are using /
-                      */
+                     * root volume, or if we are using /
+                     */
                      if (alldrives) {
                         inc = alldrives;
                      } else {
@@ -2337,10 +2347,10 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
          }
          free_pool_memory(fn);
       }
-   all_included:
+all_included:
       /* Now, we look the volume list to know which one to include */
       MTabEntry *elt;
-      foreach_rblist(elt, mtab.entries) {
+      foreach_rblist(elt, mtab->entries) {
          if (elt->in_SnapshotSet) {
             Dmsg1(DT_VOLUME|50,"Adding volume in mount_points list %ls\n",elt->volumeName);
             nCount++;
@@ -2349,6 +2359,9 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives)
       }
    }
 
+   if (!mtab_def) {
+      delete mtab;
+   }
 #endif  /* HAVE_WIN32 */
    return nCount;
 }
@@ -2366,7 +2379,7 @@ static int estimate_cmd(JCR *jcr)
    }
 
    /* On windows, the fileset can be completed by this function (File=/ => File=C:/ + File=E:/) */
-   get_win32_driveletters(jcr, jcr->ff, NULL);
+   get_win32_driveletters(jcr, jcr->ff, NULL, NULL);
 
    make_estimate(jcr);
    dir->fsend(OKest, edit_uint64_with_commas(jcr->num_files_examined, ed1),
@@ -2888,12 +2901,13 @@ static int backup_cmd(JCR *jcr)
    /* START VSS ON WIN32 */
       jcr->pVSSClient = VSSInit();
       if (jcr->pVSSClient->InitializeForBackup(jcr)) {
-         generate_plugin_event(jcr, bEventVssBackupAddComponents);
+         MTab *tab = jcr->pVSSClient->GetVolumeList();
+         generate_plugin_event(jcr, bEventVssBackupAddComponents, tab);
          /* tell vss which drives to snapshot */
          char szWinDriveLetters[27];
          *szWinDriveLetters=0;
          generate_plugin_event(jcr, bEventVssPrepareSnapshot, szWinDriveLetters);
-         if (get_win32_driveletters(jcr, jcr->ff, szWinDriveLetters)) {
+         if (get_win32_driveletters(jcr, jcr->ff, szWinDriveLetters, tab)) {
             Jmsg(jcr, M_INFO, 0, _("Generate VSS snapshots. Driver=\"%s\"\n"),
                  jcr->pVSSClient->GetDriverName());
 
@@ -2927,7 +2941,7 @@ static int backup_cmd(JCR *jcr)
 
    } else {                     /* No snapshot */
       /* On windows, the FileSet might be adjusted with the options that are used (File=/ => File=C:/, File=E:/) */
-      get_win32_driveletters(jcr, jcr->ff, NULL);
+      get_win32_driveletters(jcr, jcr->ff, NULL, NULL);
    }
    /* Call RunScript just after the Snapshot creation, usually, we restart services */
    run_scripts(jcr, jcr->RunScripts, "ClientAfterVSS");
