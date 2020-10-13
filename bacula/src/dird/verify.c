@@ -798,6 +798,12 @@ void get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
             case '1':                 /* compare SHA1 */
                do_Digest = CRYPTO_DIGEST_SHA1;
                break;
+            case '2':                 /* compare SHA256 */
+               do_Digest = CRYPTO_DIGEST_SHA256;
+               break;
+            case '3':                 /* compare SHA512 */
+               do_Digest = CRYPTO_DIGEST_SHA512;
+               break;
             case ':':
             case 'V':
             default:
@@ -815,7 +821,7 @@ void get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
           * preceded by an attributes record, which sets attr_file_index
           */
          if (jcr->FileIndex != file_index) {
-            Jmsg2(jcr, M_FATAL, 0, _("MD5/SHA1 index %d not same as attributes %d\n"),
+            Jmsg2(jcr, M_FATAL, 0, _("MD5/SHA index %d not same as attributes %d\n"),
                file_index, jcr->FileIndex);
             free_pool_memory(fname);
             return;

@@ -144,6 +144,8 @@ void v_ctx::scan_fileset()
          findFOPTS *fo = (findFOPTS *)incexe->opts_list.get(j);
          check_size = (strchr(fo->VerifyOpts, 's') != NULL);
          if ((strchr(fo->VerifyOpts, '1') != NULL) ||
+             (strchr(fo->VerifyOpts, '2') != NULL) ||
+             (strchr(fo->VerifyOpts, '3') != NULL) ||
              (strchr(fo->VerifyOpts, '5') != NULL))
          {
             check_chksum = true;

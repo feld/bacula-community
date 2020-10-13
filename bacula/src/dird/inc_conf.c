@@ -273,11 +273,11 @@ static void scan_include_options(LEX *lc, int keyword, char *opts, int optlen)
    /* Check if the options are correct */
    switch(keyword) {
    case INC_KW_VERIFY:
-      fs_options = "ipnugsamcd51:V"; /* From dird/verify.c */
+      fs_options = "ipnugsamcd5123:V"; /* From dird/verify.c */
       break;
    case INC_KW_BASEJOB:
    case INC_KW_ACCURATE:
-      fs_options = "ipnugsamMcdA51:JC"; /* From filed/accurate.c accurate_check_file() */
+      fs_options = "ipnugsamMcdA5123:JC"; /* From filed/accurate.c accurate_check_file() */
       break;
    default:
       break;
