@@ -146,6 +146,12 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
                return false;
             }
 
+            // early check if auth interaction finish
+            if (dir->msg[0] == UA_AUTH_INTERACTIVE_FINISH){
+               // break the loop
+               break;
+            }
+
             pm_strcpy(msg, NULL);
             pm_strcpy(msg, dir->msg + 1);
             strip_trailing_junk(msg.c_str());
@@ -167,7 +173,7 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
 
                   // now we should return it to director
                   strip_trailing_junk(buf.c_str());
-                  dir->fsend("%s", buf.c_str());
+                  dir->fsend("%c%s", UA_AUTH_INTERACTIVE_RESPONSE, buf.c_str());
                   break;
 
                case UA_AUTH_INTERACTIVE_HIDDEN:
@@ -184,7 +190,7 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
                   bstrncpy(buf.c_str(), passwd, buf.size());
 #endif
                   // now we should get a hidden response at `buf` class, return it to director
-                  dir->fsend("%s", buf.c_str());
+                  dir->fsend("%c%s", UA_AUTH_INTERACTIVE_RESPONSE, buf.c_str());
                   break;
 
                case UA_AUTH_INTERACTIVE_MESSAGE:
@@ -193,13 +199,28 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
                   break;
 
                case UA_AUTH_INTERACTIVE_FINISH:
-                  return true;
+                  // well it is not possible that we will reach this code, so report insanity
+                  return false;
 
                default:
                   bmicrosleep(5, 0); // original cram_md5_respond() wait for 5s here
                   return false;
             }
          }
+
+         // now check if authorized
+         if (bsock->wait_data(180) <= 0 || bsock->recv() <= 0) {
+            Dmsg1(1, "Receive auth confirmation failed. ERR=%s\n", bsock->bstrerror());
+            bmicrosleep(5, 0);
+            return false;
+         }
+         if (strcmp(bsock->msg, "1000 OK auth\n") == 0) {
+            // authorization ok
+            return true;
+         }
+         Dmsg1(1, "Received bad response: %s\n", bsock->msg);
+         bmicrosleep(5, 0);
+         return false;
       }
    }
 
@@ -239,7 +260,7 @@ int ConsoleAuthenticate::authenticate_director(DIRRES *director, CONRES *cons)
    }
 
    /* Timeout Hello after 15 secs */
-   StartAuthTimeout(15);
+   StartAuthTimeout(1500);
 
    dir->fsend(hello, bashed_name, UA_VERSION, tlspsk_local_need);
 

@@ -233,9 +233,16 @@ static bRC dir_authplugin_handle_response(JCR *jcr, BSOCK *bsock, const char *pl
       return bRC_Error;
    }
 
+   // check if it is a response packet
+   if (bsock->msg[0] != UA_AUTH_INTERACTIVE_RESPONSE){
+      Dmsg1(dbglvl, "Receive auth response packet error. Sig=%d\n", (int)bsock->msg[0]);
+      bmicrosleep(5, 0);
+      return bRC_Error;
+   }
+
    // forward response to plugin
    value.seqdata = seqdata;
-   value.response = bsock->msg;
+   value.response = bsock->msg + 1;    // we have to omit a first character which is a packet mark
    return dir_authplugin_generate_plugin_event(jcr, pluginname, bDirEventAuthenticationResponse, (void*)&value);
 }
 

@@ -336,6 +336,7 @@ int UAAuthenticate::authenticate_user_agent()
          legacy_auth = false;
          Dmsg1(dbglvl, "authenticate with Plugin=%s\n", cons->authenticationplugin);
          if (ua_version < UA_VERSION_PLUGINAUTH || !authenticate_with_plugin(cons)){
+            auth_success = false;
             goto auth_done;
          }
       }
@@ -429,8 +430,11 @@ bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
    }
 
    if (dir_authplugin_authenticate(uac->jcr, bsock, authData->name) != bRC_OK){
+      bsock->fsend(_("1999 Authorization failed !!!.\n"));
+      bmicrosleep(5, 0);
       return false;
    }
 
+   bsock->fsend("1000 OK auth\n");
    return true;
 }
