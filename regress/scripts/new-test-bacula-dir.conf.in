@@ -455,6 +455,50 @@ FileSet {
 }
 
 FileSet {
+  Name = "FS2"
+  Include  { Options { verify=s2; signature=SHA256 }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA256; sparse=yes }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA256; compression=GZIP }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA256; compression=LZO }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA256; compression=LZO; sparse=yes }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA256; compression=GZIP; sparse=yes }
+    File = <@tmpdir@/file-list
+  }
+}
+
+FileSet {
+  Name = "FS3"
+  Include  { Options { verify=s3; signature=SHA512 }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA512; sparse=yes }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA512; compression=GZIP }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA512; compression=LZO }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA512; compression=LZO; sparse=yes }
+    File = <@tmpdir@/file-list
+  }
+  Include  { Options { signature=SHA512; compression=GZIP; sparse=yes }
+    File = <@tmpdir@/file-list
+  }
+}
+
+FileSet {
   Name = "SimpleSet"
   Include {  
      Options { signature=MD5 }

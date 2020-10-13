@@ -10,8 +10,6 @@ TestName="verify-data-test"
 JobName=VerifyVol
 . scripts/functions
 
-require_linux
-
 cwd=`pwd`
 scripts/cleanup
 scripts/copy-test-confs
@@ -38,6 +36,8 @@ run job=$JobName level=full fileset=FS1 yes
 run job=$JobName level=full fileset=FS5 yes
 run job=$JobName level=full fileset=FSno5 yes
 run job=$JobName level=full fileset=FS5nocheck yes
+run job=$JobName level=full fileset=FS2 yes
+run job=$JobName level=full fileset=FS3 yes
 wait
 messages
 @# 
@@ -49,10 +49,14 @@ run job=VerifyData jobid=1 yes
 run job=VerifyData jobid=2 yes
 run job=VerifyData jobid=3 yes
 run job=VerifyData jobid=4 yes
+run job=VerifyData jobid=5 yes
+run job=VerifyData jobid=6 yes
 run job=VerifyData jobid=1 accurate=yes yes
 run job=VerifyData jobid=2 accurate=yes yes
 run job=VerifyData jobid=3 accurate=yes yes
 run job=VerifyData jobid=4 accurate=yes yes
+run job=VerifyData jobid=5 accurate=yes yes
+run job=VerifyData jobid=6 accurate=yes yes
 wait
 messages
 quit
@@ -77,20 +81,11 @@ stop_bacula
 
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "BlockChecksum", "no", "Device")'
 
-#
-# NOTE!!!  sed is an ASCII file editor not a binary file editor
-#   Thus in general, the following sed will not work and is 
-#   not portable.  It is known to fail on FreeBSD, but *seems* to work
-#   on Linux.
-#
-# Introduce a volume error by modifying the some Volume data
 nbok=2
-if [ x$FORCE_DEDUP = xyes ]; then
-    nbok=4
+if [ x$FORCE_DEDUP = xyes -o x$FORCE_CLOUD = xyes ]; then
+    nbok=6
 elif [ x$FORCE_ALIGNED = xyes ]; then
     sed -i 's/DUALCASE/PUALCASE/g' $tmp/TestVolume001.add
-elif [ x$FORCE_CLOUD = xyes ]; then
-    sed -i 's/DUALCASE/PUALCASE/g' $tmp/TestVolume001/part.2
 else
     sed -i 's/DUALCASE/PUALCASE/g' $tmp/TestVolume001
 fi
@@ -98,9 +93,7 @@ fi
 cat <<END_OF_DATA >tmp/bconcmds
 @$out tmp/log3.out
 @# 
-@# now do a verify volume with errors.  Note, which JobId produces
-@#  verify errors depends on the size of data stored (less with dedup
-@#  and ALIGNED).  
+@# now do a verify volume with errors
 @#
 @$out ${cwd}/tmp/log3.out
 setdebug level=10 client
@@ -108,6 +101,8 @@ run job=VerifyData jobid=1 yes
 run job=VerifyData jobid=2 yes
 run job=VerifyData jobid=3 yes
 run job=VerifyData jobid=4 yes
+run job=VerifyData jobid=5 yes
+run job=VerifyData jobid=6 yes
 wait
 messages
 quit
@@ -115,23 +110,20 @@ END_OF_DATA
 
 run_bacula
 
-sleep 2
+sleep 1
 check_for_zombie_jobs storage=File
 stop_bacula
 
 nb=`grep "^  Termination: *Backup OK" tmp/log1.out | wc -l`
-if [ $nb -ne 4 ]; then
+if [ $nb -ne 6 ]; then
     bstat=1
 fi
 nb=`grep "^  Termination: *Verify OK" tmp/log2.out | wc -l`
-if [ $nb -ne 8 ]; then
+if [ $nb -ne 12 ]; then
     vstat=1
 fi
 nb=`grep "^  Termination: *Verify OK" tmp/log3.out | wc -l`
 if [ $nb -ne $nbok ]; then
-    echo "nb=${nb} nbok=${nbok}"
-    echo "tmp/log3.out"
-    cat tmp/log3.out
     vstat=2
 fi
 nb=`grep "^  Termination: *Verify Dif" tmp/log4.out | wc -l`
@@ -139,4 +131,5 @@ if [ $nb -ne 1 ]; then
     vstat=3
 fi
 dstat=0
+rstat=0
 end_test
