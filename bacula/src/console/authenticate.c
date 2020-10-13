@@ -39,11 +39,14 @@
  * Community
  *   prior to 06Aug13 no version
  *   100  14Feb17 - added comm line compression
+ *
+ * Starting from version 9.7 both Hellos become the same:
+ *    200  1/10/2020 - added `auth interactive` functionality
  */
 #ifndef COMMUNITY
 #define UA_VERSION 1   /* Enterprise */
 #else
-#define UA_VERSION 100 /* Community */
+#define UA_VERSION 200 /* Community */
 #endif
 
 void senditf(const char *fmt, ...);
@@ -69,8 +72,8 @@ public:
    virtual bool CheckTLSRequirement();
 
    int authenticate_director(DIRRES *director, CONRES *cons);
+   bool ClientAuthenticate(CONRES *cons, const char *password);
 };
-
 
 int authenticate_director(BSOCK *dir, DIRRES *director, CONRES *cons)
 {
@@ -97,6 +100,117 @@ bool ConsoleAuthenticate::CheckTLSRequirement()
    return true;
 }
 
+bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
+{
+   BSOCK *dir = bsock;
+   bool legacy = true;        // by default we should execute legacy authentication
+   POOL_MEM msg(PM_MESSAGE);
+
+   // at first handle optional startTLS
+   if (!ClientEarlyTLS()) {
+      return false;
+   }
+
+   // auth interactive is handled in named console only
+   if (cons){
+      // if starttls does not left our auth interactive command get it from director
+      if (!check_early_tls){
+         if (dir->recv() <= 0) {
+            bmicrosleep(5, 0); // original cram_md5_respond() wait for 5s here
+            return false;
+         }
+      }
+
+      // temporary buffer
+      pm_strcpy(msg, dir->msg);
+
+      // the check_early_tls=false means legacy authentication should do standard recv() else it can get command already in the bsock->msg
+      check_early_tls = true;
+
+      if (strncmp(msg.c_str(), UA_AUTH_INTERACTIVE, strlen(UA_AUTH_INTERACTIVE)) == 0){
+         // do challenge/response chatting
+         check_early_tls = false;   // "tell" cram_md5_respond to do a recv()
+         legacy = false;            // we do the authentication
+
+         // first display a welcome string if available
+         char *welcome = msg.c_str() + strlen(UA_AUTH_INTERACTIVE) + 1;
+         if (strlen(welcome) > 2){
+            sendit("> ");
+            sendit(welcome);
+         }
+
+         for (;;){
+            // loop over operations
+            if (dir->recv() <= 0) {
+               bmicrosleep(5, 0); // original cram_md5_respond() wait for 5s here
+               return false;
+            }
+
+            pm_strcpy(msg, NULL);
+            pm_strcpy(msg, dir->msg + 1);
+            strip_trailing_junk(msg.c_str());
+
+            char *data = msg.c_str();
+            POOL_MEM buf(PM_MESSAGE);
+            char *passwd;
+            char *input;
+
+            // the command is encoded as a first char of the message
+            switch (dir->msg[0]){
+               case UA_AUTH_INTERACTIVE_PLAIN:
+                  sendit(data);
+                  input = fgets(buf.c_str(), buf.size(), stdin);
+                  if (!input){
+                     Dmsg0(1, "Error reading user input!\n");
+                     return false;
+                  }
+
+                  // now we should return it to director
+                  strip_trailing_junk(buf.c_str());
+                  dir->fsend("%s", buf.c_str());
+                  break;
+
+               case UA_AUTH_INTERACTIVE_HIDDEN:
+#if defined(HAVE_WIN32)
+                  sendit(data);
+                  if (win32_cgets(buf.c_str(), buf.size()) == NULL) {
+                     buf[0] = 0;
+                     return 0;
+                  } else {
+                     return strlen(buf);
+                  }
+#else
+                  passwd = getpass(data);
+                  bstrncpy(buf.c_str(), passwd, buf.size());
+#endif
+                  // now we should get a hidden response at `buf` class, return it to director
+                  dir->fsend("%s", buf.c_str());
+                  break;
+
+               case UA_AUTH_INTERACTIVE_MESSAGE:
+                  sendit(data);
+                  sendit("\n");
+                  break;
+
+               case UA_AUTH_INTERACTIVE_FINISH:
+                  return true;
+
+               default:
+                  bmicrosleep(5, 0); // original cram_md5_respond() wait for 5s here
+                  return false;
+            }
+         }
+      }
+   }
+
+   /* standard md5 handle */
+   if (legacy && !ClientCramMD5AuthenticateBase(password)) {
+      return false;
+   }
+
+   return true;
+}
+
 /*
  * Authenticate Director
  */
@@ -106,6 +220,7 @@ int ConsoleAuthenticate::authenticate_director(DIRRES *director, CONRES *cons)
    int dir_version = 0;
    char bashed_name[MAX_NAME_LENGTH];
    bool skip_msg = false;
+
    /*
     * Send my name to the Director then do authentication
     */
@@ -128,7 +243,7 @@ int ConsoleAuthenticate::authenticate_director(DIRRES *director, CONRES *cons)
 
    dir->fsend(hello, bashed_name, UA_VERSION, tlspsk_local_need);
 
-   if (!ClientCramMD5Authenticate(password)) {
+   if (!ClientAuthenticate(cons, password)){
       if (dir->is_timed_out()) {
          sendit(_("The Director is busy or the MaximumConsoleConnections limit is reached.\n"));
          skip_msg = true;

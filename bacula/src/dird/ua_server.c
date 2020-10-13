@@ -130,6 +130,9 @@ static void *handle_UA_client_request(void *arg)
 
    jcr = new_control_jcr("-Console-", JT_CONSOLE);
 
+   // create plugins for authentication/authorization handling
+   new_plugins(jcr);
+
    ua = new_ua_context(jcr);
    ua->UA_sock = user;
    set_jcr_in_tsd(INVALID_JCR);

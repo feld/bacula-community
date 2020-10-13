@@ -438,6 +438,8 @@ static RES_ITEM con_items[] = {
    {"TlsKey",               store_dir,       ITEM(res_con.tls_keyfile), 0, 0, 0},
    {"TlsDhFile",            store_dir,       ITEM(res_con.tls_dhfile), 0, 0, 0},
    {"TlsAllowedCn",         store_alist_str, ITEM(res_con.tls_allowed_cns), 0, 0, 0},
+   {"AuthenticationPlugin",   store_str,     ITEM(res_con.authenticationplugin), 0, 0, 0},
+   {"AuthorizationPlugin",    store_str,     ITEM(res_con.authorizationplugin), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -941,6 +943,12 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
       }
       sendit(sock, _("Console: name=%s SSL=%d PSK=%d\n"),
          res->res_con.hdr.name, res->res_con.tls_enable, res->res_con.tls_psk_enable);
+      if (res->res_con.authenticationplugin){
+         sendit(sock, _("      Authentication=%s\n"), res->res_con.authenticationplugin);
+      }
+      if (res->res_con.authorizationplugin){
+         sendit(sock, _(" (!)  Authorization=%s\n"), res->res_con.authorizationplugin);
+      }
       for (int acl=0; acl<Num_ACL; acl++) {
          if (res->res_con.ACL_lists[acl]==NULL) {
             continue;
@@ -1317,7 +1325,7 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
          int i;
          RUN *run = res->res_sch.run;
          char buf[1000], num[30];
-         sendit(sock, _("Schedule: Name=%s Enabled=%d\n"), 
+         sendit(sock, _("Schedule: Name=%s Enabled=%d\n"),
             res->res_sch.hdr.name, res->res_sch.is_enabled());
          if (!run) {
             break;
@@ -1658,6 +1666,12 @@ void free_resource(RES *rres, int type)
             delete res->res_con.ACL_lists[i];
             res->res_con.ACL_lists[i] = NULL;
          }
+      }
+      if (res->res_con.authenticationplugin) {
+         free(res->res_con.authenticationplugin);
+      }
+      if (res->res_con.authorizationplugin) {
+         free(res->res_con.authorizationplugin);
       }
       break;
    case R_CLIENT:
@@ -2045,7 +2059,7 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
          res->res_store.shared_storage = res_all.res_store.shared_storage;
          res->res_store.autochanger = res_all.res_store.autochanger;
          /* The resource name is Autochanger instead of Storage
-          * so we force the Autochanger attributes 
+          * so we force the Autochanger attributes
           */
          if (strcasecmp(resources[rindex].name, "autochanger") == 0) {
             /* The Autochanger resource might be already defined */

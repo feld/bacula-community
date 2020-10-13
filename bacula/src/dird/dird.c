@@ -130,7 +130,7 @@ static BDB *dir_get_db(JCR *jcr)
    return db;
 }
 
-static bool dir_sql_log(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg) 
+static bool dir_sql_log(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg)
 {
    bool ret;
    BDB *db = dir_get_db(jcr);
@@ -144,7 +144,7 @@ static bool dir_sql_log(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg)
       db_close_database(jcr, db);             /* It was open just for us */
    }
    return ret;
-} 
+}
 
 static bool dir_sql_event(JCR *jcr, utime_t mtime, char *line)
 {
@@ -167,8 +167,8 @@ bail_out:
    if (!jcr || !jcr->db) {
       db_close_database(jcr, db);             /* It was open just for us */
    }
-   return ret; 
-} 
+   return ret;
+}
 
 static void usage()
 {
@@ -1153,7 +1153,7 @@ static bool check_resources()
       /* Make sure the job doesn't use the Scratch Pool to start with */
       const char *name;
       if (!check_pool(job->JobType, job->JobLevel,
-                      job->pool, job->next_pool, &name)) { 
+                      job->pool, job->next_pool, &name)) {
          Jmsg(NULL, M_FATAL, 0,
               _("%s \"Scratch\" not valid in Job \"%s\".\n"),
               name, job->name());
@@ -1319,7 +1319,7 @@ static bool check_resources()
          case COLLECTOR_BACKEND_CSV:
             /* a CSV backend require a file parameter */
             if (!collect->file){
-               Jmsg(NULL, M_FATAL, 0, _("File parameter required in Collector CSV resource \"%s\".\n"), 
+               Jmsg(NULL, M_FATAL, 0, _("File parameter required in Collector CSV resource \"%s\".\n"),
                      collect->hdr.name);
                OK = false;
             }
@@ -1327,7 +1327,7 @@ static bool check_resources()
          case COLLECTOR_BACKEND_Graphite:
             /* we require a host parameter at least */
             if (!collect->host){
-               Jmsg(NULL, M_FATAL, 0, _("Host parameter required in Collector Graphite resource \"%s\".\n"), 
+               Jmsg(NULL, M_FATAL, 0, _("Host parameter required in Collector Graphite resource \"%s\".\n"),
                      collect->hdr.name);
                OK = false;
             }
@@ -1345,7 +1345,7 @@ static bool check_resources()
 }
 
 
-/* Take note of all jobs to be canceled when we start the director 
+/* Take note of all jobs to be canceled when we start the director
  * We don't send events directly here because the events might also
  * be sent to the Catalog. Better to return a list of message.
  */
@@ -1383,13 +1383,13 @@ static bool check_catalog(cat_op mode)
        * Make sure we can open catalog, otherwise print a warning
        * message because the server is probably not running.
        */
-      db = db_init_database(NULL, catalog->db_driver, catalog->db_name, 
+      db = db_init_database(NULL, catalog->db_driver, catalog->db_name,
               catalog->db_user,
               catalog->db_password, catalog->db_address,
               catalog->db_port, catalog->db_socket,
               catalog->db_ssl_mode, catalog->db_ssl_key,
               catalog->db_ssl_cert, catalog->db_ssl_ca,
-              catalog->db_ssl_capath, catalog->db_ssl_cipher,           
+              catalog->db_ssl_capath, catalog->db_ssl_cipher,
               true /* mult_db_connections */,     /* Avoid issue with counters during a reload */
               catalog->disable_batch_insert);
 

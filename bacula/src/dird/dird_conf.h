@@ -198,21 +198,23 @@ enum {
 class CONRES {
 public:
    RES   hdr;
-   char *password;                    /* UA server password */
-   alist *ACL_lists[Num_ACL];         /* pointers to ACLs */
-   char *tls_ca_certfile;             /* TLS CA Certificate File */
-   char *tls_ca_certdir;              /* TLS CA Certificate Directory */
-   char *tls_certfile;                /* TLS Server Certificate File */
-   char *tls_keyfile;                 /* TLS Server Key File */
-   char *tls_dhfile;                  /* TLS Diffie-Hellman Parameters */
-   alist *tls_allowed_cns;            /* TLS Allowed Clients */
-   TLS_CONTEXT *tls_ctx;              /* Shared TLS Context */
-   TLS_CONTEXT *psk_ctx;              /* Shared TLS-PSK Context */
-   bool tls_authenticate;             /* Authenticated with TLS */
-   bool tls_enable;                   /* Enable TLS */
-   bool tls_psk_enable;               /* Enable TLS-PSK */
-   bool tls_require;                  /* Require TLS */
-   bool tls_verify_peer;              /* TLS Verify Client Certificate */
+   char *password;                     /* UA server password */
+   alist *ACL_lists[Num_ACL];          /* pointers to ACLs */
+   char *tls_ca_certfile;              /* TLS CA Certificate File */
+   char *tls_ca_certdir;               /* TLS CA Certificate Directory */
+   char *tls_certfile;                 /* TLS Server Certificate File */
+   char *tls_keyfile;                  /* TLS Server Key File */
+   char *tls_dhfile;                   /* TLS Diffie-Hellman Parameters */
+   alist *tls_allowed_cns;             /* TLS Allowed Clients */
+   TLS_CONTEXT *tls_ctx;               /* Shared TLS Context */
+   TLS_CONTEXT *psk_ctx;               /* Shared TLS-PSK Context */
+   bool tls_authenticate;              /* Authenticated with TLS */
+   bool tls_enable;                    /* Enable TLS */
+   bool tls_psk_enable;                /* Enable TLS-PSK */
+   bool tls_require;                   /* Require TLS */
+   bool tls_verify_peer;               /* TLS Verify Client Certificate */
+   char *authenticationplugin;         /* Authentication Plugin (user/password) */
+   char *authorizationplugin;          /* Authorization Plugin (permissions) */
 
    /* Methods */
    char *name() const;

@@ -422,7 +422,6 @@ public:
    bool dummy_jobmedia;               /* Dummy JobMedia written */
 #endif /* DIRECTOR_DAEMON */
 
-
 #ifdef FILE_DAEMON
    /* File Daemon specific part of JCR */
    BSOCK *sd_calls_client_bsock;      /* Socket used by SDCallsClient feature */

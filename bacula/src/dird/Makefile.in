@@ -34,7 +34,8 @@ dummy:
 #
 SVRSRCS = dird.c admin.c authenticate.c \
 	  autoprune.c backup.c bsr.c \
-	  catreq.c dir_plugins.c dird_conf.c expand.c \
+	  catreq.c dir_plugins.c dir_authplugin.c \
+	  dird_conf.c expand.c \
 	  fd_cmds.c getmsg.c inc_conf.c job.c \
 	  jobq.c mac.c mac_sql.c \
 	  mountreq.c msgchan.c next_vol.c newvol.c \

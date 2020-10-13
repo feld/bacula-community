@@ -121,7 +121,7 @@ bool setup_job(JCR *jcr)
                               jcr->catalog->db_socket,
                               jcr->catalog->db_ssl_mode,
                               jcr->catalog->db_ssl_key, jcr->catalog->db_ssl_cert,
-                              jcr->catalog->db_ssl_ca, jcr->catalog->db_ssl_capath, 
+                              jcr->catalog->db_ssl_ca, jcr->catalog->db_ssl_capath,
                               jcr->catalog->db_ssl_cipher,
                               jcr->catalog->mult_db_connections,
                               jcr->catalog->disable_batch_insert);
@@ -291,7 +291,7 @@ static bool setup_resume_job(JCR *jcr, JOB_DBR *jr)
                               jcr->catalog->db_socket,
                               jcr->catalog->db_ssl_mode,
                               jcr->catalog->db_ssl_key, jcr->catalog->db_ssl_cert,
-                              jcr->catalog->db_ssl_ca, jcr->catalog->db_ssl_capath, 
+                              jcr->catalog->db_ssl_ca, jcr->catalog->db_ssl_capath,
                               jcr->catalog->db_ssl_cipher,
                               jcr->catalog->mult_db_connections,
                               jcr->catalog->disable_batch_insert);
@@ -713,7 +713,7 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
                    "%s jobid=%s job=%s",
                    cancel?"cancel":"stop",
                    edit_uint64(jcr->JobId, ed1), jcr->Job);
-   
+
    if (!cancel) {               /* stop the job */
       if (!jcr->can_be_stopped()) {
          ua->error_msg(_("Cannot stop JobId %s, Job %s is not a regular Backup Job\n"),

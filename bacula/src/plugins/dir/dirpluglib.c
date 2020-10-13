@@ -19,105 +19,72 @@
 /*
  * Common definitions and utility functions for Inteos plugins.
  * Functions defines a common framework used in our utilities and plugins.
+ * This a Director Plugins flavor.
  *
  * Author: Radosław Korzeniewski, MMXIX
  * radoslaw@korzeniewski.net, radekk@inteos.pl
  * Inteos Sp. z o.o. http://www.inteos.pl/
  */
 
-#include "pluglib.h"
+#include "dirpluglib.h"
 
 /* Pointers to Bacula functions used in plugins */
-extern bFuncs *bfuncs;
-extern bInfo *binfo;
+extern bDirFuncs *bfuncs;
+extern bDirInfo *binfo;
 
 /* Events that are passed to plugin
 typedef enum {
-  bEventJobStart                        = 1,
-  bEventJobEnd                          = 2,
-  bEventStartBackupJob                  = 3,
-  bEventEndBackupJob                    = 4,
-  bEventStartRestoreJob                 = 5,
-  bEventEndRestoreJob                   = 6,
-  bEventStartVerifyJob                  = 7,
-  bEventEndVerifyJob                    = 8,
-  bEventBackupCommand                   = 9,
-  bEventRestoreCommand                  = 10,
-  bEventEstimateCommand                 = 11,
-  bEventLevel                           = 12,
-  bEventSince                           = 13,
-  bEventCancelCommand                   = 14,
-  bEventVssBackupAddComponents          = 15,
-  bEventVssRestoreLoadComponentMetadata = 16,
-  bEventVssRestoreSetComponentsSelected = 17,
-  bEventRestoreObject                   = 18,
-  bEventEndFileSet                      = 19,
-  bEventPluginCommand                   = 20,
-  bEventVssBeforeCloseRestore           = 21,
-  bEventVssPrepareSnapshot              = 22,
-  bEventOptionPlugin                    = 23,
-  bEventHandleBackupFile                = 24,
-  bEventComponentInfo                   = 25
-} bEventType;
+  bDirEventJobStart                    = 1,
+  bDirEventJobEnd                      = 2,
+  bDirEventJobInit                     = 3,
+  bDirEventJobRun                      = 4,
+  bDirEventVolumePurged                = 5,
+  bDirEventNewVolume                   = 6,
+  bDirEventNeedVolume                  = 7,
+  bDirEventVolumeFull                  = 8,
+  bDirEventRecyle                      = 9,
+  bDirEventGetScratch                  = 10,
+  bDirEventAuthenticationParam         = 1000,     // *value is a char* to console resource param value
+  bDirEventAuthorizationACLParam       = 1001,     // *value is a char* to console resource param value
+  bDirEventAuthenticationQuestion      = 1002,     // *value is a bDirAuthValue struct allocated by Dir
+                                                   // to get return value from
+  bDirEventAuthenticationResponse      = 1003,     // *value is a char* to user response
+  bDirEventAuthenticate                = 1004,     // return bRC_OK when authenticate is successful
+} bDirEventsType;
 */
 
-const char *eventtype2str(bEvent *event){
+const char *eventtype2str(bDirEvent *event){
    switch (event->eventType){
-      case bEventJobStart:
-         return "bEventJobStart";
-      case bEventJobEnd:
-         return "bEventJobEnd";
-      case bEventStartBackupJob:
-         return "bEventStartBackupJob";
-      case bEventEndBackupJob:
-         return "bEventEndBackupJob";
-      case bEventStartRestoreJob:
-         return "bEventStartRestoreJob";
-      case bEventEndRestoreJob:
-         return "bEventEndRestoreJob";
-      case bEventStartVerifyJob:
-         return "bEventStartVerifyJob";
-      case bEventEndVerifyJob:
-         return "bEventEndVerifyJob";
-      case bEventBackupCommand:
-         return "bEventBackupCommand";
-      case bEventRestoreCommand:
-         return "bEventRestoreCommand";
-      case bEventEstimateCommand:
-         return "bEventEstimateCommand";
-      case bEventLevel:
-         return "bEventLevel";
-      case bEventSince:
-         return "bEventSince";
-      case bEventCancelCommand:
-         return "bEventCancelCommand";
-      case bEventVssBackupAddComponents:
-         return "bEventVssBackupAddComponents";
-      case bEventVssRestoreLoadComponentMetadata:
-         return "bEventVssRestoreLoadComponentMetadata";
-      case bEventVssRestoreSetComponentsSelected:
-         return "bEventVssRestoreSetComponentsSelected";
-      case bEventRestoreObject:
-         return "bEventRestoreObject";
-      case bEventEndFileSet:
-         return "bEventEndFileSet";
-      case bEventPluginCommand:
-         return "bEventPluginCommand";
-      case bEventVssBeforeCloseRestore:
-         return "bEventVssBeforeCloseRestore";
-      case bEventVssPrepareSnapshot:
-         return "bEventVssPrepareSnapshot";
-      case bEventOptionPlugin:
-         return "bEventOptionPlugin";
-      case bEventHandleBackupFile:
-         return "bEventHandleBackupFile";
-      case bEventComponentInfo:
-         return "bEventComponentInfo";
+      case bDirEventJobStart:
+         return "bDirEventJobStart";
+      case bDirEventJobEnd:
+         return "bDirEventJobEnd";
+      case bDirEventJobInit:
+         return "bDirEventJobInit";
+      case bDirEventJobRun:
+         return "bDirEventJobRun";
+      case bDirEventVolumePurged:
+         return "bDirEventVolumePurged";
+      case bDirEventNewVolume:
+         return "bDirEventNewVolume";
+      case bDirEventNeedVolume:
+         return "bDirEventNeedVolume";
+      case bDirEventVolumeFull:
+         return "bDirEventVolumeFull";
+      case bDirEventRecyle:
+         return "bDirEventRecyle";
+      case bDirEventGetScratch:
+         return "bDirEventGetScratch";
+      case bDirEventAuthenticationQuestion:
+         return "bDirEventAuthenticationQuestion";
+      case bDirEventAuthenticationResponse:
+         return "bDirEventAuthenticationResponse";
+      case bDirEventAuthenticate:
+         return "bDirEventAuthenticate";
       default:
          return "Unknown";
    }
 }
-
 
 /*
  * Return the real size of the disk based on the size suffix.

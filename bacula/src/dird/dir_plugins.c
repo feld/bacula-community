@@ -461,6 +461,10 @@ static bRC baculaRegisterEvents(bpContext *ctx, ...)
    va_start(args, ctx);
    while ((event = va_arg(args, uint32_t))) {
       Dmsg1(dbglvl, "dir-Plugin wants event=%u\n", event);
+      switch(event){
+      default:
+         Dmsg1(dbglvl, "event=%u not registered\n", event);
+      }
    }
    va_end(args);
    return bRC_OK;

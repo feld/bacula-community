@@ -94,18 +94,21 @@ typedef enum {
   bwDirVarJobLevel   = 4
 } bwDirVariable;
 
-
 typedef enum {
-  bDirEventJobStart      = 1,
-  bDirEventJobEnd        = 2,
-  bDirEventJobInit       = 3,
-  bDirEventJobRun        = 4,
-  bDirEventVolumePurged  = 5,
-  bDirEventNewVolume     = 6,
-  bDirEventNeedVolume    = 7,
-  bDirEventVolumeFull    = 8,
-  bDirEventRecyle        = 9,
-  bDirEventGetScratch    = 10
+  bDirEventJobStart                    = 1,
+  bDirEventJobEnd                      = 2,
+  bDirEventJobInit                     = 3,
+  bDirEventJobRun                      = 4,
+  bDirEventVolumePurged                = 5,
+  bDirEventNewVolume                   = 6,
+  bDirEventNeedVolume                  = 7,
+  bDirEventVolumeFull                  = 8,
+  bDirEventRecyle                      = 9,
+  bDirEventGetScratch                  = 10,
+  bDirEventAuthenticationQuestion      = 1000,     // *value is a bDirAuthValue struct allocated by Dir
+                                                   // to get return value from
+  bDirEventAuthenticationResponse      = 1001,     // *value is a char* to user response
+  bDirEventAuthenticate                = 1002,     // return bRC_OK when authenticate is successful
 } bDirEventsType;
 
 typedef struct s_bDirEvent {
@@ -165,7 +168,8 @@ typedef struct s_dirpluginInfo {
    const char *plugin_description;
 } pDirInfo;
 
-typedef struct s_dirpluginFuncs {
+typedef struct s_dirpluginFuncs
+{
    uint32_t size;
    uint32_t version;
    bRC (*newPlugin)(bpContext *ctx);
@@ -173,6 +177,8 @@ typedef struct s_dirpluginFuncs {
    bRC (*getPluginValue)(bpContext *ctx, pDirVariable var, void *value);
    bRC (*setPluginValue)(bpContext *ctx, pDirVariable var, void *value);
    bRC (*handlePluginEvent)(bpContext *ctx, bDirEvent *event, void *value);
+   bRC (*getPluginAuthenticationData)(bpContext *ctx, const char *param, void **data);
+   bRC (*getPluginAuthorizationData)(bpContext *ctx, const char *param, void **data);
 } pDirFuncs;
 
 #define dirplug_func(plugin) ((pDirFuncs *)(plugin->pfuncs))

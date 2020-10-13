@@ -29,6 +29,7 @@
 
 #include "bacula.h"
 #include "dird.h"
+#include "dir_authplugin.h"
 
 static const int dbglvl = 50;
 
@@ -235,6 +236,7 @@ public:
    }
 
    int authenticate_user_agent();
+   bool authenticate_with_plugin(CONRES * cons);
 };
 
 int authenticate_user_agent(UAContext *uac)
@@ -254,6 +256,7 @@ int UAAuthenticate::authenticate_user_agent()
    int tlspsk_remote = 0;
    bool fdcallsdir=false;
    CLIENT *cli=NULL;
+   bool legacy_auth = true;
 
    if (ua->msglen < 16 || ua->msglen >= MAX_NAME_LENGTH + 15) {
       Qmsg3(NULL, M_SECURITY, 0, _("UA Hello from %s:%s is invalid. Len=%d\n"), ua->who(),
@@ -323,13 +326,23 @@ int UAAuthenticate::authenticate_user_agent()
    }
    DecodeRemoteTLSPSKNeed(tlspsk_remote);
 
-   if (!ServerCramMD5Authenticate(password)) {
-      goto auth_done;
-   }
-
-   if (cons) {
+   // if user console
+   if (cons){
       uac->cons = cons;         /* save console resource pointer */
       bstrncpy(uac->name, uac->cons->hdr.name, sizeof(uac->name));
+
+      // require authentication and user agent is on proper version
+      if (cons->authenticationplugin){
+         legacy_auth = false;
+         Dmsg1(dbglvl, "authenticate with Plugin=%s\n", cons->authenticationplugin);
+         if (ua_version < UA_VERSION_PLUGINAUTH || !authenticate_with_plugin(cons)){
+            goto auth_done;
+         }
+      }
+   }
+
+   if (legacy_auth && !ServerCramMD5Authenticate(password)) {
+      goto auth_done;
    }
 
    this->auth_success = HandleTLS();
@@ -358,4 +371,66 @@ auth_done:
       uac->quit = true;
    }
    return 1;
+}
+
+/**
+ * @brief This function perform user authentication procedure augmented with Auth Plugin API.
+ *        All bconsole network chatting and interaction is forwarded to dir_authplugins module
+ *        and we just provide a required frameworka dn resources, i.e. jcr or bsock to ua.
+ *
+ * @param cons a Console resource required for auth plugin registration
+ * @return true when authentication process finish with success and we can proceed next operations
+ * @return false when some error raised or authentication was unsuccessful
+ */
+bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
+{
+   /*
+    * The user authentication procedure with Auth Plugins API follow like this:
+    * 1. get bDirAuthenticationRegister data which defines what and how we should proceed with authentication
+    * 2. if auth operation is not bDirAuthenticationOperationPluginAll (which points that you have to ask plugin for every auth operation you execute)
+    *    then iterate over returned data
+    * 3. the iteration goes like this:
+    *    a. send question to console or simple message do display if operation is bDirAuthenticationOperationMessage
+    *    b. receive response from console
+    *    c. forward response to plugin with plugin event
+    * 4. when all interactions were handled without problem then do authenticate with plugin
+    * 5. if plugin return authentication OK? return true, Not? return false
+    */
+
+   bDirAuthenticationRegister *authData;
+
+   authData = (bDirAuthenticationRegister*) dir_authplugin_getauthenticationData(uac->jcr, cons->authenticationplugin);
+   if (authData == NULL)
+   {
+      return false;
+   }
+
+   // do tls before real auth
+   if (!ServerEarlyTLS())
+   {
+      return false;
+   }
+
+   // send auth plugin start packet and optional welcome string to console
+   Dmsg1(dbglvl, "send: auth interactive %s\n", NPRT(authData->welcome));
+   if (!bsock->fsend("auth interactive %s\n", NPRTB(authData->welcome))) {
+      Dmsg1(dbglvl, "Send interactive start comm error. ERR=%s\n", bsock->bstrerror());
+      return false;
+   }
+
+   // now a console should know how to deal with it, so iterate over auth data
+   const bDirAuthenticationData *data = authData->data;
+
+   for (uint i = 0; i < authData->num; i++){
+      Dmsg1(dbglvl, "bDirAuthenticationData step %d\n", i);
+      if (dir_authplugin_do_interaction(uac->jcr, bsock, authData->name, (void *)&data[i]) != bRC_OK){
+         return false;
+      }
+   }
+
+   if (dir_authplugin_authenticate(uac->jcr, bsock, authData->name) != bRC_OK){
+      return false;
+   }
+
+   return true;
 }

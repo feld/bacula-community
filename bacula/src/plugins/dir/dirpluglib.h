@@ -20,7 +20,7 @@
  * Common definitions and utility functions for Inteos plugins.
  * Functions defines a common framework used in our utilities and plugins.
  *
- * Author: Radosław Korzeniewski, MMXIX
+ * Author: Radosław Korzeniewski, MMXX
  * radoslaw@korzeniewski.net, radekk@inteos.pl
  * Inteos Sp. z o.o. http://www.inteos.pl/
  */
@@ -33,7 +33,7 @@
 #include <ctype.h>
 
 #include "bacula.h"
-#include "fd_plugins.h"
+#include "dir_plugins.h"
 
 /* definitions */
 /* size of different string or query buffers */
@@ -101,7 +101,7 @@
 #define DMSG_EVENT_LONG(event,value)      DMSG2(ctx, DINFO, "%s value=%ld\n", eventtype2str(event), (intptr_t)value);
 #define DMSG_EVENT_PTR(event,value)       DMSG2(ctx, DINFO, "%s value=%p\n", eventtype2str(event), value);
 
-const char *eventtype2str(bEvent *event);
+const char *eventtype2str(bDirEvent *event);
 uint64_t pluglib_size_suffix(int disksize, char suff);
 uint64_t pluglib_size_suffix(double disksize, char suff);
 bRC pluglib_mkpath(bpContext* ctx, char* path, bool isfatal);

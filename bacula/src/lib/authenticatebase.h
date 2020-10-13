@@ -29,6 +29,14 @@ enum {
    TLS_REQ_ERR_REMOTE
 };
 
+#define UA_VERSION_PLUGINAUTH          200
+#define UA_AUTH_INTERACTIVE            "auth interactive"
+#define UA_AUTH_INTERACTIVE_PLAIN      'P'
+#define UA_AUTH_INTERACTIVE_HIDDEN     'H'
+#define UA_AUTH_INTERACTIVE_MESSAGE    'M'
+#define UA_AUTH_INTERACTIVE_FINISH     'F'
+#define UA_AUTH_INTERACTIVE_RESPONSE   'R'
+
 class AuthenticateBase
 {
    static const char *dc_short_name[6];
@@ -87,6 +95,7 @@ public:
    bool ServerEarlyTLS();
 
    bool ClientCramMD5Authenticate(const char *password);
+   bool ClientCramMD5AuthenticateBase(const char *password);
    bool ServerCramMD5Authenticate(const char *password);
 
    bool HandleTLS();

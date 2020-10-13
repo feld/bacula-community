@@ -67,7 +67,7 @@ AuthenticateBase::~AuthenticateBase()
 }
 
 /*
- * 
+ *
  * LOCAL                    REMOTE
  * {TLS,PSK}                {TLS,PSK}
  * --------------------------------------------------
@@ -161,7 +161,7 @@ AuthenticateBase::~AuthenticateBase()
  * {REQUIRED,REQUIRED}     {REQUIRED,OK}         => t
  * {REQUIRED,REQUIRED}     {REQUIRED,NONE}       => t
  * {REQUIRED,REQUIRED}     {REQUIRED,REQUIRED}   => t
- * 
+ *
  */
 
 /* OK
@@ -198,7 +198,7 @@ int AuthenticateBase::TestTLSRequirement()
     * {NONE,NONE}             {NONE,REQUIRED}       => F  -- Remote
     * {NONE,NONE}             {REQUIRED,OK}         => F  -- Remote
     * {NONE,NONE}             {REQUIRED,NONE}       => F  -- Remote
-    * {NONE,NONE}             {REQUIRED,REQUIRED}   => F  
+    * {NONE,NONE}             {REQUIRED,REQUIRED}   => F
     */
    if (tls_local_need == BNET_TLS_NONE && psk_local_need == BNET_TLS_NONE
        &&
@@ -387,11 +387,17 @@ bool AuthenticateBase::ClientEarlyTLS()
 /* DIR is calling, DIR is the client */
 bool AuthenticateBase::ClientCramMD5Authenticate(const char *password)
 {
-   int compatible = true;
-
    if (!ClientEarlyTLS()) {
       return false;
    }
+
+   return ClientCramMD5AuthenticateBase(password);
+}
+
+/* the *Base version works without startTLS feature */
+bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
+{
+   int compatible = true;
 
    if (((local_class == dcSD && remote_class == dcSD) ||
         (local_class == dcFD && remote_class == dcSD))) {
@@ -460,7 +466,7 @@ bool AuthenticateBase::ServerEarlyTLS()
       /* If both can speak TLS or PSK then send the "starttls" even if the
        * local requirement is not full filled. The client need to
        * know the server requirements too. Both will terminate the connection
-       * in HandleTLS if the requirement are not full filled 
+       * in HandleTLS if the requirement are not full filled
        */
       if (!bsock->fsend("starttls tlspsk=%d\n", tlspsk_local_need)) {
 // TODO tweak the error message
