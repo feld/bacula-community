@@ -1,0 +1,151 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for proper filtering 'list object' commands.
+#
+TestName="plugin-object-syntetic-test"
+. scripts/functions
+
+scripts/cleanup
+
+start_test
+
+cat <<EOF >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+list objects
+quit
+EOF
+
+run_bacula
+
+objects_lines=`cat ${cwd}/tmp/log1.out | grep 'No results to list' | wc -l`
+if [ ${objects_lines} -ne 1 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+fi
+
+cat <<EOF >${cwd}/tmp/bconcmds
+sqlquery
+INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
+       VALUES (1, '/dummy/path2', 'file1', 'plugin1', 'Category_first', 'Type_first', 'objName1', 'objSource1', 'objUUID1', 1);
+INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
+       VALUES (2, '/dummy/path2', 'file2', 'plugin2', 'Category_second', 'Type_second', 'objName2', 'objSource2', 'objUUID2', 2);
+INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
+       VALUES (2, '/dummy/path2', 'file2', 'plugin2', 'Category_second','Type_second', 'objName2', 'objSource2', 'objUUID2', 2);
+INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
+       VALUES (3, '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3);
+INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
+       VALUES (3, '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3);
+INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
+       VALUES (3, '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3);
+quit
+EOF
+
+run_bconsole
+
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+list objects
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log2.out | grep 'Type*' | wc -l`
+if [ ${objects_lines} -ne 6 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 6"
+fi
+
+# Type filter
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log3.out
+list objects type=Type_first
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log3.out | grep 'Type_first' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong 'Type_first' plugin objects count found in output: ${objects_lines}, expected 1"
+fi
+
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log4.out
+list objects type=Type_second
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log4.out | grep 'Type_second' | wc -l`
+if [ ${objects_lines} -ne 3 ]; then
+   estat=1
+   print_debug "Wrong 'Type_second' plugin objects count found in output: ${objects_lines}, expected 2"
+fi
+
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log5.out
+list objects type=Type_third
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log5.out | grep 'Type_third' | wc -l`
+if [ ${objects_lines} -ne 4 ]; then
+   estat=1
+   print_debug "Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
+fi
+
+
+# JobId filter
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log6.out
+list objects jobid=1
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log6.out | grep 'Type_first' | wc -l`
+if [ ${objects_lines} -ne 1 ]; then
+   estat=1
+   print_debug "Wrong 'Type_first' plugin objects count found in output: ${objects_lines}, expected 1"
+fi
+
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log7.out
+list objects jobid=2
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log7.out | grep 'Type_second' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong 'Type_second' plugin objects count found in output: ${objects_lines}, expected 2"
+fi
+
+cat <<EOF >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log8.out
+list objects jobid=3
+quit
+EOF
+
+run_bconsole
+
+objects_lines=`cat ${cwd}/tmp/log8.out | grep 'Type_third' | wc -l`
+if [ ${objects_lines} -ne 3 ]; then
+   estat=1
+   print_debug "Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
+fi
+
+end_test
