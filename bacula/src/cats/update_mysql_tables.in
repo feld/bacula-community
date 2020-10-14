@@ -493,5 +493,21 @@ END-OF-DATA
     fi
 fi
 
+if [ "$DBVERSION" -eq 1022 ] ; then
+    if mysql $* -f  <<END-OF-DATA
+USE ${db_name};
+ALTER TABLE FileMedia ADD FileMediaId integer auto_increment primary key;
+ALTER TABLE JobHisto MODIFY COLUMN JobId int PRIMARY KEY AUTO_INCREMENT;
+ALTER TABLE Version MODIFY COLUMN VersionId int PRIMARY KEY;
+UPDATE Version SET VersionId=1023;
+END-OF-DATA
+    then
+        echo "Update of Bacula MySQL tables 1022 to 1023 succeeded."
+        getVersion
+    else
+        echo "Update of Bacula MySQL tables 1022 to 1023 failed."
+        exit 1
+    fi
+fi
 
 exit 0
