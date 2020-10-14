@@ -44,17 +44,108 @@ END_OF_DATA
 run_bacula
 
 #TODO add check for fileds in llist output
-objects_lines=`cat ${cwd}/tmp/log2.out | grep 'test-obj-type' | wc -l`
+objects_lines=`cat ${cwd}/tmp/log2.out | grep 'VMWare' | wc -l`
 if [ ${objects_lines} -ne 2 ]; then
    estat=1
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
 fi
 
+objects_lines=`cat ${cwd}/tmp/log2.out | grep 'PostgreSQL' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+fi
+
+id_vmware_obj=`cat $tmp/log2.out | grep 'VMWare' | head -n 1 | awk  '/VMWare/ {print $2 }'`
+if [ "$id_vmware_obj" = "" ]; then
+    print_debug "ERROR: Should find any ID for VMWare Object in restore menu"
+    estat=1
+fi
+
+id_postgres_obj=`cat $tmp/log2.out | grep 'PostgreSQL' | head -n 1 | awk  '/PostgreSQL/ {print $2 }'`
+if [ "$id_postgres_obj" = "" ]; then
+   print_debug "ERROR: Should find any ID for PostgreSQL Object in restore menu"
+    estat=1
+fi
+
+# Get id of each type in restore menu
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+messages
+@$out ${cwd}/tmp/log4.out
+restore
+13
+.
+quit
+END_OF_DATA
+
+run_bconsole
+
+id_vmware_menu=`cat $tmp/log4.out | grep 'VMWare' | head -n 1 | awk  '/VMWare/ {print $1 }'`
+if [ "$id_vmware_menu" = "" ]; then
+    print_debug "ERROR: Did not find any ID for VMWare Object in restore menu"
+    estat=1
+fi
+
+id_postgres_menu=`cat $tmp/log4.out | grep 'PostgreSQL' | head -n 1 | awk  '/PostgreSQL/ {print $1 }'`
+if [ "$id_postgres_menu" = "" ]; then
+    print_debug "ERROR: Did not find any ID for PostgreSQL Object in restore menu"
+    estat=1
+fi
+
+# Strip trailing ':'
+id_vmware_menu=${id_vmware_menu%?}
+id_postgres_menu=${id_postgres_menu%?}
+
+# Restore 'VMWare' object
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+messages
+@$out ${cwd}/tmp/log5.out
+restore
+13
+${id_vmware_menu}
+${id_vmware_obj}
+yes
+wait
+messages
+.
+quit
+END_OF_DATA
+
+run_bconsole
+
+cat $tmp/log5.out | grep "Restore OK"
+if [ $? -ne 0 ]; then
+    print_debug "Restore failed"
+    estat=1
+fi
+
+# Restore 'PostgreSQL' object
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+messages
+@$out ${cwd}/tmp/log6.out
+restore
+13
+${id_postgres_menu}
+${id_postgres_obj}
+yes
+wait
+messages
+.
+quit
+END_OF_DATA
+
+run_bconsole
+
+cat $tmp/log6.out | grep "Restore OK"
+if [ $? -ne 0 ]; then
+    print_debug "Restore failed,"
+    estat=1
+fi
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @# now do a restore
-@$out ${cwd}/tmp/log4.out
+@$out ${cwd}/tmp/log7.out
 restore where=${cwd}/tmp select all storage=File1 done
 yes
 wait
@@ -67,18 +158,23 @@ run_bconsole
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
-@$out ${cwd}/tmp/log5.out
+@$out ${cwd}/tmp/log8.out
 purge volume=TestVolume001
-@$out ${cwd}/tmp/log6.out
+@$out ${cwd}/tmp/log9.out
 list objects
 END_OF_DATA
 
 run_bconsole
 
-objects_lines=`cat ${cwd}/tmp/log6.out | grep 'test-obj-type' | wc -l`
+objects_lines=`cat ${cwd}/tmp/log9.out | grep 'VMWare' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
 fi
 
+objects_lines=`cat ${cwd}/tmp/log9.out | grep 'PostgreSQL' | wc -l`
+if [ ${objects_lines} -ne 0 ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+fi
 end_test
