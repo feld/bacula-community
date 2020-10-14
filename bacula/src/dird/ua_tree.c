@@ -60,6 +60,8 @@ static int dot_lscmd(UAContext *ua, TREE_CTX *tree);
 static int dot_helpcmd(UAContext *ua, TREE_CTX *tree);
 static int dot_lsmarkcmd(UAContext *ua, TREE_CTX *tree);
 
+static int set_extract(UAContext *ua, TREE_NODE *node, TREE_CTX *tree, bool extract);
+
 struct cmdstruct { const char *key; int (*func)(UAContext *ua, TREE_CTX *tree); const char *help; };
 static struct cmdstruct commands[] = {
  { NT_("add"),        markcmd,      _("add dir/file to be restored recursively, wildcards allowed")},

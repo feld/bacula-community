@@ -640,13 +640,13 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
 
    } else if (Stream == STREAM_PLUGIN_OBJECT) {
       OBJECT_DBR obj_r;
+      obj_r.parse_plugin_object_string(&p);
 
-      skip_nonspaces(&p);                  /* skip FileIndex */
-      skip_spaces(&p);
-      skip_nonspaces(&p);                  /* skip FileType */
-      skip_spaces(&p);
-
-      parse_plugin_object_string(&p, &obj_r);
+      if (jcr->wjcr) {
+         obj_r.JobId = jcr->wjcr->JobId;
+      } else {
+         obj_r.JobId = jcr->JobId;
+      }
 
       if (!db_create_object_record(jcr, jcr->db, &obj_r)) {
          Jmsg1(jcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(jcr->db));

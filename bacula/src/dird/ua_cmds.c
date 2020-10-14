@@ -141,7 +141,8 @@ static struct cmdstruct commands[] = {                                      /* C
    NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name> [tag=<name>] [job=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [order=<asc/desc>] [limit=<n>]|\n"
        "\tjobtotals | pools | volume | media <pool=pool-name> | files jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot |\n"
-       "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"), false},
+       "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
+      "\tobject [jobid=<jobid> client=<cli> type=<name>  [order=<asc/desc>] [limit=<n>\n"), false},
 
  { NT_("messages"),   messagescmd,   _("Display pending messages"),   NT_(""),    false},
  { NT_("memory"),     memory_cmd,    _("Print current memory usage"), NT_(""),    true},
@@ -162,7 +163,8 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("restore"),    restore_cmd,   _("Restore files"),
    NT_("where=</path> client=<client> storage=<storage> bootstrap=<file> "
        "restorejob=<job> restoreclient=<cli> noautoparent"
-       "\n\tcomment=<text> jobid=<jobid> jobuser=<user> jobgroup=<grp> copies done select all"), false},
+       "\n\tcomment=<text> jobid=<jobid> jobuser=<user> jobgroup=<grp> copies done select all"
+       "\n\tobjectid=<objid>"), false},
 
  { NT_("relabel"),    relabel_cmd,   _("Relabel a tape"),
    NT_("storage=<storage-name> oldvolume=<old-volume-name>\n\tvolume=<newvolume-name> pool=<pool>"), false},

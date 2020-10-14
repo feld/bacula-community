@@ -269,6 +269,7 @@ int restore_cmd(UAContext *ua, const char *cmd)
       break;
    }
 
+
    if (rx.bsr_list->size() > 0) {
       char ed1[50];
       if (!complete_bsr(ua, rx.bsr_list)) {   /* find Vol, SessId, SessTime from JobIds */
@@ -547,6 +548,76 @@ static int get_restore_client_name(UAContext *ua, RESTORE_CTX &rx, char * Restor
 }
 
 
+static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTORE_CTX *rx)
+{
+   if (!db_get_plugin_object_record(ua->jcr, ua->db, obj_r)) {
+      ua->error_msg(_("Failed to get plugin object for specified object parameters\n"));
+      return 0;
+   }
+
+   JOB_DBR jr;
+   memset(&jr, 0, sizeof(JOB_DBR));
+   jr.JobId = obj_r->JobId;
+   if (!db_get_job_record(ua->jcr, ua->db, &jr)) {
+      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
+                    ua->cmd, db_strerror(ua->db));
+      return 0;
+   }
+
+   if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
+      ua->error_msg(_("Access to JobId=%d (Job \"%s\") not authorized.\n"),
+            jr.JobId, jr.Name);
+      return 0;
+   }
+
+   CLIENT_DBR cr;
+   cr.ClientId = jr.ClientId;
+   if (!db_get_client_record(ua->jcr, ua->db, &cr)) {
+      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
+                    ua->cmd, db_strerror(ua->db));
+      return 0;
+   }
+
+   if (!acl_access_ok(ua, Client_ACL, cr.Name)) {
+      ua->error_msg(_("Access to ClientId=%d not authorized.\n"),
+            jr.ClientId);
+      return 0;
+   }
+
+   bool dir = obj_r->Filename[0] != 0 ? false : true;
+   if (dir) {
+      pm_strcpy(ua->cmd, obj_r->Path);
+   } else {
+      Mmsg(ua->cmd, "%s%s", obj_r->Path, obj_r->Filename);
+   }
+
+   db_list_ctx jobids;
+   if (!db_get_accurate_jobids(ua->jcr, ua->db, &jr, &jobids)) {
+      return 0;
+   }
+   pm_strcpy(rx->JobIds, jobids.list);
+
+   if (!get_client_name(ua, rx)) {
+      return 0;
+   }
+
+   insert_one_file_or_dir(ua, rx, jr.cStartTime, dir);
+
+   return 1;
+}
+
+static int object_type_hander(void *ctx, int num_fields, char **row)
+{
+   if (num_fields != 2) {
+      return 1;
+   }
+   alist *val = (alist *)ctx;
+
+   val[0].append(bstrdup(row[0]));
+   val[1].append(bstrdup(row[1]));
+
+   return 0;
+}
 
 /*
  * The first step in the restore process is for the user to
@@ -581,6 +652,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
       _("Find the JobIds for a backup for a client before a specified time"),
       _("Enter a list of directories to restore for found JobIds"),
       _("Select full restore to a specified Job date"),
+      _("Select object to restore"),
       _("Cancel"),
       NULL };
 
@@ -619,6 +691,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
 
       "jobuser",       /* 28 */
       "jobgroup",      /* 29 */
+      "objectid",      /* 30 */
       NULL
    };
 
@@ -713,12 +786,22 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
       /*
        * All keywords 7 or greater are ignored or handled by a select prompt
        */
+      case 30:
+         {
+            OBJECT_DBR obj_r;
+            obj_r.ObjectId = str_to_int64(ua->argv[i]);
+            if (!select_files_from_plugin_obj(ua, &obj_r, rx)) {
+               return 0;
+            }
+            return 2;
+         }
       default:
          break;
       }
    }
 
    if (!done) {
+      //TODO Cleanup msg
       ua->send_msg(_("\nFirst you select one or more JobIds that contain files\n"
                   "to be restored. You will be presented several methods\n"
                   "of specifying the JobIds. Then you will be allowed to\n"
@@ -936,7 +1019,100 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          pm_strcpy(rx->JobIds, jobids.list);
          Dmsg1(30, "Item 12: jobids = %s\n", rx->JobIds);
          break;
-      case 12:                        /* Cancel or quit */
+
+       case 12: /* Select Object to restore */
+         {
+            POOL_MEM query, esc(PM_MESSAGE);
+            gui_save = ua->jcr->gui;
+            ua->jcr->gui = true;
+
+            // Array in form of ObjectCategories (at [0]) and corresponding ObjectTypes (at [1])
+            alist types[2];
+            Mmsg(query, "SELECT DISTINCT ObjectCategory, ObjectType FROM Object ORDER BY ObjectCategory, ObjectType ASC");
+            if (!db_sql_query(ua->db, query.c_str(), object_type_hander, types)) {
+               ua->error_msg(_("SQL Query failed: %s\n"), db_strerror(ua->db));
+               return 0;
+            }
+
+            char *t;
+            POOL_MEM tmp(PM_MESSAGE);
+            start_prompt(ua, _("List of the Object Types:\n"));
+            for (int i=0; i < types[0].size(); i++) {
+               // Build prompt "ObjectType ObjectCategory" - e.g. "PostgreSQL Database"
+               Mmsg(tmp, "%s %s", types[1].get(i), types[0].get(i));
+               add_prompt(ua, tmp.c_str());
+            }
+
+            int idx = do_prompt(ua, "", _("Select item:"), NULL, 0);
+            if (idx < 0) {
+               return 0;
+            }
+
+            alist object_list;
+            alist *alist_ptr = &object_list;
+
+            POOL_MEM esc_cat, esc_type;
+            char *cat = (char*)types[0].get(idx);
+            char *type = (char*)types[1].get(idx);
+            esc_cat.check_size(strlen(cat)*2+1);
+            esc_type.check_size(strlen(type)*2+1);
+
+            /* TODO: Check if we need db_lock() */
+            db_escape_string(ua->jcr, ua->db, esc_cat.c_str(), cat, strlen(cat));
+            db_escape_string(ua->jcr, ua->db, esc_type.c_str(), type, strlen(type));
+
+            Mmsg(query, "SELECT DISTINCT ObjectName FROM Object WHERE ObjectCategory='%s' AND ObjectType='%s' ORDER BY ObjectName ASC",
+                 esc_cat.c_str(), esc_type.c_str());
+
+            if (!db_sql_query(ua->db, query.c_str(), db_string_list_handler, &alist_ptr)) {
+               ua->error_msg(_("SQL Query failed: %s\n"), db_strerror(ua->db));
+               return 0;
+            }
+
+            Mmsg(tmp, "List of the %s %s Objects:\n", types[1].get(idx), types[0].get(idx));
+            start_prompt(ua, tmp.c_str());
+            foreach_alist(t, &object_list) {
+               add_prompt(ua, t);
+            }
+
+            idx = do_prompt(ua, "", _("Select Object:"), NULL, 0);
+            if (idx < 0) {
+               return 0;
+            }
+
+            ua->info_msg(_("Objects available:\n"));
+            esc.check_size(strlen((char*)object_list.get(idx))*2+1);
+            db_escape_string(ua->jcr, ua->db, esc.c_str(),
+                             (char*)object_list.get(idx), strlen((char*)object_list.get(idx)));
+            Mmsg(query, "SELECT Object.ObjectId AS ObjectId, Object.ObjectName AS ObjectName, Client.Name as Client, "
+                                "Object.ObjectSource AS ObjectSource, "
+                               "Job.StartTime AS StartTime, Object.ObjectSize AS ObjectSize "
+                        "FROM Object JOIN Job USING (JobId) "
+                        "JOIN Client ON (Job.ClientId = Client.ClientId) "
+                        "WHERE Object.ObjectName='%s' AND Object.ObjectCategory='%s' AND Object.ObjectType='%s'",
+                 esc.c_str(), esc_cat.c_str(), esc_type.c_str());
+
+            if (!db_list_sql_query(ua->jcr, ua->db, query.c_str(), prtit, ua, 0, HORZ_LIST)) {
+               ua->error_msg(_("SQL Query failed: %s\n"), db_strerror(ua->db));
+               return 0;
+            }
+
+            //TODO Validation if id entered matches one from list above would be nice...
+            if (!get_pint(ua, "Enter ID of Object to be restored: ")) {
+               ua->info_msg(_("Selection aborted, nothing done.\n"));
+               break;
+            }
+
+            OBJECT_DBR obj_r;
+            obj_r.ObjectId = ua->pint32_val;
+            if (!select_files_from_plugin_obj(ua, &obj_r, rx)) {
+               return 0;
+            }
+
+            ua->jcr->gui = gui_save;
+            return 2;
+         }
+      case 13:                        /* Cancel or quit */
          return 0;
       }
    }

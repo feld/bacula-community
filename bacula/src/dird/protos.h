@@ -328,6 +328,7 @@ void list_dir_status_header(UAContext *ua);
 
 /* ua_tree.c */
 bool user_select_files_from_tree(TREE_CTX *tree);
+bool user_select_files_from_tree_plugin_obj(TREE_CTX *tree);
 int insert_tree_handler(void *ctx, int num_fields, char **row);
 bool check_directory_acl(char **last_dir, alist *dir_acl, const char *path);
 
