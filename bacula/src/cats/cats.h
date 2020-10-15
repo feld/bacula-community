@@ -240,19 +240,47 @@ struct ATTR_DBR {
 
 class OBJECT_DBR {
 public:
-   OBJECT_DBR() { bmemset(this, 0, sizeof(OBJECT_DBR)); };
-   ~OBJECT_DBR() { };
+   OBJECT_DBR() { 
+      Path = get_pool_memory(PM_FNAME);
+      Filename = get_pool_memory(PM_FNAME);
+      PluginName = get_pool_memory(PM_FNAME);
+      reset();
+   };
+   ~OBJECT_DBR() { 
+      free_pool_memory(Path);
+      free_pool_memory(Filename);
+      free_pool_memory(PluginName);
+   };
+   /* reset memory */
+   void reset() {
+      JobId = 0;
+      ObjectId = 0;
+      ObjectSize = 0;
+      *Path = *Filename = *PluginName = 0;
+      *ObjectCategory = *ObjectType = *ObjectName = *ObjectSource = *ObjectUUID = *ClientName = 0;
+      limit = 0;
+      order = 0;
+   };
+   /* Parse OBJECT record from stream */
+   void parse_plugin_object_string(char **obj_str);
 
    DBId_t ObjectId;
    JobId_t  JobId;
-   char *Path;
-   char *Filename;
-   char *PluginName;
+   POOLMEM *Path;
+   POOLMEM *Filename;
+   POOLMEM *PluginName;
+   char ObjectCategory[MAX_NAME_LENGTH];
    char ObjectType[MAX_NAME_LENGTH];
-   char *ObjectName;
-   char *ObjectSource;
-   char *ObjectUUID;
+   char ObjectName[MAX_NAME_LENGTH];
+   char ObjectSource[MAX_NAME_LENGTH];
+   char ObjectUUID[MAX_NAME_LENGTH];
    uint64_t ObjectSize;
+
+   /* Fields not stored in db directly */
+   char ClientName[MAX_NAME_LENGTH];
+
+   int limit;
+   int order;
 };
 
 struct ROBJECT_DBR {
@@ -695,7 +723,6 @@ int DeleteDB(const char *file, int line, JCR *jcr, BDB *db, char *delete_cmd);
 void split_path_and_file(JCR *jcr, BDB *mdb, const char *fname);
 
 /* Helper functions */
-void parse_plugin_object_string(char **obj_str, OBJECT_DBR *obj_r);
 void parse_restore_object_string(char **obj_str, ROBJECT_DBR *r_r);
 
 #endif  /* __CATS_H_ */

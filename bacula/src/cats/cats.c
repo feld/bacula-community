@@ -149,108 +149,90 @@ void BDB::print_lock_info(FILE *fp)
    } 
 } 
 
-void parse_plugin_object_string(char **obj_str, OBJECT_DBR *obj_r)
+void OBJECT_DBR::parse_plugin_object_string(char **obj_str)
 {
+   /* TODO: Do some sanity checks on the input format */
    char *p = *obj_str;
-
-   obj_r->JobId = str_to_int32(p);
-   skip_nonspaces(&p);                  /* skip JobId */
-   skip_spaces(&p);
-
-   obj_r->Path = p;
+   int fnl, pnl;
+   char* tmp_path = p;
    skip_nonspaces(&p);                  /* skip Path */
    skip_spaces(&p);
-   char *c = strpbrk(obj_r->Path, " ");
+   char *c = strpbrk(tmp_path, " ");
    if (c) {
       *c = '\0';
    }
 
-   obj_r->Filename = p;
-   skip_nonspaces(&p);                  /* skip FileName */
-   skip_spaces(&p);
-   c = strpbrk(obj_r->Filename, " ");
-   if (c) {
-      *c = '\0';
+   if (tmp_path[strlen(tmp_path) - 1] == '/') {
+      pm_strcpy(Path, tmp_path);
+      unbash_spaces(Path);
+   } else {
+      split_path_and_filename(tmp_path, &Path, &pnl, &Filename, &fnl);
+      unbash_spaces(Path);
+      unbash_spaces(Filename);
    }
 
-   obj_r->PluginName = p;
+   char *tmp = p;
    skip_nonspaces(&p);                  /* skip PluginName */
    skip_spaces(&p);
-   c = strpbrk(obj_r->PluginName, " ");
+   c = strpbrk(tmp, " ");
    if (c) {
       *c = '\0';
    }
+   pm_strcpy(PluginName, tmp);
+   unbash_spaces(PluginName);
 
-   char *obj_type = p;
+   tmp = p;
    skip_nonspaces(&p);                  /* skip ObjectType */
    skip_spaces(&p);
-   c = strpbrk(obj_type, " ");
+   c = strpbrk(tmp, " ");
    if (c) {
       *c = '\0';
    }
-   bstrncpy(obj_r->ObjectType, obj_type, sizeof(obj_r->ObjectType));
+   bstrncpy(ObjectCategory, tmp, sizeof(ObjectCategory));
+   unbash_spaces(ObjectCategory);
 
-   obj_r->ObjectName = p;
+   tmp = p;
+   skip_nonspaces(&p);                  /* skip ObjectType */
+   skip_spaces(&p);
+   c = strpbrk(tmp, " ");
+   if (c) {
+      *c = '\0';
+   }
+   bstrncpy(ObjectType, tmp, sizeof(ObjectType));
+   unbash_spaces(ObjectType);
+
+   tmp = p;
    skip_nonspaces(&p);                  /* skip ObjectName */
    skip_spaces(&p);
-   c = strpbrk(obj_r->ObjectName, " ");
+   c = strpbrk(tmp, " ");
    if (c) {
       *c = '\0';
    }
+   bstrncpy(ObjectName, tmp, sizeof(ObjectName));
+   unbash_spaces(ObjectName);
 
-   obj_r->ObjectSource = p;
+   tmp = p;
    skip_nonspaces(&p);                  /* skip ObjectSource */
    skip_spaces(&p);
-   c = strpbrk(obj_r->ObjectSource, " ");
+   c = strpbrk(tmp, " ");
    if (c) {
       *c = '\0';
    }
+   bstrncpy(ObjectSource, tmp, sizeof(ObjectSource));
+   unbash_spaces(ObjectSource);
 
-   obj_r->ObjectUUID = p;
+   tmp = p;
    skip_nonspaces(&p);                  /* skip ObjectUuid */
    skip_spaces(&p);
-   c = strpbrk(obj_r->ObjectUUID, " ");
+   c = strpbrk(tmp, " ");
    if (c) {
       *c = '\0';
    }
+   bstrncpy(ObjectUUID, tmp, sizeof(ObjectUUID));
+   unbash_spaces(ObjectUUID);
 
-   obj_r->ObjectSize = str_to_uint64(p);
+   ObjectSize = str_to_uint64(p);
 }
 
-
-void parse_restore_object_string(char **r_obj_str, ROBJECT_DBR *robj_r)
-{
-   char *p = *r_obj_str;
-   int len;
-
-   robj_r->FileIndex = str_to_int32(p);        /* FileIndex */
-   skip_nonspaces(&p);
-   skip_spaces(&p);
-   robj_r->FileType = str_to_int32(p);        /* FileType */
-   skip_nonspaces(&p);
-   skip_spaces(&p);
-   robj_r->object_index = str_to_int32(p);    /* Object Index */
-   skip_nonspaces(&p);
-   skip_spaces(&p);
-   robj_r->object_len = str_to_int32(p);      /* object length possibly compressed */
-   skip_nonspaces(&p);
-   skip_spaces(&p);
-   robj_r->object_full_len = str_to_int32(p); /* uncompressed object length */
-   skip_nonspaces(&p);
-   skip_spaces(&p);
-   robj_r->object_compression = str_to_int32(p); /* compression */
-   skip_nonspaces(&p);
-   skip_spaces(&p);
-
-   robj_r->plugin_name = p;                      /* point to plugin name */
-   len = strlen(robj_r->plugin_name);
-   robj_r->object_name = &robj_r->plugin_name[len+1]; /* point to object name */
-   len = strlen(robj_r->object_name);
-   robj_r->object = &robj_r->object_name[len+1];      /* point to object */
-   robj_r->object[robj_r->object_len] = 0;            /* add zero for those who attempt printing */
-   Dmsg7(100, "oname=%s stream=%d FT=%d FI=%d JobId=%ld, obj_len=%d\nobj=\"%s\"\n",
-      robj_r->object_name, robj_r->Stream, robj_r->FileType, robj_r->FileIndex, robj_r->JobId,
-      robj_r->object_len, robj_r->object);
-}
 
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */ 

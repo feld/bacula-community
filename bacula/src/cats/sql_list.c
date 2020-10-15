@@ -140,41 +140,90 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
 
 
 /*
+ * List plugin objects types
+ */
+void BDB::bdb_list_plugin_object_types(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
+{
+   Mmsg(cmd, "SELECT DISTINCT ObjectType FROM Object");
+   bdb_lock();
+
+
+   if (!QueryDB(jcr, cmd)) {
+      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+      bdb_unlock();
+      return;
+   }
+
+   list_result(jcr, this, sendit, ctx, type);
+
+   sql_free_result();
+   bdb_unlock();
+}
+
+/*
  * List plugin objects
  */
 void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-   char esc[MAX_ESCAPE_NAME_LENGTH];
+   POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
 
    bdb_lock();
 
-   if (type == HORZ_LIST) {
-      if (obj_r->ObjectType[0] != 0) {
-         bdb_escape_string(jcr, esc, obj_r->ObjectType, strlen(obj_r->ObjectType));
+   //TODO add ACL part
+   if (obj_r->ObjectName[0] != 0) {
+      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectName, strlen(obj_r->ObjectName));
+      Mmsg(tmp, " Object.ObjectName='%s'", esc.c_str());
+      append_filter(where.addr(), tmp.c_str());
+   }
+
+   if (obj_r->ObjectType[0] != 0) {
+      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectType, strlen(obj_r->ObjectType));
+      Mmsg(tmp, " Object.ObjectType='%s'", esc.c_str());
+      append_filter(where.addr(), tmp.c_str());
+   }
+
+   if (obj_r->ObjectId != 0) {
+      Mmsg(tmp, " Object.ObjectId=%d", obj_r->ObjectId);
+      append_filter(where.addr(), tmp.c_str());
+   }
+
+   if (obj_r->JobId != 0) {
+      Mmsg(tmp, " Object.JobId=%d", obj_r->JobId);
+      append_filter(where.addr(), tmp.c_str());
+   }
+
+   if (obj_r->ClientName[0] != 0) {
+      bdb_escape_string(jcr, esc.c_str(), obj_r->ClientName, strlen(obj_r->ClientName));
+      Mmsg(tmp, " Client.Name='%s'", esc.c_str());
+      append_filter(where.addr(), tmp.c_str());
+      Mmsg(join, " INNER JOIN Job On Object.JobId=Job.JobId "   
+                 " INNER JOIN Client ON Job.ClientId=Client.ClientId ");
+   }
+
+
+   Mmsg(tmp, " ORDER BY ObjectId %s ", obj_r->order ? "DESC" : "ASC");
+   pm_strcat(where, tmp.c_str());
+
+   if (obj_r->limit) {
+      Mmsg(tmp, " LIMIT %d ", obj_r->limit);
+      pm_strcat(where, tmp.c_str());
+   }
+
+   switch (type) {
+   case VERT_LIST:
          Mmsg(cmd,
-            "SELECT ObjectId, JobId, "
-                    "ObjectType, ObjectName "
-            "FROM Object WHERE ObjectType='%s'",
-            esc);
-      } else {
+            "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectSource, Object.ObjectUUID, Object.ObjectSize "
+            "FROM Object %s %s", join.c_str(), where.c_str());
+         break;
+   case HORZ_LIST:
          Mmsg(cmd,
-               "SELECT ObjectId, JobId, "
-                       "ObjectType, ObjectName "
-               "FROM Object ORDER BY ObjectId");
-      }
-   } else {
-      if (obj_r->ObjectType[0] != 0) {
-         bdb_escape_string(jcr, esc, obj_r->ObjectType, strlen(obj_r->ObjectType));
-         Mmsg(cmd,
-            "SELECT ObjectId, JobId, Path, Filename, "
-                    "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
-            "FROM Object WHERE ObjectType='%s'", esc);
-      } else {
-         Mmsg(cmd,
-            "SELECT ObjectId, JobId, Path, Filename, "
-                    "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
-            "FROM Object ORDER BY ObjectId");
-      }
+            "SELECT Object.ObjectId, Object.JobId, Object.ObjectCategory, "
+                    "Object.ObjectType, Object.ObjectName "
+            "FROM Object %s %s", join.c_str(), where.c_str());
+         break;
+   default:
+         break;
    }
 
    if (!QueryDB(jcr, cmd)) {
