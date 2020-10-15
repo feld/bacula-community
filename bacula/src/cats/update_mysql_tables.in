@@ -499,6 +499,8 @@ USE ${db_name};
 ALTER TABLE FileMedia ADD FileMediaId integer auto_increment primary key;
 ALTER TABLE JobHisto MODIFY COLUMN JobId int PRIMARY KEY AUTO_INCREMENT;
 ALTER TABLE Version MODIFY COLUMN VersionId int PRIMARY KEY;
+ALTER TABLE Object ADD ObjectCategory TINYBLOB NOT NULL;
+create index object_type_idx on Object  (ObjectCategory(255));
 UPDATE Version SET VersionId=1023;
 END-OF-DATA
     then

@@ -79,6 +79,7 @@ CREATE TABLE Object
 );
 
 create index object_jobid_idx on Object (JobId);
+create index object_type_idx on Object  (ObjectCategory(255));
 create index object_type_idx on Object  (ObjectType(255));
 create index object_name_idx on Object  (ObjectName(255));
 create index object_source_idx on Object  (ObjectSource(255));
@@ -548,7 +549,7 @@ CREATE TABLE Version (
    );
 
 -- Initialize Version
-INSERT INTO Version (VersionId) VALUES (1022);
+INSERT INTO Version (VersionId) VALUES (1023);
 
 END-OF-DATA
 then

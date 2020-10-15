@@ -562,6 +562,24 @@ END-OF-DATA
     fi
 fi
 
+if [ "$DBVERSION" -eq 1022 ] ; then
+    if psql -f - -d ${db_name} $* <<END-OF-DATA
+begin;
+ALTER TABLE Object ADD COLUMN ObjectCategory text not null;
+create index object_category_idx on Object  (ObjectCategory);
+UPDATE Version SET VersionId=1023;
+commit;
+END-OF-DATA
+    then
+	echo "Update of Bacula PostgreSQL tables 1022 to 1023 succeeded."
+	getVersion
+    else
+	echo "Update of Bacula PostgreSQL tables 1022 to 1023 failed."
+	exit 1
+    fi
+fi
+
+
 #
 # For all versions, we need to create the Index on Media(PoolId/StorageId)
 # It may fail, but it's not a big problem

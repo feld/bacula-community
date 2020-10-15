@@ -14,10 +14,10 @@ db_name=${db_name:-@db_name@}
 
 mysql $* -D ${db_name} -e "select VersionId from Version\G" >/tmp/$$
 DBVERSION=`sed -n -e 's/^VersionId: \(.*\)$/\1/p' /tmp/$$`
-if [ $DBVERSION != 1020 ] ; then
+if [ $DBVERSION != 1021 ] ; then
    echo " "
    echo "The existing database is version $DBVERSION !!"
-   echo "This script can only update an existing version 1019 database to version 1021."
+   echo "This script can only update an existing version 1021 database to version 1022."
    echo "Error. Cannot upgrade this database."
    echo " "
    exit 1

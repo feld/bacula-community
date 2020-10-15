@@ -305,10 +305,27 @@ UPDATE Version SET VersionId=1022;
 commit;
 END-OF-DATA
     then
-	echo "Update of Bacula SQLite3 tables 1020 to 1021 succeeded."
+	echo "Update of Bacula SQLite3 tables 1021 to 1022 succeeded."
 	getVersion
     else
-	echo "Update of Bacula SQLite3 tables 1020 to 1021 failed."
+	echo "Update of Bacula SQLite3 tables 1021 to 1022 failed."
+	exit 1
+    fi
+fi
+
+if [ "$DBVERSION" -eq 1022 ] ; then
+    if sqlite3 -f - -d ${db_name} $* <<END-OF-DATA
+begin;
+ALTER TABLE Object ADD COLUMN ObjectCategory text not null;
+create index object_category_idx on Object  (ObjectCategory);
+UPDATE Version SET VersionId=1023;
+commit;
+END-OF-DATA
+    then
+	echo "Update of Bacula SQLite3 tables 1022 to 1023 succeeded."
+	getVersion
+    else
+	echo "Update of Bacula SQLite3 tables 1022 to 1023 failed."
 	exit 1
     fi
 fi
