@@ -58,7 +58,6 @@ FILED_OBJS = \
 	$(OBJDIR)/heartbeat.o \
 	$(OBJDIR)/hello.o \
 	$(OBJDIR)/job.o \
-	$(OBJDIR)/mtab.o \
 	$(OBJDIR)/restore.o \
 	$(OBJDIR)/status.o \
 	$(OBJDIR)/verify.o \
