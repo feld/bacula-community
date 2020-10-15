@@ -64,7 +64,8 @@ class ConsoleAuthenticate: public AuthenticateBase
 {
 public:
    ConsoleAuthenticate(BSOCK *dir):
-   AuthenticateBase(NULL, dir, dtCli, dcCON, dcDIR)
+   AuthenticateBase(NULL, dir, dtCli, dcCON, dcDIR),
+   avoid_getpass(false)
    {
    }
    virtual ~ConsoleAuthenticate() {};
@@ -73,11 +74,14 @@ public:
 
    int authenticate_director(DIRRES *director, CONRES *cons);
    bool ClientAuthenticate(CONRES *cons, const char *password);
+
+   bool avoid_getpass;           // this is for regress testing
 };
 
-int authenticate_director(BSOCK *dir, DIRRES *director, CONRES *cons)
+int authenticate_director(BSOCK *dir, DIRRES *director, CONRES *cons, bool avoid_getpass = false)
 {
    ConsoleAuthenticate auth(dir);
+   auth.avoid_getpass = avoid_getpass;
    return auth.authenticate_director(director, cons);
 }
 
@@ -158,8 +162,8 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
 
             char *data = msg.c_str();
             POOL_MEM buf(PM_MESSAGE);
-            char *passwd;
             char *input;
+            char *passwd;
 
             // the command is encoded as a first char of the message
             switch (dir->msg[0]){
@@ -177,17 +181,29 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
                   break;
 
                case UA_AUTH_INTERACTIVE_HIDDEN:
+#if defined(DEVELOPER)
+                  if (!avoid_getpass){
+                     // normal pass handling
+#endif
 #if defined(HAVE_WIN32)
-                  sendit(data);
-                  if (win32_cgets(buf.c_str(), buf.size()) == NULL) {
-                     buf[0] = 0;
-                     return 0;
-                  } else {
-                     return strlen(buf);
-                  }
+                     sendit(data);
+                     if (win32_cgets(buf.c_str(), buf.size()) == NULL) {
+                        pm_strcpy(buf, NULL);
+                     }
 #else
-                  passwd = getpass(data);
-                  bstrncpy(buf.c_str(), passwd, buf.size());
+                     passwd = getpass(data);
+                     bstrncpy(buf.c_str(), passwd, buf.size());
+#endif
+#if defined(DEVELOPER)
+                  } else {
+                     sendit(data);
+                     input = fgets(buf.c_str(), buf.size(), stdin);
+                     if (!input){
+                        Dmsg0(1, "Error reading user input!\n");
+                        return false;
+                     }
+                     strip_trailing_junk(buf.c_str());
+                  }
 #endif
                   // now we should get a hidden response at `buf` class, return it to director
                   dir->fsend("%c%s", UA_AUTH_INTERACTIVE_RESPONSE, buf.c_str());

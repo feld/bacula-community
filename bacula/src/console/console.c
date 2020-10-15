@@ -54,7 +54,7 @@ static int require_fips = 0;
 //extern int rl_catch_signals;
 
 /* Imported functions */
-int authenticate_director(BSOCK *dir, DIRRES *director, CONRES *cons);
+int authenticate_director(BSOCK *dir, DIRRES *director, CONRES *cons, bool avoid_getpass);
 
 /* Forward referenced functions */
 static void terminate_console(int sig);
@@ -135,6 +135,9 @@ PROG_COPYRIGHT
 "       -s          no signals\n"
 "       -u <nn>     set command execution timeout to <nn> seconds\n"
 "       -t          test - read configuration and exit\n"
+#if defined(DEVELOPER)
+"       -p          regress test - avoid getpass()\n"
+#endif
 "       -?          print this message.\n"
 "\n"), 2000, BDEMO, HOST_OS, DISTNAME, DISTVER);
 }
@@ -794,7 +797,7 @@ get_cmd(FILE *input, const char *prompt, BSOCK *sock, int sec)
    if (!next) {
       if (do_history) {
         add_history(line);
-        /* Count the number of lines added, we use it to truncate the history 
+        /* Count the number of lines added, we use it to truncate the history
          * file correctly
          */
         history_lines_added++;
@@ -1118,6 +1121,7 @@ int main(int argc, char *argv[])
    bool no_signals = false;
    bool test_config = false;
    utime_t heart_beat;
+   bool avoid_getpass = false;
 
    setlocale(LC_ALL, "");
    bindtextdomain("bacula", LOCALEDIR);
@@ -1130,7 +1134,7 @@ int main(int argc, char *argv[])
    working_directory = "/tmp";
    args = get_pool_memory(PM_FNAME);
 
-   while ((ch = getopt(argc, argv, "D:lc:d:nstu:?C:L")) != -1) {
+   while ((ch = getopt(argc, argv, "D:lc:d:npstu:?C:L")) != -1) {
       switch (ch) {
       case 'D':                    /* Director */
          if (director) {
@@ -1189,6 +1193,12 @@ int main(int argc, char *argv[])
       case 'u':
          timeout = atoi(optarg);
          break;
+
+#if defined(DEVELOPER)
+      case 'p':
+         avoid_getpass = true;
+         break;
+#endif
 
       case '?':
       default:
@@ -1339,7 +1349,7 @@ int main(int argc, char *argv[])
       terminate_console(0);
       return 1;
    }
- 
+
    if (dir->heartbeat_interval) {
       heart_beat = dir->heartbeat_interval;
    } else if (cons) {
@@ -1359,7 +1369,7 @@ int main(int argc, char *argv[])
    }
 
    /* If cons==NULL, default console will be used */
-   if (!authenticate_director(UA_sock, dir, cons)) {
+   if (!authenticate_director(UA_sock, dir, cons, avoid_getpass)) {
       terminate_console(0);
       return 1;
    }
