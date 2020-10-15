@@ -135,6 +135,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot | \n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
        "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> ]\n"
+       "\tobjects [jobid=<jobid> client=<cli> type=<str> | category=<str> | limit=<int> | order=<asc|desc> ]\n"
       ), false},
 
  { NT_("llist"),      llist_cmd,     _("Full or long list like list command"),
@@ -142,7 +143,8 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tjobtotals | pools | volume | media <pool=pool-name> | files jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot |\n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
-      "\tobject [jobid=<jobid> client=<cli> type=<name>  [order=<asc/desc>] [limit=<n>\n"), false},
+       "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> ]\n"
+       "\tobject [jobid=<jobid> client=<cli> type=<name> category=<str> order=<asc/desc> limit=<n>\n"), false},
 
  { NT_("messages"),   messagescmd,   _("Display pending messages"),   NT_(""),    false},
  { NT_("memory"),     memory_cmd,    _("Print current memory usage"), NT_(""),    true},

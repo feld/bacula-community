@@ -182,6 +182,12 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
       append_filter(where.addr(), tmp.c_str());
    }
 
+   if (obj_r->ObjectCategory[0] != 0) {
+      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectCategory, strlen(obj_r->ObjectCategory));
+      Mmsg(tmp, " Object.ObjectCategory='%s'", esc.c_str());
+      append_filter(where.addr(), tmp.c_str());
+   }
+
    if (obj_r->ObjectId != 0) {
       Mmsg(tmp, " Object.ObjectId=%d", obj_r->ObjectId);
       append_filter(where.addr(), tmp.c_str());

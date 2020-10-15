@@ -698,6 +698,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             } else if (strcasecmp(ua->argk[j], NT_("type")) == 0) {
                bstrncpy(obj_r.ObjectType, ua->argv[j], sizeof(obj_r.ObjectType));
 
+            } else if (strcasecmp(ua->argk[j], NT_("category")) == 0) {
+               bstrncpy(obj_r.ObjectCategory, ua->argv[j], sizeof(obj_r.ObjectCategory));
+
             } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0 && ua->argv[j]) {
                obj_r.limit = atoi(ua->argv[j]);
 
