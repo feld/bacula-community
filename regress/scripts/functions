@@ -172,6 +172,7 @@ start_test()
       make -C build/src/stored install-dedup > /dev/null 2>&1
       make -C build/src/plugins/fd install-test-dedup >/dev/null 2>&1
       make -C build/scripts install-btools >/dev/null 2>&1
+      DEDUP_DRIVER=${DEDUP_DRIVER:-Legacy}
       DEDUP_FS_OPTION=${DEDUP_FS_OPTION:-bothsides}
       mkdir ${working}/dde
       DEDUP_MAXIMUM_CONTAINER_SIZE=${DEDUP_MAXIMUM_CONTAINER_SIZE:-10MB}
