@@ -49,11 +49,12 @@ CREATE TABLE Object
    Filename     text     not null,
    PluginName   text     not null,
 
-   ObjectType   text     not null,
-   ObjectName   text     not null,
-   ObjectSource text     not null,
-   ObjectUUID   text     not null,
-   ObjectSize   integer  not null,
+   ObjectCategory  text     not null,
+   ObjectType      text     not null,
+   ObjectName      text     not null,
+   ObjectSource    text     not null,
+   ObjectUUID      text     not null,
+   ObjectSize      integer  not null,
    primary key (ObjectId)
 );
 
