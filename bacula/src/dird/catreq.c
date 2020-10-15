@@ -828,6 +828,7 @@ bool despool_attributes_from_file(JCR *jcr, const char *file)
                   be.bstrerror());
             goto bail_out;
          }
+         msg[msglen]='\0';      /* We have an extra byte free */
          size += nbytes;
       }
       if (!jcr->is_job_canceled()) {
