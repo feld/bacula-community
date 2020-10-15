@@ -1079,19 +1079,19 @@ bool encode_and_send_attributes(bctx_t &bctx)
          POOL_MEM object_source;
          POOL_MEM object_uuid;
 
-         pm_strcpy(path, ff_pkt->plugin_obj.path);
+         pm_strcpy(path, NPRTB(ff_pkt->plugin_obj.path));
          bash_spaces(path.c_str());
-         pm_strcpy(plugin_name, ff_pkt->plugin_obj.plugin_name);
+         pm_strcpy(plugin_name, NPRTB(ff_pkt->plugin_obj.plugin_name));
          bash_spaces(plugin_name.c_str());
-         pm_strcpy(object_type, ff_pkt->plugin_obj.object_type);
+         pm_strcpy(object_type, NPRTB(ff_pkt->plugin_obj.object_type));
          bash_spaces(object_type.c_str());
-         pm_strcpy(object_category, ff_pkt->plugin_obj.object_category);
+         pm_strcpy(object_category, NPRTB(ff_pkt->plugin_obj.object_category));
          bash_spaces(object_category.c_str());
-         pm_strcpy(object_name, ff_pkt->plugin_obj.object_name);
+         pm_strcpy(object_name, NPRTB(ff_pkt->plugin_obj.object_name));
          bash_spaces(object_name.c_str());
-         pm_strcpy(object_source, ff_pkt->plugin_obj.object_source);
+         pm_strcpy(object_source, NPRTB(ff_pkt->plugin_obj.object_source));
          bash_spaces(object_source.c_str());
-         pm_strcpy(object_uuid, ff_pkt->plugin_obj.object_uuid);
+         pm_strcpy(object_uuid, NPRTB(ff_pkt->plugin_obj.object_uuid));
          bash_spaces(object_uuid.c_str());
          sd->msglen = Mmsg(sd->msg, "%s %s %s %s %s %s %s %llu%c",
                            path.c_str(), plugin_name.c_str(), object_category.c_str(), object_type.c_str(),
