@@ -790,46 +790,6 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          char *buf = rec->data;
          num_plugin_objects++;
 
-         skip_nonspaces(&buf);   /* Skip FileIndex */
-         skip_spaces(&buf);
-         skip_nonspaces(&buf);   /* Skip FileType */
-         skip_spaces(&buf);
-
-         parse_plugin_object_string(&buf, &obj_r);
-
-         // Need to get new jobId if possible
-         mjcr = get_jcr_by_session(rec->VolSessionId, rec->VolSessionTime);
-         if (!mjcr) {
-            Pmsg2(000, _("Could not find SessId=%d SessTime=%d for PluginObject record.\n"),
-                  rec->VolSessionId, rec->VolSessionTime);
-            break;
-         }
-
-         obj_r.JobId = mjcr->JobId;
-
-         if (db_get_plugin_object_record(mjcr, db, &obj_r)) {
-            if (verbose) {
-               Pmsg1(0, _("RESTORE_OBJECT: Found Plugin Object \"%s\" in the catalog\n"), obj_r.ObjectName);
-            }
-         } else if (update_db) {
-            /* Send it */
-            Pmsg1(0, _("PLUGIN_OBJECT: Inserting Plugin Object \"%s\" into the catalog\n"), obj_r.ObjectName);
-            if (!db_create_object_record(mjcr, db, &obj_r)) {
-               Jmsg1(mjcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(db));
-            }
-         } else {
-            Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object \"%s\" on the volume\n"), obj_r.ObjectName);
-         }
-
-         break;
-      }
-
-   case STREAM_PLUGIN_OBJECT:
-      {
-         OBJECT_DBR obj_r;
-         char *buf = rec->data;
-         num_plugin_objects++;
-
          obj_r.parse_plugin_object_string(&buf);
 
          // Need to get new jobId if possible

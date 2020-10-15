@@ -234,5 +234,40 @@ void OBJECT_DBR::parse_plugin_object_string(char **obj_str)
    ObjectSize = str_to_uint64(p);
 }
 
+ 
+void parse_restore_object_string(char **r_obj_str, ROBJECT_DBR *robj_r)
+{
+   char *p = *r_obj_str;
+   int len;
+
+   robj_r->FileIndex = str_to_int32(p);        /* FileIndex */
+   skip_nonspaces(&p);
+   skip_spaces(&p);
+   robj_r->FileType = str_to_int32(p);        /* FileType */
+   skip_nonspaces(&p);
+   skip_spaces(&p);
+   robj_r->object_index = str_to_int32(p);    /* Object Index */
+   skip_nonspaces(&p);
+   skip_spaces(&p);
+   robj_r->object_len = str_to_int32(p);      /* object length possibly compressed */
+   skip_nonspaces(&p);
+   skip_spaces(&p);
+   robj_r->object_full_len = str_to_int32(p); /* uncompressed object length */
+   skip_nonspaces(&p);
+   skip_spaces(&p);
+   robj_r->object_compression = str_to_int32(p); /* compression */
+   skip_nonspaces(&p);
+   skip_spaces(&p);
+
+   robj_r->plugin_name = p;                      /* point to plugin name */
+   len = strlen(robj_r->plugin_name);
+   robj_r->object_name = &robj_r->plugin_name[len+1]; /* point to object name */
+   len = strlen(robj_r->object_name);
+   robj_r->object = &robj_r->object_name[len+1];      /* point to object */
+   robj_r->object[robj_r->object_len] = 0;            /* add zero for those who attempt printing */
+   Dmsg7(100, "oname=%s stream=%d FT=%d FI=%d JobId=%ld, obj_len=%d\nobj=\"%s\"\n",
+      robj_r->object_name, robj_r->Stream, robj_r->FileType, robj_r->FileIndex, robj_r->JobId,
+      robj_r->object_len, robj_r->object);
+}
 
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */ 
