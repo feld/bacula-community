@@ -1093,11 +1093,10 @@ bool encode_and_send_attributes(bctx_t &bctx)
          bash_spaces(object_source.c_str());
          pm_strcpy(object_uuid, ff_pkt->plugin_obj.object_uuid);
          bash_spaces(object_uuid.c_str());
-
-         sd->msglen = Mmsg(sd->msg, "%s %s %s %s %s %s %s %llu",
+         sd->msglen = Mmsg(sd->msg, "%s %s %s %s %s %s %s %llu%c",
                            path.c_str(), plugin_name.c_str(), object_category.c_str(), object_type.c_str(),
                            object_name.c_str(), object_source.c_str(), object_uuid.c_str(),
-                           ff_pkt->plugin_obj.object_size);
+                           ff_pkt->plugin_obj.object_size, 0);
          stat = sd->send();
 
          break;
