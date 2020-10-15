@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Copyright (C) 2020 Radosław Korzeniewski
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+TestName="ldap-auth-plugin-test"
+. scripts/functions
+. scripts/regress-utils.sh
+
+mkdir -p ${tmp}
+
+scripts/cleanup
+scripts/copy-ldap-auth-plugin-confs
+
+start_local_slapd
+
+# Authentication Plugin = "ldap:binddn=@BINDDN@ bindpass=@BINDPASS@ url=ldap://localhost:3890 query=@LDAPQUERY@"
+db_name=`cat ${tmp}/ldap_db_name`
+BINDDN="cn=root,dc=$db_name,dc=bacula,dc=com"
+BINDPASS=rootroot
+LDAPQUERY="dc=$db_name,dc=bacula,dc=com/(cn=%u)"
+
+out_sed="${tmp}/sed_tmp"
+cp ${conf}/bacula-dir.conf ${tmp}/bacula-dir.conf
+echo "s!@BINDDN@!${BINDDN}!g" >> ${out_sed}
+echo "s!@BINDPASS@!${BINDPASS}!g" >> ${out_sed}
+echo "s!@LDAPQUERY@!${LDAPQUERY}!g" >> ${out_sed}
+
+sed -i -f ${out_sed} ${tmp}/bacula-dir.conf
+mv ${tmp}/bacula-dir.conf ${conf}/bacula-dir.conf
+rm ${out_sed}
+
+start_test
+
+#export debug=1
+
+cat << END_OF_DATA >${tmp}/bconcmds
+@output /dev/null
+messages
+@$out ${tmp}/log.out
+quit
+END_OF_DATA
+
+run_bacula
+
+# now we should test authentication
+printf "Authentication test ... "
+estat=0
+printf "root\nrootroot\nstatus dir\n" | ${bin}/bconsole -p > ${tmp}/log1.out
+if [ `grep Version: ${tmp}/log1.out | wc -l` -le 1 ]
+then
+   printf "failed ... "
+   estat=1
+fi
+echo "done"
+
+stop_bacula
+stop_local_slapd
+end_test

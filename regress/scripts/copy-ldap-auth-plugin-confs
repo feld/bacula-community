@@ -1,0 +1,8 @@
+#!/bin/sh
+cp -f ${rscripts}/bacula-dir.auth-ldap-plugin.conf ${conf}/bacula-dir.conf
+cp -f ${rscripts}/test-bacula-sd.conf ${conf}/bacula-sd.conf
+cp -f ${rscripts}/test-bacula-fd.conf ${conf}/bacula-fd.conf
+cp -f ${rscripts}/test-console.conf ${conf}/bconsole.conf
+cp -f ${rscripts}/bconsole.auth-ldap-plugin.conf ${conf}/bconsole.auth-ldap-plugin.conf
+
+scripts/set_tape_options

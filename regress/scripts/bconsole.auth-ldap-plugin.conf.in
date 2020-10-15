@@ -1,0 +1,16 @@
+#
+# Bacula User Agent (or Console) Configuration File
+#
+
+Director {
+  Name = @hostname@-dir
+  DIRPort = @dirport@
+  address = @hostname@
+  Password = "shoozudah0io7eipohyachait1oothee9oGu2AejieThadai"
+}
+
+Console {
+  Name = ldaptest
+  Password = "bconsole-unused-pw"
+  Director = @hostname@-dir
+}

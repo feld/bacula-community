@@ -108,6 +108,9 @@ sed -f ${out} ${rscripts}/hdfs-plugin-test-bacula-dir.conf.in >${rscripts}/hdfs-
 sed -f ${out} ${rscripts}/cdp-plugin-test-bacula-dir.conf.in >${rscripts}/cdp-plugin-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/cdp-plugin-test-bacula-sd.conf.in >${rscripts}/cdp-plugin-test-bacula-sd.conf
 
+sed -f ${out} ${rscripts}/bacula-dir.auth-ldap-plugin.conf.in >${rscripts}/bacula-dir.auth-ldap-plugin.conf
+sed -f ${out} ${rscripts}/bconsole.auth-ldap-plugin.conf.in >${rscripts}/bconsole.auth-ldap-plugin.conf
+
 chmod 755 ${rscripts}/regress-config
 
 if test -f ${conf}/bacula-sd.conf ; then
