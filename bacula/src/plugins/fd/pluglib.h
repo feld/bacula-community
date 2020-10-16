@@ -40,6 +40,10 @@
 #define BUFLEN       4096
 #define BIGBUFLEN    65536
 
+/* Pointers to Bacula functions used in plugins */
+extern bFuncs *bfuncs;
+extern bInfo *binfo;
+
 /* debug and messages functions */
 #define JMSG0(ctx,type,msg) \
       if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, PLUGINPREFIX " " msg );
