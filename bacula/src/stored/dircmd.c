@@ -141,7 +141,7 @@ static struct s_cmds cmds[] = {
    {"cloudlist",   cloud_list_cmd,  0},     /* List volumes/parts in the cloud */
    {"unmount",     unmount_cmd,     0},
    {"use storage=", use_cmd,        0},
-#if BEEF
+#if SD_DEDUP_SUPPORT
    {"dedup",       dedup_cmd,       0},     /* any dedup command */
 #endif
    {"run",         run_cmd,         0},
