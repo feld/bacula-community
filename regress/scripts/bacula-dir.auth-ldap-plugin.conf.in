@@ -28,7 +28,7 @@ Director {                            # define myself
 Console {
   Name = ldaptest
   Authentication Plugin = "ldap:binddn=@BINDDN@ bindpass=@BINDPASS@ url=ldap://localhost:3890 query=@LDAPQUERY@"
-  Password = ""
+  Password = "yyy"
   CommandACL = status, .status
 }
 

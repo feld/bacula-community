@@ -41,11 +41,11 @@ update_cloud()
 
    if [ x$CLOUD_NAME = xAzuriteCloud ]; then  #WAS Emulator
       azurite &
-   fi 
+   fi
 
    if [ x$CLOUD_NAME = xFakeAzureCloud ]; then  #WAS Emulator
       make -C build/scripts install-generic-cloud-as-was > /dev/null 2>&1
-   fi 
+   fi
 
    #FIXME : if we find an existing Cloud, might be worth it to remove it here
    grep $CLOUD_NAME $conf/bacula-sd.conf > /dev/null
@@ -56,7 +56,7 @@ update_cloud()
       fi
       if grep $CLOUD_NAME $cfile > /dev/null; then
          $bperl -e "extract_resource('$cfile', 'Cloud', '$CLOUD_NAME')" >> $conf/bacula-sd.conf
-      else 
+      else
           echo "Missing cloud $CLOUD_NAME in $cfile. Contact R@D manager for more info."
           exit 1
       fi
@@ -316,7 +316,7 @@ if [ $MUID != 0 ] ; then
 fi
 }
 
-require_tape_drive() 
+require_tape_drive()
 {
 #  tape not comptible with aligned
 if test x$FORCE_ALIGNED = xyes; then
@@ -340,7 +340,7 @@ fi
 }
 
 require_second_drive()
-{ 
+{
 if test x${TAPE_DRIVE1} = x/dev/null ; then
    echo "$JobName needs second drive, but has none."
    exit 1
@@ -355,7 +355,7 @@ if test x${AUTOCHANGER} = x/dev/null ; then
 fi
 }
 
-require_vtape() 
+require_vtape()
 {
 #  vtape not comptible with aligned
 if test x$FORCE_ALIGNED = xyes; then
@@ -378,7 +378,7 @@ if test x${USE_VTAPE} = x ; then
 fi
 }
 
-require_disk() 
+require_disk()
 {
 #  vtape not comptible with aligned
 if test x$FORCE_ALIGNED = xyes; then
@@ -401,7 +401,7 @@ if test x${USE_VTAPE} = xyes ; then
 fi
 }
 
-require_changer() 
+require_changer()
 {
 #  disk changer not comptible with cloud
 if test x$FORCE_CLOUD = xyes; then
@@ -435,7 +435,7 @@ set_debug()
    else
      out="output"
    fi
-} 
+}
 
 print_debug()
 {
@@ -538,14 +538,14 @@ run_bscan()
 }
 
 bscan_libdbi()
-{   
+{
    B=`echo $LIBDBI | sed 's/;//' | sed 's/;//g'`
    B_D=`echo $B | awk '{print $3}'`
    B_t=`echo $B | awk '{print $6}'`
    B_p=`echo $B | awk '{print $9}'`
 
    BSCANLIBDBI="${LIBDBI:+1}"
-                
+
    if test "$BSCANLIBDBI" = "1" ; then
       BSCANLIBDBI="-D $B_D -h $B_t -t $B_p"
    else
@@ -568,7 +568,7 @@ message
 .status storage header
 quit
 EOF
-      cat  $tmp/stop.$$ | $bin/bconsole -c $conf/bconsole.conf -u 1
+      cat  $tmp/stop.$$ | $bin/bconsole -c $conf/bconsole.conf -u 1 2>&1 > /dev/null
       pid=`awk -F= '/pid=/ { print $2; exit; }' $tmp/stop.$$.out 2> /dev/null`
       if [ "$pid" != "" ]; then
          $bperl -e "check_openfile('/proc/$pid/fd')"
@@ -754,10 +754,10 @@ die_dde()
 {
    code=$1
    msg=$2
-   
+
    print_debug $msg
    stop_bacula
-   
+
    if test "$code" -gt "$ddestat" ; then
       ddestat=$code
    fi
@@ -792,7 +792,7 @@ die_early()
 #
 check_dedup_enable()
 {
-   if [ "$FORCE_DEDUP" != "yes" ] ; then 
+   if [ "$FORCE_DEDUP" != "yes" ] ; then
       print_debug "This test is dedicated to DEDUP, set variable FORCE_DEDUP to 'yes'"
       exit 0
    fi
@@ -855,7 +855,7 @@ check_dde_status()
    local filename="$1"
    local hash_count=$2
    local chunk_used=$3
-   
+
    grep "DDE:" ${filename} | grep "hash_count=${hash_count}" >/dev/null && \
       grep "Containers:" ${filename} | grep "chunk_used=${chunk_used}" >/dev/null
 }
@@ -883,11 +883,11 @@ dmsg()
 check_size_interval()
 {
    # if mi == -1 then then ignore mi (idem for ma)
-   mi=$1        
+   mi=$1
    value=$2
    ma=$3
-   
-   test \( -1 -eq $mi -o $mi -le $value \) -a \( -1 -eq $ma -o $value -le $ma \) 
+
+   test \( -1 -eq $mi -o $mi -le $value \) -a \( -1 -eq $ma -o $value -le $ma \)
 }
 
 check_restore_diff()
@@ -902,7 +902,7 @@ check_restore_diff()
       fi
       rm -f /tmp/d$$
       diff -ur ${src} ${tmp}/bacula-restores${src}
-   else 
+   else
       $rscripts/diff.pl -notop -s ${src} -d ${tmp}/bacula-restores${src} 2>&1 >/dev/null
       if test $? -ne 0; then
          dstat=1
@@ -926,7 +926,7 @@ check_restore_bin_diff()
       fi
       rm -f /tmp/d$$
       diff -ur ${bin} ${tmp}/bacula-restores${bin}
-   else 
+   else
       $rscripts/diff.pl -notop -s ${bin} -d ${tmp}/bacula-restores${bin} 2>&1 >/dev/null
       if test $? -ne 0; then
          dstat=1
@@ -973,7 +973,7 @@ check_restore_tmp_build_diff()
 #
 end_test()
 {
-   if [ x$notracedump != xyes ]; then 
+   if [ x$notracedump != xyes ]; then
       cat ${working}/bacula.*.traceback 2>/dev/null
       cp -f  ${working}/bacula.*.traceback ${dumps} 2>/dev/null
    fi
@@ -1071,7 +1071,7 @@ update_win32()
    then
        echo "Try to upgrade the FileDaemon:\t"
        wget -qO - "$WIN32_ADDR:8091/install"
-   else 
+   else
        echo "Windows binaries not found, skiping upgrade"
    fi
 }
@@ -1116,7 +1116,7 @@ rewind_drive()
   fi
 }
 
-load_slot1() 
+load_slot1()
 {
 # Get a tape from slot1
 slot=`${scripts}/$MTX ${AUTOCHANGER} loaded 0 ${TAPE_DRIVE} $DRIVE1`
@@ -1233,7 +1233,7 @@ src=${src:-"$cwd/build"}
 # Temp source directory so we don't mess up $src
 tmpsrc=${tmpsrc:-"$cwd/tmp/build"}
 
-# Unit Tests source directory 
+# Unit Tests source directory
 unitsrc=${unitsrc:-"$cwd/src"}
 
 estat=0
@@ -1290,4 +1290,4 @@ AUTOCHANGER_SCRIPT=${AUTOCHANGER_SCRIPT:-mtx-changer}
 LD_LIBRARY_PATH=$bin:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 
-trap "{ estat=999; end_test; }" TERM 
+trap "{ estat=999; end_test; }" TERM

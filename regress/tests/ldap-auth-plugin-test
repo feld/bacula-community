@@ -33,26 +33,62 @@ rm ${out_sed}
 
 start_test
 
-#export debug=1
+# export debug=1
 
 cat << END_OF_DATA >${tmp}/bconcmds
 @output /dev/null
 messages
 @$out ${tmp}/log.out
+status dir
 quit
 END_OF_DATA
 
 run_bacula
 
+# now check if we have ldap-dir loaded
+if [ `grep ldap-dir ${tmp}/log.out | wc -l` -lt 1 ]
+then
+   echo "BPAM LDAP Plugin is not loaded, cannot perform the test!"
+   exit 1
+fi
+
 # now we should test authentication
 printf "Authentication test ... "
 estat=0
-printf "root\nrootroot\nstatus dir\n" | ${bin}/bconsole -p > ${tmp}/log1.out
-if [ `grep Version: ${tmp}/log1.out | wc -l` -le 1 ]
+
+cat << END_OF_DATA >${tmp}/bconcmds
+@output /dev/null
+setdebug dir level=500 trace=1
+quit
+END_OF_DATA
+run_bconsole
+
+#check invalid login
+printf "admin\nadmin\nstatus dir\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log1.out
+if [ `grep Version: ${tmp}/log1.out | wc -l` -gt 0 ]
 then
    printf "failed ... "
    estat=1
+else
+   if [ `grep "LDAP Authentication Successfull" ${working}/*.trace | wc -l` -gt 0 ]
+   then
+      estat=2
+   fi
 fi
+
+#check proper login
+printf "root\nrootroot\nstatus dir\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log2.out
+if [ `grep Version: ${tmp}/log2.out | wc -l` -lt 1 ]
+then
+   printf "failed ... "
+   estat=3
+else
+   if [ `grep "LDAP Authentication Successfull" ${working}/*.trace | wc -l` -lt 1 ]
+   then
+      estat=4
+   fi
+fi
+
 echo "done"
 
 stop_bacula

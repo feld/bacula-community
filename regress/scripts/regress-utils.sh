@@ -354,7 +354,7 @@ cn: root
 description: Directory Manager
 END_OF_DATA
 
-ldapadd -f $tmp/entries.ldif -x -D "cn=root,dc=$db_name,dc=bacula,dc=com" -w rootroot -H ldap://localhost:3890
+ldapadd -f $tmp/entries.ldif -x -D "cn=root,dc=$db_name,dc=bacula,dc=com" -w rootroot -H ldap://localhost:3890 2>&1 > ${tmp}/ldap.add.log
 
 if [ $? -ne 0 ]; then
     print_debug "ERROR: Need to setup ldap access correctly"
