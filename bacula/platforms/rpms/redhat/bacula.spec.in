@@ -311,6 +311,8 @@ exit 1
 
 Distribution: %_dist
 
+BuildRequires: openldap-devel
+
 # should we enable tcp wrappers support
 %define tcpwrappers 1
 %{?build_tcpwrappers:%define tcpwrappers 1}
@@ -741,6 +743,7 @@ rm -f $RPM_BUILD_ROOT%{script_dir}/breload
 rm -f $RPM_BUILD_ROOT%{script_dir}/manual_prune.pl
 rm -f $RPM_BUILD_ROOT%{systemd_dir}/bacula-dir.service
 rm -f $RPM_BUILD_ROOT%{systemd_dir}/bacula-sd.service
+rm -f $RPM_BUILD_ROOT%{plugin_dir}/ldap-dir.so
 %endif
 
 # install sqlite
@@ -875,6 +878,7 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %attr(-, root, %{daemon_group}) %{_sbindir}/dbcheck
 %attr(-, root, %{storage_daemon_group}) %{script_dir}/mtx-changer
 %attr(-, root, %{storage_daemon_group}) %config(noreplace) %{script_dir}/mtx-changer.conf
+%attr(-, root, %{daemon_group}) %{plugin_dir}/ldap-dir.so
 
 %if %{usesystemd}
 %attr(-, root, %{daemon_group}) %{systemd_dir}/bacula-dir.service
