@@ -710,11 +710,6 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             }
          }
 
-         if (obj_r.JobId != 0 && obj_r.ObjectId != 0) {
-            db_get_plugin_object_record(ua->jcr, ua->db, &obj_r);
-            return 1;
-         }
-
          db_list_plugin_objects(ua->jcr, ua->db, &obj_r, prtit, ua, llist);
          return 1;
 
