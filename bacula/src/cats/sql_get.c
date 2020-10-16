@@ -757,16 +757,16 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
    int stat = false;
 
    if (obj_r->ObjectId > 0) {
-      Mmsg(tmp, "%s JobId=%lu ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->JobId);
+      Mmsg(tmp, "WHERE ObjectId=%lu ", obj_r->ObjectId);
       pm_strcat(where_str, tmp.c_str());
    }
 
    Mmsg(cmd,
-         "SELECT ObjectId, JobId, Path, Filename, PluginName, "
+         "SELECT ObjectId, JobId, Path, Filename, PluginName, ObjectCategory, "
                  "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
          "FROM Object %s", where_str.c_str());
+
+   bdb_lock();
 
    if (QueryDB(jcr, cmd)) {
       if (sql_num_rows() > 1) {
