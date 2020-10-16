@@ -120,7 +120,8 @@ if [ $? -ne 0 ]; then
     estat=13
 fi
 
-if [ ! -f $tmp/histfile ]; then
+ldd $bin/bconsole | grep readline > /dev/null
+if [ $? = 0 && ! -f $tmp/histfile ]; then
     print_debug "bconsole history file not found"
     estat=14
 fi
