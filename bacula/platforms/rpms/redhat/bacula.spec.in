@@ -619,6 +619,7 @@ export BACULA="Bacula"
         --enable-smartalloc \
         --disable-conio \
         --enable-readline \
+	--with-ldap \
 %if %{mysql}
         --with-mysql \
 %endif
@@ -745,6 +746,8 @@ rm -f $RPM_BUILD_ROOT%{systemd_dir}/bacula-dir.service
 rm -f $RPM_BUILD_ROOT%{systemd_dir}/bacula-sd.service
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/ldap-dir.so
 %endif
+
+rm -f $RPM_BUILD_ROOT%{_sbindir}/ldaptest
 
 # install sqlite
 %if %{sqlite}
