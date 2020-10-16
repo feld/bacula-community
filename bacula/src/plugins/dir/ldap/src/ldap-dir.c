@@ -443,6 +443,7 @@ bRC BPAMLDAP::do_ldap_authenticate()
    }
 
    // now we should report login success!
+   DMSG0(ctx, DINFO, "LDAP Authentication Successfull!\n");
    return bRC_OK;
 }
 
