@@ -747,99 +747,19 @@ void db_free_pluginobject_record(JCR *jcr, OBJECT_DBR *obj_r)
 }
 
 /*
- *  TODO Update doc
+ *  Get specified Plugin Object by ObjectId
  *  */
 bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
 {
-   //TODO cleanup it as well so that append_filter is used
    SQL_ROW row;
    POOL_MEM where_str(PM_MESSAGE);
    POOL_MEM tmp(PM_MESSAGE);
-   POOL_MEM esc(PM_MESSAGE);
    int stat = false;
 
-   if (obj_r->JobId > 0) {
+   if (obj_r->ObjectId > 0) {
       Mmsg(tmp, "%s JobId=%lu ",
            where_str.c_str()[0] == 0? "WHERE" : "AND",
            obj_r->JobId);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   if (obj_r->ObjectId > 0) {
-      Mmsg(tmp, "%s ObjectId=%lu ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->ObjectId);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   //TODO is that surely needed for bdb_escape_string() calls?
-   bdb_lock();
-
-   esc.check_size(strlen(obj_r->Path)*2+1);
-   if (*obj_r->Path) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->Path, strlen(obj_r->Path));
-      Mmsg(tmp, "%s Path='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->Path);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   esc.check_size(strlen(obj_r->Filename)*2+1);
-   if (*obj_r->Filename) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->Filename, strlen(obj_r->Filename));
-      Mmsg(tmp, "%s Filename='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->Filename);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   esc.check_size(strlen(obj_r->PluginName)*2+1);
-   if (*obj_r->PluginName) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->PluginName, strlen(obj_r->PluginName));
-      Mmsg(tmp, "%s PluginName='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->PluginName);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   // Other fields are fixed-size
-   esc.check_size(MAX_ESCAPE_NAME_LENGTH);
-   if (*obj_r->ObjectType) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectType, strlen(obj_r->ObjectType));
-      Mmsg(tmp, "%s ObjectType='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->ObjectType);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   if (*obj_r->ObjectName) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectName, strlen(obj_r->ObjectName));
-      Mmsg(tmp, "%s ObjectName='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->ObjectName);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   if (*obj_r->ObjectSource) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectSource, strlen(obj_r->ObjectSource));
-      Mmsg(tmp, "%s ObjectSource='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->ObjectSource);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   if (*obj_r->ObjectUUID) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectUUID, strlen(obj_r->ObjectUUID));
-      Mmsg(tmp, "%s ObjectUUID='%s' ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->ObjectUUID);
-      pm_strcat(where_str, tmp.c_str());
-   }
-
-   if (obj_r->ObjectSize) {
-      Mmsg(tmp, "%s ObjectSize=%llu ",
-           where_str.c_str()[0] == 0? "WHERE" : "AND",
-           obj_r->ObjectSize);
       pm_strcat(where_str, tmp.c_str());
    }
 
@@ -851,24 +771,25 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
    if (QueryDB(jcr, cmd)) {
       if (sql_num_rows() > 1) {
          char ed1[30];
-         Mmsg1(errmsg, _("Error got %s RestoreObjects but expected only one!\n"),
+         Mmsg1(errmsg, _("Error got %s PluginObjects but expected only one!\n"),
             edit_uint64(sql_num_rows(), ed1));
          sql_data_seek(sql_num_rows()-1);
+         goto bail_out;
       }
       if ((row = sql_fetch_row()) == NULL) {
-         Mmsg2(errmsg, _("PluginOjbect with JobId=%lu ObjectId=%lu not found.\n"),
-               obj_r->JobId, obj_r->ObjectId);
+         Jmsg(jcr, M_ERROR, 0, _("PluginObject with ObjectId=%lu not found.\n"), obj_r->ObjectId);
       } else {
          obj_r->ObjectId = str_to_uint64(row[0]);
          obj_r->JobId = str_to_uint64(row[1]);
          pm_strcpy(obj_r->Path, row[2]);
          pm_strcpy(obj_r->Filename, row[3]);
          pm_strcpy(obj_r->PluginName, row[4]);
-         bstrncpy(obj_r->ObjectType, row[5], sizeof(obj_r->ObjectType));
-         bstrncpy(obj_r->ObjectName, row[6], sizeof(obj_r->ObjectName));
-         bstrncpy(obj_r->ObjectSource, row[7], sizeof(obj_r->ObjectSource));
-         bstrncpy(obj_r->ObjectUUID, row[8], sizeof(obj_r->ObjectUUID));
-         obj_r->ObjectSize = str_to_uint64(row[9]);
+         bstrncpy(obj_r->ObjectCategory, row[5], sizeof(obj_r->ObjectCategory));
+         bstrncpy(obj_r->ObjectType, row[6], sizeof(obj_r->ObjectType));
+         bstrncpy(obj_r->ObjectName, row[7], sizeof(obj_r->ObjectName));
+         bstrncpy(obj_r->ObjectSource, row[8], sizeof(obj_r->ObjectSource));
+         bstrncpy(obj_r->ObjectUUID, row[9], sizeof(obj_r->ObjectUUID));
+         obj_r->ObjectSize = str_to_uint64(row[10]);
 
          stat = true;
       }
@@ -876,10 +797,12 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
       Jmsg(jcr, M_ERROR, 0, _("PluginObject query %s failed!\n"), cmd);
    }
 
+bail_out:
    bdb_unlock();
 
    return stat;
 }
+
 /*
  * Get RestoreObject  Record
  * If the RestoreObjectId is non-zero, we get its record
