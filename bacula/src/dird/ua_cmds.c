@@ -116,7 +116,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tstatus  | prune | list | upload | truncate"), true},
  { NT_("create"),     create_cmd,    _("Create DB Pool from resource"), NT_("pool=<pool-name>"),                    false},
  { NT_("delete"),     delete_cmd,    _("Delete volume, pool, client or job"), NT_("volume=<vol-name> | pool=<pool-name> | jobid=<id> | client=<client-name> | snapshot"), true},
- { NT_("disable"),    disable_cmd,   _("Disable a job, attributes batch process"), NT_("job=<name> | client=<name> | schedule=<name> | storage=<name> | batch"),  true},
+ { NT_("disable"),    disable_cmd,   _("Disable a job, attributes batch process"), NT_("job=<name> | jobs all | client=<name> | schedule=<name> | storage=<name> | batch"),  true},
  { NT_("enable"),     enable_cmd,    _("Enable a job, attributes batch process"), NT_("job=<name> | client=<name> | schedule=<name> | storage=<name> | batch"),   true},
  { NT_("estimate"),   estimate_cmd,  _("Performs FileSet estimate, listing gives full listing"),
    NT_("fileset=<fs> client=<cli> level=<level> accurate=<yes/no> job=<job> listing"), true},
@@ -871,6 +871,29 @@ get_out:
    return 1;
 }
 
+static void enable_disable_job(UAContext *ua, JOB *job, bool setting, bool force)
+{
+   if (!acl_access_ok(ua, Job_ACL, job->name())) {
+      return;
+   }
+
+   if (job->is_enabled() == setting) {   /* Already enabled/disabled? */
+      return; /* yes, skip */
+   }
+
+   /* Allow to enable jobs which are disabled in config only when force flag is set */
+   if (!force && !job->Enabled && setting) {
+      ua->info_msg(_("Job %s was not enabled because it is explicitly disabled in configuration.\n"), job->name());
+      return;
+   }
+
+   /* Keep track of this important event */
+   ua->send_events("DC0007", EVENTS_TYPE_COMMAND, "%sable job=%s",
+            setting?"en":"dis", job->name());
+   job->setEnabled(setting);
+   ua->send_msg(_("Job \"%s\" %sabled\n"), job->name(), setting?"en":"dis");
+}
+
 /*
  * Does all sorts of enable/disable commands: batch, scheduler (not implemented)
  *  job, client, schedule, storage
@@ -910,15 +933,25 @@ static void do_enable_disable_cmd(UAContext *ua, bool setting)
          }
       }
    }
+
    if (job) {
-      if (!acl_access_ok(ua, Job_ACL, job->name())) {
-         ua->error_msg(_("Unauthorized command from this console.\n"));
+      /* User manages single job, force flag can be set */
+      enable_disable_job(ua, job, setting, true);
+      return;
+   }
+
+   i = find_arg(ua, NT_("jobs"));
+   if (i >= 0) {
+      //TODO passing list of jobs could implemented as well
+      int j = find_arg(ua, NT_("all"));
+      if (j >= 0) {
+         ua->send_events("DC0007", EVENTS_TYPE_COMMAND, "%sabling all jobs", setting?"en":"dis");
+         foreach_res(job, R_JOB) {
+            /* User manages all jobs at once, force flag shouldn't be set to avoid unexpected behavior */
+            enable_disable_job(ua, job, setting, false);
+         }
          return;
       }
-      /* Keep track of this important event */
-      ua->send_events("DC0007", EVENTS_TYPE_COMMAND, "%sable job=%s", setting?"en":"dis", job->name());
-      job->setEnabled(setting);
-      ua->send_msg(_("Job \"%s\" %sabled\n"), job->name(), setting?"en":"dis");
    }
 
    i = find_arg(ua, NT_("client"));
