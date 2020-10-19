@@ -548,7 +548,7 @@ static int get_restore_client_name(UAContext *ua, RESTORE_CTX &rx, char * Restor
 }
 
 
-static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTORE_CTX *rx)
+static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTORE_CTX *rx, bool copies)
 {
    if (!db_get_plugin_object_record(ua->jcr, ua->db, obj_r)) {
       ua->error_msg(_("Failed to get plugin object for specified object parameters\n"));
@@ -597,6 +597,12 @@ static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTOR
    }
    pm_strcpy(rx->JobIds, jobids.list);
 
+   if (copies) {
+      /* Display a list of all copies */
+      db_list_copies_records(ua->jcr, ua->db, 0, rx->JobIds,
+                             prtit, ua, HORZ_LIST);
+   }
+
    if (!get_client_name(ua, rx)) {
       return 0;
    }
@@ -637,7 +643,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
    utime_t now = time(NULL) + 1;
    JobId_t JobId;
    JOB_DBR jr = { (JobId_t)-1 };
-   bool done = false;
+   bool done = false, copies = false;
    int i, j;
    const char *list[] = {
       _("List last 20 Jobs run"),
@@ -783,14 +789,15 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
       case 7:                         /* all specified */
          rx->all = true;
          break;
-      /*
-       * All keywords 7 or greater are ignored or handled by a select prompt
-       */
+
+      case 20:             /* copies */
+         copies = true;
+         break;
       case 30:
          {
             OBJECT_DBR obj_r;
             obj_r.ObjectId = str_to_int64(ua->argv[i]);
-            if (!select_files_from_plugin_obj(ua, &obj_r, rx)) {
+            if (!select_files_from_plugin_obj(ua, &obj_r, rx, copies)) {
                return 0;
             }
             return 2;
@@ -1105,7 +1112,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
 
             OBJECT_DBR obj_r;
             obj_r.ObjectId = ua->pint32_val;
-            if (!select_files_from_plugin_obj(ua, &obj_r, rx)) {
+            if (!select_files_from_plugin_obj(ua, &obj_r, rx, copies)) {
                return 0;
             }
 
@@ -1163,6 +1170,12 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
    if (*rx->JobIds == 0) {
       ua->warning_msg(_("No Jobs selected.\n"));
       return 0;
+   }
+
+   if (copies) {
+      /* Display a list of all copies for selected jobs */
+      db_list_copies_records(ua->jcr, ua->db, 0, rx->JobIds,
+                             prtit, ua, HORZ_LIST);
    }
 
    if (strchr(rx->JobIds,',')) {
@@ -1839,15 +1852,9 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
    }
 
    if (rx->JobIds[0] != 0) {
-      if (find_arg(ua, NT_("copies")) > 0) {
-         /* Display a list of all copies */
-         db_list_copies_records(ua->jcr, ua->db, 0, rx->JobIds,
-                                prtit, ua, HORZ_LIST);
-      }
       /* Display a list of Jobs selected for this restore */
       db_list_sql_query(ua->jcr, ua->db, uar_list_temp, prtit, ua, 1,HORZ_LIST);
       ok = true;
-
    } else {
       ua->warning_msg(_("No jobs found.\n"));
    }
