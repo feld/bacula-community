@@ -1,0 +1,160 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Verify 'disable/enable jobs all' command. It should also not allow to enable jobs which are
+# disabled in the config.
+#
+TestName="console-delete-jobs-all-test"
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Enabled', 'No', 'Job', 'FSType')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Enabled', 'No', 'Job', 'VerifyVolume')"
+
+start_test
+
+run_bacula
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+show jobs
+@$out $tmp/log2.out
+show disabled
+quit
+EOF
+
+run_bconsole
+
+# Create a list of all/disabled/enabled jobs
+cat tmp/log1.out | grep "Job: name=" | cut -d "=" -f2 | cut -d " " -f1  > $tmp/all_job_names.log
+
+cat tmp/log1.out | grep "Enabled=0" | grep "Job: name=" | cut -d "=" -f2 | cut -d " " -f1  > $tmp/disabled_job_names.log
+
+cat tmp/log1.out | grep "Enabled=1" | grep "Job: name=" | cut -d "=" -f2 | cut -d " " -f1  > $tmp/enabled_job_names.log
+
+# Check if disabled jobs also present in 'show disabled output'
+cat tmp/log2.out | grep "FSType"
+if [ $? -ne 0 ]; then
+    print_debug "Did not find 'FSType' job in disabled ones"
+    estat=1
+fi
+
+cat tmp/log2.out | grep "VerifyVolume"
+if [ $? -ne 0 ]; then
+    print_debug "Did not find 'FSType' job in disabled ones"
+    estat=1
+
+fi
+
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log3.out
+disable jobs all
+quit
+EOF
+
+run_bconsole
+
+while read jobname; do
+   cat $tmp/log3.out| grep $jobname
+   if [ $? -ne 0 ]; then
+       print_debug "Did not find $jobname job in 'disable jobs all' output"
+       estat=1
+   fi
+done <$tmp/enabled_job_names.log
+
+while read jobname; do
+   cat $tmp/log3.out | grep $jobname
+   if [ $? -eq 0 ]; then
+       print_debug "Found $jobname job in 'disable jobs all' output, that should not happen since it was disabled in the first place"
+       estat=1
+   fi
+done <$tmp/disabled_job_names.log
+
+#Check if jobs are being shown as disabled now
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log4.out
+show disabled
+quit
+EOF
+
+run_bconsole
+
+while read jobname; do
+   cat $tmp/log4.out | grep $jobname
+   if [ $? -ne 0 ]; then
+       print_debug "Did not found $jobname job in 'show disabled' output"
+       estat=1
+   fi
+done <$tmp/all_job_names.log
+
+#Now try to enable all jobs
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log5.out
+enable jobs all
+quit
+EOF
+
+run_bconsole
+
+while read jobname; do
+   cat $tmp/log5.out| grep $jobname
+   if [ $? -ne 0 ]; then
+       print_debug "Did not find $jobname job in 'enable jobs all' output"
+       estat=1
+   fi
+done <$tmp/enabled_job_names.log
+
+#Check if jobs are being shown as enabled now (excluding those which were disabled in config)
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log6.out
+show disabled
+quit
+EOF
+
+run_bconsole
+
+while read jobname; do
+   cat $tmp/log6.out | grep $jobname
+   if [ $? -ne 0 ]; then
+       print_debug "Found $jobname job in 'show disabled' output after enabling all"
+       estat=1
+   fi
+done <$tmp/disabled_job_names.log
+
+#Now try to explicitly enable jobs which were disabled in config
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log7.out
+enable job=FSType
+enable job=VerifyVolume
+@$out $tmp/log8.out
+show disabled
+quit
+EOF
+
+run_bconsole
+
+while read jobname; do
+   cat $tmp/log8.out | grep $jobname
+   if [ $? -eq 0 ]; then
+       print_debug "Found $jobname job in 'show disabled' after explicitly enabling this job previously"
+       estat=1
+   fi
+done <$tmp/disabled_job_names.log
+
+stop_bacula
+end_test
