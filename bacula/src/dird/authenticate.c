@@ -377,7 +377,7 @@ auth_done:
 /**
  * @brief This function perform user authentication procedure augmented with Auth Plugin API.
  *        All bconsole network chatting and interaction is forwarded to dir_authplugins module
- *        and we just provide a required frameworka dn resources, i.e. jcr or bsock to ua.
+ *        and we just provide a required framework and resources, i.e. jcr or bsock to ua.
  *
  * @param cons a Console resource required for auth plugin registration
  * @return true when authentication process finish with success and we can proceed next operations
@@ -388,8 +388,8 @@ bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
    /*
     * The user authentication procedure with Auth Plugins API follow like this:
     * 1. get bDirAuthenticationRegister data which defines what and how we should proceed with authentication
-    * 2. if auth operation is not bDirAuthenticationOperationPluginAll (which points that you have to ask plugin for every auth operation you execute)
-    *    then iterate over returned data
+    * 2. if auth operation is not bDirAuthenticationOperationPluginAll (which points that you have to ask plugin for
+    *    every auth operation you execute) then iterate over returned data
     * 3. the iteration goes like this:
     *    a. send question to console or simple message do display if operation is bDirAuthenticationOperationMessage
     *    b. receive response from console
