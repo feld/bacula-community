@@ -82,6 +82,7 @@ static int wait_cmd(UAContext *ua, const char *cmd);
 static void do_job_delete(UAContext *ua, JobId_t JobId);
 static int delete_volume(UAContext *ua);
 static int delete_pool(UAContext *ua);
+static void delete_object(UAContext *ua);
 static void delete_job(UAContext *ua);
 static int delete_client(UAContext *ua);
 static void do_storage_cmd(UAContext *ua, const char *command);
@@ -1790,11 +1791,12 @@ static int reload_cmd(UAContext *ua, const char *cmd)
 }
 
 /*
- * Delete Pool records (should purge Media with it).
+ * Delete records (should purge Media with it).
  *
  *  delete pool=<pool-name>
  *  delete volume pool=<pool-name> volume=<name>
  *  delete jobid=xxx
+ *  delete object [objectid=id]
  */
 static int delete_cmd(UAContext *ua, const char *cmd)
 {
@@ -1805,6 +1807,7 @@ static int delete_cmd(UAContext *ua, const char *cmd)
       NT_("snapshot"),
       NT_("client"),
       NT_("tag"),
+      NT_("object"),
       NULL};
 
    /* Deleting large jobs can take time! */
@@ -1838,6 +1841,9 @@ static int delete_cmd(UAContext *ua, const char *cmd)
        * same) command line */
 
       /* failback wanted */
+   case 6:
+      delete_object(ua);
+      return 1;
    default:
       break;
    }
@@ -1865,11 +1871,143 @@ static int delete_cmd(UAContext *ua, const char *cmd)
    case 5:
       delete_tag(ua);
       return 1;
+   case 6:
+      delete_object(ua);
+      return 1;
    default:
       ua->warning_msg(_("Nothing done.\n"));
       break;
    }
    return 1;
+}
+
+static void do_object_delete(UAContext *ua, DBId_t ObjectId)
+{
+   POOL_MEM query(PM_MESSAGE), filename(PM_MESSAGE), path(PM_MESSAGE);
+   OBJECT_DBR obj_r;
+
+   obj_r.ObjectId = ObjectId;
+   if (!db_get_plugin_object_record(ua->jcr, ua->db, &obj_r)) {
+      ua->error_msg(_("Failed to delete object with ID: %lu!\n"), ObjectId);
+      return;
+   }
+
+   if (obj_r.Filename[0] != 0) {
+      filename.check_size(strlen(obj_r.Filename)*2+1);
+      db_escape_string(ua->jcr, ua->db, filename.c_str(), obj_r.Filename, strlen(obj_r.Filename));
+   }
+
+   if (obj_r.Path[0] != 0) {
+      path.check_size(strlen(obj_r.Path)*2+1);
+      db_escape_string(ua->jcr, ua->db, path.c_str(), obj_r.Path, strlen(obj_r.Path));
+   }
+
+   JOB_DBR jr;
+   memset(&jr, 0, sizeof(JOB_DBR));
+   jr.JobId = obj_r.JobId;
+   if (!db_get_job_record(ua->jcr, ua->db, &jr)) {
+      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
+                    ua->cmd, db_strerror(ua->db));
+      return;
+   }
+
+   if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
+      ua->error_msg(_("Access to JobId=%d (Job \"%s\") not authorized.\n"),
+            jr.JobId, jr.Name);
+      return;
+   }
+
+   CLIENT_DBR cr;
+   cr.ClientId = jr.ClientId;
+   if (!db_get_client_record(ua->jcr, ua->db, &cr)) {
+      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
+                    ua->cmd, db_strerror(ua->db));
+      return;
+   }
+
+   if (!acl_access_ok(ua, Client_ACL, cr.Name)) {
+      ua->error_msg(_("Access to ClientId=%d not authorized.\n"),
+            jr.ClientId);
+      return;
+   }
+
+   ua->send_events("DC0018", EVENTS_TYPE_COMMAND, "delete object objectid=%lu", ObjectId);
+
+   db_lock(ua->db);
+
+   if (!db_sql_query(ua->db, "BEGIN", NULL, NULL)) {
+      ua->error_msg(_("SQL 'BEGIN' failed with error: %s\n"), db_strerror(ua->db));
+      goto bail_out;
+   }
+
+   /* Delete records associated with the job */
+   /* TODO: Delete JobMedia that correspond to the list of Files we delete */
+   if (obj_r.Filename[0] != '0') {
+      Mmsg(query, "DELETE FROM File WHERE PathId=(SELECT PathId FROM Path WHERE Path='%s') "
+                  "AND Filename='%s' AND JobId=%ld", path.c_str(), filename.c_str(), obj_r.JobId);
+      if (!db_sql_query(ua->db, query.c_str(), NULL, NULL)) {
+         ua->error_msg(_("SQL query: %s failed with error: %s\n"), query.c_str(), db_strerror(ua->db));
+         goto bail_out;
+      }
+   } else {
+      Mmsg(query, "DELETE FROM File WHERE PathId=(SELECT PathId FROM Path WHERE Path='%s') AND JobId=%ld",
+            path.c_str(), obj_r.JobId);
+      if (!db_sql_query(ua->db, query.c_str(), NULL, NULL)) {
+         ua->error_msg(_("SQL query: %s failed with error: %s\n"), query.c_str(), db_strerror(ua->db));
+         goto bail_out;
+      }
+   }
+
+   /* Remove object from main table */
+   Mmsg(query, "DELETE FROM Object WHERE ObjectId=%lu", ObjectId);
+   if (!db_sql_query(ua->db, query.c_str(), NULL, NULL)) {
+      ua->error_msg(_("Failed to delete object record: : %s\n"), db_strerror(ua->db));
+      goto bail_out;
+   }
+
+   if (!db_sql_query(ua->db, "COMMIT", NULL, NULL)) {
+      ua->error_msg(_("SQL 'COMMIT' failed with error: %s\n"), db_strerror(ua->db));
+      goto bail_out;
+   }
+
+   db_unlock(ua->db);
+   return;
+
+bail_out:
+   db_sql_query(ua->db, "ROLLBACK", NULL, NULL);
+   db_unlock(ua->db);
+}
+
+static void delete_object(UAContext *ua)
+{
+   int ObjectId;
+   POOL_MEM msg;
+   sellist sl;
+
+   int i = find_arg_with_value(ua, NT_("objectid"));
+   if (i >= 0) {
+      if (!sl.set_string(ua->argv[i], true)) {
+         ua->warning_msg("%s", sl.get_errmsg());
+         return;
+      }
+
+      if (sl.size() > 25 && (find_arg(ua, "yes") < 0)) {
+         Mmsg(msg, _("Are you sure you want to delete %d Objects? (yes/no): "), sl.size());
+         if (!get_yesno(ua, msg.c_str()) || ua->pint32_val == 0) {
+            return;
+         }
+      }
+
+      foreach_sellist(ObjectId, &sl) {
+         do_object_delete(ua, ObjectId);
+      }
+
+   } else if (!get_pint(ua, _("Enter ObjectId to delete: "))) {
+      return;
+   } else {
+      ObjectId = ua->int64_val;
+      do_object_delete(ua, ObjectId);
+   }
 }
 
 /*
