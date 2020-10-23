@@ -483,6 +483,8 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
       /* TODO: cleanup and factorise this function with verify.c */
       case '5':                /* compare MD5 */
       case '1':                /* compare SHA1 */
+      case '2':                /* compare SHA256 */
+      case '3':                /* compare SHA512 */
         /*
           * The remainder of the function is all about getting the checksum.
           * First we initialise, then we read files, other streams and Finder Info.

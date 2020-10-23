@@ -226,6 +226,8 @@ static bool is_checksum_needed_by_fileset(JCR *jcr)
                break;
             case '5':           /* MD5  */
             case '1':           /* SHA1 */
+            case '2':           /* SHA256 */
+            case '3':           /* SHA512 */
                if (in_block) {
                   Dmsg0(50, "Checksum will be sent to FD\n");
                   return true;
