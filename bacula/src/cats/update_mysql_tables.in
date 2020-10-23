@@ -3,15 +3,15 @@
 # Copyright (C) 2000-2020 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-# Shell script to update MySQL tables from Bacula Enterprise version from 4.0.x to 12.4.x
+# Shell script to update MySQL tables from Bacula Enterprise version from 4.0.x to 12.6.x
 #
 echo " "
 echo "This script will update a Bacula MySQL database"
-echo " from any from version 12-15 or 1014-1021 to version 1022"
+echo " from any from version 12-15 or 1014-1021 to version 1023"
 echo " which is needed to convert from any Bacula Enterprise"
-echo " version 4.0.x or later to version 12.4.x"
+echo " version 4.0.x or later to version 12.6.x"
 echo " or Bacula Community versions 5.0.x, 5.2.x, 7.4.x, 9.x.x to"
-echo " Community version 11.0"
+echo " Community version 11.2"
 echo " "
 echo "Depending on the current version of your catalog, you may"
 echo " have to run this script multiple times"
@@ -45,11 +45,11 @@ if [ "x$DBVERSION" = x ]; then
     exit 1
 fi
 
-if [ "$DBVERSION" -lt 1014 -o "$DBVERSION" -gt 1021 ] ; then
+if [ "$DBVERSION" -lt 1014 -o "$DBVERSION" -gt 1022 ] ; then
   if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt 16 ] ; then
     echo " "
     echo "The existing database is version $DBVERSION !!"
-    echo "This script can only update an existing version 12-16 or 1014-1021 database to version 1022."
+    echo "This script can only update an existing version 12-16 or 1014-1022 database to version 1023."
     echo "Error. Cannot upgrade this database."
     echo " "
     exit 1

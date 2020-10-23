@@ -5,9 +5,9 @@
 #
 echo " "
 echo "This script will update a Bacula PostgreSQL database"
-echo " from any from version 12-16 or 1014-1021 to version 1022"
+echo " from any from version 12-16 or 1014-1021 to version 1023"
 echo " which is needed to convert from any Bacula Enterprise"
-echo " version 4.0.x, 6.x.y, 8.x.y, 10.x.y to version 12.4.x"
+echo " version 4.0.x, 6.x.y, 8.x.y, 10.x.y to version 12.6.x"
 echo " "
 
 
@@ -45,11 +45,11 @@ if [ "x$DBVERSION" = x ]; then
     exit 1
 fi
 
-if [ "$DBVERSION" -lt 1014 -o "$DBVERSION" -gt 1021 ] ; then
+if [ "$DBVERSION" -lt 1014 -o "$DBVERSION" -gt 1022 ] ; then
   if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt 16 ] ; then
     echo " "
     echo "The existing database is version $DBVERSION !!"
-    echo "This script can only update an existing version 12-16, 1014-1021 database to version 1022."
+    echo "This script can only update an existing version 12-16, 1014-1022 database to version 1023."
     echo "Error. Cannot update this database."
     echo " "
     exit 1
