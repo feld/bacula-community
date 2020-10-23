@@ -714,7 +714,7 @@ const char *sql_get_max_connections[] =
  *  version of a file in the same dataset.
  */
 const char *default_sql_bvfs_select =
-"CREATE TABLE %s AS"
+"CREATE TABLE %s AS "
 "SELECT File.JobId, File.FileIndex, File.FileId "
 "FROM Job, File, ( "
     "SELECT MAX(JobTDate) AS JobTDate, PathId, Filename "
