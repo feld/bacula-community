@@ -1218,7 +1218,7 @@ void build_ls_files_query(BDB *db, POOL_MEM &query,
    } else {
       Mmsg(query, sql_bvfs_list_files[db->bdb_get_type_index()],
            JobId, PathId, JobId, PathId,
-           limit, offset, filter, JobId, JobId);
+           filter, JobId, JobId, limit, offset);
    }
 }
 

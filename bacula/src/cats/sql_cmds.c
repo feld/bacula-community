@@ -775,7 +775,6 @@ static const char *sql_bvfs_list_files_default =
                "JOIN Job  ON    (BaseJobId = Job.JobId) "
          "WHERE BaseFiles.JobId IN (%s)   AND PathId = %s "
        ") AS tmp GROUP BY PathId, Filename "
-     "LIMIT %lld OFFSET %lld"
     ") AS T "
 "WHERE T.JobTDate = Job.JobTDate "
   "AND Job.JobId = File.JobId "
@@ -786,7 +785,8 @@ static const char *sql_bvfs_list_files_default =
   " %s "                     /* AND Name LIKE '' */
   "AND (Job.JobId IN ( "
         "SELECT DISTINCT BaseJobId FROM BaseFiles WHERE JobId IN (%s)) "
-       "OR Job.JobId IN (%s)) ";
+       "OR Job.JobId IN (%s)) "
+   "LIMIT %lld OFFSET %lld";
 
 const char *sql_bvfs_list_files[] = {
    /* MySQL */
