@@ -759,6 +759,8 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
    if (obj_r->ObjectId > 0) {
       Mmsg(tmp, "WHERE ObjectId=%lu ", obj_r->ObjectId);
       pm_strcat(where_str, tmp.c_str());
+   } else {
+      return stat;
    }
 
    Mmsg(cmd,
@@ -770,10 +772,6 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
 
    if (QueryDB(jcr, cmd)) {
       if (sql_num_rows() > 1) {
-         char ed1[30];
-         Mmsg1(errmsg, _("Error got %s PluginObjects but expected only one!\n"),
-            edit_uint64(sql_num_rows(), ed1));
-         sql_data_seek(sql_num_rows()-1);
          goto bail_out;
       }
       if ((row = sql_fetch_row()) == NULL) {

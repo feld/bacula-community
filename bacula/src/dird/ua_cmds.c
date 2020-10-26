@@ -1970,6 +1970,8 @@ static void do_object_delete(UAContext *ua, DBId_t ObjectId)
       goto bail_out;
    }
 
+   ua->send_msg(_("1000 Object deleted\n"));
+
    db_unlock(ua->db);
    return;
 
