@@ -267,13 +267,13 @@ int ConfigFile::serialize(POOLMEM **buf)
 /* Dump the item table content to a text file (used by director) */
 int ConfigFile::dump_results(POOLMEM **buf)
 {
-   int len;
+   int len, len_header;
    POOLMEM *tmp, *tmp2;
    if (!items) {
       **buf = 0;
       return 0;
    }
-   len = Mmsg(buf, "# Plugin configuration file\n# Version %d\n", version);
+   len_header = len = Mmsg(buf, "# Plugin configuration file\n# Version %d\n", version);
 
    tmp = get_pool_memory(PM_MESSAGE);
    tmp2 = get_pool_memory(PM_MESSAGE);
@@ -309,13 +309,16 @@ int ConfigFile::dump_results(POOLMEM **buf)
    free_pool_memory(tmp);
    free_pool_memory(tmp2);
 
+   if (len_header == len) {     /* Nothing was generated */
+      return 0;
+   }
    return len ;
 }
 
 bool ConfigFile::parse()
 {
    int token, i;
-   bool ret = false;
+   bool ret = true; /* If the file is empty and we don't have required fields, it's ok */
    bool found;
 
    lc->options |= LOPT_NO_EXTERN;

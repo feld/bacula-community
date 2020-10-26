@@ -871,8 +871,11 @@ static void plugin_config_save_jcr(UAContext *ua, JCR *jcr,
    elt = (plugin_config_item *) malloc (sizeof(plugin_config_item));
    elt->plugin_name = bstrdup(pname);
    elt->content = get_pool_memory(PM_FNAME);
-   ini->dump_results(&elt->content);
-   jcr->plugin_config->append(elt);
+   if (ini->dump_results(&elt->content) > 0) {
+      jcr->plugin_config->append(elt); /* Is not empty */
+   } else {
+      free_plugin_config_item(elt);
+   }
 }
 
 /* TODO: Allow to have sub-menus Advanced.restore_mode can be
