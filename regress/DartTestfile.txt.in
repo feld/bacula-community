@@ -18,6 +18,7 @@ ADD_TEST(misc:btape-test "@regressdir@/tests/btape-test")
 
 ADD_TEST(misc:backup-to-null-crc32 "@regressdir@/tests/backup-to-null-crc32")
 ADD_TEST(misc:console-acl-test "@regressdir@/tests/console-acl-test")
+ADD_TEST(misc:console-delete-jobs-all-test "@regressdir@/tests/console-delete-jobs-all-test")
 ADD_TEST(misc:hangup-blowup-test "@regressdir@/tests/hangup-blowup-test")
 SET_TESTS_PROPERTIES(misc:hangup-blowup-test PROPERTIES TIMEOUT "60")
 ADD_TEST(misc:json-test "@regressdir@/tests/json-test")
