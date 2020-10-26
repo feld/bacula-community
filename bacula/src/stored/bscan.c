@@ -804,16 +804,16 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          /* Look if we have already the same object */
          if (db_get_plugin_object_record(mjcr, db, &obj_r)) {
             if (verbose) {
-               Pmsg1(0, _("RESTORE_OBJECT: Found Plugin Object \"%s\" in the catalog\n"), obj_r.ObjectName);
+               Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object (id: %lu) in the catalog\n"), obj_r.ObjectId);
             }
          } else if (update_db) {
             /* Send it */
-            Pmsg1(0, _("PLUGIN_OBJECT: Inserting Plugin Object \"%s\" into the catalog\n"), obj_r.ObjectName);
+            Pmsg1(0, _("PLUGIN_OBJECT: Inserting Plugin Object (id: %lu) into the catalog\n"), obj_r.ObjectId);
             if (!db_create_object_record(mjcr, db, &obj_r)) {
                Jmsg1(mjcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(db));
             }
          } else {
-            Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object \"%s\" on the volume\n"), obj_r.ObjectName);
+            Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object (id: %lu) on the volume\n"), obj_r.ObjectId);
          }
 
          break;
