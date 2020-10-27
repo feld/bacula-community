@@ -132,6 +132,12 @@ delete jobid=1
 EOF
 run_bconsole
 
+cat ${cwd}/tmp/log2.out | grep "Following Copy jobs have been upgraded to Backup jobs: 5"
+if [ $? -ne 0 ]; then
+   estat=1
+   print_debug "Log about upgrading copy job to backup hasn't been found!"
+fi
+
 rm -rf ${cwd}/tmp/bacula-restores
 run_bconsole ${cwd}/tmp/bconcmds.resto
 check_two_logs
@@ -144,6 +150,12 @@ delete jobid=5
 @# should restore with 11,2,3
 EOF
 run_bconsole
+
+cat ${cwd}/tmp/log2.out | grep "Following Copy jobs have been upgraded to Backup jobs: 11"
+if [ $? -ne 0 ]; then
+   estat=1
+   print_debug "Log about upgrading copy job to backup hasn't been found!"
+fi
 
 rm -rf ${cwd}/tmp/bacula-restores
 run_bconsole ${cwd}/tmp/bconcmds.resto
@@ -158,6 +170,18 @@ delete jobid=11,17
 EOF
 run_bconsole
 
+cat ${cwd}/tmp/log2.out | grep "Following Copy jobs have been upgraded to Backup jobs: 17"
+if [ $? -ne 0 ]; then
+   estat=1
+   print_debug "Log about upgrading copy job to backup hasn't been found!"
+fi
+
+cat ${cwd}/tmp/log2.out | grep "Following Copy jobs have been upgraded to Backup jobs: 19"
+if [ $? -ne 0 ]; then
+   estat=1
+   print_debug "Log about upgrading copy job to backup hasn't been found!"
+fi
+
 rm -rf ${cwd}/tmp/bacula-restores
 run_bconsole ${cwd}/tmp/bconcmds.resto
 check_two_logs
@@ -170,6 +194,18 @@ delete jobid=3,9,15
 @# should restore with 19,2
 EOF
 run_bconsole
+
+cat ${cwd}/tmp/log2.out | grep "Following Copy jobs have been upgraded to Backup jobs: 9"
+if [ $? -ne 0 ]; then
+   estat=1
+   print_debug "Log about upgrading copy job to backup hasn't been found!"
+fi
+
+cat ${cwd}/tmp/log2.out | grep "Following Copy jobs have been upgraded to Backup jobs: 15"
+if [ $? -ne 0 ]; then
+   estat=1
+   print_debug "Log about upgrading copy job to backup hasn't been found!"
+fi
 
 rm -f ${cwd}/build/po/test1
 rm -rf ${cwd}/tmp/bacula-restores
