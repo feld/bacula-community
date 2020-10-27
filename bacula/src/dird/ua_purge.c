@@ -406,12 +406,19 @@ void upgrade_copies(UAContext *ua, char *jobs)
 {
    POOL_MEM query(PM_MESSAGE);
    int dbtype = ua->db->bdb_get_type_index();
+   db_list_ctx jobids;
 
    db_lock(ua->db);
 
    Mmsg(query, uap_upgrade_copies_oldest_job[dbtype], JT_JOB_COPY, jobs, jobs);
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Upgrade copies Log sql=%s\n", query.c_str());
+
+   Mmsg(query, "SELECT JobId FROM cpy_tmp ORDER BY JobId ASC");
+   db_sql_query(ua->db, query.c_str(), db_list_handler, &jobids);
+   if (jobids.count != 0)  {
+      ua->info_msg(_("Following Copy jobs have been upgraded to Backup jobs: %s\n"), jobids.list);
+   }
 
    /* Now upgrade first copy to Backup */
    Mmsg(query, "UPDATE Job SET Type='B' "      /* JT_JOB_COPY => JT_BACKUP  */
