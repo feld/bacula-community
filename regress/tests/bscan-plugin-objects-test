@@ -118,4 +118,5 @@ if [ ${objects_lines} -ne 2 ]; then
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
 fi
 
+stop_bacula
 end_test

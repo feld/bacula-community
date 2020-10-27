@@ -177,4 +177,6 @@ if [ ${objects_lines} -ne 0 ]; then
    estat=1
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
 fi
+
+stop_bacula
 end_test

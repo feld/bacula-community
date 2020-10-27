@@ -142,5 +142,6 @@ if [ $nb -ne 1 ]; then
 fi
 
 run_bconsole
+stop_bacula
 
 end_test

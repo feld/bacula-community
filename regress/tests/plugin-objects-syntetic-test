@@ -148,4 +148,5 @@ if [ ${objects_lines} -ne 3 ]; then
    print_debug "Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
 fi
 
+stop_bacula
 end_test
