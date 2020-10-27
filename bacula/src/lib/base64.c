@@ -408,7 +408,7 @@ int main()
 
    /* test vectors from https://www.base64encode.org/ */
    const char * testdata1 = "Man is distinguished, not only by his reason, but ...";
-   const char * testvect1 = "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCAuLi4=";
+   const char * testvect1 = "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCAuLi4";
    // const char * filltest1  = "a";
    // const char * fillres1   = "YQ==";
    // const char * filltest2  = "ab";
@@ -427,7 +427,6 @@ int main()
 
    len = bin_to_base64(vvect1, strlen(testvect1) + 10, (char*)testdata1, strlen(testdata1), true);
    is(len, strlen(testvect1), "test bin_to_base64");
-   Dmsg1(0, "%s\n", testvect1);
    ok(strcmp(testvect1, vvect1) == 0, "test bin_to_base64 content");
 
    len = base64_to_bin(vdata1, strlen(testdata1) + 10, (char*)testvect1, strlen(testvect1));
