@@ -90,18 +90,18 @@
 #define STREAM_PLUGIN_NAME                 26    /* Plugin "file" string */
 #define STREAM_PLUGIN_DATA                 27    /* Plugin specific data */
 #define STREAM_RESTORE_OBJECT              28    /* Plugin restore object */
-#define STREAM_PLUGIN_OBJECT               29    /* Plugin object */
 /*
  * Non-gzip compressed streams. Those streams can handle arbitrary
  *  compression algorithm data as an additional header is stored
  *  at the beginning of the stream. See comp_stream_header definition
  *  in ch.h for more details.
  */
-#define STREAM_COMPRESSED_DATA                 30    /* Compressed file data */
-#define STREAM_SPARSE_COMPRESSED_DATA          31    /* Sparse compressed data stream */
-#define STREAM_WIN32_COMPRESSED_DATA           32    /* Compressed Win32 BackupRead data */
-#define STREAM_ENCRYPTED_FILE_COMPRESSED_DATA  33    /* Encrypted, compressed data */
-#define STREAM_ENCRYPTED_WIN32_COMPRESSED_DATA 34    /* Encrypted, compressed Win32 BackupRead data */
+#define STREAM_COMPRESSED_DATA                 29    /* Compressed file data */
+#define STREAM_SPARSE_COMPRESSED_DATA          30    /* Sparse compressed data stream */
+#define STREAM_WIN32_COMPRESSED_DATA           31    /* Compressed Win32 BackupRead data */
+#define STREAM_ENCRYPTED_FILE_COMPRESSED_DATA  32    /* Encrypted, compressed data */
+#define STREAM_ENCRYPTED_WIN32_COMPRESSED_DATA 33    /* Encrypted, compressed Win32 BackupRead data */
+#define STREAM_PLUGIN_OBJECT                   34    /* Plugin object */
 
 #define STREAM_ADATA_BLOCK_HEADER             200    /* Adata block header */
 #define STREAM_ADATA_RECORD_HEADER            201    /* Adata record header */
