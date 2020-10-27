@@ -53,7 +53,7 @@ sleep 2
 
 cat <<END_OF_DATA >$tmp/bconcmds
 @$out $tmp/log2.out
-@sleep 1
+@sleep 2
 prune events yes
 list events
 @$out $tmp/log3.out
