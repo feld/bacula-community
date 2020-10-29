@@ -5,10 +5,13 @@
 #
 # Shell script to update SQLite3 tables from Bacula
 #
+OLDVERSION=1022
+NEWVERSION=1023
+
 echo " "
-echo "This script will update a Bacula SQLite3 database from version 12-16 to 1022"
-echo "	which is needed to convert from Bacula Enterprise version 4.0.x to 12.4.x"
-echo "	or Bacula Community version 5.0.x, 5.2.x, 6.0.x to 11.0.x"
+echo "This script will update a Bacula SQLite3 database from version 12-14,$OLDVERSION to $NEWVERSION"
+echo "	which is needed to convert from Bacula Enterprise version 4.0.x to 12.6.x"
+echo "	or Bacula Community version 5.0.x, 5.2.x, 7.0.x, 9.x to 11.2.x"
 echo " "
 
 bindir=@SQLITE_BINDIR@
@@ -20,11 +23,11 @@ DBVERSION=`sqlite3 ${db_name}.db <<END
 SELECT VersionId FROM Version LIMIT 1;
 END
 `
-if [ "$DBVERSION" -ne 1022 ] ; then
-  if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt 16 ] ; then
+if [ "$DBVERSION" -ne $OLDVERSION ] ; then
+  if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt 14 ] ; then
     echo " "
     echo "The existing database is version $DBVERSION !!"
-    echo "This script can only update an existing version 12-16 database to version 1022."
+    echo "This script can only update an existing version 12, 13, 14 or 1014-$OLDVERSION database to version $NEWVERSION."
     echo "Error. Cannot upgrade this database."
     echo " "
     exit 1
@@ -474,6 +477,8 @@ if [ "$DBVERSION" -eq 1022 ] ; then
 begin;
 ALTER TABLE Object ADD COLUMN ObjectCategory text not null;
 create index object_category_idx on Object  (ObjectCategory);
+INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText)
+  VALUES ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1023');
 UPDATE Version SET VersionId=1023;
 commit;
 END-OF-DATA

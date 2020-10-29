@@ -26,6 +26,8 @@ if psql -f - -d ${db_name} $* <<END-OF-DATA
 begin;
 ALTER TABLE Object ADD COLUMN ObjectCategory text not null;
 create index object_category_idx on Object  (ObjectCategory);
+INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
+  ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1023');
 UPDATE Version SET VersionId=1023;
 commit;
 END-OF-DATA
