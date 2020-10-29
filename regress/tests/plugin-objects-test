@@ -142,10 +142,27 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
+# Restore object with bvfs
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log7.out
+setdebug level=15 tags=bvfs,sql trace=1 dir
+.bvfs_cleanup path=b21$$
+.bvfs_restore path=b21$$ objectid=$id_vmware_obj,$id_postgres_obj
+wait
+messages
+@$out $tmp/log8.out
+restore file=?b21$$ where=$tmp/bacula-restore2 yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @# now do a restore
-@$out ${cwd}/tmp/log7.out
+@$out ${cwd}/tmp/log9.out
 restore where=${cwd}/tmp select all storage=File1 done
 yes
 wait
@@ -158,9 +175,9 @@ run_bconsole
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
-@$out ${cwd}/tmp/log8.out
+@$out ${cwd}/tmp/log10.out
 purge volume=TestVolume001
-@$out ${cwd}/tmp/log9.out
+@$out ${cwd}/tmp/log11.out
 list objects
 END_OF_DATA
 
