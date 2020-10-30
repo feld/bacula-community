@@ -747,14 +747,14 @@ void read_state_file(char *dir, const char *progname, int port)
 // Dmsg1(10, "O_BINARY=%d\n", O_BINARY);
    if ((sfd = open(fname, O_RDONLY|O_BINARY)) < 0) {
       berrno be;
-      Dmsg3(010, "Could not open state file. sfd=%d size=%d: ERR=%s\n",
-            sfd, (int)sizeof(hdr), be.bstrerror());
+      Dmsg4(010, "Could not open state file: %s sfd=%d size=%d ERR=%s\n",
+            fname, sfd, (int)sizeof(hdr), be.bstrerror());
       goto bail_out;
    }
    if ((stat=read(sfd, &hdr, hdr_size)) != hdr_size) {
       berrno be;
-      Dmsg4(010, "Could not read state file. sfd=%d stat=%d size=%d: ERR=%s\n",
-                    sfd, (int)stat, hdr_size, be.bstrerror());
+      Dmsg5(010, "Could not read state file: %s sfd=%d stat=%d size=%d ERR=%s\n",
+            fname, sfd, (int)stat, hdr_size, be.bstrerror());
       goto bail_out;
    }
    if (hdr.version != state_hdr.version) {
