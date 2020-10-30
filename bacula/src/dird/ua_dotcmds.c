@@ -712,20 +712,114 @@ static bool dot_bvfs_cleanup(UAContext *ua, const char *cmd)
    return true;
 }
 
-/* .bvfs_restore path=b2XXXXX jobid=1,2 fileid=1,2 dirid=1,2
+static bool check_plugin_object_acl(UAContext *ua, OBJECT_DBR *obj_r) {
+   JOB_DBR jr;
+   memset(&jr, 0, sizeof(JOB_DBR));
+   bool ret = false;
+
+   jr.JobId = obj_r->JobId;
+   if (!db_get_job_record(ua->jcr, ua->db, &jr)) {
+      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
+                    ua->cmd, db_strerror(ua->db));
+      goto bail_out;
+   }
+
+   if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
+      ua->error_msg(_("Access to JobId=%d (Job \"%s\") not authorized.\n"),
+            jr.JobId, jr.Name);
+      goto bail_out;
+   }
+
+   CLIENT_DBR cr;
+   cr.ClientId = jr.ClientId;
+   if (!db_get_client_record(ua->jcr, ua->db, &cr)) {
+      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
+                    ua->cmd, db_strerror(ua->db));
+      goto bail_out;
+   }
+
+   if (!acl_access_ok(ua, Client_ACL, cr.Name)) {
+      ua->error_msg(_("Access to ClientId=%d not authorized.\n"),
+            jr.ClientId);
+      goto bail_out;
+   }
+
+   ret = true;
+
+bail_out:
+   return ret;
+}
+
+static bool compute_ids_from_object(UAContext *ua, DBId_t objectid,
+                                    db_list_ctx *jobid, db_list_ctx *fileid, db_list_ctx *dirid)
+{
+   bool ret = false;
+   POOL_MEM query, filename, obj_path, tmp;
+   OBJECT_DBR obj_r;
+   obj_r.ObjectId = objectid;
+
+   if (!db_get_plugin_object_record(ua->jcr, ua->db, &obj_r)) {
+      goto bail_out;
+   }
+
+   if (!check_plugin_object_acl(ua, &obj_r)) {
+      goto bail_out;
+   }
+
+   Mmsg(tmp, "%lu", obj_r.JobId);
+   jobid->add(tmp.c_str());
+
+   if (obj_r.Filename[0] != 0) {
+      filename.check_size(strlen(obj_r.Filename)*2+1);
+      db_escape_string(ua->jcr, ua->db, filename.c_str(), obj_r.Filename, strlen(obj_r.Filename));
+   }
+
+   if (obj_r.Path[0] != 0) {
+      obj_path.check_size(strlen(obj_r.Path)*2+1);
+      db_escape_string(ua->jcr, ua->db, obj_path.c_str(), obj_r.Path, strlen(obj_r.Path));
+   }
+
+   if (obj_r.Filename[0] != 0) {
+      Mmsg(query, "SELECT FileId FROM File WHERE PathId=(SELECT PathId FROM Path WHERE Path='%s') "
+               "AND Filename='%s' AND JobId=%ld", obj_path.c_str(), filename.c_str(), obj_r.JobId);
+      if (!db_sql_query(ua->db, query.c_str(), db_list_handler, fileid)) {
+         ua->error_msg(_("SQL query: %s failed with error: %s\n"),
+                       query.c_str(), db_strerror(ua->db));
+         goto bail_out;
+      }
+
+   } else {
+      Mmsg(query, "SELECT PathId FROM Path WHERE Path='%s'", obj_path.c_str());
+      if (!db_sql_query(ua->db, query.c_str(), db_list_handler, dirid)) {
+         ua->error_msg(_("SQL query: %s failed with error: %s\n"),
+                       query.c_str(), db_strerror(ua->db));
+         goto bail_out;
+      }
+
+   }
+
+   ret = true;
+
+bail_out:
+   return ret;
+}
+
+/* .bvfs_restore path=b2XXXXX jobid=1,2 fileid=1,2 dirid=1,2 objectid=1,2
  */
 static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
 {
    DBId_t pathid=0;
    int limit=2000, offset=0, i;
-   char *path=NULL, *jobid=NULL, *username=NULL;
-   char *empty = (char *)"";
-   char *fileid, *dirid;
-   fileid = dirid = empty;
+   char *path=NULL, *jobid = NULL, *username=NULL;
+   db_list_ctx jobids, fileid, dirid;
+   bool object = false, ret = false;
 
-   if (!bvfs_parse_arg(ua, &pathid, &path, &jobid, &username,
-                       &limit, &offset) || !path)
-   {
+   ret = bvfs_parse_arg(ua, &pathid, &path, &jobid, &username,
+                       &limit, &offset);
+
+   if (path && find_arg(ua, "objectid") > 0) {
+      object = true;            /* restoring by objectid */
+   } else if (!ret || !path) {
       ua->error_msg("Can't find jobid, pathid or path argument\n");
       return true;              /* not enough param */
    }
@@ -734,21 +828,56 @@ static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
       return true;
    }
 
+   /* If user specified jobids list as well as objectid we need to copy it into poolmem to
+    * append the jobid related to the plugin object. */
+   if (jobid) {
+      jobids.add(jobid);
+   }
+
    Bvfs fs(ua->jcr, ua->db);
    bvfs_set_acl(ua, &fs);
    fs.set_username(username);
-   fs.set_jobids(jobid);
 
    if ((i = find_arg_with_value(ua, "fileid")) >= 0) {
-      fileid = ua->argv[i];
+      if (!is_a_number_list(ua->argv[i])) {
+         ua->error_msg("Please provide fileid as a list of integers!\n");
+         return true;
+      }
+      fileid.add(ua->argv[i]);
    }
    if ((i = find_arg_with_value(ua, "dirid")) >= 0) {
-      dirid = ua->argv[i];
+      if (!is_a_number_list(ua->argv[i])) {
+         ua->error_msg("Please provide dirid as a list of integers!\n");
+         return true;
+      }
+      dirid.add(ua->argv[i]);
    }
+
+   if (object) {
+      i = find_arg_with_value(ua, "objectid");
+      if (!is_a_number_list(ua->argv[i])) {
+         ua->error_msg("Please provide objectid as a list of integers!\n");
+         return true;
+      }
+      int objectid;
+      sellist sel;
+      sel.set_string(ua->argv[i], true);
+
+      foreach_sellist(objectid, &sel) {
+         if (!compute_ids_from_object(ua, objectid, &jobids, &fileid, &dirid)) {
+            return true;
+
+         }
+      }
+   }
+
+   /* Now jobid list is complete and can be used */
+   fs.set_jobids(jobids.list);
+
    if ((i = find_arg(ua, "nodelta")) >= 0) {
       fs.set_compute_delta(false);
    }
-   if (fs.compute_restore_list(fileid, dirid, path)) {
+   if (fs.compute_restore_list(fileid.list, dirid.list, path)) {
       ua->send_msg("OK\n");
    } else {
       ua->error_msg("Can't create restore list\n");
