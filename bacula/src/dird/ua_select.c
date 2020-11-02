@@ -283,9 +283,8 @@ CAT *get_catalog_resource(UAContext *ua)
 /*
  * Select a job to enable or disable
  */
-JOB *select_enable_disable_job_resource(UAContext *ua, bool enable)
+void select_enable_disable_job_resource(UAContext *ua, bool enable)
 {
-   char name[MAX_NAME_LENGTH];
    JOB *job;
 
    LockRes();
@@ -304,11 +303,22 @@ JOB *select_enable_disable_job_resource(UAContext *ua, bool enable)
       add_prompt(ua, job->name());
    }
    UnlockRes();
-   if (do_prompt(ua, _("Job"), _("Select Job resource"), name, sizeof(name)) < 0) {
-      return NULL;
+
+   alist selected(10);
+   if (do_alist_prompt(ua, _("Job"), _("Select Job resource"), &selected) < 0) {
+      return;
+   } else {
+      char *name;
+      foreach_alist(name, &selected) {
+         job = (JOB *)GetResWithName(R_JOB, name);
+         if (job) {
+            enable_disable_job(ua, job, enable, false);
+         } else {
+            return;
+         }
+      }
    }
-   job = (JOB *)GetResWithName(R_JOB, name);
-   return job;
+
 }
 
 /*

@@ -871,7 +871,7 @@ get_out:
    return 1;
 }
 
-static void enable_disable_job(UAContext *ua, JOB *job, bool setting, bool force)
+void enable_disable_job(UAContext *ua, JOB *job, bool setting, bool force)
 {
    if (!acl_access_ok(ua, Job_ACL, job->name())) {
       return;
@@ -924,25 +924,24 @@ static void do_enable_disable_cmd(UAContext *ua, bool setting)
    if (i >= 0) {
       if (ua->argv[i]) {
          LockRes();
+
          job = GetJobResWithName(ua->argv[i]);
          UnlockRes();
-      } else {
-         job = select_enable_disable_job_resource(ua, setting);
-         if (!job) {
-            return;
-         }
-      }
-   }
 
-   if (job) {
-      /* User manages single job, force flag can be set */
-      enable_disable_job(ua, job, setting, true);
-      return;
+         if (job) {
+            /* User manages single job, force flag can be set */
+            enable_disable_job(ua, job, setting, true);
+         }
+
+         return;
+      } else {
+         select_enable_disable_job_resource(ua, setting);
+         return;
+      }
    }
 
    i = find_arg(ua, NT_("jobs"));
    if (i >= 0) {
-      //TODO passing list of jobs could implemented as well
       int j = find_arg(ua, NT_("all"));
       if (j >= 0) {
          ua->send_events("DC0007", EVENTS_TYPE_COMMAND, "%sabling all jobs", setting?"en":"dis");

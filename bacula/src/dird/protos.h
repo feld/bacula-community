@@ -225,6 +225,7 @@ bool open_client_db(UAContext *ua);
 bool open_db(UAContext *ua);
 void close_db(UAContext *ua);
 int cloud_volumes_cmd(UAContext *ua, const char *cmd, const char *mode);
+void enable_disable_job(UAContext *ua, JOB *job, bool setting, bool force);
 enum e_pool_op {
    POOL_OP_UPDATE,
    POOL_OP_CREATE
@@ -277,7 +278,7 @@ void free_ua_context(UAContext *ua);
 /* ua_select.c */
 STORE   *select_storage_resource(UAContext *ua, bool unique=false);
 JOB     *select_job_resource(UAContext *ua);
-JOB     *select_enable_disable_job_resource(UAContext *ua, bool enable);
+void    select_enable_disable_job_resource(UAContext *ua, bool enable);
 JOB     *select_restore_job_resource(UAContext *ua);
 CLIENT  *select_enable_disable_client_resource(UAContext *ua, bool enable);
 CLIENT  *select_client_resource(UAContext *ua, int32_t jobtype);
