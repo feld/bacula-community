@@ -25,7 +25,7 @@ run_bacula
 objects_lines=`cat ${cwd}/tmp/log1.out | grep 'No results to list' | wc -l`
 if [ ${objects_lines} -ne 1 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "ERROR: Wrong plugin objects count found in output: ${objects_lines}, expected 2"
 fi
 
 cat <<EOF >${cwd}/tmp/bconcmds
@@ -55,10 +55,10 @@ EOF
 
 run_bconsole
 
-objects_lines=`cat ${cwd}/tmp/log2.out | grep 'Type*' | wc -l`
+objects_lines=`cat ${cwd}/tmp/log2.out | grep 'Type_' | wc -l`
 if [ ${objects_lines} -ne 6 ]; then
-   estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 6"
+   estat=2
+   print_debug "ERROR: Wrong plugin objects count found in output: ${objects_lines}, expected 6"
 fi
 
 # Type filter
@@ -72,8 +72,8 @@ run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log3.out | grep 'Type_first' | wc -l`
 if [ ${objects_lines} -ne 2 ]; then
-   estat=1
-   print_debug "Wrong 'Type_first' plugin objects count found in output: ${objects_lines}, expected 1"
+   estat=3
+   print_debug "ERROR: Wrong 'Type_first' plugin objects count found in output: ${objects_lines}, expected 1"
 fi
 
 cat <<EOF >${cwd}/tmp/bconcmds
@@ -86,8 +86,8 @@ run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log4.out | grep 'Type_second' | wc -l`
 if [ ${objects_lines} -ne 3 ]; then
-   estat=1
-   print_debug "Wrong 'Type_second' plugin objects count found in output: ${objects_lines}, expected 2"
+   estat=4
+   print_debug "ERROR: Wrong 'Type_second' plugin objects count found in output: ${objects_lines}, expected 2"
 fi
 
 cat <<EOF >${cwd}/tmp/bconcmds
@@ -100,8 +100,8 @@ run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log5.out | grep 'Type_third' | wc -l`
 if [ ${objects_lines} -ne 4 ]; then
-   estat=1
-   print_debug "Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
+   estat=5
+   print_debug "ERROR: Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
 fi
 
 
@@ -116,8 +116,8 @@ run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log6.out | grep 'Type_first' | wc -l`
 if [ ${objects_lines} -ne 1 ]; then
-   estat=1
-   print_debug "Wrong 'Type_first' plugin objects count found in output: ${objects_lines}, expected 1"
+   estat=6
+   print_debug "ERROR: Wrong 'Type_first' plugin objects count found in output: ${objects_lines}, expected 1"
 fi
 
 cat <<EOF >${cwd}/tmp/bconcmds
@@ -130,8 +130,8 @@ run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log7.out | grep 'Type_second' | wc -l`
 if [ ${objects_lines} -ne 2 ]; then
-   estat=1
-   print_debug "Wrong 'Type_second' plugin objects count found in output: ${objects_lines}, expected 2"
+   estat=7
+   print_debug "ERROR: Wrong 'Type_second' plugin objects count found in output: ${objects_lines}, expected 2"
 fi
 
 cat <<EOF >${cwd}/tmp/bconcmds
@@ -144,8 +144,8 @@ run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log8.out | grep 'Type_third' | wc -l`
 if [ ${objects_lines} -ne 3 ]; then
-   estat=1
-   print_debug "Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
+   estat=8
+   print_debug "ERROR: Wrong 'Type_third' plugin objects count found in output: ${objects_lines}, expected 3"
 fi
 
 stop_bacula
