@@ -49,11 +49,11 @@ END_OF_DATA
 run_bacula
 stop_bacula
 
-sleep 2
+sleep 1
 
 cat <<END_OF_DATA >$tmp/bconcmds
 @$out $tmp/log2.out
-@sleep 2
+@sleep 4
 prune events yes
 list events
 @$out $tmp/log3.out
