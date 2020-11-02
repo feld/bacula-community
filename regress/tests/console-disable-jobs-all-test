@@ -6,7 +6,7 @@
 # Verify 'disable/enable jobs all' command. It should also not allow to enable jobs which are
 # disabled in the config.
 #
-TestName="console-delete-jobs-all-test"
+TestName="console-disable-jobs-all-test"
 . scripts/functions
 
 scripts/cleanup
