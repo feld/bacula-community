@@ -19,6 +19,12 @@ echo "${cwd}/build" >${cwd}/tmp/file-list
 sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
 sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
 
+$bin/dbcheck -B -c $conf/bacula-dir.conf | grep PostgreSQL > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "Test designed to run on PostgreSQL database"
+    exit 0
+fi
+
 change_jobname NightlySave $JobName
 
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'AllowDuplicateJobs', 'no', 'Job', 'copy-sqlquery')"
