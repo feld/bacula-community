@@ -1,0 +1,195 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Verify 'disable/enable jobs all' command. It should also not allow to enable jobs which are
+# disabled in the config.
+#
+TestName="console-disable-job-test"
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+# Explicitly disable 2 jobs so that it should not be enabled later
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Enabled', 'No', 'Job', 'FSType')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Enabled', 'No', 'Job', 'VerifyVolume')"
+
+start_test
+
+run_bacula
+
+# Run cmd to get list of jobs available
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log1.out
+disable job
+.
+quit
+EOF
+
+run_bconsole
+
+# Create a list of jobs (ids/names) available for disabling
+# Parse jobs list, get only jobId list (translate each entry like '1: jobName' -> '1')
+cat $tmp/log1.out | grep '[1-9]:' | cut -d ":" -f1 | sed -r 's/\s+//g'  > $tmp/range_ids.log
+ids_count=`cat $tmp/range_ids.log | wc -l`
+if [ $ids_count -eq 0 ]; then
+    print_debug "ERROR: No jobs to disable found!"
+    estat=1
+fi
+
+# Create array with list of parsed jobids
+job_ids=()
+while read jobid; do
+   job_ids+=($jobid)
+done < $tmp/range_ids.log
+
+# Parse jobs list, get only jobName list (translate each entry like '1: jobName' -> 'JobName')
+cat $tmp/log1.out | grep '[1-9]:' | cut -d ":" -f2 > $tmp/range_names.log
+# Create array with list of parsed jobnames
+job_names=()
+while read jobname; do
+   job_names+=($jobname)
+done < $tmp/range_names.log
+
+# Now disable some range of jobs
+# Check how many possible selections there is
+arr_size=${#job_ids[@]}
+# Disable jobs with range - from item nr 3 to next to last one
+range_begin=${job_ids[2]}
+range_end=${job_ids[${#job_ids[@]}-1]}
+
+# Create array with subset of jobs according to range above
+enabled_jobs=()
+echo "$arr_size size"
+for ((x=2; x<${arr_size}; x++)); do
+   enabled_jobs+=(${job_names[x]})
+done
+
+# Disable jobs by given range
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log2.out
+disable job
+${range_begin}-${range_end}
+quit
+EOF
+
+run_bconsole
+
+# Check if all expected jobs were disabled
+for name in ${enabled_jobs}; do
+   cat $tmp/log2.out | grep "Job \"${name}\" disabled"
+   if [ $? -ne 0 ]; then
+       print_debug "ERROR: Job ${name} was not disabled!"
+       estat=1
+   fi
+done
+
+# Disable list of jobs - use jobs which were not used durign disabling by range
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log3.out
+disable job
+${job_ids[0]},${job_ids[1]}
+quit
+EOF
+
+run_bconsole
+
+# Check if jobs were disabled correctly
+cat $tmp/log3.out | grep "Job \"${job_names[0]}\" disabled"
+if [ $? -ne 0 ]; then
+   print_debug "ERROR: Job ${job_names[0]} was not disabled!"
+   estat=1
+fi
+
+cat $tmp/log3.out | grep "Job \"${job_names[1]}\" disabled"
+if [ $? -ne 0 ]; then
+   print_debug "ERROR: Job ${job_names[1]} was not disabled!"
+   estat=1
+fi
+
+# Test 'enable job' cmd
+# Run cmd to get list of jobs available
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log4.out
+enable job
+.
+quit
+EOF
+
+run_bconsole
+
+# Create a list of jobs (ids/names) available for enabling
+# Parse jobs list, get only jobId list (translate each entry like '1: jobName' -> '1')
+cat $tmp/log4.out | grep '[1-9]:' | cut -d ":" -f1 | sed -r 's/\s+//g'  > $tmp/range_ids.log
+ids_count=`cat $tmp/range_ids.log | wc -l`
+if [ $ids_count -eq 0 ]; then
+    print_debug "ERROR: No jobs to enable found!"
+    estat=1
+fi
+# Create array with list of parsed jobids
+job_ids=()
+while read jobid; do
+   job_ids+=($jobid)
+done < $tmp/range_ids.log
+
+# Parse jobs list, get only jobName list (translate each entry like '1: jobName' -> 'JobName')
+cat $tmp/log4.out | grep '[1-9]:' | cut -d ":" -f2 > $tmp/range_names.log
+# Create array with list of parsed jobnames
+job_names=()
+while read jobname; do
+   job_names+=($jobname)
+done < $tmp/range_names.log
+
+# Now enable range of jobs
+arr_size=${#job_ids[@]}
+# Disable jobs with range - use all jobs possible this time
+range_begin=${job_ids[0]}
+range_end=${job_ids[${#job_ids[@]}-1]}
+
+# Enable range of jobs
+cat <<EOF > $tmp/bconcmds
+@$out $tmp/log5.out
+enable job
+${range_begin}-${range_end}
+quit
+EOF
+
+run_bconsole
+
+disabled_jobs=()
+for name in "${job_names[@]}"; do
+   disabled_jobs+=($name)
+done
+
+for name in ${disabled_jobs[@]}; do
+   cat $tmp/log5.out | grep "Job \"${name}\" enabled"
+   retval=$?
+   # Since FSType and VerifyVolue is disabled in config it shouldn't be enabled with specyfing range
+   if [ $name = "FSType" ] || [ $name = "VerifyVolume" ]; then
+      if [ $retval -eq 0 ]; then
+          print_debug "ERROR: Job ${name} was enabled, it shouldn't be since it was disabled in config!!"
+          estat=1
+      fi
+   else
+      if [ $retval -ne 0 ]; then
+          cat $tmp/log5.out | grep "Job \"${name}\" enabled"
+          print_debug "ERROR: Job ${name} was not enabled!"
+          estat=1:wa
+
+      fi
+   fi
+done
+
+stop_bacula
+end_test
