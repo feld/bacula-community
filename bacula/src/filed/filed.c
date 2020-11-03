@@ -282,7 +282,7 @@ int main (int argc, char *argv[])
    /* Keep track of the important events */
    events_send_msg(NULL, "FD0001",
                    EVENTS_TYPE_DAEMON, "*Daemon*",
-                   (intptr_t)get_first_port_host_order(me->FDaddrs), "Filed startup");
+                   (intptr_t)get_first_port_host_order(me->FDaddrs), "Filed startup %s (%s)", VERSION, BDATE);
 
    /* Load the GPFS library if installed */
    GPFSLIB::Init();
@@ -331,7 +331,8 @@ void terminate_filed(int sig)
       }
       /* Keep track of the important events */
       events_send_msg(NULL, "FD0002", EVENTS_TYPE_DAEMON,
-                      "*Daemon*", (intptr_t)get_first_port_host_order(me->FDaddrs), "Filed shutdown");
+                      "*Daemon*", (intptr_t)get_first_port_host_order(me->FDaddrs), "Filed shutdown %s (%s)",
+                      VERSION, BDATE);
    }
 
    if (configfile != NULL) {

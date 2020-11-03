@@ -331,7 +331,7 @@ int main (int argc, char *argv[])
    /* Keep track of important events */
    events_send_msg(NULL, "SD0001", EVENTS_TYPE_DAEMON, "*Daemon*",
                    (intptr_t)get_first_port_host_order(me->sdaddrs),
-                   "Storage startup");
+                   "Storage startup %s (%s)", VERSION, BDATE);
 
    /* Single server used for Director and File daemon */
    server_tid = pthread_self();
@@ -873,7 +873,7 @@ void terminate_stored(int sig)
       /* Keep track of important events */
       events_send_msg(NULL, "SD0003", EVENTS_TYPE_DAEMON, "*Daemon*",
                       get_first_port_host_order(me->sdaddrs),
-                      "Storage shutdown");
+                      "Storage shutdown %s (%s)", VERSION, BDATE);
    }
 
    Dmsg1(200, "In terminate_stored() sig=%d\n", sig);

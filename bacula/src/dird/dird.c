@@ -475,7 +475,8 @@ int main (int argc, char *argv[])
                    "DD0001",
                    EVENTS_TYPE_DAEMON,
                    "*Director*",
-                   (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director startup");
+                   (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director startup %s (%s)",
+                   VERSION, BDATE);
 
 //   init_device_resources();
 
@@ -821,7 +822,8 @@ void terminate_dird(int sig)
    if (!test_config) {
       events_send_msg(NULL, "DD0002",
                       EVENTS_TYPE_DAEMON, "*Director*",
-                      (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director shutdown");
+                      (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director shutdown %s (%s)",
+                      VERSION, BDATE);
    }
    stop_watchdog();
    terminate_collector_threads();
