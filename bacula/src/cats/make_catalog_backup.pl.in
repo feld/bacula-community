@@ -28,6 +28,8 @@ if ($cat eq '-m' || $cat eq '--maintenance-only') {
 }
 
 my $dir_conf='@sbindir@/dbcheck -B -c @sysconfdir@/bacula-dir.conf';
+
+# Overwritten by dbcheck working_dir if available at the runtime
 my $wd = "@working_dir@";
 
 sub dump_sqlite3
