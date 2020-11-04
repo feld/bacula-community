@@ -88,6 +88,16 @@ Job {
 # Prefer Mounted Volumes = no
 }
 
+Job {
+  Name = "VerifyData"
+  Type = Verify
+  Level = Data
+  Client=@hostname@-fd
+  FileSet="Full Set"
+  Storage = LTO3
+  Messages = Standard
+  Pool = Default
+}
 
 # Standard Restore template, to be changed by Console program
 Job {
@@ -100,7 +110,6 @@ Job {
   Pool = Default
   Where = @tmpdir@/bacula-restores
 }
-
 
 # List of files to be backed up
 FileSet {
