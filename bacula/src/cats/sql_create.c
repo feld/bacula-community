@@ -1408,7 +1408,7 @@ bail_out:
 bool BDB::bdb_create_log_record(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg) 
 {
    bool ret;
-   POOLMEM *cmd = get_pool_memory(PM_MESSAGE);
+   POOLMEM *tmp = get_pool_memory(PM_MESSAGE);
    POOLMEM *esc_msg = get_pool_memory(PM_MESSAGE);
    char dt[MAX_TIME_LENGTH], ed1[50];
    int len = strlen(msg) + 1;
@@ -1416,12 +1416,12 @@ bool BDB::bdb_create_log_record(JCR *jcr, JobId_t jobid, utime_t mtime, char *ms
    esc_msg = check_pool_memory_size(esc_msg, len*2+1);
    bdb_escape_string(jcr, esc_msg, msg, len);
    bstrutime(dt, sizeof(dt), mtime);
-   Mmsg(cmd, "INSERT INTO Log (JobId, Time, LogText) VALUES (%s,'%s','%s')",
+   Mmsg(tmp, "INSERT INTO Log (JobId, Time, LogText) VALUES (%s,'%s','%s')",
         edit_int64(jcr->JobId, ed1), dt, esc_msg);
 
-   ret = bdb_sql_query(cmd, NULL, NULL);
+   ret = bdb_sql_query(tmp, NULL, NULL);
 
-   free_pool_memory(cmd);
+   free_pool_memory(tmp);
    free_pool_memory(esc_msg);
    return ret; 
 } 
