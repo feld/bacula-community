@@ -80,6 +80,7 @@ enum {
    /* Keep M_ABORT=1 for dlist.h */
    M_ABORT = 1,                       /* MUST abort immediately */
    M_DEBUG,                           /* debug message */
+   M_EVENTS,                          /* Event messages use event_send_msg() */
    M_FATAL,                           /* Fatal error, stopping job */
    M_ERROR,                           /* Error, but recoverable */
    M_WARNING,                         /* Warning message */
@@ -93,11 +94,10 @@ enum {
    M_RESTORED,                        /* ls -l of restored files */
    M_SECURITY,                        /* security violation */
    M_ALERT,                           /* tape alert messages */
-   M_VOLMGMT,                         /* Volume management messages */
-   M_EVENTS                           /* Event messages use event_send_msg() */
+   M_VOLMGMT                          /* Volume management messages */
 };
 
-#define M_MAX      M_EVENTS           /* keep this updated ! */
+#define M_MAX      M_VOLMGMT          /* keep this updated ! */
 #define M_ALL      M_MAX+1
 
 /* We cannot store more than this amount of custom events */

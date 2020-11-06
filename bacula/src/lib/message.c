@@ -390,7 +390,7 @@ init_msg(JCR *jcr, MSGS *msg, job_code_callback_t job_code_callback)
    if (msg == NULL) {
       daemon_msgs = (MSGS *)malloc(sizeof(MSGS));
       memset(daemon_msgs, 0, sizeof(MSGS));
-      for (i=1; i<=M_MAX; i++) {
+      for (i=3; i<=M_MAX; i++) {
          add_msg_dest(daemon_msgs, MD_STDOUT, i, NULL, NULL);
       }
       Dmsg1(050, "Create daemon global message resource %p\n", daemon_msgs);
@@ -1540,7 +1540,7 @@ Jmsg(JCR *jcr, int type, utime_t mtime, const char *fmt,...)
      *  This allow commands such as "estimate" to work.
      *  It probably should be restricted to work only in the FD.
      */
-    if (jcr && jcr->JobId == 0 && jcr->dir_bsock && type != M_SECURITY) {
+    if (jcr && jcr->JobId == 0 && jcr->dir_bsock && type != M_SECURITY && type != M_EVENTS) {
        BSOCK *dir = jcr->dir_bsock;
        va_start(arg_ptr, fmt);
        dir->msglen = bvsnprintf(dir->msg, sizeof_pool_memory(dir->msg),
