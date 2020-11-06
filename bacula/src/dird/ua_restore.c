@@ -384,6 +384,11 @@ int restore_cmd(UAContext *ua, const char *cmd)
    if (find_arg(ua, NT_("yes")) > 0) {
       pm_strcat(ua->cmd, " yes");    /* pass it on to the run command */
    }
+
+   ua->send_events("DJ0004",
+                   EVENTS_TYPE_COMMAND,
+                   "%s", ua->cmd);
+
    Dmsg1(200, "Submitting: %s\n", ua->cmd);
    /*
     * Transfer jobids, component stuff to jcr to
