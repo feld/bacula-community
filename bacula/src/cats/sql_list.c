@@ -36,16 +36,6 @@
  * -----------------------------------------------------------------------
  */
 
-#define append_filter(buf, sql)  \
-   do {                          \
-      if (*buf) {                \
-         pm_strcat(buf, " AND ");\
-      } else {                   \
-         pm_strcpy(buf, " WHERE ");\
-      }                          \
-      pm_strcat(buf, sql);       \
-   } while (0)
-
 /*
  * Submit general SQL query
  */
