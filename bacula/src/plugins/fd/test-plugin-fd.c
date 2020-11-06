@@ -363,6 +363,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
 {
    struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
+   static int obj_uuid = 1;
    if (!p_ctx) {
       return bRC_Error;
    }
@@ -623,7 +624,8 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plugin_obj.object_name = (char *)NT_("test vm");
       sp->plugin_obj.object_source = (char *)NT_("test plugin source");
       sp->plugin_obj.object_uuid = (char *)NT_("1234-abc-testplugin");
-      sp->plugin_obj.object_size = 100;
+
+      sp->plugin_obj.object_size = obj_uuid++;
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;
       return bRC_OK;
@@ -635,7 +637,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plugin_obj.object_name = (char *)NT_("test db");
       sp->plugin_obj.object_source = (char *)NT_("test plugin source");
       sp->plugin_obj.object_uuid = (char *)NT_("5678-abc-testplugin");
-      sp->plugin_obj.object_size = 100;
+      sp->plugin_obj.object_size = obj_uuid++;
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;
       return bRC_OK;
