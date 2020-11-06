@@ -9,6 +9,7 @@ TestName="events-test"
 JobName=backup
 . scripts/functions
 
+require_linux
 scripts/cleanup
 scripts/copy-confs
 
@@ -22,7 +23,7 @@ cp $scripts/bacula-dir.conf $tmp/1
 sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
 
 $bperl -e "add_log_message('$conf/bacula-sd.conf', '$conf/bacula-fd.conf')"
-sed -i "s/ = all/ = all,events/" $conf/bacula-fd.conf $conf/bacula-sd.conf
+sed -i "s/ = all/ = all,events/" $conf/bacula-sd.conf
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'catalog', 'all,events', 'Messages')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'console', 'all,!skipped,!saved,events', 'Messages')"
 
@@ -60,6 +61,20 @@ quit
 END_OF_DATA
 
 run_bacula
+
+sed -i "s/ = all/ = all,events/" $conf/bacula-fd.conf
+$bin/bacula-ctl-fd restart
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log4.out
+status client
+@$out $tmp/log5.out
+list events
+quit
+END_OF_DATA
+
+run_bconsole
+
 stop_bacula
 
 grep "User login" $tmp/log2.out > /dev/null
@@ -110,4 +125,21 @@ if [ $? != 0 ]; then
     estat=1
 fi
 
+grep -- "-fd " $tmp/log2.out | grep "Director connection" > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should not find messages from the FD in the catalog in $tmp/log2.out"
+    estat=1
+fi
+
+grep -- "-sd " $tmp/log2.out | grep "Job Start" > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find messages from the SD in the catalog in $tmp/log2.out"
+    estat=1
+fi
+
+grep -- "-fd " $tmp/log5.out | grep "Director connection" > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find messages from the FD in the catalog in $tmp/log5.out"
+    estat=1
+fi
 end_test
