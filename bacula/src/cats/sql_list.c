@@ -134,7 +134,7 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
  */
 void BDB::bdb_list_plugin_object_types(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-   Mmsg(cmd, "SELECT DISTINCT ObjectType FROM Object");
+   Mmsg(cmd, "SELECT DISTINCT ObjectType FROM Object ORDER BY ObjectType ASC");
    bdb_lock();
 
 

@@ -752,30 +752,90 @@ void db_free_pluginobject_record(JCR *jcr, OBJECT_DBR *obj_r)
 bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
 {
    SQL_ROW row;
-   POOL_MEM where_str(PM_MESSAGE);
-   POOL_MEM tmp(PM_MESSAGE);
+   POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE);
    int stat = false;
 
    if (obj_r->ObjectId > 0) {
-      Mmsg(tmp, "WHERE ObjectId=%lu ", obj_r->ObjectId);
-      pm_strcat(where_str, tmp.c_str());
+      Mmsg(tmp, " Object.ObjectId=%lu", obj_r->ObjectId);
+      append_filter(where.addr(), tmp.c_str());
    } else {
-      return stat;
+      if (obj_r->JobId != 0) {
+         Mmsg(tmp, " Object.JobId=%lu", obj_r->JobId);
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->Path[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->Path, strlen(obj_r->Path));
+         Mmsg(tmp, " Object.Path='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->Filename[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->Filename, strlen(obj_r->Filename));
+         Mmsg(tmp, " Object.Filename='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->PluginName[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->PluginName, strlen(obj_r->PluginName));
+         Mmsg(tmp, " Object.PluginName='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->ObjectCategory[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectCategory, strlen(obj_r->ObjectCategory));
+         Mmsg(tmp, " Object.ObjectCategory='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->ObjectType[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectType, strlen(obj_r->ObjectType));
+         Mmsg(tmp, " Object.ObjectType='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->ObjectName[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectName, strlen(obj_r->ObjectName));
+         Mmsg(tmp, " Object.Objectname='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->ObjectSource[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectSource, strlen(obj_r->ObjectSource));
+         Mmsg(tmp, " Object.ObjectSource='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->ObjectUUID[0] != 0) {
+         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectUUID, strlen(obj_r->ObjectUUID));
+         Mmsg(tmp, " Object.ObjectUUID='%s'", esc.c_str());
+         append_filter(where.addr(), tmp.c_str());
+      }
+
+      if (obj_r->ObjectSize > 0) {
+         Mmsg(tmp, " Object.ObjectSize=%llu", obj_r->ObjectSize);
+         append_filter(where.addr(), tmp.c_str());
+      }
    }
 
    Mmsg(cmd,
          "SELECT ObjectId, JobId, Path, Filename, PluginName, ObjectCategory, "
                  "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
-         "FROM Object %s", where_str.c_str());
+         "FROM Object %s", where.c_str());
 
    bdb_lock();
 
    if (QueryDB(jcr, cmd)) {
       if (sql_num_rows() > 1) {
+         char ed1[30];
+         Dmsg1(0, _("Error got %s PluginObjects but expected only one!\n"), 
+               edit_uint64(sql_num_rows(), ed1));
+         sql_data_seek(sql_num_rows()-1);
          goto bail_out;
       }
       if ((row = sql_fetch_row()) == NULL) {
-         Jmsg(jcr, M_ERROR, 0, _("PluginObject with ObjectId=%lu not found.\n"), obj_r->ObjectId);
+         Dmsg1(100, _("PluginObject with ObjectId=%lu not found.\n"), obj_r->ObjectId);
+         goto bail_out;
       } else {
          obj_r->ObjectId = str_to_uint64(row[0]);
          obj_r->JobId = str_to_uint64(row[1]);
