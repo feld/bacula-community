@@ -839,14 +839,14 @@ static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
    fs.set_username(username);
 
    if ((i = find_arg_with_value(ua, "fileid")) >= 0) {
-      if (!is_a_number_list(ua->argv[i])) {
+      if (ua->argv[i][0] != '\0' && !is_a_number_list(ua->argv[i])) {
          ua->error_msg("Please provide fileid as a list of integers!\n");
          return true;
       }
       fileid.add(ua->argv[i]);
    }
    if ((i = find_arg_with_value(ua, "dirid")) >= 0) {
-      if (!is_a_number_list(ua->argv[i])) {
+      if (ua->argv[i][0] != '\0' && !is_a_number_list(ua->argv[i])) {
          ua->error_msg("Please provide dirid as a list of integers!\n");
          return true;
       }
@@ -855,7 +855,7 @@ static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
 
    if (object) {
       i = find_arg_with_value(ua, "objectid");
-      if (!is_a_number_list(ua->argv[i])) {
+      if (ua->argv[i][0] != '\0' && !is_a_number_list(ua->argv[i])) {
          ua->error_msg("Please provide objectid as a list of integers!\n");
          return true;
       }
