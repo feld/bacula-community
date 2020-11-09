@@ -1,0 +1,143 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+#TODO fixp
+#   Run a simple backup (many jobs actually ) of the Bacula build directory but
+#   split the archive across few volumes then bscan it
+#   into the catalog after the backup.
+#
+TestName="bscan-many-volumes-test"
+JobName=bscan-many-volumes
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+echo "${cwd}/build" >tmp/file-list
+
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'MaximumVolumeSize', '400M', 'Device')"
+
+change_jobname NightlySave $JobName
+start_test
+
+# Create 4 volumes, span 10 jobs across them
+cat <<END_OF_DATA >tmp/bconcmds
+@$out /dev/null
+messages
+@$out tmp/log1.out
+label storage=File1 volume=TestVolume001
+label storage=File1 volume=TestVolume002
+label storage=File1 volume=TestVolume003
+label storage=File1 volume=TestVolume004
+@$out tmp/log2.out
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 yes
+wait
+messages
+@$out tmp/log3.out
+list jobs
+@$out tmp/log4.out
+list volumes
+@$out tmp/log5.out
+sql
+SELECT count(*) from File;
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File1
+
+# Check how many file records are in the db
+files_in_catalog=`grep '^| *[0-9]' tmp/log5.out | cut -d'|' -f2 | sed 's/,//g'`
+
+# Check how many files are stored in jobs (reported by bscan)
+# Get list of jobfiles per each job (sed used for removing ',' separator in numbers)
+cat tmp/log3.out | grep 'bscan-many-volumes' | cut -d'|' -f7 | sed 's/,//g' > tmp/files_no_list.out
+
+# Count total number of files stored
+files_no=0
+while read number
+do
+   files_no=$((files_no+number))
+done < tmp/files_no_list.out
+
+if [ $files_in_catalog -ne $files_no ]; then
+   print_debug "Files count mismatch! File record in catalog: $files_in_catalog files in jobs: $files_no"
+   estat=1
+fi
+
+# Delete jobs from catalog
+cat <<END_OF_DATA >tmp/bconcmds
+@$out tmp/log6.out
+delete jobid=1,2,3,4,5,6,7,8,9,10
+@$out tmp/log7.out
+list jobs
+@$out tmp/log8.out
+sql
+SELECT count(*) from File;
+quit
+END_OF_DATA
+
+run_bconsole
+
+# Check if file records were removed
+after_jobs_del=`grep '^| *[0-9]' tmp/log8.out | cut -d'|' -f2 | sed 's/,//g'`
+if [ $after_jobs_del -ne 0 ]; then
+   print_debug "Deleting jobs did not remove all file records in db ($after_jobs_del records left)"
+   estat=1
+fi
+
+echo "volume=TestVolume001" > tmp/bscan.bsr
+echo "volume=TestVolume002" >> tmp/bscan.bsr
+echo "volume=TestVolume003" >> tmp/bscan.bsr
+echo "volume=TestVolume004" >> tmp/bscan.bsr
+
+bscan_libdbi
+
+# If the database has a password pass it to bscan
+if test "x${db_password}" = "x"; then
+  PASSWD=
+else
+  PASSWD="-P ${db_password}"
+fi
+
+# Run bscan to insert records from volumes into db
+$bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log9.out 2>&1
+
+# Check how many file records were inserted into the db by bscan
+bscan_files=`grep '[0-9]* File' tmp/log9.out | tail -1 | cut -d' ' -f3`
+
+if [ $bscan_files -ne $files_no ]; then
+   print_debug "Files count mismatch! File record in catalog: $files_no files found by bscan: $bscan_files"
+   estat=1
+fi
+
+# Check if catalog contains correct file records number
+cat <<END_OF_DATA >tmp/bconcmds
+@$out tmp/log10.out
+sql
+SELECT count(*) from File;
+quit
+END_OF_DATA
+
+run_bconsole
+
+# Check how many file records are in the db
+after_bscan=`grep '^| *[0-9]' tmp/log10.out | cut -d'|' -f2 | sed 's/,//g'`
+if [ $after_bscan -ne $files_in_catalog ]; then
+   print_debug "Files count mismatch! File record in catalog: $files_no files found by bscan: $bscan_files"
+   estat=1
+fi
+
+stop_bacula
+end_test
