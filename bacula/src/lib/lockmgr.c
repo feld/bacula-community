@@ -585,7 +585,7 @@ static pthread_key_t lmgr_key;  /* used to get lgmr_thread_t object */
 static dlist *global_mgr = NULL;  /* used to store all lgmr_thread_t objects */
 static pthread_mutex_t lmgr_global_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t undertaker;
-static pthread_cond_t undertaker_cond;
+static pthread_cond_t undertaker_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t undertaker_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool use_undertaker = true;
 static bool do_quit = false;
@@ -843,13 +843,6 @@ void create_lmgr_key()
 
    if (use_undertaker) {
       /* Create condwait */
-      status = pthread_cond_init(&undertaker_cond, NULL);
-      if (status != 0) {
-         berrno be;
-         Pmsg1(000, _("pthread_cond_init failed: ERR=%s\n"),
-               be.bstrerror(status));
-         ASSERT2(0, "pthread_cond_init failed");
-      }
       status = pthread_create(&undertaker, NULL, check_deadlock, NULL);
       if (status != 0) {
          berrno be;
@@ -911,7 +904,6 @@ void lmgr_cleanup_main()
       pthread_mutex_unlock(&undertaker_mutex);
       /* Should avoid memory leak reporting */
       pthread_join(undertaker, NULL);
-      pthread_cond_destroy(&undertaker_cond);
    }
    lmgr_cleanup_thread();
    lmgr_p(&lmgr_global_mutex);
