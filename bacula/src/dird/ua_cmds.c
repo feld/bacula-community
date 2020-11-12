@@ -115,7 +115,7 @@ static struct cmdstruct commands[] = {                                      /* C
    NT_("[storage=<storage-name>] [volume=<vol>] [pool=<pool>] [allpools] [allfrompool] [mediatype=<type>] [drive=<number>] [slots=<number] \n"
        "\tstatus  | prune | list | upload | truncate"), true},
  { NT_("create"),     create_cmd,    _("Create DB Pool from resource"), NT_("pool=<pool-name>"),                    false},
- { NT_("delete"),     delete_cmd,    _("Delete volume, pool, client or job"), NT_("volume=<vol-name> | pool=<pool-name> | jobid=<id> | client=<client-name> | snapshot"), true},
+ { NT_("delete"),     delete_cmd,    _("Delete volume, pool, client, job, object or snapshot"), NT_("volume=<vol-name> | pool=<pool-name> | jobid=<id> | client=<client-name> | objectid=<id> | snapshot"), true},
  { NT_("disable"),    disable_cmd,   _("Disable a job, attributes batch process"), NT_("job=<name> | jobs all | client=<name> | schedule=<name> | storage=<name> | batch"),  true},
  { NT_("enable"),     enable_cmd,    _("Enable a job, attributes batch process"), NT_("job=<name> | client=<name> | schedule=<name> | storage=<name> | batch"),   true},
  { NT_("estimate"),   estimate_cmd,  _("Performs FileSet estimate, listing gives full listing"),
