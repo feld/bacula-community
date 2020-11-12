@@ -2002,7 +2002,8 @@ static void do_object_delete(UAContext *ua, DBId_t ObjectId)
       goto bail_out;
    }
 
-   ua->send_msg(_("1000 Object deleted\n"));
+   ua->send_msg(_("1000 Object deleted: objectid=%lu jobid=%lu category='%s' type='%s' name='%s'\n"),
+                obj_r.ObjectId, obj_r.JobId, obj_r.ObjectCategory, obj_r.ObjectType, obj_r.ObjectName);
 
    db_unlock(ua->db);
    return;
