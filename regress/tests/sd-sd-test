@@ -35,7 +35,8 @@ $bperl -e "add_attribute('$conf/bacula-sd2.conf', 'SDPort', '$PORT', 'Storage')"
 $bperl -e "add_attribute('$conf/bacula-sd2.conf', 'Media Type', 'DiskChangerMedia2', 'Device', 'Drive-0')"
 $bperl -e "add_attribute('$conf/bacula-sd2.conf', 'Media Type', 'File2', 'Device', 'FileStorage')"
 if [ x$FORCE_DEDUP = xyes ]; then
-   DEDUP_FS_OPTION=${DEDUP_FS_OPTION:-bothsides}
+    DEDUP_FS_OPTION=${DEDUP_FS_OPTION:-bothsides}
+    DEDUP_DRIVER=${DEDUP_DRIVER:-legacy}
    $bperl -e 'add_attribute("$conf/bacula-sd2.conf", "Plugin Directory", "$plugins", "Storage")'
    $bperl -e 'add_attribute("$conf/bacula-sd2.conf", "Device Type", "Dedup", "Device")'
    $bperl -e 'add_attribute("$conf/bacula-sd2.conf", "Dedupengine", "Dedupengine-sd2", "Device")'
