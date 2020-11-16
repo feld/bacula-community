@@ -712,26 +712,26 @@ static bool dot_bvfs_cleanup(UAContext *ua, const char *cmd)
    return true;
 }
 
-static bool check_plugin_object_acl(UAContext *ua, OBJECT_DBR *obj_r) {
-   JOB_DBR jr;
-   memset(&jr, 0, sizeof(JOB_DBR));
+static bool check_plugin_object_acl(UAContext *ua, OBJECT_DBR *obj_r, JOB_DBR *jr)
+{
    bool ret = false;
+   memset(jr, 0, sizeof(JOB_DBR));
 
-   jr.JobId = obj_r->JobId;
-   if (!db_get_job_record(ua->jcr, ua->db, &jr)) {
+   jr->JobId = obj_r->JobId;
+   if (!db_get_job_record(ua->jcr, ua->db, jr)) {
       ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
                     ua->cmd, db_strerror(ua->db));
       goto bail_out;
    }
 
-   if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
+   if (!acl_access_ok(ua, Job_ACL, jr->Name)) {
       ua->error_msg(_("Access to JobId=%d (Job \"%s\") not authorized.\n"),
-            jr.JobId, jr.Name);
+            jr->JobId, jr->Name);
       goto bail_out;
    }
 
    CLIENT_DBR cr;
-   cr.ClientId = jr.ClientId;
+   cr.ClientId = jr->ClientId;
    if (!db_get_client_record(ua->jcr, ua->db, &cr)) {
       ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
                     ua->cmd, db_strerror(ua->db));
@@ -740,7 +740,7 @@ static bool check_plugin_object_acl(UAContext *ua, OBJECT_DBR *obj_r) {
 
    if (!acl_access_ok(ua, Client_ACL, cr.Name)) {
       ua->error_msg(_("Access to ClientId=%d not authorized.\n"),
-            jr.ClientId);
+            jr->ClientId);
       goto bail_out;
    }
 
@@ -764,13 +764,12 @@ static bool compute_ids_from_object(UAContext *ua, DBId_t objectid,
       goto bail_out;
    }
 
-   if (!check_plugin_object_acl(ua, &obj_r)) {
+   if (!check_plugin_object_acl(ua, &obj_r, &jr)) {
       goto bail_out;
    }
 
+   jr.JobLevel = L_INCREMENTAL; /* Take Full+Diff+Incr */
    /* Compute the list of the jobs that are involved with this object */
-   memset(&jr, 0, sizeof(jr));
-   jr.JobId = obj_r.JobId;
    if (!db_get_accurate_jobids(ua->jcr, ua->db, &jr, &tempids)) {
       goto bail_out;
    }
