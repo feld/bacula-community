@@ -754,8 +754,10 @@ static bool compute_ids_from_object(UAContext *ua, DBId_t objectid,
                                     db_list_ctx *jobid, db_list_ctx *fileid, db_list_ctx *dirid)
 {
    bool ret = false;
-   POOL_MEM query, filename, obj_path, tmp;
+   POOL_MEM query, filename, obj_path;
    OBJECT_DBR obj_r;
+   JOB_DBR jr;
+   db_list_ctx tempids;
    obj_r.ObjectId = objectid;
 
    if (!db_get_plugin_object_record(ua->jcr, ua->db, &obj_r)) {
@@ -766,8 +768,13 @@ static bool compute_ids_from_object(UAContext *ua, DBId_t objectid,
       goto bail_out;
    }
 
-   Mmsg(tmp, "%lu", obj_r.JobId);
-   jobid->add(tmp.c_str());
+   /* Compute the list of the jobs that are involved with this object */
+   memset(&jr, 0, sizeof(jr));
+   jr.JobId = obj_r.JobId;
+   if (!db_get_accurate_jobids(ua->jcr, ua->db, &jr, &tempids)) {
+      goto bail_out;
+   }
+   jobid->add(tempids);
 
    if (obj_r.Filename[0] != 0) {
       filename.check_size(strlen(obj_r.Filename)*2+1);
