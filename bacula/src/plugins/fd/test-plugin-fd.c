@@ -133,6 +133,7 @@ struct plugin_ctx {
    int nb_obj;                        /* Number of objects created */
    int nb;                            /* used in queryParameter */
    char *query_buf;                   /* buffer used to not loose memory */
+   int job_level;                     /* current Job level */
    POOLMEM *buf;                      /* store ConfigFile */
 };
 
@@ -243,9 +244,11 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    case bEventJobStart:
       bfuncs->DebugMessage(ctx, fi, li, dbglvl, "test-plugin-fd: JobStart=%s\n", (char *)value);
       break;
+   case bEventLevel:
+      p_ctx->job_level = (intptr_t)value;
+      break;
    case bEventJobEnd:
    case bEventEndBackupJob:
-   case bEventLevel:
    case bEventSince:
    case bEventStartRestoreJob:
    case bEventEndRestoreJob:
@@ -641,6 +644,29 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;
       return bRC_OK;
+
+   } else if (p_ctx->nb_obj == 6) {
+      sp->plugin_obj.path = (char *)NT_("/@testplugin/");
+      sp->plugin_obj.plugin_name = (char *)NT_("Test Plugin");
+      sp->plugin_obj.object_category = (char *)NT_("Database");
+      sp->plugin_obj.object_type = (char *)NT_("PostgreSQL");
+      sp->plugin_obj.object_name = (char *)NT_("everything");
+      sp->plugin_obj.object_source = (char *)NT_("test plugin source");
+      sp->plugin_obj.object_uuid = (char *)NT_("5678-abc-testplugin");
+      sp->plugin_obj.object_size = obj_uuid++;
+      sp->type = FT_PLUGIN_OBJECT;
+      p_ctx->nb_obj++;
+      return bRC_OK;
+
+   } else if (p_ctx->nb_obj == 7) {
+      p_ctx->nb_obj++;
+      if (p_ctx->job_level == 'F') {
+         sp->type = FT_REG;
+         sp->link = sp->fname = (char *)"/@testplugin/test1.zero";
+
+      } else {
+         return bRC_Stop;
+      }
    }
 
    if (p_ctx->nb_obj < 2) {
@@ -681,7 +707,7 @@ static bRC endBackupFile(bpContext *ctx)
     * We would return bRC_More if we wanted startBackupFile to be
     * called again to backup another file
     */
-   if (p_ctx->nb_obj >= 6) {
+   if (p_ctx->nb_obj >= 8) {
       return bRC_OK;
 
    } else {
