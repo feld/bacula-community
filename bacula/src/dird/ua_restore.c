@@ -589,13 +589,6 @@ static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTOR
       return 0;
    }
 
-   bool dir = obj_r->Filename[0] != 0 ? false : true;
-   if (dir) {
-      pm_strcpy(ua->cmd, obj_r->Path);
-   } else {
-      Mmsg(ua->cmd, "%s%s", obj_r->Path, obj_r->Filename);
-   }
-
    db_list_ctx jobids;
    if (!db_get_accurate_jobids(ua->jcr, ua->db, &jr, &jobids)) {
       return 0;
@@ -610,6 +603,13 @@ static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTOR
 
    if (!get_client_name(ua, rx)) {
       return 0;
+   }
+
+   bool dir = obj_r->Filename[0] != 0 ? false : true;
+   if (dir) {
+      pm_strcpy(ua->cmd, obj_r->Path);
+   } else {
+      Mmsg(ua->cmd, "%s%s", obj_r->Path, obj_r->Filename);
    }
 
    insert_one_file_or_dir(ua, rx, jr.cStartTime, dir);
