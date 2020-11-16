@@ -43,11 +43,7 @@
  * Starting from version 9.7 both Hellos become the same:
  *    200  1/10/2020 - added `auth interactive` functionality
  */
-#ifndef COMMUNITY
-#define UA_VERSION 1   /* Enterprise */
-#else
-#define UA_VERSION 200 /* Community */
-#endif
+#define UA_VERSION   UA_VERSION_PLUGINAUTH   /* Enterprise and Community */
 
 void senditf(const char *fmt, ...);
 void sendit(const char *buf);
