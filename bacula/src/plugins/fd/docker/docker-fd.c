@@ -165,6 +165,7 @@ DOCKER::DOCKER(bpContext *bpctx) :
       robjbuf(NULL),
       currdkinfo(NULL),
       restoredkinfo(NULL),
+      currvols(NULL),
       listing_mode(DOCKER_LISTING_NONE),
       listing_objnr(0),
       parser(NULL),
@@ -739,7 +740,6 @@ bRC DOCKER::perform_backup_open(bpContext *ctx, struct io_pkt *io)
 {
    POOL_MEM wname(PM_FNAME);
    struct stat statp;
-   btimer_t *timer;
 
    DMSG1(ctx, DDEBUG, "perform_backup_open called: %s\n", io->fname);
    /* prepare backup for DOCKER_VOLUME */
@@ -755,7 +755,7 @@ bRC DOCKER::perform_backup_open(bpContext *ctx, struct io_pkt *io)
          /* if the path does not exist then create one */
          if (be.code() != ENOENT || mkfifo(wname.c_str(), 0600) != 0){
             /* error creating named pipe */
-            berrno be;
+            be.set_errno(errno);
             io->status = -1;
             io->io_errno = be.code();
             dkcommctx->set_error();
@@ -789,7 +789,7 @@ bRC DOCKER::perform_backup_open(bpContext *ctx, struct io_pkt *io)
 
    /* finish preparation for DOCKER_VOLUME */
    if (currdkinfo->type() == DOCKER_VOLUME){
-      timer = start_thread_timer(NULL, pthread_self(), dkcommctx->timeout());
+      btimer_t *timer = start_thread_timer(NULL, pthread_self(), dkcommctx->timeout());
       dkfd = open(wname.c_str(), O_RDONLY);
       stop_thread_timer(timer);
       if (dkfd < 0){
