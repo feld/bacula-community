@@ -29,39 +29,46 @@
 
 #include "bacula.h"
 
-#define DKIDDIGESTSIZE        64       // the size of string array for hex chars, without trailing nul
-#define DKIDDIGESTShortSIZE   12       // the number of hex characters in short digest, without trailing nul
-#define DKIDInvalid           -256     // the non-trivial negative value :)
+#define DKIDDIGESTSIZE           64                         // the size of string array for hex chars, without trailing nul
+#define DKIDDIGESTSIZE_Len       (DKIDDIGESTSIZE + 1)       // the size of string array for hex chars, with trailing nul
+#define DKIDDIGESTShortSIZE      12                         // the number of hex characters in short digest, without trailing nul
+#define DKIDDIGESTShortSIZE_Len  (DKIDDIGESTShortSIZE + 1)  // the number of hex characters in short digest, without trailing nul
+#define DKIDInvalid              -256                       // the non-trivial negative value :)
 
 /*
  * This is a simple storage class to handle Docker Container IDs
  */
-class DKID: public SMARTALLOC {
- public:
-    DKID();
-    DKID(const char *data);
-    DKID(POOL_MEM &data);
-    ~DKID() {};
-
-    inline int64_t id() { return ShortD; };
-    inline char *digest() { return Digest; };
-    inline char *digest_short() { return DigestShort; };
-    inline operator int64_t () { return ShortD; };
-    inline operator char* () { return Digest; };
-    DKID& operator= (char *data);
-    DKID& operator= (DKID &other);
-    DKID& operator= (POOL_MEM &data);
-    bool operator== (DKID &other);
-    bool operator!= (DKID &other);
-#ifdef TEST_PROGRAM
-    void dump();
+class DKID: public SMARTALLOC
+{
+public:
+   DKID();
+   DKID(const char *data) { init(data); }
+   DKID(POOL_MEM &data) { init(data.c_str()); }
+#if __cplusplus > 201103L
+   ~DKID() = default;
+#else
+   ~DKID() {};
 #endif
 
- private:
-   char Digest[DKIDDIGESTSIZE + 1];
-   char DigestShort[DKIDDIGESTShortSIZE + 1];
+   inline int64_t id() { return ShortD; };
+   inline char *digest() { return Digest; };
+   inline char *digest_short() { return DigestShort; };
+   inline operator int64_t () { return ShortD; };
+   inline operator char* () { return Digest; };
+   DKID& operator= (char *data);
+   DKID& operator= (DKID &other);
+   DKID& operator= (POOL_MEM &data);
+   bool operator== (DKID &other);
+   bool operator!= (DKID &other);
+#ifdef TEST_PROGRAM
+   void dump();
+#endif
+
+private:
    int64_t ShortD; // default short digest on Docker is 48bits/6bytes/12hex chars
                    // https://github.com/docker/cli/blob/master/vendor/github.com/docker/docker/pkg/stringid/stringid.go
+   char Digest[DKIDDIGESTSIZE_Len];
+   char DigestShort[DKIDDIGESTShortSIZE_Len];
    bool shortonly;
 
    void init(const char* d);

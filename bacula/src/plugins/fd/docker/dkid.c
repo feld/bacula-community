@@ -29,27 +29,18 @@
 /*
  * DKID class constructor, does default initialization.
  */
-DKID::DKID()
+DKID::DKID() :
+   ShortD(DKIDInvalid),
+#if __cplusplus > 201103L
+   Digest{0},
+   DigestShort{0},
+#endif
+   shortonly(false)
 {
-   bmemzero(Digest, DKIDDIGESTSIZE + 1);
-   ShortD = DKIDInvalid;
-   shortonly = false;
-};
-
-/*
- * DKID class constructor, does parm initialization.
- */
-DKID::DKID(const char* data)
-{
-   init(data);
-};
-
-/*
- * DKID class constructor, does parm initialization.
- */
-DKID::DKID(POOL_MEM& data)
-{
-   init(data.c_str());
+#if ! __cplusplus > 201103L
+   bmemzero(Digest, DKIDDIGESTSIZE_Len);
+   bmemzero(DigestShort, DKIDDIGESTShortSIZE_Len);
+#endif
 };
 
 /*
@@ -60,10 +51,6 @@ DKID::DKID(POOL_MEM& data)
  */
 void DKID::init(const char* data)
 {
-   int len;
-   int a;
-   unsigned char c;
-   bool valid = true;
    char *dig = (char*)data;
 
    if (dig != NULL){
@@ -71,11 +58,12 @@ void DKID::init(const char* data)
       if (strstr(dig, "sha256:") == dig){
          dig += 7;
       }
-      len = strlen(dig);
+      int len = strlen(dig);
       /* check for invalid input data */
-      for (a = 0; a < (len > DKIDDIGESTShortSIZE ? DKIDDIGESTShortSIZE : len); a++){
+      bool valid = true;
+      for (int a = 0; a < (len > DKIDDIGESTShortSIZE ? DKIDDIGESTShortSIZE : len); a++){
          // we are checking for ASCII codes, a subset of UTF-8 for short digest only
-         c = (unsigned char)dig[a];
+         unsigned char c = (unsigned char)dig[a];
          if (c > 'f' || (c > '9' && c < 'A') || (c > 'F' && c < 'a')){
             valid = false;
             break;
