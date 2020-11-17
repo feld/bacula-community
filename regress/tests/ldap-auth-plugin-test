@@ -40,6 +40,7 @@ cat << END_OF_DATA >${tmp}/bconcmds
 messages
 @$out ${tmp}/log.out
 status dir
+setdebug dir level=500 trace=1
 quit
 END_OF_DATA
 
@@ -56,15 +57,8 @@ fi
 printf "Authentication test ... "
 estat=0
 
-cat << END_OF_DATA >${tmp}/bconcmds
-@output /dev/null
-setdebug dir level=500 trace=1
-quit
-END_OF_DATA
-run_bconsole
-
-#check invalid login
-printf "admin\nadmin\nstatus dir\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log1.out
+# check invalid login
+printf "admin\nadmin\nstatus dir\nquit\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log1.out
 if [ `grep Version: ${tmp}/log1.out | wc -l` -gt 0 ]
 then
    printf "failed ... "
@@ -76,8 +70,8 @@ else
    fi
 fi
 
-#check proper login
-printf "root\nrootroot\nstatus dir\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log2.out
+# check proper login
+printf "root\nrootroot\nstatus dir\nquit\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log2.out
 if [ `grep Version: ${tmp}/log2.out | wc -l` -lt 1 ]
 then
    printf "failed ... "
@@ -91,6 +85,15 @@ fi
 
 echo "done"
 
+cat << END_OF_DATA >${tmp}/bconcmds
+status dir
+quit
+END_OF_DATA
+
+run_bconsole
+
+export CHECK_JOBMEDIA=0
+export CHECK_OPENFILE=0
 stop_bacula
 stop_local_slapd
 end_test

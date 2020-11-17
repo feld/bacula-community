@@ -11,6 +11,6 @@ Director {
 
 Console {
   Name = ldaptest
-  Password = "bconsole-unused-pw"
+  Password = "yyy"
   Director = @hostname@-dir
 }
