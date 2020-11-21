@@ -105,6 +105,7 @@ get_source()
    *.tar.bz2)      ARCHIVER="tar xjf";    [ -z "${SRC_DIR}" ] && SRC_DIR=`expr "${ARCHIVE}" : '\(.*\)\.tar\.bz2'`;;
    *.zip)          ARCHIVER="unzip -q";   [ -z "${SRC_DIR}" ] && SRC_DIR=`expr "${ARCHIVE}" : '\(.*\)\.zip'`;;
    *.exe)          ARCHIVER="";           [ -z "${SRC_DIR}" ] && SRC_DIR=`expr "${ARCHIVE}" : '\(.*\)\.zip'`;;
+   *.xz)       ARCHIVER="tar xf";    [ -z "${SRC_DIR}" ] && SRC_DIR=`expr "${ARCHIVE}" : '\(.*\)\.tar\.xz'`;;
    *)              echo Unsupported archive type - $ARCHIVE; exit 1;;
    esac
    
@@ -208,17 +209,6 @@ process_zlib()
    do_make win32/Makefile.gcc PREFIX=${BASE}-  DESTDIR=${DEPPKG_DIR}/ LIBRARY_PATH=lib BINARY_PATH=bin INCLUDE_PATH=include SHARED_MODE=1 install
 }
 
-
-process_rsync()
-{
-   get_source "${URL_RSYNC}" "${DIR_RSYNC}" "${MKD_RSYNC}"
-   ./configure --host=$BASE --with-pic
-   echo Building librsync
-   do_make Makefile
-   echo Installing lib and headers
-   cp .libs/librsync.a ${DEPPKG_DIR}/lib
-   cp librsync*h ${DEPPKG_DIR}/include
-}
 
 process_pcre()
 {
@@ -480,8 +470,7 @@ process_sed()
    then
            echo Patching sed
            >patch.log
-           # patch not needed for 4.2k which is already updated
-           # do_patch sed.patch
+           do_patch sed.patch
            echo Configuring sed
            ./configure --host=$BASE \
                        --prefix=${DEPPKG_DIR} \
@@ -557,6 +546,9 @@ process_qt5()
        echo Patching Qt5
        do_patch qt5-qaction.patch
     fi
+    if [ -f done ]; then
+        return
+    fi
     export OPENSSL_LIBS="-lssl -lcrypto"
     echo y | ./configure -xplatform win32-g++ -device-option CROSS_COMPILE=/usr/bin/i686-w64-mingw32- \
                 -prefix ${DEPPKG_DIR} -opensource  -no-compile-examples \
@@ -630,29 +622,23 @@ process_mingw()
 {
    if test -f /usr/lib/gcc/$BASE/*posix/libstdc++-6.dll; then
       echo "Installing MinGW libs"
-      cp -f /usr/lib/gcc/$BASE/*posix/libstdc++-6.dll ${DEPPKG_DIR}/bin
-      cp -f /usr/lib/gcc/$BASE/*posix/libgcc*dll ${DEPPKG_DIR}/bin
+      cp /usr/lib/gcc/$BASE/*posix/libstdc++-6.dll ${DEPPKG_DIR}/bin
+      cp /usr/lib/gcc/$BASE/*posix/libgcc*dll ${DEPPKG_DIR}/bin
    elif test -f /usr/lib/gcc/$BASE/*/libstdc++-6.dll; then
       echo "Installing MinGW libs"
-      cp -f /usr/$BASE/lib/libstdc++-6.dll ${DEPPKG_DIR}/bin
-      cp -f /usr/$BASE/lib/libgcc*dll ${DEPPKG_DIR}/bin
+      cp /usr/lib/gcc/$BASE/*/libstdc++-6.dll ${DEPPKG_DIR}/bin
+      cp /usr/lib/gcc/$BASE/*/libgcc*dll ${DEPPKG_DIR}/bin
+   elif test -f /usr/$BASE/lib/libstdc++-6.dll; then
+      echo "Installing MinGW libs"
+      cp /usr/$BASE/lib/libstdc++-6.dll ${DEPPKG_DIR}/bin
+      cp /usr/$BASE/lib/libgcc*dll ${DEPPKG_DIR}/bin
    else
       echo "ERROR: Unable to find $BASE on this system"
    fi
 
    if test -f /usr/$BASE/lib/libwinpthread-1.dll; then
-      cp -f /usr/$BASE/lib/libwinpthread-1.dll ${DEPPKG_DIR}/bin
+      cp /usr/$BASE/lib/libwinpthread-1.dll ${DEPPKG_DIR}/bin
    fi
-}
-
-# MSSQL dlls are created from Visual Studio
-process_mssql()
-{
-   get_source "${URL_MSSQL}" "${DIR_MSSQL}" "${MKD_MSSQL}"
-   echo Installing MSSQL driver
-   cp include/*.h ${DEPPKG_DIR}/include
-   cp x86/mssql-driver.dll ${DEPPKG_DIR}/bin
-   cp x86/mssql-regression.exe ${DEPPKG_DIR}/bin
 }
 
 if [ "$#" -eq 0 ]
@@ -660,13 +646,11 @@ then
    process_mingw
    process_lzo
    process_zlib
-   process_rsync
    #process_pthreads
    process_openssl
    process_stab2cv
    process_sed
    process_cmd_utils
-   process_mssql
 #   process_pcre
 #   process_mysql
 #   process_sqlite
