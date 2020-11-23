@@ -497,3 +497,27 @@ bool add_param_str(alist **list, const char *pname, const char *name, char *valu
    }
    return false;
 }
+
+/**
+ * @brief
+ *
+ * @param cmd
+ * @param param
+ * @return true - when prefix match in the command
+ * @return false - when not
+ */
+bool scan_parameter_str(const POOL_MEM &cmd, const char *prefix, POOL_MEM &param)
+{
+   if (prefix != NULL){
+      int len = strlen(prefix);
+      if (strncmp(cmd.c_str(), prefix, len) == 0)
+      {
+         // prefix match, extract param
+         pm_strcpy(param, cmd.c_str() + len);
+         strip_trailing_newline(param.c_str());
+         return true;
+      }
+   }
+
+   return false;
+}
