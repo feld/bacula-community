@@ -270,6 +270,11 @@ TLS_CONTEXT *new_tls_context(const char *ca_certfile, const char *ca_certdir,
 
 #endif
 
+   if (!ctx->openssl) {
+      openssl_post_errors(M_FATAL, _("Error initializing SSL context"));
+      goto err;
+   }
+
    /* Use SSL_OP_ALL to turn on all "rather harmless" workarounds that
     * OpenSSL offers 
     */
@@ -277,11 +282,6 @@ TLS_CONTEXT *new_tls_context(const char *ca_certfile, const char *ca_certdir,
 
    /* Now disable old broken SSLv3 and SSLv2 protocols */
    SSL_CTX_set_options(ctx->openssl, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-
-   if (!ctx->openssl) {
-      openssl_post_errors(M_FATAL, _("Error initializing SSL context"));
-      goto err;
-   }
 
    /* Set up pem encryption callback */
    if (pem_callback) {
