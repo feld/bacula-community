@@ -16,6 +16,7 @@ LIBDIR = $(SRCDIR)/lib
 FINDLIBDIR = $(SRCDIR)/findlib
 
 topdir = @BUILD_DIR@
+working_dir=@working_dir@
 thisdir = src/plugins/fd/pluginlib
 
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
@@ -34,6 +35,9 @@ PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
 ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
 ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
 
+TESTMETAPLUGINBACKENDSRC = test_metaplugin_backend.c
+TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
+
 COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
 COMMONPLUGINTESTS = pluginlib_test iso8601_test
 
@@ -49,10 +53,14 @@ LIBBAC = -lbac -L$(LIBDIR)/.libs
 	@echo "Compiling c++ $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
 
-all: $(COMMONPLUGINOBJ) $(COMMONPLUGINTESTS)
+all: $(COMMONPLUGINOBJ) $(COMMONPLUGINTESTS) $(TESTMETAPLUGINBACKENDOBJ)
 
 $(LIBDIR)/unittests.lo:
 	$(MAKE) -C $(LIBDIR) unittests.lo
+
+test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
+	@echo "Compiling backend $< ..."
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DLOGDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
 pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSSRC)
 	@echo "Building $@ ..."

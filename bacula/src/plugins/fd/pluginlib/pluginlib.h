@@ -42,10 +42,6 @@ extern bInfo *binfo;
 #define PLUGMODULE   "PluginLib::"
 #endif
 
-// #ifndef PLUGINPREFIX
-// #define PLUGINPREFIX    PLUGMODULE
-// #endif
-
 /* size of different string or query buffers */
 #define BUFLEN       4096
 #define BIGBUFLEN    65536
