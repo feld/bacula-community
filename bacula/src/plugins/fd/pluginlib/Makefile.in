@@ -1,0 +1,101 @@
+#
+# Makefile for building FD plugins PluginLibrary for Bacula
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+#  Author: Radoslaw Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
+
+@MCOMMON@
+
+# No optimization for now for easy debugging
+
+SRCDIR = ../../..
+FDDIR = $(SRCDIR)/filed
+LIBDIR = $(SRCDIR)/lib
+FINDLIBDIR = $(SRCDIR)/findlib
+
+topdir = @BUILD_DIR@
+thisdir = src/plugins/fd/pluginlib
+
+UNITTESTSOBJ = $(LIBDIR)/unittests.lo
+
+PLUGINLIBSSRC = pluginlib.cpp pluginlib.h
+PLUGINLIBSOBJ = $(filter %.lo,$(PLUGINLIBSSRC:.cpp=.lo))
+ISO8601SRC = iso8601.cpp iso8601.h
+ISO8601OBJ = $(filter %.lo,$(ISO8601SRC:.cpp=.lo))
+EXECPROGSRC = execprog.cpp execprog.h
+EXECPROGOBJ = $(filter %.lo,$(EXECPROGSRC:.cpp=.lo))
+COMMCTXSRC = commctx.cpp commctx.h
+COMMCTXOBJ = $(filter %.lo,$(COMMCTXSRC:.cpp=.lo))
+
+PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
+PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
+ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
+ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
+
+COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
+COMMONPLUGINTESTS = pluginlib_test iso8601_test
+
+.SUFFIXES:    .c .lo
+
+LIBBAC = -lbac -L$(LIBDIR)/.libs
+
+.c.lo:
+	@echo "Compiling $< ..."
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
+
+.cpp.lo:
+	@echo "Compiling c++ $< ..."
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
+
+all: $(COMMONPLUGINOBJ) $(COMMONPLUGINTESTS)
+
+$(LIBDIR)/unittests.lo:
+	$(MAKE) -C $(LIBDIR) unittests.lo
+
+pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSSRC)
+	@echo "Building $@ ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
+
+iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC)
+	@echo "Building $@ ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
+
+install: all
+	$(MKDIR) $(DESTDIR)$(plugindir)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bpipe-fd.la $(DESTDIR)$(plugindir)
+	$(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.la
+
+install-test-plugin: all
+	$(MKDIR) $(DESTDIR)$(plugindir)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-plugin-fd.la $(DESTDIR)$(plugindir)
+	$(RMF) $(DESTDIR)$(plugindir)/test-plugin-fd.la
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-deltaseq-fd.la $(DESTDIR)$(plugindir)
+	$(RMF) $(DESTDIR)$(plugindir)/test-deltaseq-fd.la
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-handlexacl-plugin-fd.la $(DESTDIR)$(plugindir)
+	$(RMF) $(DESTDIR)$(plugindir)/test-handlexacl-plugin-fd.la
+
+Makefile: Makefile.in $(topdir)/config.status
+	cd $(topdir) \
+	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+libtool-clean:
+	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
+	@$(RMF) *.la
+	@$(RMF) -r .libs _libs
+
+clean:	libtool-clean
+	@rm -f main *.so *.o 1 2 3
+	@rm -f $(COMMONPLUGINTESTS)
+
+distclean: clean
+	@rm -f Makefile *.la *.lo
+	@rm -rf .libs
+
+libtool-uninstall:
+	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.so
+
+uninstall: @LIBTOOL_UNINSTALL_TARGET@
+
+depend:
