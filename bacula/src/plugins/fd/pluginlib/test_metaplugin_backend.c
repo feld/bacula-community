@@ -47,10 +47,21 @@ pid_t mypid;
 char * buf;
 char * buflog;
 
+bool regress_error_plugin_params = false;
+bool regress_error_start_job = false;
+bool regress_error_backup_no_files = false;
+bool regress_error_backup_stderr = false;
+bool regress_backup_plugin_objects = false;
+bool regress_error_backup_abort = false;
+bool regress_error_estimate_stderr = false;
+bool regress_error_listing_stderr = false;
+bool regress_error_restore_stderr = false;
+bool regress_backup_other_file = false;
+
 #define BUFLEN             4096
 #define BIGBUFLEN          65536
 
-void LOG(const char *txt)
+    void LOG(const char *txt)
 {
    char _buf[BUFLEN];
 
@@ -174,12 +185,13 @@ void perform_backup()
    write_plugin('D', "user::rw-\nuser:root:-wx\ngroup::r--\nmask::rwx\nother::r--\n");
    write_plugin('I', "TEST5Acl");
    signal_eod();
-#if 0
-   snprintf(buf, BIGBUFLEN, "No matches found for pattern container1/otherobject\n");
-   write_plugin('E', buf);
-   signal_eod();
-   return;
-#endif
+
+   if (regress_error_backup_no_files)
+   {
+      write_plugin('E', "No files found for pattern container1/otherobject\n");
+      signal_eod();
+      return;
+   }
 
    // next file
    write_plugin('I', "TEST6");
@@ -193,16 +205,19 @@ void perform_backup()
    write_plugin('C', "DATA\n");
    write_plugin('I', "TEST6Data");
 
-#if 1
-   // test some stderror handling
-   errno = EACCES;
-   perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
-#endif
-
    // next file
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vm2.iso\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:F 1048576 200 200 100640 1\n");
+
+   if (regress_error_backup_stderr)
+   {
+      // test some stderror handling, yes in the middle file parameters
+      errno = EACCES;
+      perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
+      sleep(1);
+   }
+
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    signal_eod();
    write_plugin('I', "TEST7");
@@ -211,6 +226,15 @@ void perform_backup()
    write_plugin('D', "/* here comes a file data contents */");
    write_plugin('D', "/* here comes another file line    */");
    write_plugin('D', "/* here comes another file line    */");
+
+   if (regress_error_backup_stderr && false)
+   {
+      // test some stderror handling, yes in the middle of data transfer
+      errno = EACCES;
+      perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
+      sleep(1);
+   }
+
    write_plugin('D', "/* here comes another file line    */");
    write_plugin('D', "/* here comes another file line    */");
    signal_eod();
@@ -218,6 +242,26 @@ void perform_backup()
    write_plugin('C', "XATTR\n");
    write_plugin('D', "bacula.custom.data=Inteos\nsystem.custom.data=Bacula\n");
    signal_eod();
+
+   if (regress_backup_other_file)
+   {
+      // next file
+      snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vm222-other-file.iso\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "STAT:F 1048576 200 200 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      signal_eod();
+      write_plugin('I', "TEST7-Other");
+      /* here comes a file data contents */
+      write_plugin('C', "DATA\n");
+      write_plugin('D', "/* here comes a file data contents */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('I', "TEST7-Other-End");
+      signal_eod();
+   }
 
    // next file
    write_plugin('I', "TEST8");
@@ -231,22 +275,23 @@ void perform_backup()
    write_plugin('C', "DATA\n");
    write_plugin('I', "TEST8Data");
 
-#if 1
-   // test Plugin Objects interface
-   write_plugin('I', "TEST PluginObject");
-   snprintf(buf, BIGBUFLEN, "PLUGINOBJ:%s/images/%d/vm1\n", PLUGINPREFIX, mypid);
-   write_plugin('C', buf);
-   write_plugin('C', "PLUGINOBJ_CAT:Image\n");
-   write_plugin('C', "PLUGINOBJ_TYPE:VM\n");
-   snprintf(buf, BIGBUFLEN, "PLUGINOBJ_NAME:%s%d/vm1 - Name\n", PLUGINPREFIX, mypid);
-   write_plugin('C', buf);
-   snprintf(buf, BIGBUFLEN, "PLUGINOBJ_SRC:%s\n", PLUGINPREFIX);
-   write_plugin('C', buf);
-   write_plugin('C', "PLUGINOBJ_UUID:c3260b8c560e5e093e8913065fa3cba9\n");
-   write_plugin('C', "PLUGINOBJ_SIZE:1024kB\n");
-   signal_eod();
-   write_plugin('I', "TEST PluginObject - END");
-#endif
+   if (regress_backup_plugin_objects)
+   {
+      // test Plugin Objects interface
+      write_plugin('I', "TEST PluginObject");
+      snprintf(buf, BIGBUFLEN, "PLUGINOBJ:%s/images/%d/vm1\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "PLUGINOBJ_CAT:Image\n");
+      write_plugin('C', "PLUGINOBJ_TYPE:VM\n");
+      snprintf(buf, BIGBUFLEN, "PLUGINOBJ_NAME:%s%d/vm1 - Name\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      snprintf(buf, BIGBUFLEN, "PLUGINOBJ_SRC:%s\n", PLUGINPREFIX);
+      write_plugin('C', buf);
+      write_plugin('C', "PLUGINOBJ_UUID:c3260b8c560e5e093e8913065fa3cba9\n");
+      write_plugin('C', "PLUGINOBJ_SIZE:1024kB\n");
+      signal_eod();
+      write_plugin('I', "TEST PluginObject - END");
+   }
 
    // next file
    write_plugin('I', "TEST9");
@@ -287,15 +332,16 @@ void perform_backup()
    write_plugin('D', "/* here comes another file line    */");
    signal_eod();
 
-#if 0
-   snprintf(buf, BIGBUFLEN, "FNAME:" PLUGINPREFIX "/bucket/%d/file on error\n", mypid);
-   write_plugin('C', buf);
-   write_plugin('C', "STAT:F 234560 900 900 0100640 1\n");
-   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
-   signal_eod();
-   write_plugin('A', "Some error...\n");
-   return;
-#endif
+   if (regress_error_backup_abort)
+   {
+      snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/file on error\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "STAT:F 234560 900 900 0100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      signal_eod();
+      write_plugin('A', "Some error...\n");
+      return;
+   }
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
@@ -337,11 +383,12 @@ void perform_estimate(){
    signal_eod();
    // write_plugin('I', "TEST5A");
 
-#if 1
-   // test some stderror handling
-   errno = EACCES;
-   perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
-#endif
+   if (regress_error_estimate_stderr)
+   {
+      // test some stderror handling
+      errno = EACCES;
+      perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
+   }
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/lockfile\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
@@ -392,11 +439,13 @@ void perform_listing(char *listing){
       write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
       write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
       signal_eod();
-#if 1
+
+   if (regress_error_listing_stderr)
+   {
       // test some stderror handling
       errno = EACCES;
       perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
-#endif
+   }
 
       write_plugin('C', "FNAME:bucket2/\n");
       write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
@@ -451,11 +500,12 @@ void perform_restore(){
    int fsize;
    bool loopgo = true;
 
-#if 1
-   // test some stderror handling
-   errno = EACCES;
-   perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
-#endif
+   if (regress_error_restore_stderr)
+   {
+      // test some stderror handling
+      errno = EACCES;
+      perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
+   }
 
    /* Restore Loop (5) */
    LOG("#> Restore Loop.");
@@ -533,12 +583,11 @@ void perform_restore(){
 }
 
 /*
- *
+ * Start here
  */
 int main(int argc, char** argv) {
 
    int len;
-//   int abort = 0;
    char *listing;
 
    buf = (char*)malloc(BIGBUFLEN);
@@ -577,26 +626,89 @@ int main(int argc, char** argv) {
    signal_eod();
 
    /* Plugin Params (3) */
-   while ((len = read_plugin(buf)) > 0){
-      if (strcmp(buf, "abort_on_error=1\n") == 0){
-         // abort = 1;
+   while ((len = read_plugin(buf)) > 0)
+   {
+      // "regress_error_plugin_params",
+      // "regress_error_start_job",
+      // "regress_error_backup_no_files",
+      // "regress_error_backup_stderr",
+      // "regress_error_estimate_stderr",
+      // "regress_error_listing_stderr",
+      // "regress_error_restore_stderr",
+      // "regress_backup_plugin_objects",
+      // "regress_error_backup_abort",
+      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0)
+      {
+         regress_error_plugin_params = true;
+         continue;
       }
-      if (sscanf(buf, "listing=%s\n", buf) == 1){
+      if (strcmp(buf, "regress_error_start_job=1\n") == 0)
+      {
+         regress_error_start_job = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0)
+      {
+         regress_error_backup_no_files = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0)
+      {
+         regress_error_backup_stderr = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0)
+      {
+         regress_error_estimate_stderr = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0)
+      {
+         regress_error_listing_stderr = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0)
+      {
+         regress_error_restore_stderr = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0)
+      {
+         regress_backup_plugin_objects = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0)
+      {
+         regress_error_backup_abort = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_backup_other_file=1\n") == 0)
+      {
+         regress_backup_other_file = true;
+         continue;
+      }
+      if (sscanf(buf, "listing=%s\n", buf) == 1)
+      {
          strcpy(listing, buf);
+         continue;
       }
    }
    write_plugin('I', "TEST3");
-   signal_eod();
+   if (!regress_error_plugin_params){
+      signal_eod();
+   } else {
+      write_plugin('E', "We do not accept your TEST3E! AsRequest.");
+   }
 
    /* Start Backup/Estimate/Restore (4) */
    len = read_plugin(buf);
    write_plugin('I', "TEST4");
-#if 0
-   if (abort){
-      write_plugin('A', "Invalid credentials.");
+
+   if (regress_error_start_job){
+      write_plugin('A', "We do not accept your TEST4E! AsRequest.");
       goto Term;
    }
-#endif
+
    signal_eod();
 
    /* check what kind of Job we have */
@@ -620,9 +732,7 @@ int main(int argc, char** argv) {
    signal_eod();
    len = read_plugin(buf);
 
-#if 0
 Term:
-#endif
    signal_term();
    LOG("#> Terminating backend.");
    close(logfd);
