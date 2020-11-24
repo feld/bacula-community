@@ -173,14 +173,25 @@ start_test()
       make -C build/src/plugins/fd install-test-dedup >/dev/null 2>&1
       make -C build/scripts install-btools >/dev/null 2>&1
       DEDUP_DRIVER=${DEDUP_DRIVER:-Legacy}
+      if [ "$DEDUP_DRIVER" = "Legacy" ] ; then
+         default_dedup_config_fmt="1"
+      else
+         default_dedup_config_fmt="2"
+      fi
+      DEDUP_CONFIG_FMT=${DEDUP_CONFIG_FMT:-$default_config_dedup_fmt}
       DEDUP_FS_OPTION=${DEDUP_FS_OPTION:-bothsides}
       mkdir ${working}/dde
       DEDUP_MAXIMUM_CONTAINER_SIZE=${DEDUP_MAXIMUM_CONTAINER_SIZE:-10MB}
       touch ${working}/dde/dde.conf # When dde.conf exists, DDE create a smaller Index
       $bperl -e 'add_attribute("$conf/bacula-sd.conf", "Plugin Directory", "$plugins", "Storage")'
       $bperl -e 'add_attribute("$conf/bacula-sd.conf", "Device Type", "Dedup", "Device")'
-      $bperl -e 'add_attribute("$conf/bacula-sd.conf", "Dedupengine", "Dedupengine1", "Device")'
-      cat >> $conf/bacula-sd.conf <<EOF
+      if [ "$DEDUP_CONFIG_FMT" = "1" ] ; then
+         $bperl -e 'add_attribute("$conf/bacula-sd.conf", "DedupDirectory", "${working}/dde", "Storage")'
+         $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumContainerSize", "'$DEDUP_MAXIMUM_CONTAINER_SIZE'", "Storage")'
+      else
+#         $bperl -e 'add_attribute("$conf/bacula-sd.conf", "Dedupengine", "Dedupengine1", "Device")'
+         $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumContainerSize", "'$DEDUP_MAXIMUM_CONTAINER_SIZE'", "Dedup")'
+         cat >> $conf/bacula-sd.conf <<EOF
 
 Dedupengine {
   Name = Dedupengine1
@@ -189,8 +200,8 @@ Dedupengine {
 }
 
 EOF
+      fi
       $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Dedup", "'$DEDUP_FS_OPTION'", "Options")'
-      $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumContainerSize", "'$DEDUP_MAXIMUM_CONTAINER_SIZE'", "Dedup")'
       DEDUP_FD_CACHE=${DEDUP_FD_CACHE:-no}
       if [ x$DEDUP_FD_CACHE = xyes ]; then
             $bperl -e 'add_attribute("$conf/bacula-fd.conf", "DedupIndexDirectory", "$working/ddefd", "FileDaemon")'
