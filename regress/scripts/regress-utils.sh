@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2000-2020 Kern Sibbald
+# Copyright (C) 2015-2020 Radosław Korzeniewski
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # This is an Inteos regression tests support utilities.
