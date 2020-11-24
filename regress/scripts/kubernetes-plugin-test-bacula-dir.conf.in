@@ -14,6 +14,16 @@ Director {                              # define myself
   Messages = Standard
 }
 
+JobDefs {
+  Name = "BackupJob"
+  Type = Backup
+  Pool = Default
+  Storage = File
+  Messages = Standard
+  Priority = 10
+  Client=@hostname@-fd
+  Write Bootstrap = "@working_dir@/%n-%f.bsr"
+}
 
 JobDefs {
   Name = "Default"
@@ -23,9 +33,66 @@ JobDefs {
   Storage = File1
   Messages = Standard
   Write Bootstrap = "@working_dir@/%c.bsr"
-  Pool = SmallVols
+  Pool = Default
   SpoolData = yes
   Max Run Time = 30min
+}
+
+Job {
+  Name = "PluginK8STestProtocol1"
+  JobDefs = "BackupJob"
+  FileSet="TestPluginK8SSetProtocol1"
+}
+
+FileSet {
+  Name = "TestPluginK8SSetProtocol1"
+  Include {
+    Options { signature=MD5 }
+    Plugin = "kubernetes:"
+  }
+}
+
+Job {
+  Name = "PluginK8STestProtocol2"
+  JobDefs = "BackupJob"
+  FileSet="TestPluginK8SSetProtocol2"
+}
+
+FileSet {
+  Name = "TestPluginK8SSetProtocol2"
+  Include {
+    Options { signature=MD5 }
+    Plugin = "kubernetes: regress_backup_plugin_objects"
+  }
+}
+
+Job {
+  Name = "PluginK8STestProtocol3"
+  JobDefs = "BackupJob"
+  FileSet="TestPluginK8SSetProtocol3"
+}
+
+FileSet {
+  Name = "TestPluginK8SSetProtocol3"
+  Include {
+    Options { signature=MD5 }
+    Plugin = "kubernetes:"
+    Plugin = "kubernetes: regress_backup_other_file"
+  }
+}
+
+Job {
+  Name = "PluginK8STestProtocol4"
+  JobDefs = "BackupJob"
+  FileSet="TestPluginK8SSetProtocol4"
+}
+
+FileSet {
+  Name = "TestPluginK8SSetProtocol4"
+  Include {
+    Options { signature=MD5 }
+    Plugin = "kubernetes: regress_error_backup_stderr"
+  }
 }
 
 FileSet {
@@ -159,7 +226,7 @@ Client {
 
 # Definiton of file storage device
 Storage {
-  Name = File1
+  Name = File
   Address = @hostname@                # N.B. Use a fully qualified name here
   SDPort = @sdport@
   Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"
@@ -167,12 +234,13 @@ Storage {
   Media Type = File
 }
 
+# Definiton of file storage device
 Storage {
-  Name = File2
+  Name = File1
   Address = @hostname@                # N.B. Use a fully qualified name here
   SDPort = @sdport@
   Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"
-  Device = FileStorage1
+  Device = FileStorage
   Media Type = File1
 }
 
@@ -226,15 +294,4 @@ Pool {
   Recycle = yes                       # Bacula can automatically recycle Volumes
   AutoPrune = yes                     # Prune expired volumes
   Volume Retention = 365d             # one year
-}
-
-Pool {
-  Name = SmallVols
-  Pool Type = Backup
-  Recycle = yes                       # Bacula can automatically recycle Volumes
-  AutoPrune = yes                     # Prune expired volumes
-  Volume Retention = 365d             # one year
-  Maximum Volumes = 10
-  MaximumVolumeBytes = 10M
-  LabelFormat = Small
 }
