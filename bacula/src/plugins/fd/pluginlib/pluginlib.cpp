@@ -501,9 +501,9 @@ bool add_param_str(alist **list, const char *pname, const char *name, char *valu
 /**
  * @brief Scans for `prefix` in `cmd`, when match copy remaining to `param`.
  *
- *
- * @param cmd
- * @param param
+ * @param cmd - command string to can for prefix and extract parameter
+ * @param prefix - prefix string to check
+ * @param param - when `prefix` match then copy the remaining from `cmd`
  * @return true - when prefix match in the command
  * @return false - when not
  */

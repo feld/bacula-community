@@ -62,10 +62,10 @@ class PTCOMM : public SMARTALLOC
 {
 private:
    BPIPE *bpipe;              // this is our bpipe to communicate with backend */
-   int rfd;                   //
-   int wfd;                   //
-   int efd;                   //
-   int maxfd;                 //
+   int rfd;                   // backend `stdout` to plugin file descriptor
+   int wfd;                   // backend `stdin` to plugin file descriptor
+   int efd;                   // backend `stderr` to plugin file descriptor
+   int maxfd;                 // max file descriptors from bpipe channels
    POOL_MEM errmsg;           // message buffer for error string */
    int extpipe;               // set when data blast is performed using external pipe/file */
    POOL_MEM extpipename;      // name of the external pipe/file for restore */
@@ -75,7 +75,7 @@ private:
    bool f_cont;               // when we are reading next part of data packet */
    bool abort_on_error;       // abort on error flag */
    int32_t remaininglen;      // the number of bytes to read when `f_cont` is true
-   struct timeval _timeout;   //
+   struct timeval _timeout;   // a timeout when waiting for data to read from backend
 
 protected:
    bool recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes);

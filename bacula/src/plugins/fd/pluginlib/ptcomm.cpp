@@ -56,11 +56,9 @@ extern int parse_args(POOLMEM *cmd, POOLMEM **args, int *argc,
  */
 bool PTCOMM::close_extpipe(bpContext *ctx)
 {
-   int rc;
-
    /* close expipe if used */
    if (extpipe > 0){
-      rc = close(extpipe);
+      int rc = close(extpipe);
       extpipe = -1;
       if (rc != 0){
          berrno be;
