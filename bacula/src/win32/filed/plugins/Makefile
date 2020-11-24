@@ -97,6 +97,15 @@ $(BINDIR)/exchange-fd.dll: $(EXCHANGE_OBJS) exchange-fd.def
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/exchange-fd.a $^ $(LIBS_DLL) -o $@
 
+$(BINDIR)/cdp-fd.dll: DLL_DEFINE=BUILDING_DLL
+
+$(BINDIR)/cdp-fd.dll: $(CDP_OBJS) $(LIBS_BACULA)
+       @echo "Linking $@"
+       $(call checkdir,$@)
+       $(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/cdp-fd.a $^ $(LIBS_DLL) -o $@
+       $(BUILDDIR)/sign-binaries $@
+
+
 $(BINDIR)/bpipe-fd.dll: DLL_DEFINE=BUILDING_DLL
 
 $(BINDIR)/bpipe-fd.dll: $(BPIPE_OBJS) bpipe-fd.def $(LIBS_BACULA)
