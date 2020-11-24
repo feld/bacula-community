@@ -160,6 +160,7 @@ bool parse_param(int &param, const char *pname, const char *name, char *value, b
 bool parse_param(POOL_MEM &param, const char *pname, const char *name, char *value);
 bool add_param_str(alist **list, const char *pname, const char *name, char *value);
 
-bool scan_parameter_str(const POOL_MEM &cmd, const char *prefix, POOL_MEM &param);
+bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param);
+inline bool scan_parameter_str(const POOL_MEM &cmd, const char *prefix, POOL_MEM &param) { return scan_parameter_str(cmd.c_str(), prefix, param); }
 
 #endif   /* _PLUGINLIB_H_ */

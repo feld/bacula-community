@@ -71,23 +71,29 @@ int main()
    ok(strcmp((char*)list->next(), "Kern") == 0, "check element Kern");
    delete list;
 
-   POOL_MEM cmd(PM_NAME);
+   POOL_MEM cmd1(PM_NAME);
    POOL_MEM param(PM_NAME);
    const char *prefix = "FNAME:";
    const char *fname1 = "/etc/passwd";
-   pm_strcpy(cmd, prefix);
-   pm_strcat(cmd, fname1);
-   pm_strcat(cmd, "\n");
-   ok(scan_parameter_str(cmd, prefix, param), "check scan parameter str match");
+   pm_strcpy(cmd1, prefix);
+   pm_strcat(cmd1, fname1);
+   pm_strcat(cmd1, "\n");
+   ok(scan_parameter_str(cmd1, prefix, param), "check scan parameter str match");
    ok(bstrcmp(param.c_str(), fname1) , "check scan parameter str param");
-   nok(scan_parameter_str(cmd, "prefix", param), "check scan parameter str not match");
+   nok(scan_parameter_str(cmd1, "prefix", param), "check scan parameter str not match");
 
    const char *fname2 = "/home/this is a filename with spaces which /are hard to/ manage.com";
-   pm_strcpy(cmd, prefix);
-   pm_strcat(cmd, fname2);
-   pm_strcat(cmd, "\n");
-   ok(scan_parameter_str(cmd, prefix, param), "check scan parameter str with spaces match");
+   pm_strcpy(cmd1, prefix);
+   pm_strcat(cmd1, fname2);
+   pm_strcat(cmd1, "\n");
+   ok(scan_parameter_str(cmd1, prefix, param), "check scan parameter str with spaces match");
    ok(bstrcmp(param.c_str(), fname2) , "check scan parameter str with spaces param");
+
+   char cmd2[256];
+   snprintf(cmd2, 256, "%s%s\n", prefix, fname1);
+   ok(scan_parameter_str(cmd2, prefix, param), "check scan parameter for char* str match");
+   ok(bstrcmp(param.c_str(), fname1) , "check scan parameter for char* str param");
+   nok(scan_parameter_str(cmd2, "prefix", param), "check scan parameter for char* str not match");
 
    return report();
 }
