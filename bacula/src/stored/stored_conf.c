@@ -1096,12 +1096,25 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
           * "default_legacy_dedupengine" aka the DDE defined in storage
           */
          if (res->res_dev.dev_type == B_DEDUP_DEV && res->res_dev.dedup == NULL) {
-            URES *dedup;
-            if ((dedup = (URES *)GetResWithName(R_DEDUP, default_legacy_dedupengine)) == NULL) {
-               Mmsg(config->m_errmsg,  _("Cannot find dedupengine for device %s\n"), res_all.res_dir.hdr.name);
+            /* The "Dedupengine" is not specified in this Device resource */
+            /* If there is only one Dedupengine defined use it */
+            int i = 0;
+            DEDUPRES *dedup, *prev_dedup = NULL;
+            foreach_res(dedup, R_DEDUP) {
+               prev_dedup = dedup;
+               i++;
+            }
+            if (i == 1) {
+               res->res_dev.dedup = prev_dedup;
+               Dmsg2(0, "Select dedupengine %s for device %s\n", prev_dedup->hdr.name, res_all.res_dir.hdr.name);
+            } else if (i == 0){
+               Mmsg(config->m_errmsg,  _("Cannot find any dedupengine for the device %s\n"), res_all.res_dir.hdr.name);
+               return false;
+            } else {
+               /* i > 1 */
+               Mmsg(config->m_errmsg,  _("Dedupengine unspecified for device %s\n"), res_all.res_dir.hdr.name);
                return false;
             }
-            res->res_dev.dedup = &dedup->res_dedup;
          }
 #endif
          break;
