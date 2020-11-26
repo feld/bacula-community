@@ -8,6 +8,8 @@
 
 include ../Makefile.inc
 
+PWD   := $(shell pwd)
+
 VERSION := $(shell sed -ne 's/^.define[ \t]VERSION[ \t][ \t]*"\(.*\)"/\1/p' < ../../version.h)
 RELEASE ?= $(shell awk '/define RELEASE [0-9]+/ { print $$3 }' ../../version.h)
 
@@ -203,5 +205,6 @@ $(foreach file,$(addprefix $(MAINDIR)/, $(LICENSE_FILES)),$(eval $(call Copy_Lic
 $(INSTALL_EXE): winbacula.nsi $(addprefix release64/,$(BACULA_BINARIES) $(DEPKGS_BINARIES) $(SSL_FILES) $(LICENSE_FILES))
 	makensis -V3 $(DEFINES) winbacula.nsi
 	echo " "
+	../sign-binaries ../release64/bacula-*$(VERSION).exe
 
 include $(BUILDDIR)/Makefile.rules
