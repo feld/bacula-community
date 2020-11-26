@@ -37,7 +37,6 @@ prepare_regw_build()
       echo "Make Windows RegistrationWizard"
       make -j3 -f Makefile.mingw${version} $2
       if test -f RegistrationWizard.exe; then
-          ../../win32/sign-binaries RegistrationWizard.exe
           cp -f RegistrationWizard.exe ../../win32/release${version}
       fi
       rm -f RegistrationWizard.exe
@@ -97,7 +96,6 @@ prepare_bat_build ()
       else
          cp -f debug/bat.exe ../win32/release${version}
       fi
-      ../win32/sign-binaries ../win32/release${version}/bat.exe
       rm -f bat.exe release/bat.exe debug/bat.exe
    fi
 }
@@ -123,7 +121,6 @@ prepare_tray_monitor_build ()
     else
        cp -f debug/bacula-tray-monitor.exe ../../win32/release${version}
     fi
-    ../../win32/sign-binaries ../../win32/release${version}/bacula-tray-monitor.exe
     rm -f bacula-tray-monitor.exe release/bacula-tray-monitor.exe debug/bacula-tray-monitor.exe
     cd ..
 }

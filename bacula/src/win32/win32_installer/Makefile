@@ -133,11 +133,13 @@ release32/$$(notdir $(1)): $(1)
 	$$(call checkdir,$$@)
 	$(ECHO_CMD)cp -f $$^ $$@ ; \
 	$(STAB2CV) $$@
+	$(BUILDDIR)/sign-binaries release32/$$(notdir $(1))
 endef
 
 define Copy_Binary
 release32/$$(notdir $(1)): $(1)
 	$$(call checkdir,$$@)
+	$(BUILDDIR)/sign-binaries $$^
 	$(ECHO_CMD)cp -f $$^ $$@
 endef
 

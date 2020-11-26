@@ -57,12 +57,16 @@ is_depkgs_set:
 release32/bat.exe: is_depkgs_set
 	( cd ../qt-console; ./make-win32 "32" )
 	test -f release32/bat.exe
+	test -f release32/bacula-tray-monitor.exe
+	./sign-binaries release32/bat.exe release32/bacula-tray-monitor.exe release32/RegistrationWizard.exe release32/Qt*dll release32/q*.dll
 
 bat32: release32/bat.exe
 
 release64/bat.exe: is_depkgs_set
 	( cd ../qt-console; ./make-win32 "64" )
 	test -f release64/bat.exe
+	test -f release64/bacula-tray-monitor.exe
+	./sign-binaries release64/bat.exe release64/bacula-tray-monitor.exe release64/RegistrationWizard.exe release64/Qt*dll release64/q*.dll
 
 bat64: release64/bat.exe
 

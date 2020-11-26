@@ -161,12 +161,14 @@ docs:
 define Convert_Binary
 release64/$$(notdir $(1)): $(1)
 	$$(call checkdir,$$@)
+	$(BUILDDIR)/sign-binaries $$^
 	$(ECHO_CMD)cp -f $$^ $$@
 endef
 
 define Copy_Binary
 release64/$$(notdir $(1)): $(1)
 	$$(call checkdir,$$@)
+	$(BUILDDIR)/sign-binaries $$^
 	$(ECHO_CMD)cp -f $$^ $$@
 endef
 
