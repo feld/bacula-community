@@ -739,13 +739,6 @@ void db_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr)
    rr->object = rr->plugin_name = rr->object_name = NULL;
 }
 
-void db_free_pluginobject_record(JCR *jcr, OBJECT_DBR *obj_r)
-{
-      bfree_and_null(obj_r->Path);
-      bfree_and_null(obj_r->Filename);
-      bfree_and_null(obj_r->PluginName);
-}
-
 /*
  *  Get specified Plugin Object by ObjectId
  *  */

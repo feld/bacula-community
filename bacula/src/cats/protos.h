@@ -88,7 +88,6 @@ int db_string_list_handler(void *ctx, int num_fields, char **row);
 int db_int_handler(void *ctx, int num_fields, char **row);
 void bdb_debug_print(JCR *jcr, FILE *fp);
 void db_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
-void db_free_pluginobject_record(JCR *jcr, OBJECT_DBR *obj_r);
 
 #define db_open_batch_connexion(jcr, mdb) \
            mdb->bdb_open_batch_connexion(jcr)
