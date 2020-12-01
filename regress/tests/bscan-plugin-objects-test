@@ -43,16 +43,16 @@ END_OF_DATA
 
 run_bacula
 
-objects_lines=`cat ${cwd}/tmp/log2.out | grep 'VMWare' | wc -l`
-if [ ${objects_lines} -ne 2 ]; then
+vm_objects_orig=`cat ${cwd}/tmp/log2.out | grep 'VMWare' | wc -l`
+if [ ${vm_objects_orig} -ne 2 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "Wrong VMWare plugin objects count found in output: ${vm_objects_orig}, expected 2"
 fi
 
-objects_lines=`cat ${cwd}/tmp/log2.out | grep 'PostgreSQL' | wc -l`
-if [ ${objects_lines} -ne 2  ]; then
+db_objects_orig=`cat ${cwd}/tmp/log2.out | grep 'PostgreSQL' | wc -l`
+if [ ${db_objects_orig} -ne 4  ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "Wrong PostgreSQL plugin objects count found in output: ${db_objects_orig}, expected 4"
 fi
 
 # Purge volume to delete plugin objects from db
@@ -70,13 +70,13 @@ run_bconsole
 objects_lines=`cat ${cwd}/tmp/log4.out | grep 'VMWare' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+   print_debug "Wrong VMWare plugin objects count found in output: ${objects_lines}, expected 0"
 fi
 
 objects_lines=`cat ${cwd}/tmp/log4.out | grep 'PostgreSQL' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+   print_debug "Wrong PostgreSQL plugin objects count found in output: ${objects_lines}, expected 0"
 fi
 
 echo "volume=TestVolume001" >tmp/bscan.bsr
@@ -107,15 +107,15 @@ END_OF_DATA
 run_bconsole
 
 objects_lines=`cat ${cwd}/tmp/log6.out | grep 'VMWare' | wc -l`
-if [ ${objects_lines} -ne 2 ]; then
+if [ ${objects_lines} -ne ${vm_objects_orig} ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected ${vm_objects_orig}"
 fi
 
 objects_lines=`cat ${cwd}/tmp/log6.out | grep 'PostgreSQL' | wc -l`
-if [ ${objects_lines} -ne 2 ]; then
+if [ ${objects_lines} -ne ${db_objects_orig} ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected ${db_objects_orig}"
 fi
 
 stop_bacula
