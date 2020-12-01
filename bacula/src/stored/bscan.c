@@ -811,23 +811,22 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
             break;
          }
 
-         obj_r.JobId = mjcr->JobId;
-
-         /* Look if we have already the same object */
-         if (db_get_plugin_object_record(mjcr, db, &obj_r)) {
-            if (verbose) {
-               Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object (id: %lu) in the catalog\n"), obj_r.ObjectId);
-            }
-         } else if (update_db) {
-            /* Send it */
-            Pmsg1(0, _("PLUGIN_OBJECT: Inserting Plugin Object (ObjectName: %s) into the catalog\n"), obj_r.ObjectName);
-            if (!db_create_object_record(mjcr, db, &obj_r)) {
-               Jmsg1(mjcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(db));
+         if (mjcr->bscan_created) {
+            // bscan created this job record so we need to recreate objects as well
+            if (update_db) {
+               /* Send it */
+               Pmsg1(0, _("PLUGIN_OBJECT: Inserting Plugin Object (ObjectName: %s) into the catalog\n"), obj_r.ObjectName);
+               obj_r.JobId = mjcr->JobId;
+               // Create record with updated jobid
+               if (!db_create_object_record(mjcr, db, &obj_r)) {
+                  Jmsg1(mjcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(db));
+               }
             }
          } else {
             Pmsg1(0, _("PLUGIN_OBJECT: Found Plugin Object (ObjectName: %s) on the volume\n"), obj_r.ObjectName);
          }
 
+         mjcr->dec_use_count(); /* Decrease reference counter increased by get_jcr_by_session call */
          break;
       }
 
