@@ -523,6 +523,7 @@ public:
    bool PreferMountedVols;            /* Prefer mounted vols rather than new */
    bool Resched;                      /* Job may be rescheduled */
    bool bscan_insert_jobmedia_records; /*Bscan: needs to insert job media records */
+   bool bscan_created;                /* Flag for bscan to know if this jcr was created by it or not */
    bool sd_client;                    /* Set if acting as client */
    bool use_new_match_all;            /* TODO: Remove when the match_bsr() will be well tested */
 

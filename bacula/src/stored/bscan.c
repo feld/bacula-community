@@ -776,22 +776,22 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
             break;
          }
 
-         ro.JobId = mjcr->JobId;
-
-         if (db_get_restoreobject_record(mjcr, db, &ro)) {
-            if (verbose) {
-               Pmsg1(0, _("RESTORE_OBJECT: Found Restore Object \"%s\" in the catalog\n"), ro.object_name);
-            }
-         } else if (update_db) {
-            /* Send it */
-            Pmsg1(0, _("RESTORE_OBJECT: Inserting Restore Object \"%s\" into the catalog\n"), ro.object_name);
-            if (!db_create_restore_object_record(mjcr, db, &ro)) {
-               Jmsg1(mjcr, M_FATAL, 0, _("Restore object create error. %s"), db_strerror(db));
+         if (mjcr->bscan_created) {
+            // bscan created this job record so we need to recreate objects as well
+            if (update_db) {
+               /* Send it */
+               Pmsg1(0, _("RESTORE_OBJECT: Inserting Restore Object \"%s\" into the catalog\n"), ro.object_name);
+               // Create record with updated jobid
+               ro.JobId = mjcr->JobId;
+               if (!db_create_restore_object_record(mjcr, db, &ro)) {
+                  Jmsg1(mjcr, M_FATAL, 0, _("Restore object create error. %s"), db_strerror(db));
+               }
             }
          } else {
             Pmsg1(0, _("RESTORE_OBJECT: Found Restore Object \"%s\" on the volume\n"), ro.object_name);
          }
 
+         mjcr->dec_use_count(); /* Decrease reference counter increased by get_jcr_by_session call */
          break;
       }
 
@@ -1286,6 +1286,7 @@ static JCR *create_job_record(BDB *db, JOB_DBR *jr, SESSION_LABEL *label,
    Pmsg2(000, _("Created new JobId=%u record for original JobId=%u\n"), jr->JobId,
          label->JobId);
    mjcr->JobId = jr->JobId;           /* set new JobId */
+   mjcr->bscan_created = true;
    return mjcr;
 }
 
