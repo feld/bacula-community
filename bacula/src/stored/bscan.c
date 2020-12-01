@@ -756,7 +756,11 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
                      edit_uint64_with_commas(rec->Addr, ed2),
                      edit_uint64_with_commas(mr.VolBytes, ed3));
       }
-      create_file_attributes_record(mjcr, attr, rec);
+      if (!create_file_attributes_record(mjcr, attr, rec)) {
+         Jmsg2(mjcr, M_ERROR, 0, _("Failed to insert record for file: %s. err: %s\n"),
+               attr->fname, db_strerror(db));
+         break;
+      }
       break;
 
    case STREAM_RESTORE_OBJECT:
@@ -1007,9 +1011,12 @@ static void bscan_free_jcr(JCR *jcr)
 
    /* Close thej jcr's db connections */
    if (jcr->db_batch) {
+      if (!db_write_batch_file_records(bjcr)) { /* used by bulk batch file insert */
+         Jmsg0(jcr, M_ERROR, 0, _("Failed to flush file records!\n"));
+      }
+
       db_close_database(jcr, jcr->db_batch);
       jcr->db_batch = NULL;
-      jcr->batch_started = false;
    }
    if (jcr->db) {
       db_close_database(jcr, jcr->db);
