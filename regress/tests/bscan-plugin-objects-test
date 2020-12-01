@@ -38,10 +38,17 @@ status client=$CLIENT
 messages
 @$out ${cwd}/tmp/log2.out
 list objects
+sql
+@$out $tmp/objs_count
+select count(*) from restoreobject;
+
 quit
 END_OF_DATA
 
 run_bacula
+
+# See how many plugin objects were created in the first place
+objs_orig=`cat tmp/objs_count | grep '|' | cut -d'|' -f2 | tail -1`
 
 vm_objects_orig=`cat ${cwd}/tmp/log2.out | grep 'VMWare' | wc -l`
 if [ ${vm_objects_orig} -ne 2 ]; then
@@ -116,6 +123,32 @@ objects_lines=`cat ${cwd}/tmp/log6.out | grep 'PostgreSQL' | wc -l`
 if [ ${objects_lines} -ne ${db_objects_orig} ]; then
    estat=1
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected ${db_objects_orig}"
+fi
+
+# Check if running bscan once more won't create any duplicates
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log6.out 2>&1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+sql
+@$out $tmp/objs_count_double_bscan
+select count(*) from restoreobject;
+
+quit
+quit
+END_OF_DATA
+
+run_bconsole
+
+# Check if there are no duplicates
+objs_after_bscan=`cat tmp/objs_count_double_bscan | grep '|' | cut -d'|' -f2 | tail -1`
+if [ $objs_after_bscan -ne ${objs_orig} ]; then
+    print_debug "ERROR: Running bscan twice produced some duplicates of plugin objects. \
+                 Original count: ${objs_orig}, after second bscan: ${objs_after_bscan}"
+    bstat=1
 fi
 
 stop_bacula

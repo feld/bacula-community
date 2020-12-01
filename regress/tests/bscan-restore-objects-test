@@ -41,9 +41,17 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 list jobs
 @$out $tmp/list
 llist pluginrestoreconf jobid=1
+sql
+@$out $tmp/robjs_count
+select count(*) from restoreobject;
+
+quit
 END_OF_DATA
 
 run_bconsole
+
+# See how many restore objects were created in the first place
+robjs_orig=`cat tmp/robjs_count | grep '|' | cut -d'|' -f2 | tail -1`
 
 nb=`grep $file $tmp/list | wc -l`
 if [ $nb -ne 1 ]; then
@@ -66,6 +74,7 @@ messages
 purge volume=TestVolume001
 @$out ${cwd}/tmp/log4.out
 list objects
+quit
 END_OF_DATA
 
 run_bconsole
@@ -75,6 +84,7 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 list jobs
 @$out $tmp/list_after_purge
 llist pluginrestoreconf jobid=1
+quit
 END_OF_DATA
 
 run_bconsole
@@ -114,6 +124,7 @@ fi
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @$out tmp/list_job_after_bscan
 list jobs
+quit
 END_OF_DATA
 
 run_bconsole
@@ -125,6 +136,7 @@ fi
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @$out $tmp/list_after_bscan
 llist pluginrestoreconf jobid=$newJobId
+quit
 END_OF_DATA
 
 run_bconsole
@@ -142,6 +154,34 @@ if [ $nb -ne 1 ]; then
 fi
 
 run_bconsole
+
+# Check for bug #7098
+# Check if running bscan once more won't create any duplicates
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log6.out 2>&1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+sql
+@$out $tmp/robjs_count_double_bscan
+select count(*) from restoreobject;
+
+quit
+quit
+END_OF_DATA
+
+run_bconsole
+
+# Check if there are no duplicates
+robjs_after_bscan=`cat tmp/robjs_count_double_bscan  | grep '|' | cut -d'|' -f2 | tail -1`
+if [ $robjs_after_bscan -ne ${robjs_orig} ]; then
+    print_debug "ERROR: Running bscan twice produced some duplicates of restore objects. \
+                 Original count: ${robjs_orig}, after second bscan: ${robjs_after_bscan}"
+    bstat=1
+fi
+
 stop_bacula
 
 end_test
