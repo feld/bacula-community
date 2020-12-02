@@ -64,17 +64,17 @@ CREATE TABLE Object
 (
    ObjectId     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 
-   JobId           integer  not null,
-   Path            BLOB NOT NULL,
-   Filename        BLOB NOT NULL,
-   PluginName      TINYBLOB NOT NULL,
+   JobId        INTEGER UNSIGNED  not null,
+   Path         BLOB NOT NULL,
+   Filename     BLOB NOT NULL,
+   PluginName   TINYBLOB NOT NULL,
 
    ObjectCategory  TINYBLOB NOT NULL,
-   ObjectType      TINYBLOB NOT NULL,
-   ObjectName      TINYBLOB NOT NULL,
-   ObjectSource    TINYBLOB NOT NULL,
-   ObjectUUID      TINYBLOB NOT NULL,
-   ObjectSize      bigint   NOT NULL,
+   ObjectType   TINYBLOB     NOT NULL,
+   ObjectName   TINYBLOB     NOT NULL,
+   ObjectSource TINYBLOB     NOT NULL,
+   ObjectUUID   TINYBLOB     NOT NULL,
+   ObjectSize   bigint       NOT NULL,
    primary key (ObjectId)
 );
 
