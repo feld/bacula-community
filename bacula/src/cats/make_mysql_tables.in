@@ -34,28 +34,28 @@ USE ${db_name};
 
 CREATE TABLE TagJob
 (
-   JobId integer not null,
+   JobId INTEGER UNSIGNED not null,
    Tag   TINYBLOB    not null,
    primary key (JobId, Tag(255))
 );
 
 CREATE TABLE TagClient
 (
-   ClientId integer not null,
+   ClientId INTEGER UNSIGNED not null,
    Tag      TINYBLOB    not null,
    primary key (ClientId, Tag(255))
 );
 
 CREATE TABLE TagMedia
 (
-   MediaId integer not null,
+   MediaId INTEGER UNSIGNED not null,
    Tag      TINYBLOB   not null,
    primary key (MediaId, Tag(255))
 );
 
 CREATE TABLE TagObject
 (
-   ObjectId integer not null,
+   ObjectId INTEGER UNSIGNED not null,
    Tag      TINYBLOB    not null,
    primary key (ObjectId, Tag(255))
 );
