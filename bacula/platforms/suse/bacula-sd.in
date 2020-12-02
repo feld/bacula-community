@@ -28,6 +28,16 @@
 # this gives us funtion rc_status -v to tell us if we succeed or fail
 . /etc/rc.status
 
+DAEMON_OPTIONS=''
+DAEMON_USER=yes
+SD_USER=@sd_user@
+SD_GROUP=@sd_group@
+SD_OPTIONS='-dt'
+OS=`uname -s`
+
+# pull in any user defined SD_OPTIONS, SD_USER, SD_GROUP or DAEMON_USER
+[ -f /etc/sysconfig/bacula ] && . /etc/sysconfig/bacula
+
 RETVAL=0
 case "$1" in
     start)

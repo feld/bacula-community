@@ -27,7 +27,7 @@ DESC="@BACULA@ Storage Daemon"
 DAEMON=@sbindir@/${NAME}
 BUSER=@sd_user@
 BGROUP=@sd_group@
-BOPTIONS="-c @sysconfdir@/${NAME}.conf"
+BOPTIONS="-dt -c @sysconfdir@/${NAME}.conf"
 BPORT=@sd_port@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin

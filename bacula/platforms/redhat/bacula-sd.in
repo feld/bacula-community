@@ -19,7 +19,7 @@ DAEMON_OPTIONS=''
 DAEMON_USER=yes
 SD_USER=@sd_user@
 SD_GROUP=@sd_group@
-SD_OPTIONS=''
+SD_OPTIONS='-dt'
 OS=`uname -s`
 
 # if /lib/tls exists, force Bacula to use the glibc pthreads instead

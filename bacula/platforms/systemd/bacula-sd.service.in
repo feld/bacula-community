@@ -24,8 +24,12 @@ RequiresMountsFor=@working_dir@ @sysconfdir@ @sbindir@
 Type=simple
 User=@sd_user@
 Group=@sd_group@
-ExecStart=@sbindir@/bacula-sd -fP -c @sysconfdir@/bacula-sd.conf
-SuccessExitStatus=15
+Environment="LD_LIBRARY_PATH=@libdir@"
+# comment out to get traces working at startup using -T and -d options
+#WorkingDirectory=@working_dir@
+ExecStart=@sbindir@/bacula-sd -dt -c @sysconfdir@/bacula-sd.conf
+StandardError=syslog
+TimeoutStopSec=3min
 LimitMEMLOCK=infinity
 
 [Install]

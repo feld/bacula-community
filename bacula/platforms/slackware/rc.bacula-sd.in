@@ -21,7 +21,7 @@ case "$1" in
         [ -x ${BACSDBIN}/bacula-sd ] && { 
             sleep 2
             echo -n "Starting the Storage daemon: "
-            OPTIONS=''
+            OPTIONS='-dt'
             if [ "${SD_USER}" != '' ]; then
                OPTIONS="${OPTIONS} -u ${SD_USER}"
             fi
