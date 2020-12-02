@@ -505,6 +505,13 @@ ALTER TABLE Object ADD ObjectCategory TINYBLOB NOT NULL;
 create index object_type_idx on Object  (ObjectCategory(255));
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1023');
+
+ALTER TABLE TagJob MODIFY JobId INTEGER UNSIGNED;
+ALTER TABLE TagClient MODIFY ClientId INTEGER UNSIGNED;
+ALTER TABLE TagObject MODIFY ObjectId INTEGER UNSIGNED;
+ALTER TABLE Object MODIFY JobId INTEGER UNSIGNED;
+ALTER TABLE Snapshot MODIFY ClientId INTEGER UNSIGNED DEFAULT 0;
+ALTER TABLE TagMedia MODIFY MediaId INTEGER UNSIGNED;
 UPDATE Version SET VersionId=1023;
 END-OF-DATA
     then
