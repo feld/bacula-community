@@ -3,7 +3,7 @@ use strict;
 
 =head1 NAME
 
-    find_bad_jobmedia.pl -- Bacula System tool to detect bad JobMedia records
+    find_bad_jobmedia.pl -- Bacula tool to detect bad JobMedia records
 
 =head1 SYNOPIS
 
@@ -22,7 +22,12 @@ use strict;
 
 =head2 VERSION
 
-    1.1
+   Copyright (C) 2000-2020 Kern Sibbald
+   License: BSD 2-Clause; see file LICENSE-FOSS
+
+   Written by Eric Bollengier
+
+   1.1
 
 =cut
 
