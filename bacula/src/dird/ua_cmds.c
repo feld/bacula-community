@@ -1993,7 +1993,7 @@ static void do_object_delete(UAContext *ua, DBId_t ObjectId)
    /* Remove object from main table */
    Mmsg(query, "DELETE FROM Object WHERE ObjectId=%lu", ObjectId);
    if (!db_sql_query(ua->db, query.c_str(), NULL, NULL)) {
-      ua->error_msg(_("Failed to delete object record: : %s\n"), db_strerror(ua->db));
+      ua->error_msg(_("Failed to delete object record: %s\n"), db_strerror(ua->db));
       goto bail_out;
    }
 
@@ -2013,6 +2013,66 @@ bail_out:
    db_unlock(ua->db);
 }
 
+static void do_delete_objects(UAContext *ua, OBJECT_DBR *obj_r)
+{
+   int ObjectId;
+   OBJECT_DBR obj_prompt;
+   db_list_ctx objs;
+   sellist sl;
+   POOL_MEM msg;
+
+   if (!db_get_plugin_objects_ids(ua->jcr, ua->jcr->db, obj_r, &objs)) {
+      ua->error_msg(_("Failed to get object ids: %s\n"), db_strerror(ua->db));
+      return;
+   }
+
+   if (!objs.count) {
+      ua->info_msg(_("No objects found for specified criteria\n"));
+      return;
+   }
+
+   if (!sl.set_string(objs.list, true)) {
+      ua->warning_msg("%s", sl.get_errmsg());
+      return;
+   }
+
+   ua->info_msg(_("About to delete following objects:\n"));
+   db_list_plugin_objects_ids(ua->jcr, ua->db, sl.get_list(), prtit, ua, HORZ_LIST);
+   Mmsg(msg, _("Are you sure you want to delete all records associated with the listed objects: (yes/no) "));
+   if (!get_yesno(ua, msg.c_str()) || ua->pint32_val == 0) {
+      return;
+   }
+
+   foreach_sellist(ObjectId, &sl) {
+      do_object_delete(ua, ObjectId);
+   }
+}
+
+static void do_delete_objects_all(UAContext *ua, DBId_t ObjectId)
+{
+   OBJECT_DBR obj_ref;
+   OBJECT_DBR obj_delete;
+
+   obj_ref.ObjectId = ObjectId;
+   if (!db_get_plugin_object_record(ua->jcr, ua->db, &obj_ref)) {
+      ua->error_msg(_("Failed to get object with ID: %lu!\n"), ObjectId);
+      return;
+   }
+
+   bstrncpy(obj_delete.ObjectCategory, obj_ref.ObjectCategory,
+            sizeof(obj_ref.ObjectCategory));
+   bstrncpy(obj_delete.ObjectType, obj_ref.ObjectType,
+            sizeof(obj_ref.ObjectType));
+   bstrncpy(obj_delete.ObjectName, obj_ref.ObjectName,
+            sizeof(obj_ref.ObjectName));
+   bstrncpy(obj_delete.ObjectUUID, obj_ref.ObjectUUID,
+            sizeof(obj_ref.ObjectUUID));
+   bstrncpy(obj_delete.ObjectSource, obj_ref.ObjectSource,
+            sizeof(obj_ref.ObjectSource));
+
+   do_delete_objects(ua, &obj_delete);
+}
+
 static void delete_object(UAContext *ua)
 {
    int ObjectId;
@@ -2021,22 +2081,55 @@ static void delete_object(UAContext *ua)
 
    int i = find_arg_with_value(ua, NT_("objectid"));
    if (i >= 0) {
+
       if (!sl.set_string(ua->argv[i], true)) {
          ua->warning_msg("%s", sl.get_errmsg());
          return;
       }
 
       if (sl.size() > 25 && (find_arg(ua, "yes") < 0)) {
-         Mmsg(msg, _("Are you sure you want to delete %d Objects? (yes/no): "), sl.size());
+         Mmsg(msg, _("Are you sure you want to delete %d objects? (yes/no): "), sl.size());
          if (!get_yesno(ua, msg.c_str()) || ua->pint32_val == 0) {
             return;
          }
       }
 
-      foreach_sellist(ObjectId, &sl) {
-         do_object_delete(ua, ObjectId);
+      if ((i = find_arg(ua, NT_("all"))) >=0) {
+         if (sl.size() != 1) {
+            ua->error_msg(_("You need to specify exactly one ObjectId along with the 'all' option\n"));
+            return;
+         }
+
+         /* Delete all objects which have fields (category, type, uuid, name, source)
+           the same as given one */
+         DBId_t id = (DBId_t) sl.first();
+         do_delete_objects_all(ua, id);
+      } else {
+         // Delete objects with ids specified
+         foreach_sellist(ObjectId, &sl) {
+            do_object_delete(ua, ObjectId);
+         }
       }
 
+   } else if (ua->argc > 2) {
+      OBJECT_DBR obj_r;
+      if ((i = find_arg_with_value(ua, NT_("category"))) >= 0) {
+         bstrncpy(obj_r.ObjectCategory, ua->argv[i], sizeof(obj_r.ObjectCategory));
+      }
+      if ((i = find_arg_with_value(ua, NT_("type"))) >= 0) {
+         bstrncpy(obj_r.ObjectType, ua->argv[i], sizeof(obj_r.ObjectType));
+      }
+      if ((i = find_arg_with_value(ua, NT_("name"))) >= 0) {
+         bstrncpy(obj_r.ObjectName, ua->argv[i], sizeof(obj_r.ObjectName));
+      }
+      if ((i = find_arg_with_value(ua, NT_("uuid"))) >= 0) {
+         bstrncpy(obj_r.ObjectUUID, ua->argv[i], sizeof(obj_r.ObjectUUID));
+      }
+      if ((i = find_arg_with_value(ua, NT_("source"))) >= 0) {
+         bstrncpy(obj_r.ObjectSource, ua->argv[i], sizeof(obj_r.ObjectSource));
+      }
+
+      do_delete_objects(ua, &obj_r);
    } else if (!get_pint(ua, _("Enter ObjectId to delete: "))) {
       return;
    } else {
