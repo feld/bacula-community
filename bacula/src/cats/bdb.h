@@ -248,6 +248,7 @@ public:
    bool bdb_get_used_base_jobids(JCR *jcr, POOLMEM *jobids, db_list_ctx *result);
    bool bdb_get_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
    bool bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r);
+   bool bdb_get_plugin_objects_ids(JCR *jcr, OBJECT_DBR *obj_r, db_list_ctx *ids);
    int  bdb_get_num_restoreobject_records(JCR *jcr, ROBJECT_DBR *rr);
    bool bdb_get_job_statistics(JCR *jcr, JOB_DBR *jr);
    bool bdb_get_client_pool(JCR *jcr, alist *results);

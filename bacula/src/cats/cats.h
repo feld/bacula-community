@@ -273,6 +273,8 @@ public:
    };
    /* Parse OBJECT record from stream */
    void parse_plugin_object_string(char **obj_str);
+   /* Helper for creating the 'where' part of jcr's related sql query based on fields from the Object */
+   void create_db_filter(JCR *jcr, POOLMEM **where);
 
    DBId_t ObjectId;
    JobId_t  JobId;

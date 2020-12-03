@@ -740,76 +740,42 @@ void db_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr)
 }
 
 /*
+ *  Get list of Object Ids from search based by provided Object fields
+ *  */
+bool BDB::bdb_get_plugin_objects_ids(JCR *jcr, OBJECT_DBR *obj_r, db_list_ctx *ids)
+{
+   POOL_MEM where(PM_MESSAGE);
+   int stat = false;
+
+   obj_r->create_db_filter(jcr, where.handle());
+
+   Mmsg(cmd, "SELECT ObjectId FROM Object %s ORDER BY ObjectId ASC", where.c_str());
+
+   ids->reset();
+
+   bdb_lock();
+   if(!bdb_sql_query(cmd, db_list_handler, ids)) {
+      Jmsg(jcr, M_ERROR, 0, _("Getting plugin object ids query %s failed!\n"), cmd);
+      goto bail_out;
+   }
+
+   stat = true;
+
+bail_out:
+   bdb_unlock();
+   return stat;
+}
+
+/*
  *  Get specified Plugin Object by ObjectId
  *  */
 bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
 {
    SQL_ROW row;
-   POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE);
+   POOL_MEM where(PM_MESSAGE);
    int stat = false;
 
-   if (obj_r->ObjectId > 0) {
-      Mmsg(tmp, " Object.ObjectId=%lu", obj_r->ObjectId);
-      append_filter(where.addr(), tmp.c_str());
-   } else {
-      if (obj_r->JobId != 0) {
-         Mmsg(tmp, " Object.JobId=%lu", obj_r->JobId);
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->Path[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->Path, strlen(obj_r->Path));
-         Mmsg(tmp, " Object.Path='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->Filename[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->Filename, strlen(obj_r->Filename));
-         Mmsg(tmp, " Object.Filename='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->PluginName[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->PluginName, strlen(obj_r->PluginName));
-         Mmsg(tmp, " Object.PluginName='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->ObjectCategory[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectCategory, strlen(obj_r->ObjectCategory));
-         Mmsg(tmp, " Object.ObjectCategory='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->ObjectType[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectType, strlen(obj_r->ObjectType));
-         Mmsg(tmp, " Object.ObjectType='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->ObjectName[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectName, strlen(obj_r->ObjectName));
-         Mmsg(tmp, " Object.Objectname='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->ObjectSource[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectSource, strlen(obj_r->ObjectSource));
-         Mmsg(tmp, " Object.ObjectSource='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->ObjectUUID[0] != 0) {
-         bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectUUID, strlen(obj_r->ObjectUUID));
-         Mmsg(tmp, " Object.ObjectUUID='%s'", esc.c_str());
-         append_filter(where.addr(), tmp.c_str());
-      }
-
-      if (obj_r->ObjectSize > 0) {
-         Mmsg(tmp, " Object.ObjectSize=%llu", obj_r->ObjectSize);
-         append_filter(where.addr(), tmp.c_str());
-      }
-   }
+   obj_r->create_db_filter(jcr, where.handle());
 
    Mmsg(cmd,
          "SELECT ObjectId, JobId, Path, Filename, PluginName, ObjectCategory, "

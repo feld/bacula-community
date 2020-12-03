@@ -246,6 +246,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_get_restoreobject_record(jcr, rr)
 #define db_get_plugin_object_record(jcr, mdb, obj_r) \
            mdb->bdb_get_plugin_object_record(jcr, obj_r)
+#define db_get_plugin_objects_ids(jcr, mdb, obj_r, ids) \
+           mdb->bdb_get_plugin_objects_ids(jcr, obj_r, ids)
 #define db_get_num_restoreobject_records(jcr, mdb, rr) \
            mdb->bdb_get_num_restoreobject_records(jcr, rr)
 #define db_get_type_index(mdb) \
