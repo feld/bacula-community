@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Purge files from job, run bscan, check if file records were reinserted back
+# to the catalog, run bscan for the second time - now no records should be inserted.
+
+TestName="bscan-plugin-object-test"
+JobName=PluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-plugin-confs
+
+make -C $src/src/plugins/fd install install-test-plugin
+if [ $? -ne 0 ]; then
+    print_debug "Failed to build and install test-plugin!"
+    exit 1
+fi
+
+# Change file retention time so that we can prune file records
+outf="${tmp}/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+echo "s%File Retention =%File Retention = 2 #%" >>  ${outf}
+cp ${scripts}/bacula-dir.conf ${tmp}/1
+sed -f ${outf} ${tmp}/1 >${scripts}/bacula-dir.conf
+
+file=encrypt-bug.jpg
+rm -rf ${cwd}/tmp/*
+echo "${cwd}/README" >${cwd}/tmp/file-list
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+run job=TestPluginTest storage=File1 yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/log2.out
+select count(*) from File;
+
+quit
+quit
+END_OF_DATA
+
+run_bacula
+
+# Check how many file records were in catalog after running backup job
+file_count_orig=`cat ${cwd}/tmp/log2.out | grep '|' | cut -d'|' -f2 | tail -1`
+
+# Wait a bit so that we are after retention period
+sleep 3
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log3.out
+prune files
+yes
+sql
+@$out ${cwd}/tmp/log4.out
+select count(*) from File;
+
+quit
+END_OF_DATA
+
+run_bconsole
+
+# There should not be any file records after prunning now
+file_count=`cat ${cwd}/tmp/log4.out | grep '|' | cut -d'|' -f2 | tail -1`
+if [ ${file_count} -ne 0 ]; then
+   estat=1
+   print_debug "Failed to prune all file records, records left in db: ${file_count}"
+fi
+
+# Run bscan
+echo "volume=TestVolume001" >tmp/bscan.bsr
+
+bscan_libdbi
+
+# If the database has a password pass it to bscan
+if test "x${db_password}" = "x"; then
+  PASSWD=
+else
+  PASSWD="-P ${db_password}"
+fi
+
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log5.out 2>&1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+sql
+@$out ${cwd}/tmp/log6.out
+select count(*) from File;
+
+quit
+END_OF_DATA
+
+run_bconsole
+
+# File records should be inserted back into the catalog after bscon run
+file_count=`cat ${cwd}/tmp/log6.out | grep '|' | cut -d'|' -f2 | tail -1`
+if [ ${file_count} -ne ${file_count_orig} ]; then
+   estat=1
+   print_debug "Bscan failed to insert file records. Expected ${file_count_orig} records in catalog, have: ${file_count}"
+fi
+
+# Another bscan run should not insert any new file records
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b tmp/bscan.bsr -c bin/bacula-sd.conf ${cwd}/tmp >tmp/log7.out 2>&1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+sql
+@$out ${cwd}/tmp/log8.out
+select count(*) from File;
+
+quit
+END_OF_DATA
+
+run_bconsole
+
+# File records count should be equal one after running backup job
+file_count=`cat ${cwd}/tmp/log8.out | grep '|' | cut -d'|' -f2 | tail -1`
+if [ ${file_count} -ne ${file_count_orig} ]; then
+   estat=1
+   print_debug "Bscan inserted too many records after second run. Expected ${file_count_orig} records in catalog, have: ${file_count}"
+fi
+
+stop_bacula
+end_test
