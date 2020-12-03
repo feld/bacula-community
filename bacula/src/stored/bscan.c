@@ -736,7 +736,6 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
    switch (rec->maskedStream) {
    case STREAM_UNIX_ATTRIBUTES:
    case STREAM_UNIX_ATTRIBUTES_EX:
-
       if (!unpack_attributes_record(bjcr, rec->Stream, rec->data, rec->data_len, attr)) {
          Emsg0(M_ERROR_TERM, 0, _("Cannot continue.\n"));
       }
@@ -756,11 +755,23 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
                      edit_uint64_with_commas(rec->Addr, ed2),
                      edit_uint64_with_commas(mr.VolBytes, ed3));
       }
-      if (!create_file_attributes_record(mjcr, attr, rec)) {
-         Jmsg2(mjcr, M_ERROR, 0, _("Failed to insert record for file: %s. err: %s\n"),
-               attr->fname, db_strerror(db));
+
+      mjcr = get_jcr_by_session(rec->VolSessionId, rec->VolSessionTime);
+      if (!mjcr) {
+         Pmsg2(000, _("Could not find SessId=%d SessTime=%d for File record.\n"),
+               rec->VolSessionId, rec->VolSessionTime);
          break;
       }
+
+      if (mjcr->bscan_files_purged || mjcr->bscan_created) {
+         // We need to insert file records etiher because job that has files purged or bscan created it
+         if (!create_file_attributes_record(mjcr, attr, rec)) {
+         Jmsg2(mjcr, M_ERROR, 0, _("Failed to insert record for file: %s. err: %s\n"),
+               attr->fname, db_strerror(db));
+         }
+      }
+
+      mjcr->dec_use_count(); /* Decrease reference counter increased by get_jcr_by_session call */
       break;
 
    case STREAM_RESTORE_OBJECT:
@@ -1272,6 +1283,11 @@ static JCR *create_job_record(BDB *db, JOB_DBR *jr, SESSION_LABEL *label,
       }
       Jmsg(NULL, M_ERROR_TERM, 0, _("Could not open Catalog \"%s\", database \"%s\".\n"),
            db_driver, db_name);
+   }
+
+   // Bscan needs to be aware if files were previously purged
+   if (jr->PurgedFiles) {
+      mjcr->bscan_files_purged = true;
    }
 
    if (!update_db) {

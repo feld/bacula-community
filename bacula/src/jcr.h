@@ -524,6 +524,7 @@ public:
    bool Resched;                      /* Job may be rescheduled */
    bool bscan_insert_jobmedia_records; /*Bscan: needs to insert job media records */
    bool bscan_created;                /* Flag for bscan to know if this jcr was created by it or not */
+   bool bscan_files_purged;           /* Flag for bscan to know if this jcr has purged files */
    bool sd_client;                    /* Set if acting as client */
    bool use_new_match_all;            /* TODO: Remove when the match_bsr() will be well tested */
 
