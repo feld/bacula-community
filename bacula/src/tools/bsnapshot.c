@@ -79,7 +79,7 @@ static void usage(const char *msg=NULL)
    }
 
    fprintf(stderr, _(
-           "Bacula Systems SA(R) %s (%s)\n\n"
+           "Bacula %s (%s)\n\n"
            "Usage: bsnapshot\n"
            "   -d level     Set debug level\n"
            "   -v           Verbose\n"
