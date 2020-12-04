@@ -97,10 +97,11 @@ if [ ${objects_lines} -ne 1 ]; then
    print_debug "Wrong VMWare plugin objects count found in output: ${objects_lines}"
 fi
 
+db_objs_expected=`expr ${db_objects_lines} - 2`
 objects_lines=`cat ${cwd}/tmp/log6.out | grep 'PostgreSQL' | wc -l`
-if [ ${objects_lines} -ne 0 ]; then
+if [ ${objects_lines} -ne ${db_objs_expected} ]; then
    estat=1
-   print_debug "No PostgreSQL object should be deleted now"
+   print_debug "Wrong PostgreSQL object cound found: ${objects_lines}, expected: ${db_objs_expected}"
 fi
 
 stop_bacula
