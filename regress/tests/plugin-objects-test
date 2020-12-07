@@ -51,9 +51,9 @@ if [ ${objects_lines} -ne 2 ]; then
 fi
 
 objects_lines=`cat ${cwd}/tmp/log2.out | grep 'PostgreSQL' | wc -l`
-if [ ${objects_lines} -ne 2 ]; then
+if [ ${objects_lines} -ne 4 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 4"
 fi
 
 id_vmware_obj=`cat $tmp/log2.out | grep 'VMWare' | head -n 1 | awk  '/VMWare/ {print $2 }'`
@@ -127,6 +127,7 @@ restore
 13
 ${id_postgres_menu}
 ${id_postgres_obj}
+.
 yes
 wait
 messages
@@ -136,21 +137,44 @@ END_OF_DATA
 
 run_bconsole
 
-cat $tmp/log6.out | grep "Restore OK"
+postgres_id=`cat $tmp/log6.out | cat tmp/log6.out | grep "test db"  | tail -n 1 | awk '/test db/ {print $2}'`
+if [ "$postgres_id" = "" ]; then
+    print_debug "ERROR: Did not find any ID for PostgreSQL Object in restore menu"
+    estat=1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+messages
+@$out ${cwd}/tmp/log7.out
+restore
+13
+${id_postgres_menu}
+${id_postgres_obj}
+${postgres_id}
+yes
+wait
+messages
+.
+quit
+END_OF_DATA
+
+run_bconsole
+
+cat $tmp/log7.out | grep "Restore OK"
 if [ $? -ne 0 ]; then
-    print_debug "Restore failed,"
+    print_debug "Restore failed"
     estat=1
 fi
 
 # Restore object with bvfs
 cat <<END_OF_DATA >$tmp/bconcmds
-@$out $tmp/log7.out
+@$out $tmp/log8.out
 setdebug level=15 tags=bvfs,sql trace=1 dir
 .bvfs_cleanup path=b21$$
 .bvfs_restore path=b21$$ objectid=$id_vmware_obj,$id_postgres_obj
 wait
 messages
-@$out $tmp/log8.out
+@$out $tmp/log9.out
 restore file=?b21$$ where=$tmp/bacula-restore-bvfs yes
 wait
 messages
@@ -168,7 +192,7 @@ fi
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @# now do a restore
-@$out ${cwd}/tmp/log9.out
+@$out ${cwd}/tmp/log10.out
 restore where=${cwd}/tmp select all storage=File1 done
 yes
 wait
@@ -181,21 +205,21 @@ run_bconsole
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
-@$out ${cwd}/tmp/log10.out
-purge volume=TestVolume001
 @$out ${cwd}/tmp/log11.out
+purge volume=TestVolume001
+@$out ${cwd}/tmp/log12.out
 list objects
 END_OF_DATA
 
 run_bconsole
 
-objects_lines=`cat ${cwd}/tmp/log9.out | grep 'VMWare' | wc -l`
+objects_lines=`cat ${cwd}/tmp/log10.out | grep 'VMWare' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
 fi
 
-objects_lines=`cat ${cwd}/tmp/log9.out | grep 'PostgreSQL' | wc -l`
+objects_lines=`cat ${cwd}/tmp/log11.out | grep 'PostgreSQL' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
    print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
