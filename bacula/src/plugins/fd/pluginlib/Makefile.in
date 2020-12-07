@@ -29,6 +29,8 @@ EXECPROGSRC = execprog.cpp execprog.h
 EXECPROGOBJ = $(filter %.lo,$(EXECPROGSRC:.cpp=.lo))
 COMMCTXSRC = commctx.cpp commctx.h
 COMMCTXOBJ = $(filter %.lo,$(COMMCTXSRC:.cpp=.lo))
+PTCOMMSRC = ptcomm.cpp ptcomm.h
+PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
 
 PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
 PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
@@ -38,10 +40,12 @@ ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
 TESTMETAPLUGINBACKENDSRC = test_metaplugin_backend.c
 TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 
-COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
-COMMONPLUGINTESTS = pluginlib_test iso8601_test
+# COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
+COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ)
+# COMMONPLUGINTESTS = pluginlib_test iso8601_test
+COMMONPLUGINTESTS = pluginlib_test
 
-.SUFFIXES:    .c .lo
+.SUFFIXES:    .c .cpp .lo
 
 LIBBAC = -lbac -L$(LIBDIR)/.libs
 
@@ -53,9 +57,13 @@ LIBBAC = -lbac -L$(LIBDIR)/.libs
 	@echo "Compiling c++ $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
 
+%.lo: %.cpp %.h
+	@echo "Pattern compiling c++ $< ..."
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
+
 all: $(COMMONPLUGINOBJ) $(COMMONPLUGINTESTS) $(TESTMETAPLUGINBACKENDOBJ)
 
-$(LIBDIR)/unittests.lo:
+$(UNITTESTSOBJ):
 	$(MAKE) -C $(LIBDIR) unittests.lo
 
 test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
