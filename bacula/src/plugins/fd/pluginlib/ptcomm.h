@@ -185,7 +185,7 @@ public:
     *
     * @return int backend PID - when backend available; -1 - when backend is unavailable
     */
-   int get_backend_pid() { return (bpipe != NULL) * bpipe->worker_pid - (bpipe == NULL); }
+   int get_backend_pid() { return (bpipe != NULL) ? bpipe->worker_pid : -1; }
 
    /**
     * @brief Sets a BPIPE object for our main communication channel.
