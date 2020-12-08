@@ -287,6 +287,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_plugin_object_types(jcr, sendit, ctx, type)
 #define db_list_plugin_objects(jcr, mdb, obj_r, sendit, ctx, type) \
            mdb->bdb_list_plugin_objects(jcr, obj_r, sendit, ctx, type)
+#define db_list_plugin_objects_ids(jcr, mdb, id_list, sendit, ctx, type) \
+           mdb->bdb_list_plugin_objects_ids(jcr, id_list, sendit, ctx, type);
 #define db_list_restore_objects(jcr, mdb, rr, sendit, ctx, type) \
            mdb->bdb_list_restore_objects(jcr, rr, sendit, ctx, type)
 #define db_list_snapshot_records(jcr, mdb, snapdbr, sendit, ua, llist) \

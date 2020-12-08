@@ -151,7 +151,7 @@ void BDB::bdb_list_plugin_object_types(JCR *jcr, DB_LIST_HANDLER *sendit, void *
 }
 
 /*
- * List plugin objects
+ * List plugin objects (search is based on object provided)
  */
 void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
@@ -234,6 +234,43 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
    bdb_unlock();
 }
 
+/*
+ * List plugin objects from list of ids provided
+ */
+void BDB::bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
+{
+   POOL_MEM msg;
+
+   switch (type) {
+   case VERT_LIST:
+         Mmsg(cmd,
+            "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectSource, Object.ObjectUUID, Object.ObjectSize "
+            "FROM Object WHERE ObjectId IN (%s) ORDER BY ObjectId ASC", id_list);
+         break;
+   case HORZ_LIST:
+         Mmsg(cmd,
+            "SELECT Object.ObjectId, Object.JobId, Object.ObjectCategory, "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectUUID "
+            "FROM Object WHERE ObjectId IN (%s) ORDER BY ObjectId ASC", id_list);
+         break;
+   default:
+         break;
+   }
+
+   bdb_lock();
+
+   if (!QueryDB(jcr, cmd)) {
+      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+      bdb_unlock();
+      return;
+   }
+
+   list_result(jcr, this, sendit, ctx, type);
+
+   sql_free_result();
+   bdb_unlock();
+}
 /*
  * List restore objects
  *

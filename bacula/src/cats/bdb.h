@@ -269,6 +269,7 @@ public:
    void bdb_list_base_files_for_job(JCR *jcr, JobId_t jobid, DB_LIST_HANDLER *sendit, void *ctx);
    void bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
+   void bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_plugin_object_types(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
               DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
