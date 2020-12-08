@@ -69,16 +69,7 @@ typedef enum {
    SQL_DRIVER_TYPE_DBI        = 3
 } SQL_DRIVER;
 
-#define append_filter(buf, sql)  \
-   do {                          \
-      if (*buf) {                \
-         pm_strcat(buf, " AND ");\
-      } else {                   \
-         pm_strcpy(buf, " WHERE ");\
-      }                          \
-      pm_strcat(buf, sql);       \
-   } while (0)
-
+void append_filter(POOLMEM **buf, char *cond);
 
 /* ==============================================================
  *

@@ -32,6 +32,17 @@
  
 #include "cats.h" 
  
+void append_filter(POOLMEM **buf, char *cond)
+{
+   if (*buf[0] != '\0') {
+      pm_strcat(buf, " AND ");
+   } else {
+      pm_strcpy(buf, " WHERE ");
+   }
+
+   pm_strcat(buf, cond);
+}
+
 bool BDB::bdb_match_database(const char *db_driver, const char *db_name, 
                              const char *db_address, int db_port) 
 { 
@@ -240,64 +251,64 @@ void OBJECT_DBR::create_db_filter(JCR *jcr, POOLMEM **where)
 
    if (ObjectId > 0) {
       Mmsg(tmp, " Object.ObjectId=%lu", ObjectId);
-      append_filter(*where, tmp.c_str());
+      append_filter(where, tmp.c_str());
    } else {
       if (JobId != 0) {
          Mmsg(tmp, " Object.JobId=%lu", JobId);
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (Path[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), Path, strlen(Path));
          Mmsg(tmp, " Object.Path='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (Filename[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), Filename, strlen(Filename));
          Mmsg(tmp, " Object.Filename='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (PluginName[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), PluginName, strlen(PluginName));
          Mmsg(tmp, " Object.PluginName='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (ObjectCategory[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), ObjectCategory, strlen(ObjectCategory));
          Mmsg(tmp, " Object.ObjectCategory='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (ObjectType[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), ObjectType, strlen(ObjectType));
          Mmsg(tmp, " Object.ObjectType='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (ObjectName[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), ObjectName, strlen(ObjectName));
          Mmsg(tmp, " Object.Objectname='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (ObjectSource[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), ObjectSource, strlen(ObjectSource));
          Mmsg(tmp, " Object.ObjectSource='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (ObjectUUID[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), ObjectUUID, strlen(ObjectUUID));
          Mmsg(tmp, " Object.ObjectUUID='%s'", esc.c_str());
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
 
       if (ObjectSize > 0) {
          Mmsg(tmp, " Object.ObjectSize=%llu", ObjectSize);
-         append_filter(*where, tmp.c_str());
+         append_filter(where, tmp.c_str());
       }
    }
 

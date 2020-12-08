@@ -160,38 +160,12 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
    bdb_lock();
 
    //TODO add ACL part
-   if (obj_r->ObjectName[0] != 0) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectName, strlen(obj_r->ObjectName));
-      Mmsg(tmp, " Object.ObjectName='%s'", esc.c_str());
-      append_filter(where.addr(), tmp.c_str());
-   }
-
-   if (obj_r->ObjectType[0] != 0) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectType, strlen(obj_r->ObjectType));
-      Mmsg(tmp, " Object.ObjectType='%s'", esc.c_str());
-      append_filter(where.addr(), tmp.c_str());
-   }
-
-   if (obj_r->ObjectCategory[0] != 0) {
-      bdb_escape_string(jcr, esc.c_str(), obj_r->ObjectCategory, strlen(obj_r->ObjectCategory));
-      Mmsg(tmp, " Object.ObjectCategory='%s'", esc.c_str());
-      append_filter(where.addr(), tmp.c_str());
-   }
-
-   if (obj_r->ObjectId != 0) {
-      Mmsg(tmp, " Object.ObjectId=%d", obj_r->ObjectId);
-      append_filter(where.addr(), tmp.c_str());
-   }
-
-   if (obj_r->JobId != 0) {
-      Mmsg(tmp, " Object.JobId=%d", obj_r->JobId);
-      append_filter(where.addr(), tmp.c_str());
-   }
+   obj_r->create_db_filter(jcr, where.handle());
 
    if (obj_r->ClientName[0] != 0) {
       bdb_escape_string(jcr, esc.c_str(), obj_r->ClientName, strlen(obj_r->ClientName));
       Mmsg(tmp, " Client.Name='%s'", esc.c_str());
-      append_filter(where.addr(), tmp.c_str());
+      append_filter(where.handle(), tmp.c_str());
       Mmsg(join, " INNER JOIN Job On Object.JobId=Job.JobId "   
                  " INNER JOIN Client ON Job.ClientId=Client.ClientId ");
    }
@@ -717,49 +691,49 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    if (jr->Name[0]) {
       bdb_escape_string(jcr, esc, jr->Name, strlen(jr->Name));
       Mmsg(tmp, " Job.Name='%s' ", esc);
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
 
    } else if (jr->JobId != 0) {
       Mmsg(tmp, " Job.JobId=%s ", edit_int64(jr->JobId, ed1));
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
 
    } else if (jr->Job[0] != 0) {
       bdb_escape_string(jcr, esc, jr->Job, strlen(jr->Job));
       Mmsg(tmp, " Job.Job='%s' ", esc);
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
 
    } else if (jr->Reviewed > 0) {
       Mmsg(tmp, " Job.Reviewed = %d ", jr->Reviewed);
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
    }
 
    if (type == INCOMPLETE_JOBS && jr->JobStatus == JS_FatalError) {
       Mmsg(tmp, " Job.JobStatus IN ('E', 'f') ");
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
 
    } else if (jr->JobStatus) {
       Mmsg(tmp, " Job.JobStatus='%c' ", jr->JobStatus);
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
    }
 
    if (jr->JobType) {
       Mmsg(tmp, " Job.Type='%c' ", jr->JobType);
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
    }
 
    if (jr->JobLevel) {
       Mmsg(tmp, " Job.Level='%c' ", jr->JobLevel);
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
    }
 
    if (jr->JobErrors > 0) {
       Mmsg(tmp, " Job.JobErrors > 0 ");
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
    }
 
    if (jr->ClientId > 0) {
       Mmsg(tmp, " Job.ClientId=%s ", edit_int64(jr->ClientId, ed1));
-      append_filter(where, tmp);
+      append_filter(&where, tmp);
    }
 
    where_tmp = get_acls(DB_ACL_BIT(DB_ACL_CLIENT)  |
@@ -983,54 +957,54 @@ void BDB::bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
    if (sdbr->Name[0]) {
       bdb_escape_string(jcr, esc, sdbr->Name, strlen(sdbr->Name));
       Mmsg(tmp, "Name='%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (sdbr->SnapshotId > 0) {
       Mmsg(tmp, "Snapshot.SnapshotId=%d", sdbr->SnapshotId);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (sdbr->ClientId > 0) {
       Mmsg(tmp, "Snapshot.ClientId=%d", sdbr->ClientId);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (sdbr->JobId > 0) {
       Mmsg(tmp, "Snapshot.JobId=%d", sdbr->JobId);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (*sdbr->Client) {
       bdb_escape_string(jcr, esc, sdbr->Client, strlen(sdbr->Client));
       Mmsg(tmp, "Client.Name='%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (sdbr->Device && *(sdbr->Device)) {
       esc = check_pool_memory_size(esc, strlen(sdbr->Device) * 2 + 1);
       bdb_escape_string(jcr, esc, sdbr->Device, strlen(sdbr->Device));
       Mmsg(tmp, "Device='%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (*sdbr->Type) {
       bdb_escape_string(jcr, esc, sdbr->Type, strlen(sdbr->Type));
       Mmsg(tmp, "Type='%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (*sdbr->created_before) {
       bdb_escape_string(jcr, esc, sdbr->created_before, strlen(sdbr->created_before));
       Mmsg(tmp, "CreateDate <= '%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (*sdbr->created_after) {
       bdb_escape_string(jcr, esc, sdbr->created_after, strlen(sdbr->created_after));
       Mmsg(tmp, "CreateDate >= '%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (sdbr->expired) {
       Mmsg(tmp, "CreateTDate < (%s - Retention)", edit_int64(time(NULL), ed1));
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
    if (*sdbr->CreateDate) {
       bdb_escape_string(jcr, esc, sdbr->CreateDate, strlen(sdbr->CreateDate));
       Mmsg(tmp, "CreateDate = '%s'", esc);
-      append_filter(filter, tmp);
+      append_filter(&filter, tmp);
    }
 
    if (sdbr->sorted_client) {
