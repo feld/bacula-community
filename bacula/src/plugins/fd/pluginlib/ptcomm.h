@@ -24,7 +24,8 @@
 
 #include "pluginlib.h"
 
-#define PTCOMM_DEFAULT_TIMEOUT   300        // timeout waiting for data 15 min, it should be enough
+#define PTCOMM_DEFAULT_TIMEOUT   3600        // timeout waiting for data is 1H as some backends could spent it doing real work
+                                             // TODO: I think we should move it to plugin configurable variable instead of a const
 
 /*
  * The protocol packet header.

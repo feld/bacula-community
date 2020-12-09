@@ -145,8 +145,8 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
       {
          // this means timeout waiting
          f_error = true;
-         DMSG1(ctx, DERROR, "BPIPE read timeout=%d.\n", _timeout.tv_sec);
-         JMSG1(ctx, is_fatal() ? M_FATAL : M_ERROR, "BPIPE read timeout=%d.\n", _timeout.tv_sec);
+         DMSG1(ctx, DERROR, "BPIPE read timeout=%d.\n", PTCOMM_DEFAULT_TIMEOUT);
+         JMSG1(ctx, is_fatal() ? M_FATAL : M_ERROR, "BPIPE read timeout=%d.\n", PTCOMM_DEFAULT_TIMEOUT);
          return false;
       }
 
