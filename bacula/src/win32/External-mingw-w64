@@ -28,7 +28,7 @@ SED|https://www.bacula.org/downloads/depkgs-mingw32/sed-4.2k.tar.gz
 LZO|https://www.bacula.org/downloads/depkgs-mingw32/lzo-2.10.tar.gz
 ZLIB|https://www.bacula.org/downloads/depkgs-mingw32/zlib-1.2.8.tar.gz
 RSYNC|https://www.bacula.org/downloads/depkgs-mingw32/librsync-0.9.7b.tar.gz
-OPENSSL|https://www.openssl.org/source/openssl-1.1.1f.tar.gz
+OPENSSL|https://www.openssl.org/source/openssl-1.1.1i.tar.gz
 PCRE|https://www.bacula.org/downloads/depkgs-mingw32/pcre-6.3.tar.bz2
 PTHREADS|https://www.bacula.org/downloads/depkgs-mingw32/pthreads-w32-2-9-1-release.tar.gz
 Qt4|https://www.bacula.org/downloads/depkgs-mingw32/qt-everywhere-opensource-src-4.8.4.tar.gz
