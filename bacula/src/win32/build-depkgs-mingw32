@@ -288,6 +288,8 @@ process_openssl()
    do_make Makefile all
    echo Installing openssl
    do_make Makefile install_sw
+   mkdir -p ${DEPPKG_DIR}/ssl
+   cp -f apps/openssl.cnf ${DEPPKG_DIR}/ssl
 }
 
 process_mysql()

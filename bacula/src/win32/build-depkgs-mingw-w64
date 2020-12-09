@@ -265,6 +265,8 @@ process_openssl()
    echo Installing openssl
    do_make Makefile -k install_sw install
    cp *.dll ${DEPPKG_DIR}/bin
+   mkdir -p ${DEPPKG_DIR}/ssl
+   cp -f apps/openssl.cnf ${DEPPKG_DIR}/ssl
 }
 
 process_lzo()
