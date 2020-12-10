@@ -28,6 +28,11 @@ touch ${cwd}/tmp/log2.out
 
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Allow Duplicate Jobs", "no", "Job", "MigVolBackup")'
 
+# Add this for bug #6637 verification. Pool setting should not be overriden by settings below
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FullBackupPool", "Scratch", "Job", "copy-uncopied")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "IncrementalBackupPool", "Scratch", "Job", "copy-uncopied")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "DifferentialBackupPool", "Scratch", "Job", "copy-uncopied")'
+
 start_test
 
 #
