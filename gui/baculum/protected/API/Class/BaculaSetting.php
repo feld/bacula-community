@@ -324,7 +324,7 @@ class BaculaSetting extends APIModule {
 								$wday = Params::getWdaysConfig($directive_value[$i]['DayOfWeek']);
 								$value = array($overwrite_directive, $month, $week, $day, $wday);
 								$hour_len = count($directive_value[$i]['Hour']);
-								if ($hour_len == 24 && $min != 0) {
+								if ($hour_len == 24) {
 									$value[] = 'hourly';
 								}
 								if ($hour_len == 1 || ($hour_len == 24 && $min != 0)) {
