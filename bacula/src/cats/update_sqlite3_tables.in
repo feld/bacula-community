@@ -465,7 +465,7 @@ commit;
 END-OF-DATA
     then
 	echo "Update of Bacula SQLite3 tables 1021 to 1022 succeeded."
-	getVersion
+	DBVERSION=1022
     else
 	echo "Update of Bacula SQLite3 tables 1021 to 1022 failed."
 	exit 1
@@ -484,7 +484,7 @@ commit;
 END-OF-DATA
     then
 	echo "Update of Bacula SQLite3 tables 1022 to 1023 succeeded."
-	getVersion
+	DBVERSION=1023
     else
 	echo "Update of Bacula SQLite3 tables 1022 to 1023 failed."
 	exit 1
