@@ -57,6 +57,7 @@
 # Daemon user:group Don't change them unless you know what you are doing
 %define director_daemon_user    bacula
 %define storage_daemon_user     bacula
+%define bacula_user             bacula
 %define file_daemon_user        root
 %define daemon_group            bacula
 # group that has write access to tape devices, usually disk on Linux
@@ -1044,6 +1045,7 @@ if [ -z "$HAVE_BACULA" ]; then
         echo "The user %{director_daemon_user} has been added to %{user_file}."
         echo "See the manual chapter \"Running Bacula\" for details."
 fi
+# usefull only if %{file_daemon_user} is not "root"
 HAVE_BACULA=`grep %{file_daemon_user} %{user_file} 2>/dev/null`
 if [ -z "$HAVE_BACULA" ]; then
         %{useradd} -r -c "Bacula" -d %{working_dir} -g %{daemon_group} -M -s /sbin/nologin %{file_daemon_user} > /dev/null 2>&1
@@ -1292,6 +1294,17 @@ if [ -z "$HAVE_BACULA" ]; then
 fi
 # we do not use the -g option allowing the primary group to be set to system default
 # this will be a unique group on redhat type systems or the group users on some systems
+
+# create the bacula user
+HAVE_BACULA=`grep %{bacula_user} %{user_file} 2>/dev/null`
+if [ -z "$HAVE_BACULA" ]; then
+    %{useradd} -r -c "Bacula" -d %{working_dir} -g %{daemon_group} -M -s /sbin/nologin %{bacula_user} > /dev/null 2>&1
+    %{usermod} -G %{daemon_group} %{bacula_user}
+    echo "The user %{bacula_user} has been added to %{user_file}."
+    echo "See the manual chapter \"Running Bacula\" for details."
+fi
+
+# and if %{file_daemon_user} is not root, create the dedicated file daemon user
 HAVE_BACULA=`grep %{file_daemon_user} %{user_file} 2>/dev/null`
 if [ -z "$HAVE_BACULA" ]; then
     %{useradd} -r -c "Bacula" -d %{working_dir} -g %{daemon_group} -M -s /sbin/nologin %{file_daemon_user} > /dev/null 2>&1
