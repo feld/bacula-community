@@ -250,6 +250,7 @@ CREATE TABLE JobMedia (
    );
 
 CREATE INDEX inx7 ON JobMedia (JobId, MediaId);
+CREATE INDEX inx71 ON JobMedia (MediaId);
 
 CREATE TABLE FileMedia
 (

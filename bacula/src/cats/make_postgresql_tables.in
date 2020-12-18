@@ -229,6 +229,7 @@ CREATE TABLE jobmedia
 );
 
 CREATE INDEX job_media_job_id_media_id_idx on jobmedia (jobid, mediaid);
+CREATE INDEX job_media_media_id_idx on jobmedia (mediaid);
 
 CREATE TABLE FileMedia
 (
