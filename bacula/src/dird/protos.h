@@ -356,6 +356,7 @@ void purge_files_from_job_list(UAContext *ua, del_ctx &del);
 
 
 /* ua_run.c */
+bool check_storage_presence(UAContext *ua, JobId_t JobId);
 extern int run_cmd(UAContext *ua, const char *cmd);
 extern int restart_cmd(UAContext *ua, const char *cmd);
 extern bool check_pool(int32_t JobType, int32_t JobLevel, POOL *pool, POOL *nextpool, const char **name);

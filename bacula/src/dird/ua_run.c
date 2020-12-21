@@ -318,6 +318,25 @@ static JobId_t start_job(UAContext *ua, JCR *jcr, run_ctx &rc)
    return JobId;
 }
 
+/* Check if there is entry in Storage table with StorageId related to the job */
+static bool check_storage_db_presence(UAContext *ua, JobId_t JobId, char *name, int len)
+{
+   POOL_MEM query;
+   if (len < MAX_NAME_LENGTH) {
+      return false;
+   }
+
+   Mmsg(query, "SELECT Storage.Name FROM Storage JOIN Media USING (StorageId) "
+         "JOIN JobMedia USING (MediaId) JOIN Job USING (JobId) WHERE JobId=%ld ORDER BY JobMediaId DESC LIMIT 1",
+        JobId);
+   if (!db_sql_query(ua->db, query.c_str(), db_name_handler, name)) {
+      return false;
+   }
+
+
+   return true;
+}
+
 /*
  * If no job_name defined in the run context, ask
  *  the user for it.
@@ -522,6 +541,32 @@ static bool get_storage(UAContext *ua, run_ctx &rc)
    return true;
 }
 
+static bool get_storage_from_job_record(UAContext *ua, run_ctx &rc)
+{
+   if (rc.restart) {
+      char name[MAX_NAME_LENGTH];
+      if (check_storage_db_presence(ua, rc.JobId, name, sizeof(name))) {
+         /* Check if there is storage of name returned */
+         STORE *storage = (STORE *)GetResWithName(R_STORAGE, name);
+         if (storage) {
+            rc.store->store = storage;
+            pm_strcpy(rc.store->store_source, _("Job record"));
+            Dmsg1(50, "Found Storage resource related to the JobId=%ld\n",
+                  rc.JobId);
+            return true;
+         }
+         Dmsg1(50, "Could not find any Storage resource related to the one refered by JobId=%ld\n",
+               rc.JobId);
+
+      } else {
+         Dmsg1(50, "Could not find any Storage record in catalog related to the one refered by JobId=%ld\n",
+               rc.JobId);
+      }
+   }
+   get_job_storage(rc.store, rc.job, NULL);
+   return true;
+}
+
 /*
  * Get and pass back a list of Jobids in rc.jid
  */
@@ -641,7 +686,6 @@ static bool get_jobid_from_list(UAContext *ua, sellist &sl, run_ctx &rc)
    if (!get_pool(ua, rc)) {
       return false;
    }
-   get_job_storage(rc.store, rc.job, NULL);
 
    bmemset(&cr, 0, sizeof(cr));
    cr.ClientId = rc.jr.ClientId;
@@ -654,6 +698,8 @@ static bool get_jobid_from_list(UAContext *ua, sellist &sl, run_ctx &rc)
    if (!get_client(ua, rc)) {
       return false;
    }
+
+   get_storage_from_job_record(ua, rc);
 
    bmemset(&fr, 0, sizeof(fr));
    fr.FileSetId = rc.jr.FileSetId;
@@ -702,6 +748,7 @@ int restart_cmd(UAContext *ua, const char *cmd)
       return 0;
    }
 
+   rc.restart = true;
    rc.jr.JobStatus = 0;
 
    /* Users can set the jobid list in command line */
