@@ -478,7 +478,7 @@ int32_t PTCOMM::recvbackend(bpContext *ctx, char cmd, POOL_MEM &buf)
    if (length > 0)
    {
       // check requested buffer size
-      buf.check_size(length);
+      buf.check_size(length + 1);
       return handle_payload(ctx, buf.c_str(), length);
    }
 
