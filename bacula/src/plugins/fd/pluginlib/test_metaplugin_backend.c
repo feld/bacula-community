@@ -16,13 +16,12 @@
 */
 /*
  * File:   test_rhv_backend.c
- * Author: radekk
+ * Author: radekk, radoslaw@korzeniewski.net
  *
  * Copyright (c) 2017 by Inteos sp. z o.o.
  * All rights reserved. IP transferred to Bacula Systems according to agreement.
  * This is a dumb and extremely simple backend simulator used for test swift Plugin.
  *
- * Created on 18 September 2017, 13:13
  */
 
 #include <stdio.h>
@@ -361,6 +360,30 @@ void perform_backup()
    signal_eod();
    write_plugin('I', "TEST12 - backup another dir");
    write_plugin('W', "Make some warning messages.");
+   signal_eod();
+
+   const char longfilenamestr[] =
+      "cb1e1926239b467c8e9affd7d22cea4993940d1e8f5377a1540d2b58e10be5669888c7e729fc9fe98f1400ca2e68c93075fd26e2806bebd727c71022de47f37b"
+      "cb1e1926239b467c8e9affd7d22cea4993940d1e8f5377a1540d2b58e10be5669888c7e729fc9fe98f1400ca2e68c93075fd26e2806bebd727c71022de47f37b"
+      "cb1e1926239b467c8e9affd7d22cea4993940d1e8f5377a1540d2b58e10be5669888c7e729fc9fe98f1400ca2e68c93075fd26e2806bebd727c71022de47f37b"
+      "cb1e1926239b467c8e9affd7d22cea4993940d1e8f5377a1540d2b58e10be5669888c7e729fc9fe98f1400ca2e68c93075fd26e2806bebd727c71022de47f37b"
+      "ENDOFNAME";
+   const char *longfilename = longfilenamestr;
+
+   // test for fname > 500c
+   static_assert(sizeof(longfilenamestr) > 500);
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/%s\n", PLUGINPREFIX, longfilename);
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:F 234560 901 901 0100640 1\n");
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   signal_eod();
+   write_plugin('I', "TEST13 - long FNAME test");
+   write_plugin('C', "DATA\n");
+   write_plugin('D', "/* here comes a file data contents */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
    signal_eod();
 
    /* this is the end of all data */
