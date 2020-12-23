@@ -29,6 +29,7 @@ EXECPROGSRC = execprog.cpp execprog.h
 EXECPROGOBJ = $(filter %.lo,$(EXECPROGSRC:.cpp=.lo))
 PTCOMMSRC = ptcomm.cpp ptcomm.h
 PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
+COMMCTXSRC = commctx.h
 SMARTALISTSRC = smartalist.h
 SMARTPTRSRC = smartalist.h
 
@@ -36,6 +37,8 @@ PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
 PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
 ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
 ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
+COMMCTXTEST = commctx_test.cpp $(COMMCTXSRC) $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+COMMCTXTESTOBJ = $(filter %.lo,$(COMMCTXTEST:.cpp=.lo))
 SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
 SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo))
 SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
@@ -47,7 +50,7 @@ TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 # COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
 COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ)
 # COMMONPLUGINTESTS = pluginlib_test iso8601_test
-COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test
+COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test commctx_test
 
 .SUFFIXES:    .c .cpp .lo
 
@@ -74,17 +77,21 @@ test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
 	@echo "Compiling backend $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DLOGDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
-pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSSRC)
+pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
 
-smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTESTOBJ)
+smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTEST)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTALISTTESTOBJ) -o $@
 
-smartptr_test: Makefile $(SMARTPTRTESTOBJ) $(SMARTPTRTESTOBJ)
+smartptr_test: Makefile $(SMARTPTRTESTOBJ) $(SMARTPTRTEST)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTPTRTESTOBJ) -o $@
+
+commctx_test: Makefile $(COMMCTXTESTOBJ) $(COMMCTXTEST)
+	@echo "Building $@ ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(COMMCTXTESTOBJ) -o $@
 
 iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC)
 	@echo "Building $@ ..."
