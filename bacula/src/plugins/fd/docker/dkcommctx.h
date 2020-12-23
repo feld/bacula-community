@@ -27,7 +27,7 @@
 #ifndef _DKCOMMCTX_H_
 #define _DKCOMMCTX_H_
 
-#include "pluglib.h"
+#include "pluginlib/pluginlib.h"
 #include "lib/ini.h"
 #include "lib/bregex.h"
 

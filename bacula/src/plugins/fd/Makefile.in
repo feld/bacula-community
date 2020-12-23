@@ -13,9 +13,13 @@
 FDDIR=../../filed
 SRCDIR=../..
 LIBDIR=../../lib
+PLUGINLIBDIR=./pluginlib
 
 topdir = @BUILD_DIR@
 thisdir = src/plugins/fd
+
+DOCKERSRC = dkcommctx.c dkcommctx.h dkid.c dkid.h dkinfo.c dkinfo.h docker-fd.c docker-fd.h
+DOCKEROBJ = $(DOCKERSRC:.c=.lo) $(PLUGINLIBDIR)/pluginlib.lo $(PLUGINLIBDIR)/ptcomm.lo
 
 .SUFFIXES:    .c .lo
 

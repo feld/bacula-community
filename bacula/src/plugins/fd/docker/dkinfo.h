@@ -28,7 +28,7 @@
 #define _DKINFO_H_
 
 #include "dkid.h"
-#include "pluglib.h"
+#include "pluginlib/pluginlib.h"
 
 /* The Docker container Power states */
 typedef enum {
