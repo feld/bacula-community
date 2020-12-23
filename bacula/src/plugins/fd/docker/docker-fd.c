@@ -106,19 +106,11 @@ bRC DLL_IMP_EXP loadPlugin(bInfo *lbinfo, bFuncs *lbfuncs, pInfo ** pinfo, pFunc
    bfuncs = lbfuncs;               /* set Bacula function pointers */
    binfo = lbinfo;
 
-   Dmsg2(DINFO, PLUGINNAME " Plugin version %s %s (c) 2019 by Inteos\n",
-      DOCKER_VERSION, DOCKER_DATE);
+   Dmsg3(DINFO, "%s Plugin version %s %s (c) 2020 by Inteos\n",
+      PLUGINNAME, DOCKER_VERSION, DOCKER_DATE);
 
    *pinfo = &pluginInfo;           /* return pointer to our info */
    *pfuncs = &pluginFuncs;         /* return pointer to our functions */
-
-   if (access(DOCKER_CMD, X_OK) < 0){
-      berrno be;
-      bfuncs->DebugMessage(NULL, __FILE__, __LINE__, DERROR,
-         PLUGINPREFIX " Unable to use command tool: %s Err=%s\n", DOCKER_CMD,
-         be.bstrerror());
-      return bRC_Error;
-   }
 
    return bRC_OK;
 }
@@ -621,10 +613,11 @@ bRC DOCKER::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    case bEventHandleBackupFile:
       if (isourplugincommand(PLUGINPREFIX, (char*)value)){
          DMSG0(ctx, DERROR, "Invalid handle Option Plugin called!\n");
-         JMSG0(ctx, M_FATAL,
-               "The " PLUGINNAME " plugin doesn't support the Option Plugin configuration.\n"
-               "Please review your FileSet and move the Plugin=" PLUGINPREFIX
-               "... command into the Include {} block.\n");
+         JMSG2(ctx, M_FATAL,
+               "The %s plugin doesn't support the Option Plugin configuration.\n"
+               "Please review your FileSet and move the Plugin=%s"
+               "... command into the Include {} block.\n",
+               PLUGINNAME, PLUGINPREFIX);
          return bRC_Error;
       }
       break;

@@ -37,8 +37,8 @@
 #define DOCKER_DESCRIPTION          "Bacula Docker Plugin"
 
 /* Plugin compile time variables */
-#define PLUGINPREFIX                "docker:"
-#define PLUGINNAME                  "Docker"
+const char *PLUGINPREFIX = "docker:";
+const char *PLUGINNAME = "Docker";
 #define PLUGINNAMESPACE             "/@docker"
 #define CONTAINERNAMESPACE          "/container"
 #define IMAGENAMESPACE              "/image"
