@@ -30,6 +30,7 @@ EXECPROGOBJ = $(filter %.lo,$(EXECPROGSRC:.cpp=.lo))
 PTCOMMSRC = ptcomm.cpp ptcomm.h
 PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
 SMARTALISTSRC = smartalist.h
+SMARTPTRSRC = smartalist.h
 
 PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
 PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
@@ -37,6 +38,8 @@ ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
 ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
 SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
 SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo))
+SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+SMARTPTRTESTOBJ = $(filter %.lo,$(SMARTPTRTEST:.cpp=.lo))
 
 TESTMETAPLUGINBACKENDSRC = test_metaplugin_backend.c
 TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
@@ -44,7 +47,7 @@ TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 # COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
 COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ)
 # COMMONPLUGINTESTS = pluginlib_test iso8601_test
-COMMONPLUGINTESTS = pluginlib_test smartalist_test
+COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test
 
 .SUFFIXES:    .c .cpp .lo
 
@@ -78,6 +81,10 @@ pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSSRC)
 smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTESTOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTALISTTESTOBJ) -o $@
+
+smartptr_test: Makefile $(SMARTPTRTESTOBJ) $(SMARTPTRTESTOBJ)
+	@echo "Building $@ ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTPTRTESTOBJ) -o $@
 
 iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC)
 	@echo "Building $@ ..."
