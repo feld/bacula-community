@@ -21,7 +21,7 @@
  * @version 2.0.0
  * @date 2020-11-20
  *
- * @copyright Copyright (c) 2020
+ * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #include "ptcomm.h"

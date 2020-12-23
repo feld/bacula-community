@@ -27,15 +27,16 @@ ISO8601SRC = iso8601.cpp iso8601.h
 ISO8601OBJ = $(filter %.lo,$(ISO8601SRC:.cpp=.lo))
 EXECPROGSRC = execprog.cpp execprog.h
 EXECPROGOBJ = $(filter %.lo,$(EXECPROGSRC:.cpp=.lo))
-COMMCTXSRC = commctx.cpp commctx.h
-COMMCTXOBJ = $(filter %.lo,$(COMMCTXSRC:.cpp=.lo))
 PTCOMMSRC = ptcomm.cpp ptcomm.h
 PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
+SMARTALISTSRC = smartalist.h
 
 PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
 PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
 ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
 ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
+SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo))
 
 TESTMETAPLUGINBACKENDSRC = test_metaplugin_backend.c
 TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
@@ -43,7 +44,7 @@ TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 # COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
 COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ)
 # COMMONPLUGINTESTS = pluginlib_test iso8601_test
-COMMONPLUGINTESTS = pluginlib_test
+COMMONPLUGINTESTS = pluginlib_test smartalist_test
 
 .SUFFIXES:    .c .cpp .lo
 
@@ -74,6 +75,10 @@ pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSSRC)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
 
+smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTESTOBJ)
+	@echo "Building $@ ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTALISTTESTOBJ) -o $@
+
 iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
@@ -82,15 +87,6 @@ install: all
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bpipe-fd.la $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.la
-
-install-test-plugin: all
-	$(MKDIR) $(DESTDIR)$(plugindir)
-	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-plugin-fd.la $(DESTDIR)$(plugindir)
-	$(RMF) $(DESTDIR)$(plugindir)/test-plugin-fd.la
-	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-deltaseq-fd.la $(DESTDIR)$(plugindir)
-	$(RMF) $(DESTDIR)$(plugindir)/test-deltaseq-fd.la
-	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-handlexacl-plugin-fd.la $(DESTDIR)$(plugindir)
-	$(RMF) $(DESTDIR)$(plugindir)/test-handlexacl-plugin-fd.la
 
 Makefile: Makefile.in $(topdir)/config.status
 	cd $(topdir) \

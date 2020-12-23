@@ -14,13 +14,13 @@
 
    Bacula® is a registered trademark of Kern Sibbald.
 */
-/*
+/**
+ * @file commctx.h
+ * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @brief Common definitions and utility functions for Inteos plugins - unittest.
+ * @version 1.1.0
+ * @date 2020-12-23
  *
- * All rights reserved. IP transferred to Bacula Systems according to agreement.
- *
- * Common definitions and utility functions for Inteos plugins.
- * Functions defines a common framework used in our utilities and plugins.
- * Author: Radosław Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
  */
 
 #include "pluginlib.h"
