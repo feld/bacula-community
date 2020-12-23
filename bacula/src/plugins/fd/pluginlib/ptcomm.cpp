@@ -28,8 +28,6 @@
 #include <sys/stat.h>
 #include <signal.h>
 
-/* Plugin compile time variables required by pluglib */
-#define PLUGINPREFIX            "ptcomm:"
 
 /*
  * libbac uses its own sscanf implementation which is not compatible with
@@ -40,10 +38,6 @@
 #undef sscanf
 #endif
 // #define NEED_REVIEW
-
-/* from lib/scan.c */
-extern int parse_args(POOLMEM *cmd, POOLMEM **args, int *argc,
-                      char **argk, char **argv, int max_args);
 
 /*
  * Closes external pipe if available (opened).

@@ -37,6 +37,10 @@
 extern bFuncs *bfuncs;
 extern bInfo *binfo;
 
+// Plugin linking time variables
+extern const char *PLUGINPREFIX;
+extern const char *PLUGINNAME;
+
 /* module definition */
 #ifndef PLUGMODULE
 #define PLUGMODULE   "PluginLib::"
@@ -48,30 +52,30 @@ extern bInfo *binfo;
 
 /* debug and messages functions */
 #define JMSG0(ctx,type,msg) \
-   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, PLUGINPREFIX " " msg );
+   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, "%s " msg, PLUGINPREFIX );
 #define JMSG1 JMSG
 #define JMSG(ctx,type,msg,var) \
-   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, PLUGINPREFIX " " msg, var );
+   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, "%s " msg, PLUGINPREFIX, var );
 #define JMSG2(ctx,type,msg,var1,var2) \
-   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, PLUGINPREFIX " " msg, var1, var2 );
+   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, "%s " msg, PLUGINPREFIX, var1, var2 );
 #define JMSG3(ctx,type,msg,var1,var2,var3) \
-   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, PLUGINPREFIX " " msg, var1, var2, var3 );
+   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, "%s " msg, PLUGINPREFIX, var1, var2, var3 );
 #define JMSG4(ctx,type,msg,var1,var2,var3,var4) \
-   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, PLUGINPREFIX " " msg, var1, var2, var3, var4 );
+   if (ctx) bfuncs->JobMessage ( ctx, __FILE__, __LINE__, type, 0, "%s " msg, PLUGINPREFIX, var1, var2, var3, var4 );
 
 #define DMSG0(ctx,level,msg) \
-   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, PLUGINPREFIX " " msg );
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX );
 #define DMSG1 DMSG
 #define DMSG(ctx,level,msg,var) \
-   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, PLUGINPREFIX " " msg, var );
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var );
 #define DMSG2(ctx,level,msg,var1,var2) \
-   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, PLUGINPREFIX " " msg, var1, var2 );
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2 );
 #define DMSG3(ctx,level,msg,var1,var2,var3) \
-   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, PLUGINPREFIX " " msg, var1, var2, var3 );
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2, var3 );
 #define DMSG4(ctx,level,msg,var1,var2,var3,var4) \
-   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, PLUGINPREFIX " " msg, var1, var2, var3, var4 );
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2, var3, var4 );
 #define DMSG6(ctx,level,msg,var1,var2,var3,var4,var5,var6) \
-   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, PLUGINPREFIX " " msg, var1, var2, var3, var4, var5, var6 );
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2, var3, var4, var5, var6 );
 
 /* fixed debug level definitions */
 #define D1  1                    /* debug for every error */
@@ -99,11 +103,11 @@ extern bInfo *binfo;
 #define DMSG_EVENT_PTR(event,value)       DMSG2(ctx, DINFO, "%s value=%p\n", eventtype2str(event), value);
 
 /* pure debug macros */
-#define DMsg0(level,msg)                  Dmsg1(level,PLUGMODULE "%s: " msg,__func__)
-#define DMsg1(level,msg,a1)               Dmsg2(level,PLUGMODULE "%s: " msg,__func__,a1)
-#define DMsg2(level,msg,a1,a2)            Dmsg3(level,PLUGMODULE "%s: " msg,__func__,a1,a2)
-#define DMsg3(level,msg,a1,a2,a3)         Dmsg4(level,PLUGMODULE "%s: " msg,__func__,a1,a2,a3)
-#define DMsg4(level,msg,a1,a2,a3,a4)      Dmsg5(level,PLUGMODULE "%s: " msg,__func__,a1,a2,a3,a4)
+#define DMsg0(level,msg)                  Dmsg1(level, PLUGMODULE "%s: " msg, __func__)
+#define DMsg1(level,msg,a1)               Dmsg2(level, PLUGMODULE "%s: " msg, __func__, a1)
+#define DMsg2(level,msg,a1,a2)            Dmsg3(level, PLUGMODULE "%s: " msg, __func__, a1, a2)
+#define DMsg3(level,msg,a1,a2,a3)         Dmsg4(level, PLUGMODULE "%s: " msg, __func__, a1, a2, a3)
+#define DMsg4(level,msg,a1,a2,a3,a4)      Dmsg5(level, PLUGMODULE "%s: " msg, __func__, a1, a2, a3, a4)
 
 #define BOOLSTR(b)                        (b?"True":"False")
 

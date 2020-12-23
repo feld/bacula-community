@@ -14,6 +14,7 @@ SRCDIR = ../../..
 FDDIR = $(SRCDIR)/filed
 LIBDIR = $(SRCDIR)/lib
 FINDLIBDIR = $(SRCDIR)/findlib
+FDPLUGDIR=..
 
 topdir = @BUILD_DIR@
 working_dir=@working_dir@
@@ -32,6 +33,8 @@ PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
 COMMCTXSRC = commctx.h
 SMARTALISTSRC = smartalist.h
 SMARTPTRSRC = smartalist.h
+METAPLUGINSRC = metaplugin.cpp metaplugin.h
+METAPLUGINOBJ = $(filter %.lo,$(METAPLUGIN:.cpp=.lo))
 
 PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
 PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
@@ -58,15 +61,15 @@ LIBBAC = -lbac -L$(LIBDIR)/.libs
 
 .c.lo:
 	@echo "Compiling $< ..."
-	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(FDPLUGDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
 
 .cpp.lo:
 	@echo "Compiling c++ $< ..."
-	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(FDPLUGDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
 
 %.lo: %.cpp %.h
 	@echo "Pattern compiling c++ $< ..."
-	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(FDPLUGDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
 
 all: $(COMMONPLUGINOBJ) $(COMMONPLUGINTESTS) $(TESTMETAPLUGINBACKENDOBJ)
 
