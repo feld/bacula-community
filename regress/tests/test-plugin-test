@@ -22,7 +22,17 @@ echo "${cwd}/build/src" >${cwd}/tmp/file-list
 # Build and install the test plugin
 cd ${cwd}/build/src/plugins/fd
 make
+if [ $? -ne 0 ]; then
+   print_debug "Failed to build test plugin!"
+   exit 1
+fi
+
 make install-test-plugin
+if [ $? -ne 0 ]; then
+   print_debug "Failed to install test plugin!"
+   exit 1
+fi
+
 cd ${cwd}
 
 start_test
