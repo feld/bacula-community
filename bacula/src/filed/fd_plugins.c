@@ -38,8 +38,9 @@ const char *plugin_type = "-fd.dll";
 const char *plugin_type = "-fd.so";
 #endif
 
-extern int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
+extern bool save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
 extern bool check_changes(JCR *jcr, FF_PKT *ff_pkt);
+extern int metadata_save(JCR *jcr, plugin_metadata *plug_meta);
 
 /* Function pointers to be set here */
 extern DLL_IMP_EXP int     (*plugin_bopen)(BFILE *bfd, const char *fname, uint64_t flags, mode_t mode);
@@ -701,6 +702,8 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
                ff_pkt->restore_obj.object = sp.restore_obj.object;
                ff_pkt->restore_obj.object_len = sp.restore_obj.object_len;
             }
+         } else if (sp.type == FT_PLUGIN_METADATA) {
+            ff_pkt->plug_meta = sp.plug_meta;
          } else {
             Dsm_check(999);
             if (!sp.fname) {
@@ -1209,6 +1212,22 @@ bool plugin_set_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
    }
 
    Dsm_check(999);
+   return true;
+}
+
+bool plugin_backup_metadata(JCR *jcr, FF_PKT *ff_pkt)
+{
+   Plugin *plugin = jcr->plugin;
+
+   /* Backup metadata if provided */
+   if (ff_pkt->plug_meta) {
+      if (!metadata_save(jcr, ff_pkt->plug_meta)) {
+         Jmsg2(jcr, M_ERROR, 0, _("Failed to backup metadata for plugin: \"%s\" fname: %s"),
+               plugin->file, ff_pkt->fname);
+         return false;
+      }
+   }
+
    return true;
 }
 

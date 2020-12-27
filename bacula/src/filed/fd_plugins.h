@@ -114,6 +114,167 @@ struct plugin_object {
    uint64_t object_size;
 };
 
+enum metadata_type {
+   plugin_meta_blob = 0,
+   plugin_meta_catalog_email,
+   plugin_meta_invalid = -1,
+};
+
+/*
+ * This packet is used for storing plugin's metadata.
+*/
+class meta_pkt: public SMARTALLOC {
+   private:
+      bool decoded; /* Was metadata packed decoded from serialized stream or not */
+
+   public:
+      uint32_t total_size;       /* Total size of metadata stream (consiting of packets) */
+      uint16_t total_count;      /* Total count of metadata packets in the stream */
+      enum metadata_type type;   /* Type of metadata (binary, email, ...) */
+      uint16_t index;            /* Index of the packet in metadata stream (starting from 0, goes up to [total_count-1] */
+      uint32_t buf_len;          /* Length of buffer */
+      void *buf;                 /* Can be either passed by the user or allocated for deserialization */
+
+      meta_pkt(metadata_type type=plugin_meta_invalid, uint32_t len=0, void *buf=NULL, uint16_t idx=0)  {
+         this->buf_len = len;
+         this->type = type;
+         this->buf = buf;
+         this->index = idx;
+         this->total_size = 0;
+         this->total_count = 0;
+
+         decoded = false;
+      };
+
+      /* Build metadata packet from serialized stream */
+      meta_pkt(void *stream) {
+         if (stream) {
+            unser_declare;
+            unser_begin(stream, 0);
+            unser_uint32(total_size);
+            unser_uint16(total_count);
+            unser_uint32((uint32_t&) type);
+            unser_uint16(index);
+            unser_uint32(buf_len);
+            buf = bmalloc(buf_len);
+            unser_bytes(buf, buf_len);
+         } else {
+            total_size = 0;
+            total_count = 0;
+            buf_len = 0;
+            type = plugin_meta_invalid;
+            index = 0;
+            buf = NULL;
+         }
+
+         /* Mark if we need to free buf later or not */
+         decoded = stream ? true : false;
+      };
+
+      ~meta_pkt() {
+         if (decoded) {
+            bfree(buf);
+         }
+      };
+
+      /* Size of single metadata packet (struct's size + plugin's metadata buffer) */
+      uint32_t size() {
+         return sizeof(meta_pkt) + buf_len - sizeof(buf);
+      }
+
+      /* Serialize metadata packed into specified buffer */
+      void serialize(void *ser_buf) {
+         ser_declare;
+
+         ser_begin(ser_buf, size());
+         ser_uint32(total_size);
+         ser_uint16(total_count);
+         ser_uint32(type);
+         ser_uint16(index);
+         ser_uint32(buf_len);
+         ser_bytes(buf, buf_len);
+      }
+
+};
+
+/*
+ * This class is used for transferring plugin's file metadata between the plugin and the fd.
+ * It's a helper class to make metadata packets easy to manage for the plugins.
+ *
+ * Example usage (in form of pseudocode) of adding two packets:
+ *
+ * meta_mgr = New(plugin_metadata);
+ * meta_mgr->add_packet(plugin_meta_blog, buf1, buf1_len);
+ * meta_mgr->add_packet(plugin_meta_catalog_email, buf2, buf2_len);
+ *
+ * Then just simply return meta_mgr as an 'plug_meta' field in save_packet structure and
+ * set save_packet`s type to FT_PLUGIN_METADATA. Bacula will then take care of all of the packets
+ * added to the list and store it onto the volume one by one.
+ */
+class plugin_metadata: public SMARTALLOC {
+   private:
+      uint32_t total_size;       /* Total size of metadata stream (consiting of many packets) */
+      uint16_t total_count;      /* Total count of metadata packets in the stream */
+      alist *packets;            /* List of packets in the stream */
+
+   public:
+      plugin_metadata() {
+         packets = New(alist(5, false));
+         total_size = 0;
+         total_count = 0;
+      };
+
+      ~plugin_metadata() {
+         /* Remove packets from list, delete each of them */
+         while (!packets->empty()) {
+            meta_pkt *mp = (meta_pkt *)packets->pop();
+            delete mp;
+         }
+
+        delete packets;
+      };
+
+      /* Create packet with specified attributes, add it to the list */
+      void add_packet(metadata_type type, uint32_t len, void *buf) {
+         meta_pkt *mp = New(meta_pkt(type, len, buf, total_count++));
+         total_size+=mp->size();
+         mp->total_size = total_size;
+         mp->total_count = total_count;
+
+         packets->push(mp);
+
+         /* Update all packets with new total size and count */
+         foreach_alist(mp, packets) {
+            mp->total_size = total_size;
+            mp->total_count = total_count;
+         }
+
+      };
+
+      uint32_t size() {
+         return total_size;
+      };
+
+      uint16_t count() {
+         return total_count;
+      };
+
+      meta_pkt *get(int index) {
+         return (meta_pkt *)packets->get(index);
+      };
+
+      void reset() {
+         //Free allocated metadata packets
+         while (!packets->empty()) {
+            meta_pkt *mp = (meta_pkt *)packets->pop(); // remove from list
+            delete mp;
+         }
+
+         total_size = 0;
+         total_count = 0;
+      }
+};
+
 /*
  * This packet is used for file save info transfer.
 */
@@ -133,6 +294,7 @@ struct save_pkt {
    char *cmd;                         /* command */
    struct restore_object restore_obj; /* Info about restore object */
    struct plugin_object plugin_obj;   /* Plugin Object */
+   plugin_metadata *plug_meta;        /* Metadata packet provided by plugin */
    uint32_t delta_seq;                /* Delta sequence number */
    int32_t LinkFI;                    /* LinkFI if LINKSAVED */
    int32_t pkt_end;                   /* end packet sentinel */
@@ -332,6 +494,7 @@ int plugin_backup_xattr(JCR *jcr, FF_PKT *ff_pkt, char **data);
 bool plugin_restore_xattr(JCR *jcr, char *data, uint32_t length);
 bool plugin_check_stream(JCR *jcr, int32_t &stream);
 bool plugin_query_parameter(JCR *jcr, char *command, char *param, void sendit(JCR *jcr, const char *str));
+bool plugin_backup_metadata(JCR *jcr, FF_PKT *ff_pkt);
 #endif
 
 #ifdef __cplusplus
@@ -430,6 +593,7 @@ typedef struct s_pluginFuncs {
    bRC (*restoreFileList)(bpContext *ctx, struct restore_filelist_pkt *rp);
    bRC (*checkStream)(bpContext *ctx, struct stream_pkt *sp);
    bRC (*queryParameter)(bpContext *ctx, struct query_pkt *qp);
+   bRC (*metadataRestore)(bpContext *ctx, struct meta_pkt *mp);
 } pFuncs;
 
 #define plug_func(plugin) ((pFuncs *)(plugin->pfuncs))

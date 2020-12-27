@@ -652,6 +652,12 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
          Jmsg1(jcr, M_FATAL, 0, _("Plugin object create error. %s"), db_strerror(jcr->db));
       }
 
+   } else if (Stream == STREAM_PLUGIN_META_CATALOG) {
+      //TODO add storing values inside proper catalog table here instead of dummy print
+      meta_pkt mp(p);
+      Dmsg1(100, "[metadata plugin] type: %d\n", mp.type);
+      Dmsg1(100, "[metadata plugin] buffer len: %d\n", mp.buf_len);
+      Dmsg2(100, "[metadata plugin] buf: %.*s\n", mp.buf_len, mp.buf);
 
    } else if (Stream == STREAM_RESTORE_OBJECT) {
       ROBJECT_DBR ro;

@@ -42,6 +42,7 @@ const bool have_libz = false;
 /* Forward referenced functions */
 int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
 static int send_data(bctx_t &bctx, int stream);
+static bool encode_and_send_metadata(bctx_t &bctx);
 static void close_vss_backup_session(JCR *jcr);
 #ifdef HAVE_DARWIN_OS
 static bool send_resource_fork(bctx_t &bctx);
@@ -230,6 +231,66 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
    return ok;
 }
 
+bool metadata_save(JCR *jcr, plugin_metadata *plug_meta)
+{
+   bool stat = false;
+   BSOCK *sd = jcr->store_bsock;
+   uint32_t mp_count = plug_meta->count();
+
+   /* Send each metadata packet separately to the sd */
+   for (uint32_t i=0; i<mp_count; i++) {
+      meta_pkt *mp = plug_meta->get(i);
+
+      /*TODO add handling for meta size >64KB*/
+      if (mp->size() > 65536) {
+         Jmsg1(jcr, M_ERROR, 0, _("Metadata size (%ld) is bigger then currently supported one (64KB)\n"),
+                                 mp->size());
+         goto bail_out;
+      }
+
+      /* Send stream header */
+      switch (mp->type) {
+         case plugin_meta_blob:
+            stat = sd->fsend("%ld %d 0", jcr->JobFiles, STREAM_PLUGIN_META_BLOB);
+            if (!stat) {
+               if (!jcr->is_canceled() && !jcr->is_incomplete()) {
+                  Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
+                        sd->bstrerror());
+               }
+               goto bail_out;
+            }
+            break;
+         case plugin_meta_catalog_email:
+            stat = sd->fsend("%ld %d 0", jcr->JobFiles, STREAM_PLUGIN_META_CATALOG);
+            if (!stat) {
+               if (!jcr->is_canceled() && !jcr->is_incomplete()) {
+                  Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
+                        sd->bstrerror());
+               }
+               goto bail_out;
+            }
+            break;
+         default:
+            Jmsg1(jcr, M_FATAL, 0, _("Invalid metadata type: %d\n"), mp->type);
+            goto bail_out;
+      }
+
+      /* Allocate space to store entire metadata packet as a single buffer. We do not need do differentiate metadata
+       * types since each of them uses mp->data as a main metadata payload. */
+      sd->msg = check_pool_memory_size(sd->msg, mp->size());
+      sd->msglen = mp->size();
+
+      /* Serialize packet */
+      mp->serialize(sd->msg);
+
+      /* Send metadata packet */
+      stat = sd->send();
+      sd->signal(BNET_EOD); /* indicate end of attributes data */
+   }
+
+bail_out:
+   return stat;
+}
 
 /**
  * Called here by find() for each file included.
@@ -442,6 +503,12 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
    if (!encode_and_send_attributes(bctx)) {
       goto bail_out;
    }
+
+   /* Send Plugin Metadata attributes. Available only for Plugins */
+   if (!encode_and_send_metadata(bctx)) {
+      goto bail_out;
+   }
+
    /** Meta data only for restore object */
    if (IS_FT_OBJECT(ff_pkt->type)) {
       goto good_rtn;
@@ -923,6 +990,15 @@ bool process_and_send_data(bctx_t &bctx)
 
 err:
    return ret;
+}
+
+static bool encode_and_send_metadata(bctx_t &bctx)
+{
+   if (!bctx.ff_pkt->cmd_plugin) {
+      return true;
+   }
+
+   return plugin_backup_metadata(bctx.jcr, bctx.ff_pkt);
 }
 
 bool encode_and_send_attributes(bctx_t &bctx)

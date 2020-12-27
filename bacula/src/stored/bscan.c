@@ -810,6 +810,13 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          break;
       }
 
+   case STREAM_PLUGIN_META_BLOB:
+   case STREAM_PLUGIN_META_CATALOG:
+      {
+         meta_pkt mp(rec->data);
+         //TODO We probably don't want to log every single metadata record
+         Pmsg4(0, _("Plugin metadata of type: %d len: %ld buf: %.*s\n"), mp.type, mp.buf_len, mp.buf_len, mp.buf);
+      }
    case STREAM_PLUGIN_OBJECT:
       {
          OBJECT_DBR obj_r;

@@ -54,6 +54,7 @@ static bRC getPluginValue(bpContext *ctx, pVariable var, void *value);
 static bRC setPluginValue(bpContext *ctx, pVariable var, void *value);
 static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value);
 static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp);
+static bRC metadataRestore(bpContext *ctx, meta_pkt *mp);
 static bRC endBackupFile(bpContext *ctx);
 static bRC pluginIO(bpContext *ctx, struct io_pkt *io);
 static bRC startRestoreFile(bpContext *ctx, const char *cmd);
@@ -103,7 +104,8 @@ static pFuncs pluginFuncs = {
    handleXACLdata,
    restoreFileList,
    NULL,                         /* No checkStream */
-   queryParameter
+   queryParameter,
+   metadataRestore
 };
 
 static struct ini_items test_items[] = {
@@ -133,6 +135,7 @@ struct plugin_ctx {
    int nb_obj;                        /* Number of objects created */
    int nb;                            /* used in queryParameter */
    char *query_buf;                   /* buffer used to not loose memory */
+   plugin_metadata *meta_mgr;
    int job_level;                     /* current Job level */
    POOLMEM *buf;                      /* store ConfigFile */
 };
@@ -180,6 +183,10 @@ static bRC newPlugin(bpContext *ctx)
    }
    memset(p_ctx, 0, sizeof(struct plugin_ctx));
    ctx->pContext = (void *)p_ctx;        /* set our context pointer */
+
+   // Create metadata menager class
+   p_ctx->meta_mgr = New(plugin_metadata);
+
    return bRC_OK;
 }
 
@@ -200,6 +207,9 @@ static bRC freePlugin(bpContext *ctx)
    }
    if (p_ctx->cmd) {
       free(p_ctx->cmd);                  /* free any allocated command string */
+   }
+   if (p_ctx->meta_mgr) {
+      delete p_ctx->meta_mgr;
    }
    free(p_ctx);                          /* free our private context */
    ctx->pContext = NULL;
@@ -360,7 +370,28 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    return bRC_OK;
 }
 
-/* 
+static bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp)
+{
+   //TODO add proper handling instead of printing (i. e. add data buffer comparison)
+   Dmsg1(0, "Restoring metadata of index: %d\n", mp->index);
+   /*switch (mp->type) {*/
+      /*case plugin_meta_blob:*/
+         /*Dmsg0(0, "Restoring metadata of 'blob' type!\n");*/
+         /*Dmsg1(0, _("---- [pluginrestore] len: %lld\n"), mp->len);*/
+         /*Dmsg1(0, _("---- [pluginrestore] buf: %s\n"), mp->buf);*/
+         /*break;*/
+      /*case plugin_meta_catalog_email:*/
+         /*Dmsg0(0, "Restoring metadata of 'email catalog' type!\n");*/
+         /*break;*/
+      /*default:*/
+         /*Dmsg1(0, "Invalid metadata type: %d!\n", mp->type);*/
+         /*break;*/
+   /*}*/
+
+   return bRC_OK;
+}
+
+/*
  * Start the backup of a specific file
  */
 static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
@@ -659,6 +690,30 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       return bRC_OK;
 
    } else if (p_ctx->nb_obj == 7) {
+      // Remove any metadata packets related to previous files
+      p_ctx->meta_mgr->reset();
+
+      const char* m1 =
+         "{\
+         \"key1\": \"val1\", \
+         \"key2\": \"val2\", \
+         \"key3\": \"val3\"  \
+         }";
+
+      /*TODO change payload to catalog packet when it's defined*/
+      const char *m2 = "meta_type=email,title=msg";
+
+      p_ctx->meta_mgr->add_packet(plugin_meta_blob, strlen(m1), (void *)m1);
+      p_ctx->meta_mgr->add_packet(plugin_meta_catalog_email, strlen(m2), (void *)m2);
+
+      sp->plug_meta = p_ctx->meta_mgr;
+
+      p_ctx->nb_obj++;
+      sp->type = FT_PLUGIN_METADATA;
+
+      return bRC_OK;
+
+   } else if (p_ctx->nb_obj == 8) {
       p_ctx->nb_obj++;
       if (p_ctx->job_level == 'F') {
          sp->type = FT_REG;
@@ -707,9 +762,8 @@ static bRC endBackupFile(bpContext *ctx)
     * We would return bRC_More if we wanted startBackupFile to be
     * called again to backup another file
     */
-   if (p_ctx->nb_obj >= 8) {
+   if (p_ctx->nb_obj >= 9) {
       return bRC_OK;
-
    } else {
       return bRC_More;
    }

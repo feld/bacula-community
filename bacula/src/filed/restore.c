@@ -1028,6 +1028,31 @@ void do_restore(JCR *jcr)
       case STREAM_RESTORE_OBJECT:
          break;                    /* these are sent by Director */
 
+      case STREAM_PLUGIN_META_BLOB:
+      case STREAM_PLUGIN_META_CATALOG:
+         {
+            if (!jcr->plugin) {
+               Jmsg(jcr, M_ERROR, 0, _("No plugin related to metadata packet found, metadata restore failed!\n"));
+               goto get_out;
+            }
+
+            /* Deserialize and translate data obtained from volume into plugin's metadata packet */
+            meta_pkt mp(bmsg->rbuf);
+            Dmsg1(400, "[metadata plugin packet] total_size: %d\n", mp.total_size);
+            Dmsg1(400, "[metadata plugin packet] total_count: %d\n", mp.total_count);
+            Dmsg1(400, "[metadata plugin packet] type: %d\n", mp.type);
+            Dmsg1(400, "[metadata plugin packet] index: %d\n", mp.index);
+            Dmsg2(400, "[metadata plugin packet] buf: %.*s\n", mp.buf_len, mp.buf);
+
+            int rc = plug_func(jcr->plugin)->metadataRestore(jcr->plugin_ctx, &mp);
+            if (rc != bRC_OK) {
+               Jmsg(jcr, M_ERROR, 0, _("Plugin metadataRestore call failed, err: %d\n"), rc);
+               goto get_out;
+            }
+
+            break;
+         }
+
       default:
          if (!close_previous_stream(rctx)) {
             goto get_out;

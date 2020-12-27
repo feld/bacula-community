@@ -71,6 +71,7 @@
 #define FT_PLUGIN_CONFIG 27           /* Object for Plugin configuration */
 #define FT_PLUGIN_CONFIG_FILLED 28    /* Object for Plugin configuration filled by Director */
 #define FT_PLUGIN_OBJECT 29           /* Opaque Plugin Object used for Object Management*/
+#define FT_PLUGIN_METADATA 30         /* Plugin metadata */
 
 /* Definitions for upper part of type word (see above). */
 #define AR_DATA_STREAM (1<<16)        /* Data stream id present */

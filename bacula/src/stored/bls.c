@@ -451,6 +451,10 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       Dmsg0(100, "Restore Object record\n");
    } else if (rec->maskedStream == STREAM_PLUGIN_OBJECT) {
       Dmsg0(100, "Plugin Object record\n");
+   } else if (rec->maskedStream == STREAM_PLUGIN_META_BLOB) {
+      Dmsg0(100, "Plugin Object binary metadata record\n");
+   } else if (rec->maskedStream == STREAM_PLUGIN_META_CATALOG) {
+      Dmsg0(100, "Plugin Object catalog metadata record\n");
    } else if (rec->maskedStream == STREAM_ADATA_BLOCK_HEADER) {
       Dmsg0(000, "Adata block header\n");
    } else if (rec->maskedStream == STREAM_ADATA_RECORD_HEADER) {
