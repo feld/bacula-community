@@ -1137,14 +1137,15 @@ static bool check_resources()
       for (i=0; job_items[i].name; i++) {
          if (job_items[i].flags & ITEM_REQUIRED) {
                if (!bit_is_set(i, job->hdr.item_present)) {
-                  Jmsg(NULL, M_ERROR_TERM, 0, _("\"%s\" directive in Job \"%s\" resource is required, but not found.\n"),
+                  Jmsg(NULL, M_FATAL, 0, _("\"%s\" directive in Job \"%s\" resource is required, but not found.\n"),
                     job_items[i].name, job->name());
                   OK = false;
                 }
          }
          /* If this triggers, take a look at lib/parse_conf.h */
          if (i >= MAX_RES_ITEMS) {
-            Emsg0(M_ERROR_TERM, 0, _("Too many items in Job resource\n"));
+            Jmsg(NULL, M_FATAL, 0, _("Too many items in Job resource\n"));
+            OK = false;
          }
       }
       if (!job->storage && !job->pool->storage) {
