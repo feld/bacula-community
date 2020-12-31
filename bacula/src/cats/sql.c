@@ -58,6 +58,23 @@ dbid_list::~dbid_list()
 } 
  
 /* 
+ * Called here to retrieve an resource name (e.g. Storage name) from the database 
+ */ 
+int db_name_handler(void *ctx, int num_fields, char **row) 
+{
+   char *name = (char *)ctx;
+
+   // Retrieved name is longer than it should be
+   if (strlen(row[0]) > (MAX_NAME_LENGTH - 1)) {
+      return 1;
+   }
+
+   bstrncpy(name, row[0], MAX_NAME_LENGTH);
+
+   return 0;
+}
+
+/* 
  * Called here to retrieve an string list from the database 
  */ 
 int db_string_list_handler(void *ctx, int num_fields, char **row) 

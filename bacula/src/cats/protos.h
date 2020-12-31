@@ -84,6 +84,7 @@ BDB *db_init_database(JCR *jcr, const char *db_driver, const char *db_name,
 int db_int64_handler(void *ctx, int num_fields, char **row);
 int db_strtime_handler(void *ctx, int num_fields, char **row);
 int db_list_handler(void *ctx, int num_fields, char **row);
+int db_name_handler(void *ctx, int num_fields, char **row);
 int db_string_list_handler(void *ctx, int num_fields, char **row);
 int db_int_handler(void *ctx, int num_fields, char **row);
 void bdb_debug_print(JCR *jcr, FILE *fp);
