@@ -92,7 +92,7 @@ protected:
    int32_t sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len);
 
 public:
-   PTCOMM() :
+   PTCOMM(const char * command = NULL) :
       bpipe(NULL),
       rfd(0),
       wfd(0),
