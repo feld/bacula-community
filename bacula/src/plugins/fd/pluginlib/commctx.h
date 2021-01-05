@@ -20,14 +20,15 @@
  * @file commctx.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin command context switcher template.
- * @version 1.1.0
- * @date 2020-12-23
+ * @version 1.2.0
+ * @date 2020-01-05
  *
- * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved.
+ *            IP transferred to Bacula Systems according to agreement.
  */
 
-#ifndef COMMCTX_H
-#define COMMCTX_H
+#ifndef PLUGINLIB_COMMCTX_H
+#define PLUGINLIB_COMMCTX_H
 
 #include "pluginlib.h"
 #include "smartalist.h"
@@ -67,6 +68,7 @@ public:
    T * switch_command(const char *command);
    bool check_command(const char *command);
    void foreach_command(void (*func)(T *, void *), void *param);
+   bRC foreach_command_status(bRC (*func)(T *, void *), void *param);
 };
 
 
@@ -135,4 +137,27 @@ void COMMCTX<T>::foreach_command(void(*func)(T*, void*), void* param)
    }
 }
 
-#endif   /* COMMCTX_H */
+/**
+ * @brief Iterate on all command context to execute function and return status.
+ *
+ * @tparam T is command context type.
+ * @param param is the execution function param.
+ */
+template<typename T>
+bRC COMMCTX<T>::foreach_command_status(bRC(*func)(T*, void*), void* param)
+{
+   CMD * cmdctx;
+   bRC status = bRC_OK;
+
+   foreach_alist(cmdctx, &_command_list)
+   {
+      ctx = cmdctx->ptr;
+      bRC rc = func(ctx, param);
+      if (rc != bRC_OK)
+         status = rc;
+   }
+
+   return status;
+}
+
+#endif   // PLUGINLIB_COMMCTX_H

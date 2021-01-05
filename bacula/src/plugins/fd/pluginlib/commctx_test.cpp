@@ -34,6 +34,7 @@ bFuncs *bfuncs;
 bInfo *binfo;
 
 static int referencenumber = 0;
+static int dosomethingvariable = 0;
 
 struct testctx : public SMARTALLOC
 {
@@ -41,6 +42,27 @@ struct testctx : public SMARTALLOC
    testctx(const char *command) : cmd(command) { referencenumber++; };
    ~testctx() { referencenumber--; };;
 };
+
+void do_something(testctx*, void*data)
+{
+   dosomethingvariable++;
+
+   if (data != NULL)
+   {
+      int *var = (int *)data;
+      dosomethingvariable += *var;
+   }
+}
+
+bRC do_status(testctx*, void*data)
+{
+   if (data != NULL)
+   {
+      return bRC_OK;
+   }
+
+   return bRC_Error;
+}
 
 int main()
 {
@@ -54,7 +76,7 @@ int main()
    {
       COMMCTX<testctx> ctx;
 
-      nok(ctx.check_command("TEST1"), "test empty ctx list");
+      nok(ctx.check_command(TEST1), "test empty ctx list");
       ok(referencenumber == 0, "check no allocation yet");
 
       auto testctx1 = ctx.switch_command(TEST1);
@@ -74,6 +96,32 @@ int main()
    }
 
    ok(referencenumber == 0, "check smart free");
+
+   {
+      COMMCTX<testctx> ctx;
+
+      auto testctx1 = ctx.switch_command(TEST1);
+      ok(testctx1 != nullptr, "test switch command1");
+      ok(referencenumber == 1, "check ref allocation1");
+
+      auto testctx2 = ctx.switch_command(TEST2);
+      ok(testctx2 != nullptr, "test switch command2");
+      ok(referencenumber == 2, "check allocation2");
+
+      int append = 2;
+      ctx.foreach_command(do_something, &append);
+      ok(dosomethingvariable == 6, "dosomethingvariable");
+
+      dosomethingvariable = 0;
+      ctx.foreach_command(do_something, NULL);
+      ok(dosomethingvariable == 2, "do_something with NULL");
+
+      auto status = ctx.foreach_command_status(do_status, &append);
+      ok(status != bRC_Error, "do_status");
+
+      status = ctx.foreach_command_status(do_status, NULL);
+      ok(status == bRC_Error, "do_status with NULL");
+   }
 
    return report();
 }
