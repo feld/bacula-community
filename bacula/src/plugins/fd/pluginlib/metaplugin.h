@@ -21,19 +21,21 @@
  * @version 2.1.0
  * @date 2020-12-23
  *
- * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved.
+ *            IP transferred to Bacula Systems according to agreement.
  */
 
 #include "pluginlib.h"
 #include "ptcomm.h"
 #include "lib/ini.h"
+#include "pluginlib/commctx.h"
 
 
 #define USE_CMD_PARSER
 #include "fd_common.h"
 
-#ifndef _METAPLUGIN_H_
-#define _METAPLUGIN_H_
+#ifndef PLUGINLIB_METAPLUGIN_H
+#define PLUGINLIB_METAPLUGIN_H
 
 
 // Plugin Info definitions
@@ -54,29 +56,6 @@ extern struct ini_items plugin_items_dump[];
 
 // the list of valid plugin options
 extern const char *valid_params[];
-
-// types used by Plugin
-
-
-/*
- * This is a single backend context for backup and restore.
- *  The BackendCTX is used especially during multiple Plugin=... parameters
- *  defined in FileSet. Each Plugin=... parameter will have a dedicated
- *  backend handling job data. All of these backends will be executed
- *  concurrently, especially for restore where restored streams could achieve
- *  in different order. The allocated contests will be stored in a simple list.
- */
-class BackendCTX : public SMARTALLOC
-{
-public:
-   char *cmd;
-   PTCOMM *comm;
-   cmd_parser *parser;
-   ConfigFile *ini;
-
-   BackendCTX(char *command);
-   ~BackendCTX();
-};
 
 /*
  * This is a main plugin API class. It manages a plugin context.
@@ -112,7 +91,7 @@ public:
    bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
    bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
    bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
-   bRC setup_backend_command(bpContext *ctx, const char *exepath);
+   void setup_backend_command(bpContext *ctx, POOL_MEM &exepath);
    METAPLUGIN(bpContext *bpctx);
 #if __cplusplus > 201103L
    METAPLUGIN() = delete;
@@ -129,7 +108,10 @@ private:
       QueryParams,
    };
 
+   // TODO: define a variable which will signal job cancel
    bpContext *ctx;               // Bacula Plugin Context
+   bool backend_available;       // When `False` then backend program is unuseable or unavailable
+   POOL_MEM backend_error;       // Holds the error string when backend program is unavailable
    MODE mode;                    // Plugin mode of operation
    int JobId;                    // Job ID
    char *JobName;                // Job name
@@ -147,22 +129,22 @@ private:
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
    bool accurate_warning;        // for sending accurate mode warning once */
-   // TODO: define a variable which will signal job cancel
-   BackendCTX *backendctx;       // the current backend context
-   alist *backendlist;           // the backend context list for multiple backend execution for a single job
+   COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
    POOLMEM *lname;               // current LSTAT data if any
    POOLMEM *robjbuf;             // the buffer for restore object data
-   POOL_MEM plugin_obj_cat;      //
-   POOL_MEM plugin_obj_type;     //
-   POOL_MEM plugin_obj_name;     //
-   POOL_MEM plugin_obj_src;      //
-   POOL_MEM plugin_obj_uuid;     //
-   uint64_t plugin_obj_size;     //
+   POOL_MEM plugin_obj_cat;      // Plugin object Category
+   POOL_MEM plugin_obj_type;     // Plugin object Type
+   POOL_MEM plugin_obj_name;     // Plugin object Name
+   POOL_MEM plugin_obj_src;      // Plugin object Source
+   POOL_MEM plugin_obj_uuid;     // Plugin object UUID
+   uint64_t plugin_obj_size;     // Plugin object Size
    int acldatalen;               // the length of the data in acl buffer
    POOL_MEM acldata;             // the buffer for ACL data received from backend
    int xattrdatalen;             // the length of the data in xattr buffer
    POOL_MEM xattrdata;           // the buffer for XATTR data received from backend
+   cmd_parser parser;            // Plugin command parser
+   ConfigFile ini;               // Restore ini file handler
 
    bRC parse_plugin_command(bpContext *ctx, const char *command, alist *params);
    bRC parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop);
@@ -188,16 +170,15 @@ private:
    bRC perform_write_acl(bpContext *ctx, struct xacl_pkt * xacl);
    bRC perform_read_xattr(bpContext *ctx);
    bRC perform_write_xattr(bpContext *ctx, struct xacl_pkt * xacl);
-   int check_ini_param(ConfigFile *ini, char *param);
+   int check_ini_param(char *param);
    bool check_plugin_param(const char *param, alist *params);
-   int get_ini_count(ConfigFile *ini);
+   int get_ini_count();
    void new_backendlist(bpContext *ctx, char *command);
    bRC switch_or_run_backend(bpContext *ctx, char *command);
    bRC terminate_current_backend(bpContext *ctx);
    bRC terminate_all_backends(bpContext *ctx);
    bRC signal_finish_all_backends(bpContext *ctx);
    bRC render_param(bpContext *ctx, POOLMEM *param, INI_ITEM_HANDLER *handler, char *key, item_value val);
-   void dump_backendlist(bpContext *ctx);
 };
 
-#endif   /* _METAPLUGIN_H_ */
+#endif   // PLUGINLIB_METAPLUGIN_H

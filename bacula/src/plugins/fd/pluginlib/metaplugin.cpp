@@ -21,7 +21,8 @@
  * @version 2.1.0
  * @date 2020-12-23
  *
- * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved.
+ *            IP transferred to Bacula Systems according to agreement.
  */
 
 #include "metaplugin.h"
@@ -115,8 +116,6 @@ bRC DLL_IMP_EXP loadPlugin(bInfo *lbinfo, bFuncs *lbfuncs, pInfo ** pinfo, pFunc
 {
    bfuncs = lbfuncs;               /* set Bacula function pointers */
    binfo = lbinfo;
-   char *exepath;
-   POOL_MEM backend(PM_FNAME);
 
    Dmsg3(DINFO, "%s Plugin version %s %s (c) 2020 by Inteos\n", PLUGINNAME, PLUGIN_VERSION, PLUGIN_DATE);
 
@@ -139,57 +138,13 @@ bRC DLL_IMP_EXP unloadPlugin()
 #endif
 
 /*
- * Backend Context constructor, initializes variables.
- *    The BackendCTX class is a simple storage class used for storage variables
- *    for context data. It is used for proper variable allocation and freeing only.
- *
- * in:
- *    command - the Plugin command string
- * out:
- *    allocated variables
- */
-BackendCTX::BackendCTX(char *command)
-{
-   cmd = bstrdup(command);
-   comm = New(PTCOMM());
-   parser = NULL;
-   ini = NULL;
-}
-
-/*
- * Backend Context destructor, handles variable freeing on delete.
- *
- * in:
- *    none
- * out:
- *    freed internal variables and class allocated during job execution
- */
-BackendCTX::~BackendCTX()
-{
-   if (cmd){
-      // printf("~BackendCTX:cmd:%p\n", cmd);
-      free(cmd);
-   }
-   if (comm){
-      // printf("~BackendCTX:comm:%p\n", comm);
-      delete comm;
-   }
-   if (parser){
-      // printf("~BackendCTX:parser:%p\n", parser);
-      delete parser;
-   }
-   if (ini){
-      // printf("~BackendCTX:ini:%p\n", ini);
-      delete ini;
-   }
-}
-
-/*
  * Main PLUGIN class constructor.
  */
 METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       backend_cmd(PM_FNAME),
       ctx(NULL),
+      backend_available(false),
+      backend_error(PM_MESSAGE),
       mode(MODE::NONE),
       JobId(0),
       JobName(NULL),
@@ -207,8 +162,6 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       readacl(false),
       readxattr(false),
       accurate_warning(false),
-      backendctx(NULL),
-      backendlist(NULL),
       fname(PM_FNAME),
       lname(NULL),
       robjbuf(NULL),
@@ -238,21 +191,9 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
  */
 METAPLUGIN::~METAPLUGIN()
 {
-   BackendCTX *bctx;
-
    /* free standard variables */
    free_and_null_pool_memory(lname);
    free_and_null_pool_memory(robjbuf);
-   /* free backend contexts */
-   if (backendlist){
-      // printf("~PLUGIN:backendlist:%p\n", backendlist);
-      /* free all backend contexts */
-      foreach_alist(bctx, backendlist){
-         // printf("~PLUGIN:bctx:%p\n", bctx);
-         delete bctx;
-      }
-      delete backendlist;
-   }
 }
 
 /*
@@ -266,15 +207,16 @@ METAPLUGIN::~METAPLUGIN()
  *    -1 - when a parameter param is not found in ini keys
  *    <n> - whan a parameter param is found and <n> is an index in ini->items table
  */
-int METAPLUGIN::check_ini_param(ConfigFile *ini, char *param)
+int METAPLUGIN::check_ini_param(char *param)
 {
-   int k;
-
-   for (k = 0; ini->items[k].name; k++){
-      if (ini->items[k].found && strcasecmp(param, ini->items[k].name) == 0){
-         return k;
+   if (ini.items){
+      for (int k = 0; ini.items[k].name; k++){
+         if (ini.items[k].found && strcasecmp(param, ini.items[k].name) == 0){
+            return k;
+         }
       }
    }
+
    return -1;
 }
 
@@ -322,18 +264,18 @@ bool METAPLUGIN::check_plugin_param(const char *param, alist *params)
  * out:
  *    <n> - the number of ini->items
  */
-int METAPLUGIN::get_ini_count(ConfigFile *ini)
+int METAPLUGIN::get_ini_count()
 {
-   int k;
    int count = 0;
 
-   if (ini){
-      for (k=0; ini->items[k].name; k++){
-         if (ini->items[k].found) {
+   if (ini.items){
+      for (int k = 0; ini.items[k].name; k++){
+         if (ini.items[k].found){
             count++;
          }
       }
    }
+
    return count;
 }
 
@@ -355,6 +297,7 @@ bRC METAPLUGIN::render_param(bpContext* ctx, POOLMEM *param, INI_ITEM_HANDLER *h
       JMSG1(ctx, M_FATAL, "Unsupported parameter handler for: %s\n", key);
       return bRC_Error;
    }
+
    return bRC_OK;
 }
 
@@ -370,59 +313,50 @@ bRC METAPLUGIN::render_param(bpContext* ctx, POOLMEM *param, INI_ITEM_HANDLER *h
  */
 bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist *params)
 {
-   int i, k;
    bool found;
    int count;
    int parargc, argc;
    POOLMEM *param;
 
-   // debug only
-   // dump_backendlist(ctx);
-
    DMSG(ctx, DINFO, "Parse command: %s\n", command);
-   if (backendctx->parser != NULL){
-      DMSG0(ctx, DINFO, "already parsed command.\n");
-      return bRC_OK;
-   }
-
-   /* allocate a new parser and parse command */
-   backendctx->parser = new cmd_parser();
-   if (backendctx->parser->parse_cmd(command) != bRC_OK) {
+   if (parser.parse_cmd(command) != bRC_OK)
+   {
       DMSG0(ctx, DERROR, "Unable to parse Plugin command line.\n");
       JMSG0(ctx, M_FATAL, "Unable to parse Plugin command line.\n");
       return bRC_Error;
    }
 
    /* count the numbers of user parameters if any */
-   count = get_ini_count(backendctx->ini);
+   count = get_ini_count();
 
    /* the first (zero) parameter is a plugin name, we should skip it */
-   argc = backendctx->parser->argc - 1;
+   argc = parser.argc - 1;
    parargc = argc + count;
    /* first parameters from plugin command saved during backup */
-   for (i = 1; i < backendctx->parser->argc; i++) {
+   for (int i = 1; i < parser.argc; i++) {
       param = get_pool_memory(PM_FNAME);
       found = false;
+
+      int k;
       /* check if parameter overloaded by restore parameter */
-      if (backendctx->ini){
-         if ((k = check_ini_param(backendctx->ini, backendctx->parser->argk[i])) != -1){
-            found = true;
-            DMSG1(ctx, DINFO, "parse_plugin_command: %s found in restore parameters\n", backendctx->parser->argk[i]);
-            if (render_param(ctx, param, backendctx->ini->items[k].handler, backendctx->parser->argk[i], backendctx->ini->items[k].val) != bRC_OK){
-               free_and_null_pool_memory(param);
-               return bRC_Error;
-            }
-            params->append(param);
-            parargc--;
+      if ((k = check_ini_param(parser.argk[i])) != -1){
+         found = true;
+         DMSG1(ctx, DINFO, "parse_plugin_command: %s found in restore parameters\n", parser.argk[i]);
+         if (render_param(ctx, param, ini.items[k].handler, parser.argk[i], ini.items[k].val) != bRC_OK){
+            free_and_null_pool_memory(param);
+            return bRC_Error;
          }
+         params->append(param);
+         parargc--;
       }
+
       /* check if param overloaded above */
       if (!found){
-         if (backendctx->parser->argv[i]){
-            Mmsg(&param, "%s=%s\n", backendctx->parser->argk[i], backendctx->parser->argv[i]);
+         if (parser.argv[i]){
+            Mmsg(&param, "%s=%s\n", parser.argk[i], parser.argv[i]);
             params->append(param);
          } else {
-            Mmsg(&param, "%s=1\n", backendctx->parser->argk[i]);
+            Mmsg(&param, "%s=1\n", parser.argk[i]);
             params->append(param);
          }
       }
@@ -430,27 +364,27 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
       DMSG(ctx, DINFO, "Param: %s", param);
 
       /* scan for abort_on_error parameter */
-      if (strcasecmp(backendctx->parser->argk[i], "abort_on_error") == 0){
+      if (strcasecmp(parser.argk[i], "abort_on_error") == 0){
          /* found, so check the value if provided, I only check the first char */
-         if (backendctx->parser->argv[i] && *backendctx->parser->argv[i] == '0'){
-            backendctx->comm->clear_abort_on_error();
+         if (parser.argv[i] && *parser.argv[i] == '0'){
+            backend.ctx->clear_abort_on_error();
          } else {
-            backendctx->comm->set_abort_on_error();
+            backend.ctx->set_abort_on_error();
          }
-         DMSG1(ctx, DINFO, "abort_on_error found: %s\n", backendctx->comm->is_abort_on_error() ? "True" : "False");
+         DMSG1(ctx, DINFO, "abort_on_error found: %s\n", backend.ctx->is_abort_on_error() ? "True" : "False");
       }
       /* scan for listing parameter, so the estimate job should be executed as a Listing procedure */
-      if (strcasecmp(backendctx->parser->argk[i], "listing") == 0){
+      if (strcasecmp(parser.argk[i], "listing") == 0){
          /* found, so check the value if provided */
-         if (backendctx->parser->argv[i]){
+         if (parser.argv[i]){
             listing = Listing;
             DMSG0(ctx, DINFO, "listing procedure param found\n");
          }
       }
       /* scan for query parameter, so the estimate job should be executed as a QueryParam procedure */
-      if (strcasecmp(backendctx->parser->argk[i], "query") == 0){
+      if (strcasecmp(parser.argk[i], "query") == 0){
          /* found, so check the value if provided */
-         if (backendctx->parser->argv[i]){
+         if (parser.argv[i]){
             listing = QueryParams;
             DMSG0(ctx, DINFO, "query procedure param found\n");
          }
@@ -458,11 +392,11 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
    }
    /* check what was missing in plugin command but get from ini file */
    if (argc < parargc){
-      for (k = 0; backendctx->ini->items[k].name; k++){
-         if (backendctx->ini->items[k].found && !check_plugin_param(backendctx->ini->items[k].name, params)){
+      for (int k = 0; ini.items[k].name; k++){
+         if (ini.items[k].found && !check_plugin_param(ini.items[k].name, params)){
             param = get_pool_memory(PM_FNAME);
-            DMSG1(ctx, DINFO, "parse_plugin_command: %s from restore parameters\n", backendctx->ini->items[k].name);
-            if (render_param(ctx, param, backendctx->ini->items[k].handler, (char*)backendctx->ini->items[k].name, backendctx->ini->items[k].val) != bRC_OK){
+            DMSG1(ctx, DINFO, "parse_plugin_command: %s from restore parameters\n", ini.items[k].name);
+            if (render_param(ctx, param, ini.items[k].handler, (char*)ini.items[k].name, ini.items[k].val) != bRC_OK){
                free_and_null_pool_memory(param);
                return bRC_Error;
             }
@@ -490,69 +424,53 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
  */
 bRC METAPLUGIN::parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop)
 {
-   int i;
-   BackendCTX *pini;
-
    if (!rop){
       return bRC_OK;    /* end of rop list */
    }
-   // debug only
-   // dump_backendlist(ctx);
 
    if (!strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME)) {
       /* we have a single RO for every backend */
-      if (backendlist == NULL){
-         /* new backend list required */
-         new_backendlist(ctx, rop->plugin_name);
-         pini = backendctx;
-      } else {
-         /* backend list available, so allocate the new context */
-         pini = New(BackendCTX(rop->plugin_name));
-         backendlist->append(pini);
+      backend.switch_command(rop->plugin_name);
+
+      DMSG(ctx, DINFO, "INIcmd: %s\n", rop->plugin_name);
+
+      ini.clear_items();
+      if (!ini.dump_string(rop->object, rop->object_len))
+      {
+         DMSG0(ctx, DERROR, "ini->dump_string failed\n");
+         JMSG0(ctx, M_FATAL, "Unable to parse user set restore configuration.\n");
+         return bRC_Error;
       }
 
-      DMSG(ctx, DINFO, "INIcmd: %s\n", pini->cmd);
-      pini->ini = new ConfigFile();
-      if (!pini->ini->dump_string(rop->object, rop->object_len)) {
-         DMSG0(ctx, DERROR, "ini->dump_string failed\n");
-         goto bailout;
-      }
-      pini->ini->register_items(plugin_items_dump, sizeof(struct ini_items));
-      if (!pini->ini->parse(pini->ini->out_fname)){
+      ini.register_items(plugin_items_dump, sizeof(struct ini_items));
+      if (!ini.parse(ini.out_fname))
+      {
          DMSG0(ctx, DERROR, "ini->parse failed\n");
-         goto bailout;
+         JMSG0(ctx, M_FATAL, "Unable to parse user set restore configuration.\n");
+         return bRC_Error;
       }
-      for (i=0; pini->ini->items[i].name; i++){
-         if (pini->ini->items[i].found){
-            if (pini->ini->items[i].handler == ini_store_str){
-               DMSG2(ctx, DINFO, "INI: %s = %s\n", pini->ini->items[i].name, pini->ini->items[i].val.strval);
+
+      for (int i=0; ini.items[i].name; i++)
+      {
+         if (ini.items[i].found){
+            if (ini.items[i].handler == ini_store_str){
+               DMSG2(ctx, DINFO, "INI: %s = %s\n", ini.items[i].name, ini.items[i].val.strval);
             } else
-            if (pini->ini->items[i].handler == ini_store_int64){
-               DMSG2(ctx, DINFO, "INI: %s = %lld\n", pini->ini->items[i].name, pini->ini->items[i].val.int64val);
+            if (ini.items[i].handler == ini_store_int64){
+               DMSG2(ctx, DINFO, "INI: %s = %lld\n", ini.items[i].name, ini.items[i].val.int64val);
             } else
-            if (pini->ini->items[i].handler == ini_store_bool){
-               DMSG2(ctx, DINFO, "INI: %s = %s\n", pini->ini->items[i].name, pini->ini->items[i].val.boolval ? "True" : "False");
+            if (ini.items[i].handler == ini_store_bool){
+               DMSG2(ctx, DINFO, "INI: %s = %s\n", ini.items[i].name, ini.items[i].val.boolval ? "True" : "False");
             } else {
-               DMSG1(ctx, DERROR, "INI: unsupported parameter handler for: %s\n", pini->ini->items[i].name);
-               JMSG1(ctx, M_FATAL, "INI: unsupported parameter handler for: %s\n", pini->ini->items[i].name);
-               goto bailout;
+               DMSG1(ctx, DERROR, "INI: unsupported parameter handler for: %s\n", ini.items[i].name);
+               JMSG1(ctx, M_FATAL, "INI: unsupported parameter handler for: %s\n", ini.items[i].name);
+               return bRC_Error;
             }
          }
       }
    }
-   // for debug only
-   // dump_backendlist(ctx);
-   return bRC_OK;
 
-bailout:
-   JMSG0(ctx, M_FATAL, "Unable to parse user set restore configuration.\n");
-   if (pini){
-      if (pini->ini){
-         delete pini->ini;
-         pini->ini = NULL;
-      }
-   }
-   return bRC_Error;
+   return bRC_OK;
 }
 
 /*
@@ -585,7 +503,7 @@ bRC METAPLUGIN::run_backend(bpContext *ctx)
       return bRC_Error;
    }
    /* setup communication channel */
-   backendctx->comm->set_bpipe(bp);
+   backend.ctx->set_bpipe(bp);
    DMSG(ctx, DINFO, "Backend executed at PID=%i\n", bp->worker_pid);
    return bRC_OK;
 }
@@ -613,9 +531,26 @@ bRC METAPLUGIN::terminate_current_backend(bpContext *ctx)
       DMSG0(ctx, DERROR, "Error in EndJob.\n");
       status = bRC_Error;
    }
-   int pid = backendctx->comm->get_backend_pid();
+   int pid = backend.ctx->get_backend_pid();
    DMSG(ctx, DINFO, "Terminate backend at PID=%d\n", pid)
-   backendctx->comm->terminate(ctx);
+   backend.ctx->terminate(ctx);
+   return status;
+}
+
+bRC backendctx_finish_func(PTCOMM *ptcomm, void *cp)
+{
+   bpContext * ctx = (bpContext*)cp;
+   bRC status = bRC_OK;
+   POOL_MEM cmd(PM_FNAME);
+   pm_strcpy(cmd, "FINISH\n");
+
+   if (ptcomm->write_command(ctx, cmd.addr()) < 0){
+      status = bRC_Error;
+   }
+   if (!ptcomm->read_ack(ctx)){
+      status = bRC_Error;
+   }
+
    return status;
 }
 
@@ -631,21 +566,13 @@ bRC METAPLUGIN::terminate_current_backend(bpContext *ctx)
  */
 bRC METAPLUGIN::signal_finish_all_backends(bpContext *ctx)
 {
-   bRC status = bRC_OK;
-   POOL_MEM cmd(PM_FNAME);
+   return backend.foreach_command_status(backendctx_finish_func, ctx);
+}
 
-   if (backendlist != NULL){
-      pm_strcpy(cmd, "FINISH\n");
-      foreach_alist(backendctx, backendlist){
-         if (backendctx->comm->write_command(ctx, cmd.addr()) < 0){
-            status = bRC_Error;
-         }
-         if (!backendctx->comm->read_ack(ctx)){
-            status = bRC_Error;
-         }
-      }
-   }
-   return status;
+void backendctx_jobend_func(PTCOMM *ptcomm, void *cp)
+{
+   // bpContext * ctx = (bpContext*)cp;
+   // ptcomm->disconnect_xenapi(ctx);
 }
 
 /*
@@ -662,15 +589,8 @@ bRC METAPLUGIN::terminate_all_backends(bpContext *ctx)
 {
    bRC status = bRC_OK;
 
-   // for debug only
-   // dump_backendlist(ctx);
-   if (backendlist != NULL){
-      foreach_alist(backendctx, backendlist){
-         if (terminate_current_backend(ctx) != bRC_OK){
-            status = bRC_Error;
-         }
-      }
-   }
+   backend.foreach_command(backendctx_jobend_func, ctx);
+
    return status;
 }
 
@@ -696,7 +616,7 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    len = sizeof_pool_memory(cmd);
    /* we will be sending Job Info data */
    bsnprintf(cmd, len, "Job\n");
-   rc = backendctx->comm->write_command(ctx, cmd);
+   rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
       status = bRC_Error;
@@ -704,21 +624,21 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    }
    /* required parameters */
    bsnprintf(cmd, len, "Name=%s\n", JobName);
-   rc = backendctx->comm->write_command(ctx, cmd);
+   rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
       status = bRC_Error;
       goto bailout;
    }
    bsnprintf(cmd, len, "JobID=%i\n", JobId);
-   rc = backendctx->comm->write_command(ctx, cmd);
+   rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
       status = bRC_Error;
       goto bailout;
    }
    bsnprintf(cmd, len, "Type=%c\n", type);
-   rc = backendctx->comm->write_command(ctx, cmd);
+   rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
       status = bRC_Error;
@@ -741,7 +661,7 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
       }
       if (lvl){
          bsnprintf(cmd, len, "Level=%c\n", lvl);
-         rc = backendctx->comm->write_command(ctx, cmd);
+         rc = backend.ctx->write_command(ctx, cmd);
          if (rc < 0){
             /* error */
             status = bRC_Error;
@@ -751,7 +671,7 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    }
    if (since){
       bsnprintf(cmd, len, "Since=%ld\n", since);
-      rc = backendctx->comm->write_command(ctx, cmd);
+      rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
          status = bRC_Error;
@@ -760,7 +680,7 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    }
    if (where){
       bsnprintf(cmd, len, "Where=%s\n", where);
-      rc = backendctx->comm->write_command(ctx, cmd);
+      rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
          status = bRC_Error;
@@ -769,7 +689,7 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    }
    if (regexwhere){
       bsnprintf(cmd, len, "RegexWhere=%s\n", regexwhere);
-      rc = backendctx->comm->write_command(ctx, cmd);
+      rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
          status = bRC_Error;
@@ -778,18 +698,18 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    }
    if (replace){
       bsnprintf(cmd, len, "Replace=%c\n", replace);
-      rc = backendctx->comm->write_command(ctx, cmd);
+      rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
          status = bRC_Error;
          goto bailout;
       }
    }
-   backendctx->comm->signal_eod(ctx);
+   backend.ctx->signal_eod(ctx);
 
-   if (!backendctx->comm->read_ack(ctx)){
+   if (!backend.ctx->read_ack(ctx)){
       DMSG0(ctx, DERROR, "Wrong backend response to Job command.\n");
-      JMSG0(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to Job command.\n");
+      JMSG0(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to Job command.\n");
       status = bRC_Error;
    }
 
@@ -845,7 +765,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
 
    /* send backend info that parameters are coming */
    bsnprintf(cmd.c_str(), cmd.size(), "Params\n");
-   rc = backendctx->comm->write_command(ctx, cmd.c_str());
+   rc = backend.ctx->write_command(ctx, cmd.c_str());
    if (rc < 0){
       /* error */
       status = bRC_Error;
@@ -863,6 +783,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
             break;
          }
       }
+
 #ifdef DEVELOPER
       if (!found)
       {
@@ -886,7 +807,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
          JMSG1(ctx, M_ERROR, "Unknown parameter %s in Plugin command.\n", cmd.c_str());
       }
 
-      rc = backendctx->comm->write_command(ctx, param);
+      rc = backend.ctx->write_command(ctx, param);
       if (rc < 0){
          /* error */
          status = bRC_Error;
@@ -894,11 +815,11 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       }
    }
    /* signal end of parameters block */
-   backendctx->comm->signal_eod(ctx);
+   backend.ctx->signal_eod(ctx);
    /* ack Params command */
-   if (!backendctx->comm->read_ack(ctx)){
+   if (!backend.ctx->read_ack(ctx)){
       DMSG0(ctx, DERROR, "Wrong backend response to Params command.\n");
-      JMSG0(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to Params command.\n");
+      JMSG0(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to Params command.\n");
       status = bRC_Error;
    }
 
@@ -930,16 +851,16 @@ bRC METAPLUGIN::send_startjob(bpContext *ctx, const char *command)
    len = sizeof_pool_memory(cmd);
 
    bsnprintf(cmd, len, command);
-   rc = backendctx->comm->write_command(ctx, cmd);
+   rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
       status = bRC_Error;
       goto bailout;
    }
 
-   if (!backendctx->comm->read_ack(ctx)){
+   if (!backend.ctx->read_ack(ctx)){
       DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", command);
-      JMSG(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to %s command.\n", command);
+      JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to %s command.\n", command);
       status = bRC_Error;
    }
 
@@ -966,17 +887,17 @@ bRC METAPLUGIN::send_endjob(bpContext *ctx)
    POOL_MEM cmd(PM_FNAME);
 
    bsnprintf(cmd.c_str(), cmd.size(), "END\n");
-   rc = backendctx->comm->write_command(ctx, cmd.c_str());
+   rc = backend.ctx->write_command(ctx, cmd.c_str());
    if (rc < 0){
       /* error */
       status = bRC_Error;
    } else {
-      if (!backendctx->comm->read_ack(ctx)){
+      if (!backend.ctx->read_ack(ctx)){
          DMSG0(ctx, DERROR, "Wrong backend response to JobEnd command.\n");
-         JMSG0(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to JobEnd command.\n");
+         JMSG0(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to JobEnd command.\n");
          status = bRC_Error;
       }
-      backendctx->comm->signal_term(ctx);
+      backend.ctx->signal_term(ctx);
    }
    return status;
 }
@@ -1044,18 +965,18 @@ bRC METAPLUGIN::send_startrestore(bpContext *ctx)
    POOL_MEM extpipename(PM_FNAME);
 
    pm_strcpy(cmd, command);
-   rc = backendctx->comm->write_command(ctx, cmd);
+   rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
       return bRC_Error;
    }
 
-   if (backendctx->comm->read_command(ctx, cmd) < 0){
+   if (backend.ctx->read_command(ctx, cmd) < 0){
       DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", command);
-      JMSG(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to %s command.\n", command);
+      JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to %s command.\n", command);
       return bRC_Error;
    }
-   if (backendctx->comm->is_eod()){
+   if (backend.ctx->is_eod()){
       /* got EOD so the backend is ready for restore */
       return bRC_OK;
    }
@@ -1064,10 +985,10 @@ bRC METAPLUGIN::send_startrestore(bpContext *ctx)
    if (scan_parameter_str(cmd, "PIPE:", extpipename)){
       /* got PIPE: */
       DMSG(ctx, DINFO, "PIPE:%s\n", extpipename);
-      backendctx->comm->set_extpipename(extpipename.c_str());
+      backend.ctx->set_extpipename(extpipename.c_str());
       /* TODO: decide if plugin should verify if extpipe is available */
       pm_strcpy(cmd, "OK\n");
-      rc = backendctx->comm->write_command(ctx, cmd);
+      rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
          return bRC_Error;
@@ -1075,28 +996,6 @@ bRC METAPLUGIN::send_startrestore(bpContext *ctx)
       return bRC_OK;
    }
    return bRC_Error;
-}
-
-/*
- * Allocate and initialize new backend contexts list at backendlist.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    command - a Plugin command for a job as a first backend context
- * out:
- *    New backend contexts list at backendlist allocated and initialized.
- *    The only error we can get here is out of memory error, handled internally
- *    by Bacula itself.
- */
-void METAPLUGIN::new_backendlist(bpContext *ctx, char *command)
-{
-   /* we assumed 8 backends at start, should be sufficient */
-   backendlist = New(alist(8, not_owned_by_alist));
-   /* our first backend */
-   backendctx = New(BackendCTX(command));
-   /* add backend context to our list */
-   backendlist->append(backendctx);
-   DMSG0(ctx, DINFO, "First backend allocated.\n");
 }
 
 /*
@@ -1119,48 +1018,22 @@ void METAPLUGIN::new_backendlist(bpContext *ctx, char *command)
  */
 bRC METAPLUGIN::switch_or_run_backend(bpContext *ctx, char *command)
 {
-   bool found = false;
-   BackendCTX *pini;
-
    DMSG0(ctx, DINFO, "Switch or run Backend.\n");
-   // for debug only
-   // dump_backendlist(ctx);
-   if (backendlist == NULL){
-      /* new backend list required */
-      new_backendlist(ctx, command);
-   } else {
-      foreach_alist(pini, backendlist){
-         // DMSG(ctx, DINFO, "bctx: %p\n", pini);
-         if (strcmp(pini->cmd, command) == 0){
-            found = true;
-            backendctx = pini;
-            break;
-         }
-      }
-      // for debug only
-      // dump_backendlist(ctx);
-      if (!found){
-         /* it is a new backend, so we have to allocate the context for it */
-         backendctx = New(BackendCTX(command));
-         /* add backend context to our list */
-         backendlist->append(backendctx);
-         DMSG0(ctx, DINFO, "New backend allocated.\n");
-      } else {
-         /* we have the backend with the same command already */
-         if (backendctx->comm->is_open()){
-            /* and its open, so skip running the new */
-            DMSG0(ctx, DINFO, "Backend already prepared.\n");
-            return bRC_Max;
-         } else {
-            DMSG0(ctx, DINFO, "Backend context available, but backend not prepared.\n");
-         }
-      }
+   backend.switch_command(command);
+
+   /* check if we have the backend with the same command already */
+   if (backend.ctx->is_open())
+   {
+      /* and its open, so skip running the new */
+      DMSG0(ctx, DINFO, "Backend already prepared.\n");
+      return bRC_Max;
    }
-   // for debug only
-   // dump_backendlist(ctx);
+
+   // now execute a backend
    if (run_backend(ctx) != bRC_OK){
       return bRC_Error;
    }
+
    return bRC_OK;
 }
 
@@ -1201,21 +1074,21 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
    }
    /* handshake (1) */
    DMSG0(ctx, DINFO, "Backend handshake...\n");
-   if (!backendctx->comm->handshake(ctx, PLUGINNAME, PLUGINAPI))
+   if (!backend.ctx->handshake(ctx, PLUGINNAME, PLUGINAPI))
    {
-      backendctx->comm->terminate(ctx);
+      backend.ctx->terminate(ctx);
       return bRC_Error;
    }
    /* Job Info (2) */
    DMSG0(ctx, DINFO, "Job Info (2) ...\n");
    if (send_jobinfo(ctx, type) != bRC_OK){
-      backendctx->comm->terminate(ctx);
+      backend.ctx->terminate(ctx);
       return bRC_Error;
    }
    /* Plugin Params (3) */
    DMSG0(ctx, DINFO, "Plugin Params (3) ...\n");
    if (send_parameters(ctx, command) != bRC_OK){
-      backendctx->comm->terminate(ctx);
+      backend.ctx->terminate(ctx);
       return bRC_Error;
    }
    switch (type){
@@ -1223,7 +1096,7 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
          /* Start Backup (4) */
          DMSG0(ctx, DINFO, "Start Backup (4) ...\n");
          if (send_startbackup(ctx) != bRC_OK){
-            backendctx->comm->terminate(ctx);
+            backend.ctx->terminate(ctx);
             return bRC_Error;
          }
          break;
@@ -1232,13 +1105,13 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
          if (listing){
             DMSG0(ctx, DINFO, "Start Listing (4) ...\n");
             if (send_startlisting(ctx) != bRC_OK){
-               backendctx->comm->terminate(ctx);
+               backend.ctx->terminate(ctx);
                return bRC_Error;
             }
          } else {
             DMSG0(ctx, DINFO, "Start Estimate (4) ...\n");
             if (send_startestimate(ctx) != bRC_OK){
-               backendctx->comm->terminate(ctx);
+               backend.ctx->terminate(ctx);
                return bRC_Error;
             }
          }
@@ -1247,7 +1120,7 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
          /* Start Restore (4) */
          DMSG0(ctx, DINFO, "Start Restore (4) ...\n");
          if (send_startrestore(ctx) != bRC_OK){
-            backendctx->comm->terminate(ctx);
+            backend.ctx->terminate(ctx);
             return bRC_Error;
          }
          break;
@@ -1362,6 +1235,12 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    /* Plugin command e.g. plugin = <plugin-name>:parameters */
    case bEventPluginCommand:
       DMSG(ctx, D2, "bEventPluginCommand value=%s\n", NPRT((char *)value));
+      if (isourplugincommand(PLUGINPREFIX, (char*)value) && !backend_available)
+      {
+         DMSG2(ctx, DERROR, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), backend_error.c_str());
+         JMSG2(ctx, M_FATAL, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), backend_error.c_str());
+         return bRC_Error;
+      }
       break;
 
    case bEventOptionPlugin:
@@ -1393,14 +1272,14 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    case bEventCancelCommand:
       DMSG(ctx, D3, "bEventCancelCommand value=%s\n", NPRT((char *)value));
       /*
-      TODO: The code can set a flag (better if protected via a global mutex), and we
-            can send a kill USR1 or TERM signal to the backend if the variable is
-            protected with the global mutex and available easily.
-
-      PETITION: Our plugin (RHV WhiteBearSolutions) search the packet E CANCEL. If you modify this behaviour, please you notify us.
+         TODO: The code can set a flag (better if protected via a global mutex), and we
+         TODO: can send a kill USR1 or TERM signal to the backend if the variable is
+         TODO: protected with the global mutex and available easily.
+         TODO: PETITION: Our plugin (RHV WhiteBearSolutions) search the packet E CANCEL.
+         TODO: If you modify this behaviour, please you notify us.
       */
       bsscanf("CANCEL", "%s", tmp.c_str());
-      backendctx->comm->signal_error(ctx, tmp.c_str());
+      backend.ctx->signal_error(ctx, tmp.c_str());
       break;
 
    default:
@@ -1429,14 +1308,14 @@ bRC METAPLUGIN::perform_read_data(bpContext *ctx, struct io_pkt *io)
       io->status = 0;
       return bRC_OK;
    }
-   rc = backendctx->comm->read_data_fixed(ctx, io->buf, io->count);
+   rc = backend.ctx->read_data_fixed(ctx, io->buf, io->count);
    if (rc < 0){
       io->status = rc;
       io->io_errno = rc;
       return bRC_Error;
    }
    io->status = rc;
-   if (backendctx->comm->is_eod()){
+   if (backend.ctx->is_eod()){
       /* TODO: we signal EOD as rc=0, so no need to explicity check for EOD, right? */
       io->status = 0;
    }
@@ -1461,7 +1340,7 @@ bRC METAPLUGIN::perform_write_data(bpContext *ctx, struct io_pkt *io)
    /* check if DATA was sent */
    if (nodata){
       pm_strcpy(cmd, "DATA\n");
-      rc = backendctx->comm->write_command(ctx, cmd.c_str());
+      rc = backend.ctx->write_command(ctx, cmd.c_str());
       if (rc < 0){
          /* error */
          io->status = rc;
@@ -1472,7 +1351,7 @@ bRC METAPLUGIN::perform_write_data(bpContext *ctx, struct io_pkt *io)
       nodata = false;
    }
    DMSG1(ctx, DVDEBUG, "perform_write_data: %d\n", io->count);
-   rc = backendctx->comm->write_data(ctx, io->buf, io->count);
+   rc = backend.ctx->write_data(ctx, io->buf, io->count);
    io->status = rc;
    if (rc < 0){
       io->io_errno = rc;
@@ -1502,8 +1381,8 @@ bRC METAPLUGIN::perform_backup_open(bpContext *ctx, struct io_pkt *io)
 
    /* expecting DATA command */
    nodata = false;
-   rc = backendctx->comm->read_command(ctx, cmd);
-   if (backendctx->comm->is_eod()){
+   rc = backend.ctx->read_command(ctx, cmd);
+   if (backend.ctx->is_eod()){
       /* no data for file */
       nodata = true;
    } else
@@ -1511,9 +1390,10 @@ bRC METAPLUGIN::perform_backup_open(bpContext *ctx, struct io_pkt *io)
    if (rc < 0 || !bstrcmp(cmd.c_str(), "DATA")){
       io->status = rc;
       io->io_errno = EIO;
-      openerror = backendctx->comm->is_fatal() ? false : true;
+      openerror = backend.ctx->is_fatal() ? false : true;
       return bRC_Error;
    }
+
    return bRC_OK;
 }
 
@@ -1531,12 +1411,13 @@ bRC METAPLUGIN::perform_write_end(bpContext *ctx, struct io_pkt *io)
 {
    if (!nodata){
       /* signal end of data to restore and get ack */
-      if (!backendctx->comm->send_ack(ctx)){
+      if (!backend.ctx->send_ack(ctx)){
          io->status = -1;
          io->io_errno = EPIPE;
          return bRC_Error;
       }
    }
+
    return bRC_OK;
 }
 
@@ -1558,18 +1439,21 @@ bRC METAPLUGIN::perform_write_end(bpContext *ctx, struct io_pkt *io)
 bRC METAPLUGIN::perform_read_acl(bpContext *ctx)
 {
    DMSG0(ctx, DINFO, "perform_read_acl\n");
-   acldatalen = backendctx->comm->read_data(ctx, acldata);
+   acldatalen = backend.ctx->read_data(ctx, acldata);
    if (acldatalen < 0){
       DMSG0(ctx, DERROR, "Cannot read ACL data from backend.\n");
       return bRC_Error;
    }
+
    DMSG1(ctx, DINFO, "readACL: %i\n", acldatalen);
-   if (!backendctx->comm->read_ack(ctx)){
+   if (!backend.ctx->read_ack(ctx)){
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
       return bRC_Error;
    }
+
    readacl = true;
+
    return bRC_OK;
 }
 
@@ -1592,13 +1476,13 @@ bRC METAPLUGIN::perform_read_acl(bpContext *ctx)
 bRC METAPLUGIN::perform_read_xattr(bpContext *ctx)
 {
    DMSG0(ctx, DINFO, "perform_read_xattr\n");
-   xattrdatalen = backendctx->comm->read_data(ctx, xattrdata);
+   xattrdatalen = backend.ctx->read_data(ctx, xattrdata);
    if (xattrdatalen < 0){
       DMSG0(ctx, DERROR, "Cannot read XATTR data from backend.\n");
       return bRC_Error;
    }
    DMSG1(ctx, DINFO, "readXATTR: %i\n", xattrdatalen);
-   if (!backendctx->comm->read_ack(ctx)){
+   if (!backend.ctx->read_ack(ctx)){
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
       return bRC_Error;
@@ -1629,19 +1513,20 @@ bRC METAPLUGIN::perform_write_acl(bpContext* ctx, xacl_pkt* xacl)
    if (xacl->count > 0){
       /* send command ACL */
       pm_strcpy(cmd, "ACL\n");
-      backendctx->comm->write_command(ctx, cmd.c_str());
+      backend.ctx->write_command(ctx, cmd.c_str());
       /* send acls data */
       DMSG1(ctx, DINFO, "writeACL: %i\n", xacl->count);
-      rc = backendctx->comm->write_data(ctx, xacl->content, xacl->count);
+      rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
       if (rc < 0){
          /* got some error */
          return bRC_Error;
       }
       /* signal end of acls data to restore and get ack */
-      if (!backendctx->comm->send_ack(ctx)){
+      if (!backend.ctx->send_ack(ctx)){
          return bRC_Error;
       }
    }
+
    return bRC_OK;
 }
 
@@ -1667,16 +1552,16 @@ bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, xacl_pkt* xacl)
    if (xacl->count > 0){
       /* send command XATTR */
       pm_strcpy(cmd, "XATTR\n");
-      backendctx->comm->write_command(ctx, cmd.c_str());
+      backend.ctx->write_command(ctx, cmd.c_str());
       /* send xattrs data */
       DMSG1(ctx, DINFO, "writeXATTR: %i\n", xacl->count);
-      rc = backendctx->comm->write_data(ctx, xacl->content, xacl->count);
+      rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
       if (rc < 0){
          /* got some error */
          return bRC_Error;
       }
       /* signal end of xattrs data to restore and get ack */
-      if (!backendctx->comm->send_ack(ctx)){
+      if (!backend.ctx->send_ack(ctx)){
          return bRC_Error;
       }
    }
@@ -1707,7 +1592,7 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
    // loop on metadata from backend or EOD which means no more files to backup
    while (true)
    {
-      if (backendctx->comm->read_command(ctx, cmd) > 0){
+      if (backend.ctx->read_command(ctx, cmd) > 0){
          /* yup, should read FNAME, ACL or XATTR from backend, check which one */
          DMSG(ctx, DDEBUG, "read_command(1): %s\n", cmd.c_str());
          if (scan_parameter_str(cmd, "FNAME:", fname))
@@ -1738,11 +1623,11 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
          return bRC_Error;
       } else {
-         if (backendctx->comm->is_fatal()){
+         if (backend.ctx->is_fatal()){
             /* raise up error from backend */
             return bRC_Error;
          }
-         if (backendctx->comm->is_eod()){
+         if (backend.ctx->is_eod()){
             /* no more files to backup */
             DMSG0(ctx, DDEBUG, "No more files to backup from backend.\n");
             return bRC_OK;
@@ -1775,7 +1660,7 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
    // loop on plugin objects parameters from backend and EOD
    while (true)
    {
-      if (backendctx->comm->read_command(ctx, cmd) > 0)
+      if (backend.ctx->read_command(ctx, cmd) > 0)
       {
          DMSG(ctx, DDEBUG, "read_command(1): %s\n", cmd.c_str());
          if (scan_parameter_str(cmd, "PLUGINOBJ_CAT:", plugin_obj_cat)){
@@ -1825,11 +1710,11 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
          return bRC_Error;
       } else {
-         if (backendctx->comm->is_fatal()){
+         if (backend.ctx->is_fatal()){
             /* raise up error from backend */
             return bRC_Error;
          }
-         if (backendctx->comm->is_eod()){
+         if (backend.ctx->is_eod()){
             /* no more plugin object params to backup */
             DMSG0(ctx, DINFO, "No more Plugin Object params from backend.\n");
             pluginobject = false;
@@ -1904,7 +1789,7 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
       case IO_CLOSE:
          DMSG0(ctx, D2, "IO_CLOSE\n");
          rw = 0;
-         if (!backendctx->comm->close_extpipe(ctx)){
+         if (!backend.ctx->close_extpipe(ctx)){
             return bRC_Error;
          }
          switch (mode){
@@ -2013,7 +1898,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
          lname = get_pool_memory(PM_FNAME);
       }
 
-      while (backendctx->comm->read_command(ctx, cmd) > 0)
+      while (backend.ctx->read_command(ctx, cmd) > 0)
       {
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
          if (sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d", &type, &size, &uid, &gid, &perms, &nlinks) == 6){
@@ -2066,17 +1951,17 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
             if (extpipe > 0)
             {
                DMSG0(ctx, DINFO, "ExtPIPE file available.\n");
-               backendctx->comm->set_extpipe(extpipe);
+               backend.ctx->set_extpipe(extpipe);
                pm_strcpy(tmp, "OK\n");
-               backendctx->comm->write_command(ctx, tmp.c_str());
+               backend.ctx->write_command(ctx, tmp.c_str());
                continue;
             } else {
                /* here are common error signaling */
                berrno be;
                DMSG(ctx, DERROR, "ExtPIPE file open error! Err=%s\n", be.bstrerror());
-               JMSG(ctx, backendctx->comm->is_abort_on_error() ? M_FATAL : M_ERROR, "ExtPIPE file open error! Err=%s\n", be.bstrerror());
+               JMSG(ctx, backend.ctx->is_abort_on_error() ? M_FATAL : M_ERROR, "ExtPIPE file open error! Err=%s\n", be.bstrerror());
                pm_strcpy(tmp, "Err\n");
-               backendctx->comm->signal_error(ctx, tmp.c_str());
+               backend.ctx->signal_error(ctx, tmp.c_str());
                return bRC_Error;
             }
          }
@@ -2101,7 +1986,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       size = sp->plugin_obj.object_size;
    }
 
-   if (backendctx->comm->is_error()){
+   if (backend.ctx->is_error()){
       return bRC_Error;
    }
 
@@ -2198,7 +2083,7 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
 
    /* FNAME:$fname$ */
    bsnprintf(cmd.c_str(), cmd.size(), "FNAME:%s\n", rp->ofname);
-   backendctx->comm->write_command(ctx, cmd.c_str());
+   backend.ctx->write_command(ctx, cmd.c_str());
    DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    /* STAT:... */
    switch (rp->type){
@@ -2219,24 +2104,24 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
    }
    bsnprintf(cmd.c_str(), cmd.size(), "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size,
       rp->statp.st_uid, rp->statp.st_gid, rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
-   backendctx->comm->write_command(ctx, cmd.c_str());
+   backend.ctx->write_command(ctx, cmd.c_str());
    DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    /* TSTAMP:... */
    if (rp->statp.st_atime || rp->statp.st_mtime || rp->statp.st_ctime){
       bsnprintf(cmd.c_str(), cmd.size(), "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
-      backendctx->comm->write_command(ctx, cmd.c_str());
+      backend.ctx->write_command(ctx, cmd.c_str());
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    }
    /* LSTAT:$link$ */
    if (type == 'S' && rp->olname != NULL){
       bsnprintf(cmd.c_str(), cmd.size(), "LSTAT:%s\n", rp->olname);
-      backendctx->comm->write_command(ctx, cmd.c_str());
+      backend.ctx->write_command(ctx, cmd.c_str());
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    }
-   backendctx->comm->signal_eod(ctx);
+   backend.ctx->signal_eod(ctx);
 
    /* check if backend accepted the file */
-   if (backendctx->comm->read_command(ctx, cmd) > 0){
+   if (backend.ctx->read_command(ctx, cmd) > 0){
       DMSG(ctx, DINFO, "createFile:resp: %s\n", cmd.c_str());
       if (strcmp(cmd.c_str(), "OK") == 0){
          rp->create_status = CF_EXTRACT;
@@ -2245,12 +2130,12 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
          rp->create_status = CF_SKIP;
       } else {
          DMSG(ctx, DERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
-         JMSG(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
+         JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
          rp->create_status = CF_ERROR;
          return bRC_Error;
       }
    } else {
-      if (backendctx->comm->is_error()){
+      if (backend.ctx->is_error()){
          /* raise up error from backend */
          rp->create_status = CF_ERROR;
          return bRC_Error;
@@ -2275,24 +2160,21 @@ bRC METAPLUGIN::setFileAttributes(bpContext *ctx, struct restore_pkt *rp)
  * @param exepath
  * @return bRC
  */
-bRC METAPLUGIN::setup_backend_command(bpContext *ctx, const char *exepath)
+void METAPLUGIN::setup_backend_command(bpContext *ctx, POOL_MEM &exepath)
 {
-   if (exepath != NULL)
+   DMSG(ctx, DINFO, "ExePath: %s\n", exepath.c_str());
+   Mmsg(backend_cmd, "%s/%s", exepath.c_str(), BACKEND_CMD);
+   DMSG(ctx, DINFO, "BackendPath: %s\n", backend_cmd.c_str());
+   if (access(backend_cmd.c_str(), X_OK) < 0)
    {
-      DMSG(ctx, DINFO, "ExePath: %s\n", exepath);
-      Mmsg(backend_cmd, "%s/%s", exepath, BACKEND_CMD);
-      if (access(backend_cmd.c_str(), X_OK) < 0)
-      {
-         berrno be;
-         DMSG2(ctx, DERROR, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), be.bstrerror());
-         JMSG2(ctx, M_FATAL, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), be.bstrerror());
-         return bRC_Error;
-      }
-
-      return bRC_OK;
+      berrno be;
+      DMSG2(ctx, DERROR, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), be.bstrerror());
+      pm_strcpy(backend_error, be.bstrerror());
+      backend_available = false;
+   } else {
+      DMSG0(ctx, DINFO, "Backend available\n");
+      backend_available = true;
    }
-
-   return bRC_Error;
 }
 
 /**
@@ -2332,6 +2214,7 @@ bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
          DMSG0(ctx, DINFO, "bxattr_restore\n");
          return perform_write_xattr(ctx, xacl);
    }
+
    return bRC_OK;
 }
 
@@ -2358,18 +2241,18 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
    }
 
    /* read backend response */
-   if (backendctx->comm->read_command(ctx, cmd) < 0){
+   if (backend.ctx->read_command(ctx, cmd) < 0){
       DMSG(ctx, DERROR, "Cannot read backend query response for %s command.\n", qp->parameter);
-      JMSG(ctx, backendctx->comm->is_fatal() ? M_FATAL : M_ERROR, "Cannot read backend query response for %s command.\n", qp->parameter);
+      JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Cannot read backend query response for %s command.\n", qp->parameter);
       return bRC_Error;
    }
 
    /* check EOD */
-   if (backendctx->comm->is_eod()){
+   if (backend.ctx->is_eod()){
       /* got EOD so the backend finish response, so terminate the chat */
       DMSG0(ctx, D1, "METAPLUGIN::queryParameter: got EOD\n");
-      backendctx->comm->signal_term(ctx);
-      backendctx->comm->terminate(ctx);
+      backend.ctx->signal_term(ctx);
+      backend.ctx->terminate(ctx);
       ret = bRC_OK;
    } else {
       /*
@@ -2450,12 +2333,7 @@ static bRC newPlugin(bpContext *ctx)
    pm_strcpy(exepath_clean, exepath);
    strip_trailing_slashes(exepath_clean.c_str());
 
-   if (self->setup_backend_command(ctx, exepath_clean.c_str()) != bRC_OK)
-   {
-      DMSG0(ctx, DERROR, "Cannot setup backend!\n");
-      JMSG0(ctx, M_FATAL, "Cannot setup backend!\n");
-      return bRC_Error;
-   }
+   self->setup_backend_command(ctx, exepath_clean);
 
    getBaculaVar(bVarJobId, (void *)&JobId);
    DMSG(ctx, D1, "newPlugin JobId=%d\n", JobId);
@@ -2627,33 +2505,6 @@ static bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
    DMSG(ctx, D1, "handleXACLdata: %i\n", xacl->func);
    METAPLUGIN *self = pluginclass(ctx);
    return self->handleXACLdata(ctx, xacl);
-}
-
-/*
- * Used for debug backend context and contexts list. Unused for production.
- * in:
- *    bpContext - bacula plugin context
- * out:
- *    backendlist and backendctx data logged in debug trace file
- */
-void METAPLUGIN::dump_backendlist(bpContext *ctx)
-{
-   BackendCTX *pini;
-
-   if (backendlist != NULL){
-      DMSG(ctx, DINFO, "## backendlist allocated: %p\n", backendlist);
-      DMSG(ctx, DINFO, "## backendlist size: %d\n", backendlist->size());
-      foreach_alist(pini, backendlist){
-         DMSG2(ctx, DINFO, "## backendlist ctx: %p cmd: %s\n", pini, pini->cmd);
-      }
-   } else {
-      DMSG0(ctx, DINFO, "## backendlist null\n");
-   }
-   if (backendctx != NULL){
-      DMSG(ctx, DINFO, "## backendctx: %p\n", backendctx);
-   } else {
-      DMSG0(ctx, DINFO, "## backendctx null\n");
-   }
 }
 
 /* QueryParameter interface */
