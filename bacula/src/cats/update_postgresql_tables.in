@@ -569,6 +569,7 @@ fi
 if [ "$DBVERSION" -eq 1022 ] ; then
     if psql -f - -d ${db_name} $* <<END-OF-DATA
 begin;
+ALTER TABLE Object ALTER ObjectId TYPE BIGINT;
 ALTER TABLE Object ADD COLUMN ObjectCategory text not null;
 create index object_category_idx on Object  (ObjectCategory);
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
