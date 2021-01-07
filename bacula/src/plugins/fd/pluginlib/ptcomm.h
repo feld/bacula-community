@@ -250,6 +250,7 @@ public:
     */
    inline bool is_fatal() { return f_fatal || (f_error && abort_on_error); }
 
+   inline int jmsg_err_level() { return is_fatal() ? M_FATAL : M_ERROR; }
    /**
     * @brief Checks if backend signaled EOD, eod from backend is flagged on f_eod.
     *

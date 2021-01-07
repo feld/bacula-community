@@ -508,35 +508,6 @@ bRC METAPLUGIN::run_backend(bpContext *ctx)
    return bRC_OK;
 }
 
-/*
- * Terminates the current backend pointed by backendctx context.
- *    The termination sequence consist of "End Job" protocol procedure and real
- *    backend process termination including communication channel close.
- *    When we'll get an error during "End Job" procedure then we inform the user
- *    and terminate the backend as usual without unnecessary formalities. :)
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- * out:
- *    bRC_OK - when backend termination was successful, i.e. no error in
- *             "End Job" procedure
- *    bRC_Error - when backend termination encountered an error.
- */
-bRC METAPLUGIN::terminate_current_backend(bpContext *ctx)
-{
-   bRC status = bRC_OK;
-
-   if (send_endjob(ctx) != bRC_OK){
-      /* error in end job */
-      DMSG0(ctx, DERROR, "Error in EndJob.\n");
-      status = bRC_Error;
-   }
-   int pid = backend.ctx->get_backend_pid();
-   DMSG(ctx, DINFO, "Terminate backend at PID=%d\n", pid)
-   backend.ctx->terminate(ctx);
-   return status;
-}
-
 bRC backendctx_finish_func(PTCOMM *ptcomm, void *cp)
 {
    bpContext * ctx = (bpContext*)cp;
@@ -569,10 +540,67 @@ bRC METAPLUGIN::signal_finish_all_backends(bpContext *ctx)
    return backend.foreach_command_status(backendctx_finish_func, ctx);
 }
 
-void backendctx_jobend_func(PTCOMM *ptcomm, void *cp)
+/*
+ * Send end job command to backend.
+ *    It terminates the backend when command sending was unsuccessful, as it is
+ *    the very last procedure in protocol.
+ *
+ * in:
+ *    bpContext - for Bacula debug and jobinfo messages
+ *    ptcomm - backend context
+ * out:
+ *    bRC_OK - when send command was successful
+ *    bRC_Error - on any error
+ */
+bRC send_endjob(bpContext *ctx, PTCOMM *ptcomm)
 {
-   // bpContext * ctx = (bpContext*)cp;
-   // ptcomm->disconnect_xenapi(ctx);
+   bRC status = bRC_OK;
+   POOL_MEM cmd(PM_FNAME);
+   pm_strcpy(cmd, "END\n");
+
+   if (ptcomm->write_command(ctx, cmd.c_str()) < 0){
+      /* error */
+      status = bRC_Error;
+   } else {
+      if (!ptcomm->read_ack(ctx)){
+         DMSG0(ctx, DERROR, "Wrong backend response to JobEnd command.\n");
+         JMSG0(ctx, ptcomm->jmsg_err_level(), "Wrong backend response to JobEnd command.\n");
+         status = bRC_Error;
+      }
+      ptcomm->signal_term(ctx);
+   }
+   return status;
+}
+
+/*
+ * Terminates the current backend pointed by ptcomm context.
+ *    The termination sequence consist of "End Job" protocol procedure and real
+ *    backend process termination including communication channel close.
+ *    When we'll get an error during "End Job" procedure then we inform the user
+ *    and terminate the backend as usual without unnecessary formalities. :)
+ *
+ * in:
+ *    bpContext - for Bacula debug and jobinfo messages
+ * out:
+ *    bRC_OK - when backend termination was successful, i.e. no error in
+ *             "End Job" procedure
+ *    bRC_Error - when backend termination encountered an error.
+ */
+bRC backendctx_jobend_func(PTCOMM *ptcomm, void *cp)
+{
+   bpContext * ctx = (bpContext*)cp;
+   bRC status = bRC_OK;
+
+   if (send_endjob(ctx, ptcomm) != bRC_OK){
+      /* error in end job */
+      DMSG0(ctx, DERROR, "Error in EndJob.\n");
+      status = bRC_Error;
+   }
+   int pid = ptcomm->get_backend_pid();
+   DMSG(ctx, DINFO, "Terminate backend at PID=%d\n", pid)
+   ptcomm->terminate(ctx);
+
+   return status;
 }
 
 /*
@@ -587,11 +615,7 @@ void backendctx_jobend_func(PTCOMM *ptcomm, void *cp)
  */
 bRC METAPLUGIN::terminate_all_backends(bpContext *ctx)
 {
-   bRC status = bRC_OK;
-
-   backend.foreach_command(backendctx_jobend_func, ctx);
-
-   return status;
+   return backend.foreach_command_status(backendctx_jobend_func, ctx);
 }
 
 /*
@@ -709,7 +733,7 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
 
    if (!backend.ctx->read_ack(ctx)){
       DMSG0(ctx, DERROR, "Wrong backend response to Job command.\n");
-      JMSG0(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to Job command.\n");
+      JMSG0(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to Job command.\n");
       status = bRC_Error;
    }
 
@@ -819,7 +843,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
    /* ack Params command */
    if (!backend.ctx->read_ack(ctx)){
       DMSG0(ctx, DERROR, "Wrong backend response to Params command.\n");
-      JMSG0(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to Params command.\n");
+      JMSG0(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to Params command.\n");
       status = bRC_Error;
    }
 
@@ -842,64 +866,21 @@ bailout:
  */
 bRC METAPLUGIN::send_startjob(bpContext *ctx, const char *command)
 {
-   int32_t rc;
-   int len;
-   bRC status = bRC_OK;
-   POOLMEM *cmd;
+   POOL_MEM cmd;
 
-   cmd = get_pool_memory(PM_FNAME);
-   len = sizeof_pool_memory(cmd);
-
-   bsnprintf(cmd, len, command);
-   rc = backend.ctx->write_command(ctx, cmd);
-   if (rc < 0){
+   pm_strcpy(cmd, command);
+   if (backend.ctx->write_command(ctx, cmd) < 0){
       /* error */
-      status = bRC_Error;
-      goto bailout;
+      return bRC_Error;
    }
 
    if (!backend.ctx->read_ack(ctx)){
       DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", command);
-      JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to %s command.\n", command);
-      status = bRC_Error;
+      JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", command);
+      return bRC_Error;
    }
 
-bailout:
-   free_pool_memory(cmd);
-   return status;
-}
-
-/*
- * Send end job command to backend.
- *    It terminates the backend when command sending was unsuccessful, as it is
- *    the very last procedure in protocol.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- * out:
- *    bRC_OK - when send command was successful
- *    bRC_Error - on any error
- */
-bRC METAPLUGIN::send_endjob(bpContext *ctx)
-{
-   int32_t rc;
-   bRC status = bRC_OK;
-   POOL_MEM cmd(PM_FNAME);
-
-   bsnprintf(cmd.c_str(), cmd.size(), "END\n");
-   rc = backend.ctx->write_command(ctx, cmd.c_str());
-   if (rc < 0){
-      /* error */
-      status = bRC_Error;
-   } else {
-      if (!backend.ctx->read_ack(ctx)){
-         DMSG0(ctx, DERROR, "Wrong backend response to JobEnd command.\n");
-         JMSG0(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to JobEnd command.\n");
-         status = bRC_Error;
-      }
-      backend.ctx->signal_term(ctx);
-   }
-   return status;
+   return bRC_OK;
 }
 
 /*
@@ -973,7 +954,7 @@ bRC METAPLUGIN::send_startrestore(bpContext *ctx)
 
    if (backend.ctx->read_command(ctx, cmd) < 0){
       DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", command);
-      JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to %s command.\n", command);
+      JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", command);
       return bRC_Error;
    }
    if (backend.ctx->is_eod()){
@@ -2023,7 +2004,7 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
       }
    }
 
-   // check for next file onnly when no previous error
+   // check for next file only when no previous error
    if (!openerror)
    {
       if (estimate)
@@ -2130,7 +2111,7 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
          rp->create_status = CF_SKIP;
       } else {
          DMSG(ctx, DERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
-         JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
+         JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to create file, got: %s\n", cmd.c_str());
          rp->create_status = CF_ERROR;
          return bRC_Error;
       }
@@ -2243,7 +2224,7 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
    /* read backend response */
    if (backend.ctx->read_command(ctx, cmd) < 0){
       DMSG(ctx, DERROR, "Cannot read backend query response for %s command.\n", qp->parameter);
-      JMSG(ctx, backend.ctx->is_fatal() ? M_FATAL : M_ERROR, "Cannot read backend query response for %s command.\n", qp->parameter);
+      JMSG(ctx, backend.ctx->jmsg_err_level(), "Cannot read backend query response for %s command.\n", qp->parameter);
       return bRC_Error;
    }
 
