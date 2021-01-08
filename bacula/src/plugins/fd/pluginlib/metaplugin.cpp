@@ -1044,7 +1044,7 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
    }
 
    // check for prohibitted command duplication
-   if (backend.check_command(command))
+   if (type != BACKEND_JOB_INFO_RESTORE && backend.check_command(command))
    {
       // already exist, report
       DMSG1(ctx, DERROR, "Plugin command=%s already defined, cannot proceed.\n", command);
