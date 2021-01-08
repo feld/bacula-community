@@ -787,7 +787,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
    }
 
    /* send backend info that parameters are coming */
-   bsnprintf(cmd.c_str(), cmd.size(), "Params\n");
+   pm_strcpy(cmd, "Params\n");
    rc = backend.ctx->write_command(ctx, cmd.c_str());
    if (rc < 0){
       /* error */
@@ -1037,16 +1037,24 @@ bRC METAPLUGIN::switch_or_run_backend(bpContext *ctx, char *command)
  */
 bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
 {
-   bRC status;
-
-   /* check if it is our Plugin command */
-   if (strncmp(PLUGINPREFIX, command, strlen(PLUGINPREFIX)) != 0){
-      /* it is not our plugin prefix */
+   // check if it is our Plugin command
+   if (!isourplugincommand(PLUGINPREFIX, command) != 0){
+      // it is not our plugin prefix
       return bRC_OK;
    }
 
+   // check for prohibitted command duplication
+   if (backend.check_command(command))
+   {
+      // already exist, report
+      DMSG1(ctx, DERROR, "Plugin command=%s already defined, cannot proceed.\n", command);
+      JMSG1(ctx, M_FATAL, "Plugin command already defined: \"%s\" Cannot proceed. You should correct FileSet configuration.\n", command);
+      terminate_all_backends(ctx);
+      return bRC_Error;
+   }
+
    /* switch backend context, so backendctx has all required variables available */
-   status = switch_or_run_backend(ctx, command);
+   bRC status = switch_or_run_backend(ctx, command);
    if (status == bRC_Max){
       /* already prepared, skip rest of preparation */
       return bRC_OK;

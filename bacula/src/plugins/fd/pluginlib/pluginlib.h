@@ -147,7 +147,7 @@ inline bool isourplugincommand(const char *pluginprefix, const char *command)
 {
    /* check if it is our Plugin command */
    if (strncmp(pluginprefix, command, strlen(pluginprefix)) == 0){
-      /* it is not our plugin prefix */
+      /* it is our plugin prefix */
       return true;
    }
    return false;
