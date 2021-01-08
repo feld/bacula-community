@@ -131,7 +131,7 @@ private:
    bool accurate_warning;        // for sending accurate mode warning once */
    COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
-   POOLMEM *lname;               // current LSTAT data if any
+   POOL_MEM lname;               // current LSTAT data if any
    POOLMEM *robjbuf;             // the buffer for restore object data
    POOL_MEM plugin_obj_cat;      // Plugin object Category
    POOL_MEM plugin_obj_type;     // Plugin object Type

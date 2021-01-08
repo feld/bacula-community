@@ -163,7 +163,7 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       readxattr(false),
       accurate_warning(false),
       fname(PM_FNAME),
-      lname(NULL),
+      lname(PM_FNAME),
       robjbuf(NULL),
       plugin_obj_cat(PM_FNAME),
       plugin_obj_type(PM_FNAME),
@@ -192,7 +192,6 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
 METAPLUGIN::~METAPLUGIN()
 {
    /* free standard variables */
-   free_and_null_pool_memory(lname);
    free_and_null_pool_memory(robjbuf);
 }
 
@@ -1829,7 +1828,6 @@ bRC METAPLUGIN::setPluginValue(bpContext *ctx, pVariable var, void *value)
 bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
 {
    POOL_MEM cmd(PM_FNAME);
-   POOL_MEM tmp(PM_FNAME);
    char type;
    size_t size;
    int uid, gid;
@@ -1877,11 +1875,6 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       // here we handle standard metadata
       reqparams--;
 
-      /* we require lname */
-      if (!lname){
-         lname = get_pool_memory(PM_FNAME);
-      }
-
       while (backend.ctx->read_command(ctx, cmd) > 0)
       {
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
@@ -1921,13 +1914,14 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
             DMSG3(ctx, DINFO, "TSTAMP:%ld(at) %ld(mt) %ld(ct)\n", sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
             continue;
          }
-         if (bsscanf(cmd.c_str(), "LSTAT:%s", lname) == 1)
+         if (scan_parameter_str(cmd, "LSTAT:", lname) == 1)
          {
-            sp->link = lname;
+            sp->link = lname.c_str();
             reqparams--;
-            DMSG(ctx, DINFO, "LSTAT:%s\n", lname);
+            DMSG(ctx, DINFO, "LSTAT:%s\n", lname.c_str());
             continue;
          }
+         POOL_MEM tmp(PM_FNAME);
          if (scan_parameter_str(cmd, "PIPE:", tmp)){
             /* handle PIPE command */
             DMSG(ctx, DINFO, "read pipe at: %s\n", tmp.c_str());
