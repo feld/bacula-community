@@ -869,14 +869,17 @@ bRC METAPLUGIN::send_startjob(bpContext *ctx, const char *command)
    POOL_MEM cmd;
 
    pm_strcpy(cmd, command);
-   if (backend.ctx->write_command(ctx, cmd) < 0){
+   if (backend.ctx->write_command(ctx, cmd) < 0)
+   {
       /* error */
       return bRC_Error;
    }
 
-   if (!backend.ctx->read_ack(ctx)){
-      DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", command);
-      JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", command);
+   if (!backend.ctx->read_ack(ctx))
+   {
+      strip_trailing_newline(cmd.c_str());
+      DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", cmd.c_str());
+      JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", cmd.c_str());
       return bRC_Error;
    }
 
