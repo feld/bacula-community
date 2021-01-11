@@ -742,6 +742,11 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
            new_jobid, old_jobid);
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
 
+         /* Move PluginObjects */
+         Mmsg(query, "UPDATE PluginObject SET JobId=%s WHERE JobId=%s",
+           new_jobid, old_jobid);
+         db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
+
          if (jcr->job->PurgeMigrateJob) {
             /* Purge old Job record */
             purge_jobs_from_catalog(ua, old_jobid);
@@ -779,6 +784,17 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
           "ObjectCompression,FileIndex,%s FROM RestoreObject WHERE JobId=%s",
            new_jobid, old_jobid);
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
+
+         /* Copy PluginObjects */
+         Mmsg(query, "INSERT INTO PluginObject (JobId, Path, Filename, PluginName, ObjectCategory,"
+              "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize) "
+        "SELECT %s, Path, Filename, PluginName, ObjectCategory,"
+              "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize FROM PluginObject WHERE JobId=%s",
+           new_jobid, old_jobid);
+
+         if (!db_sql_query(wjcr->db, query.c_str(), NULL, NULL)) {
+            Jmsg(jcr, M_WARNING, 0, _("Error copying PluginObject for JobId=%ld"), old_jobid);
+         }
       }
 
       if (!db_get_job_record(jcr, jcr->db, &jcr->jr)) {
