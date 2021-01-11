@@ -62,21 +62,28 @@ setdebug level=0 trace=0 hangup=596 client
 @#setdebug level=20 dir
 run job=$JobName fileset=A yes pool=PoolA
 wait
+messages
 setdebug level=0 trace=0 hangup=596 client
 run job=$JobName fileset=B yes pool=PoolA
 wait
-setdebug level=0 trace=0 hangup=596 client
-run job=$JobName fileset=C yes pool=PoolA
-wait
-resume incomplete jobid=1,2,3
+messages
+resume incomplete jobid=1,2
 wait
 messages
+@$out ${cwd}/tmp/log2.out
+setdebug level=0 trace=0 hangup=596 client
+run job=$JobName fileset=C yes pool=PoolA storage=File1
+wait
+messages
+setdebug level=50 trace=1 dir
+resume incomplete jobid=3
+wait
+messages
+setdebug level=0 trace=0 dir
 quit
 END_OF_DATA
 
 run_bacula  
-
-stop_bacula
 
 nb=`grep "FileSet:" $tmp/log1.out | grep '"A"' | wc -l`
 if [ $nb != 2 ]; then
@@ -90,9 +97,46 @@ if [ $nb != 2 ]; then
     estat=1
 fi
 
-nb=`grep "FileSet:" $tmp/log1.out | grep '"C"' | wc -l`
+nb=`grep "FileSet:" $tmp/log2.out | grep '"C"' | wc -l`
 if [ $nb != 2 ]; then
     print_debug "ERROR: Should find two times the FileSet C"
     estat=1
 fi
+
+# We expect line 'Storage: "File1"' to appear twice (in job log output and resume log as well)
+# since differend storage was passed while running job
+nb=`cat $cwd/tmp/log2.out | tr -s ' ' | grep  "Storage: \"File1\"" | wc -l`
+if [ $nb != 2 ]; then
+   print_debug "ERROR: Did not found proper storage used (File1 from cmdline) while job & running resume command! Proper storage found ${nb} times"
+   estat=1
+fi
+
+rm $working/$HOST-dir.trace
+
+# Remove 'File' Storage from catalog in some ugly way - so the record should not be found during job resuming
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log3.out
+sql
+DELETE FROM Storage WHERE Name = 'File';
+
+@$out ${cwd}/tmp/log4.out
+setdebug level=50 trace=1 dir
+resume incomplete jobid=1,2,3
+setdebug level=0 trace=0 dir
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+# We expect 2 logs about not found storage (job ids 1,2) because for the 3rd one we specified File1 in the first place
+nb=`grep "Could not find any Storage resource related to the one refered by JobId=" $working/$HOST-dir.trace | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Did not found proper message about invalid storage while running resume command! "\
+                "Found ${nb} log lines, expected 2"
+    estat=1
+fi
+stop_bacula
+
 end_test
