@@ -44,7 +44,7 @@ char *bstrftime_dn(char *dt, int maxlen, utime_t tim);
 char *bstrftime_c(char *dt, int maxlen, utime_t utime);
 utime_t str_to_utime(char *str);
 char *bstrftimes_na(char *dt, int maxlen, utime_t utime);
-
+char *bstrftime_gmt_iso8601(char *dt, int maxlen, utime_t utime);
 
 /* =========================================================== */
 /*        old code deprecated below. Do not use.               */

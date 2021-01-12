@@ -143,6 +143,17 @@ char *bstrutime(char *dt, int maxlen, utime_t utime)
    return dt;
 }
 
+
+/* Unix time to GMT standard time string yyyy-mm-ddThh:mm:ss.000Z */
+char *bstrftime_gmt_iso8601(char *dt, int maxlen, utime_t utime)
+{
+   time_t time = (time_t)utime;
+   struct tm tm;
+   (void)gmtime_r(&time, &tm);
+   strftime(dt, maxlen, "%Y-%m-%dT%H:%M:%S.000Z", &tm);
+   return dt;
+}
+
 /* Convert standard time string yyyy-mm-dd hh:mm:ss to Unix time */
 utime_t str_to_utime(char *str)
 {
