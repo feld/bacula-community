@@ -1207,7 +1207,41 @@ bool Bvfs::ls_dirs()
    return nb_record == limit;
 }
 
-void build_ls_files_query(BDB *db, POOL_MEM &query,
+/* List all files from a set of jobs */
+bool Bvfs::ls_all_files()
+{
+   POOL_MEM query;
+   POOL_MEM filter;
+
+   if (*jobids == 0) {
+      return false;
+   }
+
+   if (*pattern) {
+      Mmsg(filter, " AND File.Filename %s '%s' ",
+           match_query[db->bdb_get_type_index()], pattern);
+
+   } else if (*filename) {
+      Mmsg(filter, " AND File.Filename = '%s' ", filename);
+   }
+
+   Mmsg(query, sql_bvfs_list_all_files[db->bdb_get_type_index()],
+        filter.c_str(), jobids, limit, offset);
+
+   /* TODO: check all parent directories to know if we can
+    * list the files here.
+    */
+   Dmsg1(dbglevel_sql, "q=%s\n", query.c_str());
+
+   db->bdb_lock();
+   db->bdb_sql_query(query.c_str(), list_entries, user_data);
+   nb_record = db->sql_num_rows();
+   db->bdb_unlock();
+
+   return nb_record == limit;
+}
+
+static void build_ls_files_query(BDB *db, POOL_MEM &query,
                           const char *JobId, const char *PathId,
                           const char *filter, int64_t limit, int64_t offset)
 {

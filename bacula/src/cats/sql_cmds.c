@@ -759,6 +759,34 @@ const char *sql_bvfs_select[] =
    default_sql_bvfs_select
 };
 
+static const char *sql_bvfs_list_all_files_default = 
+"SELECT 'F', File.PathId, Path.Path || File.Filename, "
+        "File.JobId, File.LStat, File.FileId "
+"FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) "
+"WHERE File.Filename != '' "
+  "AND File.FileIndex > 0 "
+  " %s "                     /* AND Name LIKE '' */
+  "AND Job.JobId IN ( %s) ORDER BY File.FileId " // Needed to support LIMIT/OFFSET 
+   "LIMIT %lld OFFSET %lld";
+
+const char *sql_bvfs_list_all_files[] = {
+   /* MySQL */
+"SELECT 'F', File.PathId, CONCAT(Path.Path, File.Filename), "
+        "File.JobId, File.LStat, File.FileId "
+"FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) "
+"WHERE File.Filename != '' "
+  "AND File.FileIndex > 0 "
+  " %s "                     /* AND Name LIKE '' */
+  "AND Job.JobId IN (%s) ORDER BY File.FileId " // Needed to support LIMIT/OFFSET
+ "LIMIT %lld OFFSET %lld",
+
+   /* PostgreSQL */
+   sql_bvfs_list_all_files_default,
+
+   /* SQLite */
+   sql_bvfs_list_all_files_default
+};
+
 static const char *sql_bvfs_list_files_default = 
 "SELECT 'F', T.PathId, T.Filename, "
         "File.JobId, File.LStat, File.FileId "

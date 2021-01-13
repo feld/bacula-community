@@ -116,7 +116,7 @@ public:
     * Returns true if the directory exists
     */
    bool ch_dir(const char *path);
-
+   bool ls_all_files();         /* Returns true if we have more files to read */
    bool ls_files();             /* Returns true if we have more files to read */
    bool ls_dirs();              /* Returns true if we have more dir to read */
    void ls_special_dirs();      /* get . and .. */

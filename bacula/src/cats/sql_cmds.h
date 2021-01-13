@@ -56,6 +56,7 @@ extern const char CATS_IMP_EXP *select_recent_version[];
 extern const char CATS_IMP_EXP *select_recent_version_with_basejob[];
 extern const char CATS_IMP_EXP *select_recent_version_with_basejob_and_delta[];
 extern const char CATS_IMP_EXP *sel_JobMedia;
+extern const char CATS_IMP_EXP *sql_bvfs_list_all_files[];
 extern const char CATS_IMP_EXP *sql_bvfs_list_files[];
 extern const char CATS_IMP_EXP *sql_bvfs_select[];
 extern const char CATS_IMP_EXP *sql_get_max_connections[];
