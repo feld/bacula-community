@@ -1,0 +1,126 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple test-plugin job and check if restore and plugin objects were copied after running
+# copy job.
+#
+TestName="copy-job-objects-test"
+. scripts/functions
+
+
+scripts/cleanup
+scripts/copy-migration-confs
+
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+# Build and install the test plugin
+cd ${cwd}/build/src/plugins/fd
+make
+if [ $? -ne 0 ]; then
+   print_debug "Failed to build test plugin!"
+   exit 1
+fi
+make install-test-plugin
+if [ $? -ne 0 ]; then
+   print_debug "Failed to install test plugin!"
+   exit 1
+fi
+
+cd ${cwd}
+
+
+# Add fileset and job which will trigger test-plugin
+echo "FileSet {
+Name = "TestPluginSet"
+Include {
+Options {
+readfifo = yes
+signature=MD5
+}
+File = ${cwd}/tmp/file-list
+Plugin = "test-plugin:/@test-plugin@/fr.po:${cwd}/build/po/fr.po:/dev/null"
+}
+}
+
+Job {
+Name = "TestPluginTest"
+Level = Full
+Type = Backup
+Client=${HOST}-fd
+FileSet=\"TestPluginSet\"
+Storage = File
+Messages = Standard
+Pool = Default
+}
+" >> $conf/bacula-dir.conf
+
+start_test
+
+# Run test-plugin job to generate restore and plugin objects, then run copy job for objects to be copied
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File volume=TestVolume001 Pool=Default
+run job=TestPluginTest yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/plug_objs_before
+select count(*) from object;
+@$out ${cwd}/tmp/rest_objs_before
+select count(*) from restoreobject;
+
+@$out ${cwd}/tmp/log2.out
+list objects
+label storage=File volume=FileVolume001 Pool=Default
+label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
+label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
+run job=copy-uncopied yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/plug_objs_after
+select count(*) from object;
+@$out ${cwd}/tmp/rest_objs_after
+select count(*) from restoreobject;
+
+@$out ${cwd}/tmp/log3.out
+list objects
+quit
+END_OF_DATA
+
+run_bacula
+
+plug_objs_before=`cat tmp/plug_objs_before | grep '|' | cut -d'|' -f2 | tail -1`
+plug_objs_after=`cat tmp/plug_objs_after | grep '|' | cut -d'|' -f2 | tail -1`
+
+rest_objs_before=`cat tmp/rest_objs_before | grep '|' | cut -d'|' -f2 | tail -1`
+rest_objs_after=`cat tmp/rest_objs_after | grep '|' | cut -d'|' -f2 | tail -1`
+
+if [ ${plug_objs_before} -eq 0 ]; then
+   estat=1
+   print_debug "No plugin objects found after running test-plugin job!"
+fi
+
+if [ ${plug_objs_before} -eq 0 ]; then
+   estat=1
+   print_debug "No restore objects found after running test-plugin job!"
+fi
+
+# Since we run copy of only one job we expected objects count to be doubled
+if [ ${plug_objs_after} -ne $((plug_objs_before*2)) ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${plug_objs_after}, expected $((plug_objs_before*2))"
+fi
+
+if [ ${rest_objs_after} -ne $((rest_objs_before*2)) ]; then
+   estat=1
+   print_debug "Wrong plugin objects count found in output: ${rest_objs_after}, expected $((rest_objs_before*2))"
+fi
+
+stop_bacula
+
+end_test
