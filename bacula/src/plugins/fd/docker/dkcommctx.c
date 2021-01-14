@@ -1,7 +1,8 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2019 Kern Sibbald
+   Copyright © 2000-2020 Bacula Systems SA
+   All rights reserved.
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -45,7 +46,7 @@ DKCOMMCTX::DKCOMMCTX(const char *cmd) :
       param_container_run(false),
       param_container_imageid(false),
       param_container_defaultnames(false),
-      param_docker_host(NULL),
+      param_docker_host(PM_FNAME),
       param_timeout(0),
 
       abort_on_error(false),
@@ -59,8 +60,8 @@ DKCOMMCTX::DKCOMMCTX(const char *cmd) :
       f_error(false),
       f_fatal(false),
       ini(NULL),
-      workingvolume(NULL),
-      workingdir(NULL)
+      workingvolume(PM_FNAME),
+      workingdir(PM_FNAME)
 {
    /* setup initial plugin command here */
    command = bstrdup(cmd);
@@ -94,9 +95,6 @@ DKCOMMCTX::~DKCOMMCTX()
    release_all_pm_list(&param_container);
    release_all_pm_list(&param_image);
    release_all_pm_list(&param_volume);
-   free_and_null_pool_memory(param_docker_host);
-   free_and_null_pool_memory(workingvolume);
-   free_and_null_pool_memory(workingdir);
 };
 
 /*
@@ -109,12 +107,8 @@ DKCOMMCTX::~DKCOMMCTX()
  */
 void DKCOMMCTX::setworkingdir(char* workdir)
 {
-   if (workingdir == NULL){
-      /* not allocated yet */
-      workingdir = get_pool_memory(PM_FNAME);
-   }
-   pm_strcpy(&workingdir, workdir);
-   DMSG1(NULL, DVDEBUG, "workingdir: %s\n", workingdir);
+   pm_strcpy(workingdir, workdir);
+   DMSG1(NULL, DVDEBUG, "workingdir: %s\n", workingdir.c_str());
 };
 
 /*
@@ -178,38 +172,34 @@ bRC DKCOMMCTX::prepare_working_volume(bpContext *ctx, int jobid)
    pid_t pid = getpid();
 
    DMSG0(ctx, DINFO, "prepare_working_volume called\n");
-   if (workingvolume == NULL){
-      workingvolume = get_pool_memory(PM_FNAME);
-      /* create dir template for mkdtemp function */
-      Mmsg(workingvolume, "%s/docker-%d-%d-XXXXXX",
-            workingdir != NULL ? workingdir : WORKDIR, jobid, pid);
-      dir = mkdtemp(workingvolume);
-      if (dir == NULL){
-         /* failback to standard method */
-         Mmsg(workingvolume, "%s/docker-%d-%d",
-               workingdir != NULL ? workingdir : WORKDIR, jobid, pid);
-         if (stat(workingvolume, &statp) != 0){
-            berrno be;
-            /* if the path does not exist then create one */
-            if (be.code() != ENOENT || mkdir(workingvolume, 0700) != 0){
-               /* creation or other error, set new errno and proceed to inform user */
-               be.set_errno(errno);
-               DMSG2(ctx, DERROR, "working volume path (%s) creation Err=%s\n", workingvolume, be.bstrerror());
-               JMSG2(ctx, abort_on_error ? M_FATAL : M_ERROR,
-                     "Working volume path (%s) creation Err=%s!\n", workingvolume, be.bstrerror());
-               return bRC_Error;
-            }
-         } else
-            if (!S_ISDIR(statp.st_mode)){
-               /* the expected working dir/volume is already available and it is not a directory, strange */
-               DMSG2(ctx, DERROR, "working volume path (%s) is not directory Mode=%o\n", workingvolume, statp.st_mode);
-               JMSG2(ctx, abort_on_error ? M_FATAL : M_ERROR,
-                     "Working volume path (%s) is not directory Mode=%o\n", workingvolume, statp.st_mode);
-               return bRC_Error;
-            }
-      }
+   /* create dir template for mkdtemp function */
+   const char *wd = strlen(workingdir.c_str()) > 0 ? workingdir.c_str() : WORKDIR;
+   Mmsg(workingvolume, "%s/docker-%d-%d-XXXXXX", wd, jobid, pid);
+   dir = mkdtemp(workingvolume.c_str());
+   if (dir == NULL){
+      /* failback to standard method */
+      Mmsg(workingvolume, "%s/docker-%d-%d", wd, jobid, pid);
+      if (stat(workingvolume.c_str(), &statp) != 0){
+         berrno be;
+         /* if the path does not exist then create one */
+         if (be.code() != ENOENT || mkdir(workingvolume.c_str(), 0700) != 0){
+            /* creation or other error, set new errno and proceed to inform user */
+            be.set_errno(errno);
+            DMSG2(ctx, DERROR, "working volume path (%s) creation Err=%s\n", workingvolume.c_str(), be.bstrerror());
+            JMSG2(ctx, abort_on_error ? M_FATAL : M_ERROR, "Working volume path (%s) creation Err=%s!\n", workingvolume.c_str(), be.bstrerror());
+            return bRC_Error;
+         }
+      } else
+         if (!S_ISDIR(statp.st_mode)){
+            /* the expected working dir/volume is already available and it is not a directory, strange */
+            DMSG2(ctx, DERROR, "working volume path (%s) is not directory mode=%o\n", workingvolume.c_str(), statp.st_mode);
+            JMSG2(ctx, abort_on_error ? M_FATAL : M_ERROR,
+                  "Working volume path (%s) is not directory mode=%o\n", workingvolume.c_str(), statp.st_mode);
+            return bRC_Error;
+         }
    }
-   DMSG1(ctx, DINFO, "prepare_working_volume finish: %s\n", workingvolume);
+
+   DMSG1(ctx, DINFO, "prepare_working_volume finish: %s\n", workingvolume.c_str());
    return bRC_OK;
 };
 
@@ -252,15 +242,15 @@ void DKCOMMCTX::clean_working_volume(bpContext* ctx)
       DMSG1(ctx, DDEBUG, "removing: %s\n", fname.c_str())
    }
    if (!ferr){
-      status = rmdir(workingvolume);
+      status = rmdir(workingvolume.c_str());
       if (status < 0){
          /* unlink error - report to user */
          berrno be;
-         DMSG2(ctx, DERROR, "rmdir error: %s Err=%s\n", workingvolume, be.bstrerror());
-         JMSG2(ctx, M_ERROR, "Cannot remove directory: %s Err=%s\n", workingvolume, be.bstrerror());
+         DMSG2(ctx, DERROR, "rmdir error: %s Err=%s\n", workingvolume.c_str(), be.bstrerror());
+         JMSG2(ctx, M_ERROR, "Cannot remove directory: %s Err=%s\n", workingvolume.c_str(), be.bstrerror());
       }
    }
-   free_and_null_pool_memory(workingvolume);
+   pm_strcpy(workingvolume, NULL);
    DMSG0(ctx, DDEBUG, "clean_working_volume finish.\n");
 };
 
@@ -373,8 +363,9 @@ bool DKCOMMCTX::execute_command(bpContext *ctx, POOLMEM *args)
    DMSG(ctx, DINFO, "Executing: %s\n", exe_cmd.c_str());
    /* preparing envinroment variables */
    envp[a++] = bstrdup("LANG=C");
-   if (param_docker_host != NULL){
-      Mmsg(DH, "DOCKER_HOST=%s", param_docker_host);
+   if (strlen(param_docker_host.c_str()) > 0)
+   {
+      Mmsg(DH, "DOCKER_HOST=%s", param_docker_host.c_str());
       envp[a++] = bstrdup(DH.c_str());
    }
    envp[a] = NULL;
@@ -584,199 +575,199 @@ int32_t DKCOMMCTX::write_data(bpContext *ctx, POOLMEM *buf, int32_t len)
    return wbytes;
 }
 
-/*
- * Render a command tool parameter for string value.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    fmt - a low-level parameter name
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, char *value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (!*param){
-         *param = get_pool_memory(PM_NAME);
-         Mmsg(*param, " -%s '%s' ", fmt, value);
-         DMSG(ctx, DDEBUG, "render param:%s\n", *param);
-      }
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Render a command tool parameter for string value.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    fmt - a low-level parameter name
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, char *value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (!*param){
+//          *param = get_pool_memory(PM_NAME);
+//          Mmsg(*param, " -%s '%s' ", fmt, value);
+//          DMSG(ctx, DDEBUG, "render param:%s\n", *param);
+//       }
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Render a command tool parameter for integer value.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    fmt - a low-level parameter name
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, int value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (!*param){
-         *param = get_pool_memory(PM_NAME);
-         Mmsg(*param, " -%s %d ", value);
-         DMSG(ctx, DDEBUG, "render param:%s\n", *param);
-      }
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Render a command tool parameter for integer value.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    fmt - a low-level parameter name
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, int value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (!*param){
+//          *param = get_pool_memory(PM_NAME);
+//          Mmsg(*param, " -%s %d ", value);
+//          DMSG(ctx, DDEBUG, "render param:%s\n", *param);
+//       }
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Render a command tool parameter for string value.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (!*param){
-         *param = get_pool_memory(PM_NAME);
-         Mmsg(*param, "%s", value);
-         DMSG(ctx, DDEBUG, "render param:%s\n", *param);
-      }
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Render a command tool parameter for string value.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (!*param){
+//          *param = get_pool_memory(PM_NAME);
+//          Mmsg(*param, "%s", value);
+//          DMSG(ctx, DDEBUG, "render param:%s\n", *param);
+//       }
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Setup DKCOMMCTX parameter for boolean value.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::render_param(bpContext *ctx, bool *param, const char *pname, const char *name, bool value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (param){
-         *param = value;
-         DMSG2(ctx, DDEBUG, "render param: %s=%s\n", pname, *param ? "True" : "False");
-      }
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Setup DKCOMMCTX parameter for boolean value.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::render_param(bpContext *ctx, bool *param, const char *pname, const char *name, bool value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (param){
+//          *param = value;
+//          DMSG2(ctx, DDEBUG, "render param: %s=%s\n", pname, *param ? "True" : "False");
+//       }
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Setup DKCOMMCTX parameter for int32_t value.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::render_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, int32_t value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (param){
-         *param = value;
-         DMSG2(ctx, DDEBUG, "render param: %s=%d\n", pname, *param);
-      }
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Setup DKCOMMCTX parameter for int32_t value.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::render_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, int32_t value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (param){
+//          *param = value;
+//          DMSG2(ctx, DDEBUG, "render param: %s=%d\n", pname, *param);
+//       }
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Setup DKCOMMCTX parameter for boolean from string value.
- *  The parameter value will be false if value start with '0' character and
- *  will be true in any other case. So, when a plugin will have a following:
- *    param
- *    param=...
- *    param=1
- *  then a param will be set to true.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::parse_param(bpContext *ctx, bool *param, const char *pname, const char *name, char *value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (value && *value == '0'){
-         *param = false;
-      } else {
-         *param = true;
-      }
-      DMSG2(ctx, DINFO, "%s parameter: %s\n", name, *param ? "True" : "False");
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Setup DKCOMMCTX parameter for boolean from string value.
+//  *  The parameter value will be false if value start with '0' character and
+//  *  will be true in any other case. So, when a plugin will have a following:
+//  *    param
+//  *    param=...
+//  *    param=1
+//  *  then a param will be set to true.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::parse_param(bpContext *ctx, bool *param, const char *pname, const char *name, char *value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (value && *value == '0'){
+//          *param = false;
+//       } else {
+//          *param = true;
+//       }
+//       DMSG2(ctx, DINFO, "%s parameter: %s\n", name, *param ? "True" : "False");
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Setup DKCOMMCTX parameter for integer from string value.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::parse_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, char *value)
-{
-   if (value && bstrcasecmp(name, pname)){
-      /* convert str to integer */
-      *param = atoi(value);
-      if (*param == 0){
-         /* error in conversion */
-         f_error = true;
-         DMSG2(ctx, DERROR, "Invalid %s parameter: %s\n", name, value);
-         JMSG2(ctx, M_ERROR, "Invalid %s parameter: %s\n", name, value);
-         return false;
-      }
-      DMSG2(ctx, DINFO, "%s parameter: %d\n", name, *param);
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Setup DKCOMMCTX parameter for integer from string value.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    param - a pointer to the param variable where we will render a parameter
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::parse_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, char *value)
+// {
+//    if (value && bstrcasecmp(name, pname)){
+//       /* convert str to integer */
+//       *param = atoi(value);
+//       if (*param == 0){
+//          /* error in conversion */
+//          f_error = true;
+//          DMSG2(ctx, DERROR, "Invalid %s parameter: %s\n", name, value);
+//          JMSG2(ctx, M_ERROR, "Invalid %s parameter: %s\n", name, value);
+//          return false;
+//       }
+//       DMSG2(ctx, DINFO, "%s parameter: %d\n", name, *param);
+//       return true;
+//    }
+//    return false;
+// }
 
 /*
  * Setup DKCOMMCTX parameter for DOCKER_BACKUP_MODE_T from string value.
@@ -793,7 +784,7 @@ bool DKCOMMCTX::parse_param(bpContext *ctx, int32_t *param, const char *pname, c
  *    True if parameter was rendered
  *    False if it was not the parameter required
  */
-bool DKCOMMCTX::parse_param(bpContext *ctx, DOCKER_BACKUP_MODE_T *param, const char *pname, const char *name, char *value)
+bool DKCOMMCTX::parse_param_mode(bpContext *ctx, DOCKER_BACKUP_MODE_T *param, const char *pname, const char *name, char *value)
 {
    if (bstrcasecmp(name, pname)){
       if (value){
@@ -817,63 +808,63 @@ bool DKCOMMCTX::parse_param(bpContext *ctx, DOCKER_BACKUP_MODE_T *param, const c
    return false;
 }
 
-/*
- * Render and add a parameter for string value to alist.
- *  When alist is NULL (uninitialized) then it creates a new list to use.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    list - pointer to alist class to use
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::add_param_str(bpContext *ctx, alist **list, const char *pname, const char *name, char *value)
-{
-   POOLMEM *param;
+// /*
+//  * Render and add a parameter for string value to alist.
+//  *  When alist is NULL (uninitialized) then it creates a new list to use.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    list - pointer to alist class to use
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::add_param_str(bpContext *ctx, alist **list, const char *pname, const char *name, char *value)
+// {
+//    POOLMEM *param;
 
-   if (bstrcasecmp(name, pname)){
-      if (!*list){
-         *list = New(alist(8, not_owned_by_alist));
-      }
-      param = get_pool_memory(PM_NAME);
-      Mmsg(param, "%s", value);
-      (*list)->append(param);
-      DMSG2(ctx, DDEBUG, "add param: %s=%s\n", name, value);
-      return true;
-   }
-   return false;
-}
+//    if (bstrcasecmp(name, pname)){
+//       if (!*list){
+//          *list = New(alist(8, not_owned_by_alist));
+//       }
+//       param = get_pool_memory(PM_NAME);
+//       Mmsg(param, "%s", value);
+//       (*list)->append(param);
+//       DMSG2(ctx, DDEBUG, "add param: %s=%s\n", name, value);
+//       return true;
+//    }
+//    return false;
+// }
 
-/*
- * Render and set a parameter for string value.
- *  When param is NULL (uninitialized) then it allocates a new string.
- *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    list - pointer to alist class to use
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
- */
-bool DKCOMMCTX::parse_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value)
-{
-   if (bstrcasecmp(name, pname)){
-      if (!*param){
-         *param = get_pool_memory(PM_NAME);
-      }
-      pm_strcpy(param, value);
-      DMSG2(ctx, DDEBUG, "add param: %s=%s\n", name, value);
-      return true;
-   }
-   return false;
-}
+// /*
+//  * Render and set a parameter for string value.
+//  *  When param is NULL (uninitialized) then it allocates a new string.
+//  *
+//  * in:
+//  *    bpContext - for Bacula debug and jobinfo messages
+//  *    list - pointer to alist class to use
+//  *    pname - a name of the parameter to compare
+//  *    name - a name of the parameter from parameter list
+//  *    value - a value to render
+//  * out:
+//  *    True if parameter was rendered
+//  *    False if it was not the parameter required
+//  */
+// bool DKCOMMCTX::parse_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value)
+// {
+//    if (bstrcasecmp(name, pname)){
+//       if (!*param){
+//          *param = get_pool_memory(PM_NAME);
+//       }
+//       pm_strcpy(param, value);
+//       DMSG2(ctx, DDEBUG, "add param: %s=%s\n", name, value);
+//       return true;
+//    }
+//    return false;
+// }
 
 /*
  * Parse a restore plugin parameters for DKCOMMCTX class (single at a time).
@@ -887,27 +878,27 @@ bool DKCOMMCTX::parse_param(bpContext *ctx, POOLMEM **param, const char *pname, 
 void DKCOMMCTX::parse_parameters(bpContext *ctx, ini_items &item)
 {
    /* container_create variable */
-   if (render_param(ctx, &param_container_create, "container_create", item.name, item.val.boolval)){
+   if (setup_param(param_container_create, "container_create", item.name, item.val.boolval)){
       return;
    }
    /* container_create variable */
-   if (render_param(ctx, &param_container_run, "container_run", item.name, item.val.boolval)){
+   if (setup_param(param_container_run, "container_run", item.name, item.val.boolval)){
       return;
    }
    /* container_create variable */
-   if (render_param(ctx, &param_container_imageid, "container_imageid", item.name, item.val.boolval)){
+   if (setup_param(param_container_imageid, "container_imageid", item.name, item.val.boolval)){
       return;
    }
    /* container_create variable */
-   if (render_param(ctx, &param_container_defaultnames, "container_defaultnames", item.name, item.val.boolval)){
+   if (setup_param(param_container_defaultnames, "container_defaultnames", item.name, item.val.boolval)){
       return;
    }
    /* docker_host variable */
-   if (render_param(ctx, &param_docker_host, "docker_host", item.name, item.val.strval)){
+   if (setup_param(param_docker_host, "docker_host", item.name, item.val.strval)){
       return;
    }
    /* timeout variable */
-   if (render_param(ctx, &param_timeout, "timeout", item.name, item.val.int32val)){
+   if (setup_param(param_timeout, "timeout", item.name, item.val.int32val)){
       return;
    }
    f_error = true;
@@ -929,51 +920,51 @@ void DKCOMMCTX::parse_parameters(bpContext *ctx, ini_items &item)
 bRC DKCOMMCTX::parse_parameters(bpContext *ctx, char *argk, char *argv)
 {
    /* check abort_on_error parameter */
-   if (parse_param(ctx, &abort_on_error, "abort_on_error", argk, argv)){
+   if (parse_param(abort_on_error, "abort_on_error", argk, argv)){
       return bRC_OK;
    }
    /* check allvolumes parameter */
-   if (parse_param(ctx, &all_vols_to_backup, "allvolumes", argk, argv)){
+   if (parse_param(all_vols_to_backup, "allvolumes", argk, argv)){
       return bRC_OK;
    }
    /* check and handle container list */
-   if (add_param_str(ctx, &param_container, "container", argk, argv)){
+   if (parse_param_add_str(&param_container, "container", argk, argv)){
       return bRC_OK;
    }
    /* check and handle include_container list */
-   if (add_param_str(ctx, &param_include_container, "include_container", argk, argv)){
+   if (parse_param_add_str(&param_include_container, "include_container", argk, argv)){
       return bRC_OK;
    }
    /* check and handle exclude_container list */
-   if (add_param_str(ctx, &param_exclude_container, "exclude_container", argk, argv)){
+   if (parse_param_add_str(&param_exclude_container, "exclude_container", argk, argv)){
       return bRC_OK;
    }
    /* check and handle image list */
-   if (add_param_str(ctx, &param_image, "image", argk, argv)){
+   if (parse_param_add_str(&param_image, "image", argk, argv)){
       return bRC_OK;
    }
    /* check and handle include_image list */
-   if (add_param_str(ctx, &param_include_image, "include_image", argk, argv)){
+   if (parse_param_add_str(&param_include_image, "include_image", argk, argv)){
       return bRC_OK;
    }
    /* check and handle exclude_image list */
-   if (add_param_str(ctx, &param_exclude_image, "exclude_image", argk, argv)){
+   if (parse_param_add_str(&param_exclude_image, "exclude_image", argk, argv)){
       return bRC_OK;
    }
    /* check and handle volume list */
-   if (add_param_str(ctx, &param_volume, "volume", argk, argv)){
+   if (parse_param_add_str(&param_volume, "volume", argk, argv)){
       return bRC_OK;
    }
    /* check and handle timeout parameter */
-   if (parse_param(ctx, &param_timeout, "timeout", argk, argv)){
+   if (parse_param(param_timeout, "timeout", argk, argv)){
       return bRC_OK;
    }
    /* check mode parameter */
-   if (parse_param(ctx, &param_mode, "mode", argk, argv)){
+   if (parse_param_mode(ctx, &param_mode, "mode", argk, argv)){
       return bRC_OK;
    }
    /* check docker_host parameter */
-   if (parse_param(ctx, &param_docker_host, "docker_host", argk, argv)){
+   if (parse_param(param_docker_host, "docker_host", argk, argv)){
       return bRC_OK;
    }
 
@@ -1121,7 +1112,7 @@ void DKCOMMCTX::filter_param_to_backup(bpContext *ctx, alist *params, alist *dkl
          found = false;
          foreach_alist(dkinfo, dklist){
             DMSG3(ctx, DDEBUG, "compare: %s/%s vs %s\n",
-                  (char*)dkinfo->id(), dkinfo->name(), pobj);
+                  (char*)*dkinfo->id(), dkinfo->name(), pobj);
             /* we have to check container id or container names */
             dkid = pobj;
             if (bstrcmp(pobj, dkinfo->name()) || dkid == *(dkinfo->id())
@@ -1131,7 +1122,7 @@ void DKCOMMCTX::filter_param_to_backup(bpContext *ctx, alist *params, alist *dkl
                found = true;
                DMSG3(ctx, DINFO, "adding %s to backup (1): %s (%s)\n",
                      dkinfo->type_str(),
-                     dkinfo->name(), (char*)dkinfo->id());
+                     dkinfo->name(), (char*)*dkinfo->id());
                break;
             };
          };
@@ -1420,7 +1411,7 @@ void DKCOMMCTX::filter_incex_to_backup(bpContext* ctx, alist* params_include, al
          objs_to_backup->append(dkinfo);
          DMSG3(ctx, DINFO, "adding %s to backup (2): %s (%s)\n",
                dkinfo->type_str(),
-               dkinfo->name(), (char*)dkinfo->id());
+               dkinfo->name(), (char*)*dkinfo->id());
       };
    }
 };
@@ -1443,7 +1434,7 @@ bRC DKCOMMCTX::prepare_bejob(bpContext *ctx, bool estimate)
       return bRC_Error;
    }
    /* when docker_host defined then skip all volumes */
-   if (param_docker_host == NULL && !get_all_volumes(ctx)){
+   if (strlen(param_docker_host.c_str()) == 0 && !get_all_volumes(ctx)){
       return bRC_Error;
    }
 
@@ -1456,7 +1447,7 @@ bRC DKCOMMCTX::prepare_bejob(bpContext *ctx, bool estimate)
       /* find all objects on param_* lists */
       filter_param_to_backup(ctx, param_container, all_containers, estimate);
       filter_param_to_backup(ctx, param_image, all_images, estimate);
-      if (param_volume && param_docker_host == NULL){
+      if (param_volume && strlen(param_docker_host.c_str()) == 0){
          filter_param_to_backup(ctx, param_volume, all_volumes, estimate);
       }
 
@@ -1465,12 +1456,12 @@ bRC DKCOMMCTX::prepare_bejob(bpContext *ctx, bool estimate)
       filter_incex_to_backup(ctx, param_include_image, param_exclude_image, all_images);
 
       /* handle allvolumes for containers backup */
-      if (all_vols_to_backup && param_docker_host == NULL){
+      if (all_vols_to_backup && strlen(param_docker_host.c_str()) == 0){
          add_container_volumes_to_backup(ctx);
       }
 
       /* generate a warning message if required */
-      if ((param_volume || all_vols_to_backup) && param_docker_host){
+      if ((param_volume || all_vols_to_backup) && strlen(param_docker_host.c_str()) > 0){
          DMSG0(ctx, DINFO, "Docker Volume backup with docker_host is unsupported!\n");
          JMSG0(ctx, M_WARNING, "Docker Volume backup with docker_host is unsupported!\n");
       }
@@ -1546,7 +1537,7 @@ void DKCOMMCTX::setup_container_dkinfo(bpContext* ctx, char *paramtab[], DKINFO 
    dkinfo->scan_container_size(paramtab[2]);
    dkinfo->set_container_mounts(paramtab[3]);
    DMSG3(ctx, DINFO, "setup_container_dkinfo: %s %s %d\n",
-         (char*)dkinfo->get_container_id(), dkinfo->get_container_names(), dkinfo->get_container_size());
+         (char*)*dkinfo->get_container_id(), dkinfo->get_container_names(), dkinfo->get_container_size());
    DMSG1(ctx, DINFO, "setup_container_dkinfo: %s\n", dkinfo->get_container_mounts());
 };
 
@@ -1575,7 +1566,7 @@ void DKCOMMCTX::setup_image_dkinfo(bpContext* ctx, char *paramtab[], DKINFO *dki
    dkinfo->scan_image_size(paramtab[3]);
    dkinfo->set_image_created(str_to_utime(paramtab[4]));
    DMSG3(ctx, DINFO, "setup_image_dkinfo: %s %s : %s\n",
-         (char*)dkinfo->get_image_id(), dkinfo->get_image_repository(), dkinfo->get_image_tag());
+         (char*)*dkinfo->get_image_id(), dkinfo->get_image_repository(), dkinfo->get_image_tag());
    DMSG2(ctx, DINFO, "setup_image_dkinfo: %d %ld\n", dkinfo->get_image_size(), dkinfo->get_image_created());
 };
 
@@ -1681,7 +1672,7 @@ alist *DKCOMMCTX::get_all_list_from_docker(bpContext* ctx, const char *cmd, int 
             setup_dkinfo(ctx, type, paramtab, dkinfo);
             (*dklist)->append(dkinfo);
             if (dkinfo->type() != DOCKER_VOLUME){
-               DMSG3(ctx, DDEBUG, "found %s: %s -> %s\n", dkinfo->type_str(), (char*)dkinfo->id(), dkinfo->name());
+               DMSG3(ctx, DDEBUG, "found %s: %s -> %s\n", dkinfo->type_str(), (char*)*dkinfo->id(), dkinfo->name());
             } else {
                DMSG2(ctx, DDEBUG, "found %s: %s\n", dkinfo->type_str(), dkinfo->name());
             }
@@ -1969,7 +1960,7 @@ bRC DKCOMMCTX::container_commit(bpContext* ctx, DKINFO *dkinfo, int jobid)
    }
    // commit -p 66f45d8601bae26a6b2ffeb46922318534d3b3905377b3a224693bd78601cb3b mcache1/66f45d8601ba:backup
    render_imagesave_name(imagename, dkinfo, jobid);
-   Mmsg(cmd, "commit %s %s %s", mode, (char*)dkinfo->get_container_id(), imagename.c_str());
+   Mmsg(cmd, "commit %s %s %s", mode, (char*)*dkinfo->get_container_id(), imagename.c_str());
    if (!execute_command(ctx, cmd)){
       /* some error executing command */
       DMSG0(ctx, DERROR, "container_commit execution error\n");
@@ -2052,7 +2043,7 @@ bRC DKCOMMCTX::delete_container_commit(bpContext* ctx, DKINFO *dkinfo, int jobid
        Deleted: sha256:e7cd2a7f1c52a1fa8d88ab812abdcd814064e4884a12bd1f9acde16133023a69
        */
 
-      Mmsg(cmd, "rmi %s", (char*)dkinfo->get_container_imagesave());
+      Mmsg(cmd, "rmi %s", (char*)*dkinfo->get_container_imagesave());
       if (!execute_command(ctx, cmd)){
          /* some error executing command */
          DMSG0(ctx, DERROR, "delete_container_commit execution error\n");
@@ -2150,7 +2141,7 @@ bRC DKCOMMCTX::image_save(bpContext* ctx, DKID *dkid)
    POOL_MEM cmd(PM_FNAME);
 
    DMSG0(ctx, DINFO, "image_save called.\n");
-   Mmsg(cmd, "save %s", (char*)dkid);
+   Mmsg(cmd, "save %s", (char*)*dkid);
    if (!execute_command(ctx, cmd)){
       /* some error executing command */
       DMSG0(ctx, DERROR, "image_save execution error\n");
@@ -2182,11 +2173,12 @@ bRC DKCOMMCTX::run_container_volume_cmd(bpContext* ctx, const char *cmd, POOLMEM
    char *p;
 
    DMSG1(ctx, DINFO, "run_container_volume_cmd called: %s.\n", cmd);
-   if (workingvolume == NULL && prepare_working_volume(ctx, jobid) != bRC_OK){
+   if (strlen(workingvolume.c_str()) == 0 && prepare_working_volume(ctx, jobid) != bRC_OK){
       return bRC_Error;
    }
+
    /* Here we will run archive container for volume backup */
-   Mmsg(bactarcmd, "run -d --rm -v %s:/%s -v %s:/logs %s %s", volname, cmd, workingvolume, BACULATARIMAGE, cmd);
+   Mmsg(bactarcmd, "run -d --rm -v %s:/%s -v %s:/logs %s %s", volname, cmd, workingvolume.c_str(), BACULATARIMAGE, cmd);
    if (!execute_command(ctx, bactarcmd)){
       /* some error executing command */
       DMSG0(ctx, DERROR, "run_container_volume_cmd execution error\n");
@@ -2344,7 +2336,7 @@ bRC DKCOMMCTX::docker_create_run_container(bpContext* ctx, DKINFO *dkinfo)
    }
    DMSG0(ctx, DINFO, "docker_create_container called.\n");
    if (dkinfo){
-      imagelabel = param_container_imageid ? (char*)dkinfo->get_container_imagesave() : dkinfo->get_container_imagesave_tag();
+      imagelabel = param_container_imageid ? (char*)*dkinfo->get_container_imagesave() : dkinfo->get_container_imagesave_tag();
       namepar = param_container_defaultnames ? "" : "--name ";
       nameval = param_container_defaultnames ? "" : dkinfo->get_container_names();
       if (param_container_run){

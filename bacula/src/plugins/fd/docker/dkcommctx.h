@@ -1,7 +1,8 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2019 Kern Sibbald
+   Copyright © 2000-2020 Bacula Systems SA
+   All rights reserved.
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -80,7 +81,8 @@ static struct ini_items plugin_items_dump[] = {
 /*
  * This is a low-level communication class which handles command tools execution.
  */
-class DKCOMMCTX: public SMARTALLOC {
+class DKCOMMCTX: public SMARTALLOC
+{
  public:
    char *command;
 
@@ -94,9 +96,9 @@ class DKCOMMCTX: public SMARTALLOC {
    void set_all_images_to_backup(bpContext *ctx);
    void set_all_volumes_to_backup(bpContext *ctx);
 
-   inline DKINFO *get_first_to_backup(bpContext *ctx) { return (DKINFO*)objs_to_backup->first(); };
-   inline DKINFO *get_next_to_backup(bpContext *ctx) { return (DKINFO*)objs_to_backup->next(); };
-   inline void finish_backup_list(bpContext *ctx) { objs_to_backup->last(); };
+   inline DKINFO *get_first_to_backup(bpContext *ctx) { return (DKINFO*)objs_to_backup->first(); }
+   inline DKINFO *get_next_to_backup(bpContext *ctx) { return (DKINFO*)objs_to_backup->next(); }
+   inline void finish_backup_list(bpContext *ctx) { objs_to_backup->last(); }
 
    bRC container_commit(bpContext *ctx, DKINFO *dkinfo, int jobid);
    bRC delete_container_commit(bpContext *ctx, DKINFO *dkinfo, int jobid);
@@ -112,7 +114,13 @@ class DKCOMMCTX: public SMARTALLOC {
    int32_t read_output(bpContext *ctx, POOL_MEM &out);
    int32_t write_data(bpContext *ctx, POOLMEM *buf, int32_t len);
    void terminate(bpContext *ctx);
-   inline int get_backend_pid() { if (bpipe){ return bpipe->worker_pid; } return -1;};
+   inline int get_backend_pid()
+   {
+      if (bpipe){
+         return bpipe->worker_pid;
+      }
+      return -1;
+   }
 
    bRC parse_parameters(bpContext *ctx, char *argk, char *argv);
    bRC parse_restoreobj(bpContext *ctx, restore_object_pkt *rop);
@@ -120,23 +128,22 @@ class DKCOMMCTX: public SMARTALLOC {
    bRC prepare_restore(bpContext *ctx);
    bRC prepare_working_volume(bpContext* ctx, int jobid);
    void clean_working_volume(bpContext* ctx);
-   inline void render_working_volume_filename(POOL_MEM &buf, const char *fname)
-      { Mmsg(buf, "%s/%s", workingvolume, fname); };
+   inline void render_working_volume_filename(POOL_MEM &buf, const char *fname) { Mmsg(buf, "%s/%s", workingvolume.c_str(), fname); }
    void setworkingdir(char *workdir);
 
-   inline bool is_open() { return bpipe != NULL; };
-   inline bool is_closed() { return bpipe == NULL; };
-   inline bool is_error() { return f_error || f_fatal; };
-   inline void set_error() { f_error = true; };
-   inline bool is_fatal() { return f_fatal || (f_error && abort_on_error); };
-   inline bool is_eod() { return f_eod; };
-   inline void clear_eod() { f_eod = false; };
-   inline void set_eod() { f_eod = true; };
-   inline void set_abort_on_error() { abort_on_error = true; };
-   inline void clear_abort_on_error() { abort_on_error = false; };
-   inline bool is_abort_on_error() { return abort_on_error; };
-   inline bool is_all_vols_to_backup() { return all_vols_to_backup; };
-   inline bool is_remote_docker() { return param_docker_host != NULL; };
+   inline bool is_open() { return bpipe != NULL; }
+   inline bool is_closed() { return bpipe == NULL; }
+   inline bool is_error() { return f_error || f_fatal; }
+   inline void set_error() { f_error = true; }
+   inline bool is_fatal() { return f_fatal || (f_error && abort_on_error); }
+   inline bool is_eod() { return f_eod; }
+   inline void clear_eod() { f_eod = false; }
+   inline void set_eod() { f_eod = true; }
+   inline void set_abort_on_error() { abort_on_error = true; }
+   inline void clear_abort_on_error() { abort_on_error = false; }
+   inline bool is_abort_on_error() { return abort_on_error; }
+   inline bool is_all_vols_to_backup() { return all_vols_to_backup; }
+   inline bool is_remote_docker() { return strlen(param_docker_host.c_str()) > 0; }
    inline int32_t timeout() { return param_timeout; };
 
    DKCOMMCTX(const char *cmd);
@@ -156,7 +163,7 @@ class DKCOMMCTX: public SMARTALLOC {
    bool param_container_run;              /* the restore parameter for container creation and execution */
    bool param_container_imageid;          /* the restore parameter for setting imageid during container creation/run */
    bool param_container_defaultnames;     /* the restore parameter for setting default docker names on container creation */
-   POOLMEM *param_docker_host;            /* use defined docker host to docker operations */
+   POOL_MEM param_docker_host;            /* use defined docker host to docker operations */
    int32_t param_timeout;                 /* a timeout opening container communication pipe, the default is 30 */
    regex_t preg;                          /* this is a regex context for include/exclude */
    bool abort_on_error;                   /* abort on error flag */
@@ -170,23 +177,23 @@ class DKCOMMCTX: public SMARTALLOC {
    bool f_error;                          /* the plugin signaled an error */
    bool f_fatal;                          /* the plugin signaled a fatal error */
    ConfigFile *ini;                       /* restore object config parser */
-   POOLMEM *workingvolume;                /* */
-   POOLMEM *workingdir;                   /* runtime working directory from file daemon */
+   POOL_MEM workingvolume;                /* */
+   POOL_MEM workingdir;                   /* runtime working directory from file daemon */
 
    bool execute_command(bpContext *ctx, POOLMEM *args);
    bool execute_command(bpContext *ctx, const char *args);
    bool execute_command(bpContext *ctx, POOL_MEM &args);
    void parse_parameters(bpContext *ctx, ini_items &item);
-   bool render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, char *value);
-   bool render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, int value);
-   bool render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value);
-   bool render_param(bpContext *ctx, bool *param, const char *pname, const char *name, bool value);
-   bool render_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, int32_t value);
-   bool add_param_str(bpContext *ctx, alist **list, const char *pname, const char *name, char *value);
-   bool parse_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value);
-   bool parse_param(bpContext *ctx, bool *param, const char *pname, const char *name, char *value);
-   bool parse_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, char *value);
-   bool parse_param(bpContext *ctx, DOCKER_BACKUP_MODE_T *param, const char *pname, const char *name, char *value);
+   // bool render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, char *value);
+   // bool render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *fmt, const char *name, int value);
+   // bool render_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value);
+   // bool render_param(bpContext *ctx, bool *param, const char *pname, const char *name, bool value);
+   // bool render_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, int32_t value);
+   // bool add_param_str(bpContext *ctx, alist **list, const char *pname, const char *name, char *value);
+   // bool parse_param(bpContext *ctx, POOLMEM **param, const char *pname, const char *name, char *value);
+   // bool parse_param(bpContext *ctx, bool *param, const char *pname, const char *name, char *value);
+   // bool parse_param(bpContext *ctx, int32_t *param, const char *pname, const char *name, char *value);
+   bool parse_param_mode(bpContext *ctx, DOCKER_BACKUP_MODE_T *param, const char *pname, const char *name, char *value);
 
    void filter_param_to_backup(bpContext *ctx, alist *params, alist *dklist, bool estimate);
    void filter_incex_to_backup(bpContext *ctx, alist *params_include, alist *params_exclude, alist *dklist);
@@ -202,8 +209,9 @@ class DKCOMMCTX: public SMARTALLOC {
    bRC run_container_volume_load(bpContext* ctx, POOLMEM *volname, int jobid);
    bool check_for_docker_errors(bpContext* ctx, char *buf);
    inline void render_imagesave_name(POOL_MEM &out, DKINFO *dkinfo, int jobid)
-      { Mmsg(out, "%s/%s/%d:backup", dkinfo->get_container_names(),
-            dkinfo->get_container_id()->digest_short(), jobid); };
+   {
+      Mmsg(out, "%s/%s/%d:backup", dkinfo->get_container_names(), dkinfo->get_container_id()->digest_short(), jobid);
+   }
    void dump_robjdebug(bpContext *ctx, restore_object_pkt *rop);
 };
 
