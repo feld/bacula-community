@@ -156,14 +156,13 @@ inline bool isourplugincommand(const char *pluginprefix, const char *command)
 alist * plugutil_str_split_to_alist(const char * str, const char sep = '.');
 
 /* plugin parameters manipulation */
-bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, char *value);
-bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, int value);
-bool render_param(bool &param, const char *pname, const char *name, bool value);
+bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const char *value);
+bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const int value);
+bool render_param(bool &param, const char *pname, const char *name, const bool value);
 
-bool parse_param(bool &param, const char *pname, const char *name, char *value);
-bool parse_param(int &param, const char *pname, const char *name, char *value, bool *err = NULL);
-// inline bool parse_param(int32_t &param, const char *pname, const char *name, char *value, bool *err = NULL) { return parse_param((int&)param, pname, name, value, err); }
-bool parse_param(POOL_MEM &param, const char *pname, const char *name, char *value);
+bool parse_param(bool &param, const char *pname, const char *name, const char *value);
+bool parse_param(int &param, const char *pname, const char *name, const char *value, bool *err = NULL);
+bool parse_param(POOL_MEM &param, const char *pname, const char *name, const char *value);
 
 bool setup_param(int32_t &param, const char *pname, const char *name, const int32_t value);
 bool setup_param(bool &param, const char *pname, const char *name, const bool value);

@@ -315,7 +315,7 @@ alist * plugutil_str_split_to_alist(const char * str, const char sep)
  *    True if parameter was rendered
  *    False if it was not the parameter required
  */
-bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, char *value)
+bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const char *value)
 {
    if (bstrcasecmp(name, pname)){
       if (!*param){
@@ -342,7 +342,7 @@ bool render_param(POOLMEM **param, const char *pname, const char *fmt, const cha
  *    True if parameter was rendered
  *    False if it was not the parameter required
  */
-bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, int value)
+bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const int value)
 {
    if (bstrcasecmp(name, pname)){
       if (!*param){
@@ -365,7 +365,7 @@ bool render_param(POOLMEM **param, const char *pname, const char *fmt, const cha
  * @return true
  * @return false
  */
-bool parse_param(POOL_MEM &param, const char *pname, const char *name, char *value)
+bool parse_param(POOL_MEM &param, const char *pname, const char *name, const char *value)
 {
    if (bstrcasecmp(name, pname)){
       pm_strcpy(param, value);
@@ -389,7 +389,7 @@ bool parse_param(POOL_MEM &param, const char *pname, const char *name, char *val
  *    False if it was not the parameter required
  */
 // TODO: It should be called setup_param
-bool render_param(bool &param, const char *pname, const char *name, bool value)
+bool render_param(bool &param, const char *pname, const char *name, const bool value)
 {
    if (bstrcasecmp(name, pname))
    {
@@ -517,7 +517,7 @@ bool parse_param(bool &param, const char *pname, const char *name, const char *v
  * @return true
  * @return false
  */
-bool parse_param(int &param, const char *pname, const char *name, char *value, bool * err)
+bool parse_param(int &param, const char *pname, const char *name, const char *value, bool * err)
 {
    // clear error flag when requested
    if (err != NULL) *err = false;
