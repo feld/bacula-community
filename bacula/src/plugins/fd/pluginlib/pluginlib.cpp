@@ -369,7 +369,7 @@ bool parse_param(POOL_MEM &param, const char *pname, const char *name, char *val
 {
    if (bstrcasecmp(name, pname)){
       pm_strcpy(param, value);
-      DMsg1(DDEBUG, "render param:%s\n", param.c_str());
+      DMsg1(DDEBUG, "parse param:%s\n", param.c_str());
       return true;
    }
    return false;
@@ -388,38 +388,98 @@ bool parse_param(POOL_MEM &param, const char *pname, const char *name, char *val
  *    True if parameter was rendered
  *    False if it was not the parameter required
  */
+// TODO: It should be called setup_param
 bool render_param(bool &param, const char *pname, const char *name, bool value)
 {
-   if (bstrcasecmp(name, pname)){
-      if (param){
-         param = value;
-         DMsg2(DDEBUG, "render param: %s=%s\n", pname, param ? "True" : "False");
-      }
+   if (bstrcasecmp(name, pname))
+   {
+      param = value;
+      DMsg2(DDEBUG, "render param: %s=%s\n", pname, param ? "True" : "False");
       return true;
    }
    return false;
 }
 
-/*
- * Setup XECOMMCTX parameter for boolean from string value.
- *  The parameter value will be false if value start with '0' character and
- *  will be true in any other case. So, when a plugin will have a following:
+/**
+ * @brief Set the up param value
+ *
+ * @param param the param variable where we will setup a parameter
+ * @param pname a name of the parameter to compare
+ * @param name a name of the parameter from parameter list
+ * @param value a value to setup
+ * @return true if parameter was handled
+ * @return false if it was not the parameter required, and param was not changed
+ */
+bool setup_param(int32_t &param, const char *pname, const char *name, const int32_t value)
+{
+   if (bstrcasecmp(name, pname))
+   {
+      param = value;
+      DMsg2(DDEBUG, "setup param: %s=%d\n", pname, param);
+      return true;
+   }
+   return false;
+}
+
+/**
+ * @brief Set the up param value
+ *
+ * @param param the param variable where we will setup a parameter
+ * @param pname a name of the parameter to compare
+ * @param name a name of the parameter from parameter list
+ * @param value a value to setup
+ * @return true if parameter was handled
+ * @return false if it was not the parameter required, and param was not changed
+ */
+bool setup_param(bool &param, const char *pname, const char *name, const bool value)
+{
+   if (bstrcasecmp(name, pname))
+   {
+      param = value;
+      DMsg2(DDEBUG, "render param: %s=%s\n", pname, param ? "True" : "False");
+      return true;
+   }
+   return false;
+}
+
+/**
+ * @brief Set the up param value
+ *
+ * @param param the param variable where we will setup a parameter
+ * @param pname a name of the parameter to compare
+ * @param name a name of the parameter from parameter list
+ * @param value a value to setup
+ * @return true if parameter was handled
+ * @return false if it was not the parameter required, and param was not changed
+ */
+bool setup_param(POOL_MEM &param, const char *pname, const char *name, const char *value)
+{
+   if (bstrcasecmp(name, pname))
+   {
+      pm_strcpy(param, value);
+      DMsg2(DDEBUG, "setup param: %s=%s\n", pname, param.c_str());
+      return true;
+   }
+   return false;
+}
+
+/**
+ * @brief Setup parameter for boolean from string value.
+ * The parameter value will be false if value start with '0' character and
+ * will be true in any other case. So, when a plugin will have a following:
  *    param
  *    param=xxx
  *    param=1
  *  then a param will be set to true.
  *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
- * out:
- *    True if parameter was rendered
- *    False if it was not the parameter required
+ * @param param the param variable where we will render a parameter
+ * @param pname a name of the parameter to compare
+ * @param name a name of the parameter from parameter list
+ * @param value a value to parse
+ * @return true if parameter was parsed
+ * @return false if it was not the parameter required
  */
-bool parse_param(bool &param, const char *pname, const char *name, char *value)
+bool parse_param(bool &param, const char *pname, const char *name, const char *value)
 {
    if (bstrcasecmp(name, pname)){
       if (value && *value == '0'){
@@ -434,16 +494,28 @@ bool parse_param(bool &param, const char *pname, const char *name, char *value)
 }
 
 /*
- * Setup Plugin parameter for integer from string value.
+ *
  *
  * in:
- *    param - a pointer to the param variable where we will render a parameter
- *    pname - a name of the parameter to compare
- *    name - a name of the parameter from parameter list
- *    value - a value to render
+ *    param - a pointer to
+ *    pname -
+ *    name -
+ *    value -
  * out:
  *    True if parameter was parsed
  *    False if it was not the parameter required
+ */
+
+/**
+ * @brief Setup Plugin parameter for integer from string value.
+ *
+ * @param param the param variable where we will render a parameter
+ * @param pname a name of the parameter to compare
+ * @param name a name of the parameter from parameter list
+ * @param value a value to render
+ * @param err a pointer to error flag when conversion was unsuccessful, optional
+ * @return true
+ * @return false
  */
 bool parse_param(int &param, const char *pname, const char *name, char *value, bool * err)
 {
@@ -452,13 +524,16 @@ bool parse_param(int &param, const char *pname, const char *name, char *value, b
 
    if (value && bstrcasecmp(name, pname)){
       /* convert str to integer */
-      param = atoi(value);
-      if (param == 0){
-         /* error in conversion */
-         DMsg2(DERROR, "Invalid %s parameter: %s\n", name, value);
-         // setup error flag
-         if (err != NULL) *err = true;
-         return false;
+      param = strtol(value, NULL, 10);
+      if (param == LONG_MIN || param == LONG_MAX){
+         // error in conversion?
+         if (errno == ERANGE){
+            // yes, error
+            DMsg2(DERROR, "Invalid %s parameter: %s\n", name, value);
+            // setup error flag
+            if (err != NULL) *err = true;
+            return false;
+         }
       }
       DMsg2(DINFO, "%s parameter: %d\n", name, param);
 
@@ -481,18 +556,34 @@ bool parse_param(int &param, const char *pname, const char *name, char *value, b
  *    True if parameter was rendered
  *    False if it was not the parameter required
  */
-bool add_param_str(alist **list, const char *pname, const char *name, char *value)
+bool parse_param_add_str(alist **list, const char *pname, const char *name, const char *value)
+{
+   POOLMEM *param;
+
+   if (list != NULL){
+      if (bstrcasecmp(name, pname)){
+         if (!*list){
+            *list = New(alist(8, not_owned_by_alist));
+         }
+         param = get_pool_memory(PM_NAME);
+         Mmsg(param, "%s", value);
+         (*list)->append(param);
+         DMsg2(DDEBUG, "add param: %s=%s\n", name, param);
+         return true;
+      }
+   }
+   return false;
+}
+
+bool parse_param_add_str(alist &list, const char *pname, const char *name, const char *value)
 {
    POOLMEM *param;
 
    if (bstrcasecmp(name, pname)){
-      if (!*list){
-         *list = New(alist(8, not_owned_by_alist));
-      }
       param = get_pool_memory(PM_NAME);
-      Mmsg(param, "%s", value);
-      (*list)->append(param);
-      DMsg2(DDEBUG, "add param: %s=%s\n", name, value);
+      pm_strcpy(param, value);
+      list.append(param);
+      DMsg2(DDEBUG, "add param: %s=%s\n", name, param);
       return true;
    }
    return false;
