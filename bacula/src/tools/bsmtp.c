@@ -589,8 +589,21 @@ lookup_host:
    chat("MAIL FROM:%s\r\n", cleanup_addr(from_addr, buf, sizeof(buf)));
    
    for (i = 0; i < argc; i++) {
-      Dmsg1(20, "rcpt to: %s\n", argv[i]);
-      chat("RCPT TO:%s\r\n", cleanup_addr(argv[i], buf, sizeof(buf)));
+      char *m = argv[i];
+      if (m) {
+         /* email1,email2,email3 */
+         for (char *end = strchr(m, ','); end ; end = strchr(m, ',')) {
+            *end = 0;
+            Dmsg1(20, "rcpt to: %s\n", argv[i]);
+            chat("RCPT TO:%s\r\n", cleanup_addr(m, buf, sizeof(buf)));
+            m = end+1;            // Move forward
+            *end = ',';           // Get the original string back
+         }
+         if (*m) {              // We should have a last one
+            Dmsg1(20, "rcpt to: %s\n", argv[i]);
+            chat("RCPT TO:%s\r\n", cleanup_addr(m, buf, sizeof(buf)));
+         }
+      }
    }
 
    if (cc_addr) {
