@@ -70,7 +70,6 @@ static bool catalogscmd(UAContext *ua, const char *cmd);
 static bool dot_ls_cmd(UAContext *ua, const char *cmd);
 static bool dot_bvfs_lsdirs(UAContext *ua, const char *cmd);
 static bool dot_bvfs_lsfiles(UAContext *ua, const char *cmd);
-static bool dot_bvfs_ls_all_files(UAContext *ua, const char *cmd);
 static bool dot_bvfs_update(UAContext *ua, const char *cmd);
 static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd);
 static bool dot_bvfs_versions(UAContext *ua, const char *cmd);
@@ -128,7 +127,6 @@ static struct cmdstruct commands[] = { /* help */  /* can be used in runscript *
  { NT_(".actiononpurge"),aopcmd,                 NULL,       true},
  { NT_(".bvfs_lsdirs"), dot_bvfs_lsdirs,         NULL,       true},
  { NT_(".bvfs_lsfiles"),dot_bvfs_lsfiles,        NULL,       true},
- { NT_(".bvfs_ls_all_files"),dot_bvfs_ls_all_files, NULL,    true},
  { NT_(".bvfs_get_volumes"),dot_bvfs_get_volumes,NULL,       true},
  { NT_(".bvfs_update"), dot_bvfs_update,         NULL,       true},
  { NT_(".bvfs_get_jobids"), dot_bvfs_get_jobids, NULL,       true},
@@ -1082,6 +1080,61 @@ static bool dot_bvfs_get_volumes(UAContext *ua, const char *cmd)
 }
 
 /*
+ * .bvfs_lsfiles allfiles jobid=1,2,3,4
+ */
+static bool dot_bvfs_ls_all_files(UAContext *ua, const char *cmd)
+{
+   int limit=2000, offset=0;
+   char *jobid=NULL, *username=NULL;
+   char *pattern=NULL, *filename=NULL;
+   int i;
+
+   if (!bvfs_parse_arg(ua, NULL, NULL, &jobid, &username,
+                       &limit, &offset))
+   {
+      ua->error_msg("Can't find jobid argument\n");
+      return true;              /* not enough param */
+   }
+   if ((i = find_arg_with_value(ua, "pattern")) >= 0) {
+      pattern = ua->argv[i];
+   }
+   if ((i = find_arg_with_value(ua, "filename")) >= 0) {
+      filename = ua->argv[i];
+   }
+
+   if (!open_new_client_db(ua)) {
+      return 1;
+   }
+
+   Bvfs fs(ua->jcr, ua->db);
+   bvfs_set_acl(ua, &fs);
+   fs.set_username(username);
+   if (str_to_int64(jobid) == 0) {
+      if (get_client_jobids(ua, &fs) <= 0) {
+         goto bail_out;
+      }
+   } else {
+      fs.set_jobids(jobid);
+   }
+   fs.set_handler(bvfs_result_handler, ua);
+   fs.set_limit(limit);
+   ua->bvfs = &fs;
+   if (pattern) {
+      fs.set_pattern(pattern);
+   }
+   if (filename) {
+      fs.set_filename(filename);
+   }
+
+   fs.set_offset(offset);
+   fs.ls_all_files();
+
+bail_out:
+   ua->bvfs = NULL;
+   return true;
+}
+
+/*
  * .bvfs_lsfiles jobid=1,2,3,4 pathid=10
  * .bvfs_lsfiles jobid=1,2,3,4 path=/
  */
@@ -1093,6 +1146,10 @@ static bool dot_bvfs_lsfiles(UAContext *ua, const char *cmd)
    char *pattern=NULL, *filename=NULL;
    bool ok;
    int i;
+
+   if (find_arg(ua, "allfiles") > 0) {
+      return dot_bvfs_ls_all_files(ua, cmd);
+   }
 
    if (!bvfs_parse_arg(ua, &pathid, &path, &jobid, &username,
                        &limit, &offset))
@@ -1141,61 +1198,6 @@ static bool dot_bvfs_lsfiles(UAContext *ua, const char *cmd)
 
    fs.set_offset(offset);
    fs.ls_files();
-
-bail_out:
-   ua->bvfs = NULL;
-   return true;
-}
-
-/*
- * .bvfs_ls_all_files jobid=1,2,3,4
- */
-static bool dot_bvfs_ls_all_files(UAContext *ua, const char *cmd)
-{
-   int limit=2000, offset=0;
-   char *jobid=NULL, *username=NULL;
-   char *pattern=NULL, *filename=NULL;
-   int i;
-
-   if (!bvfs_parse_arg(ua, NULL, NULL, &jobid, &username,
-                       &limit, &offset))
-   {
-      ua->error_msg("Can't find jobid argument\n");
-      return true;              /* not enough param */
-   }
-   if ((i = find_arg_with_value(ua, "pattern")) >= 0) {
-      pattern = ua->argv[i];
-   }
-   if ((i = find_arg_with_value(ua, "filename")) >= 0) {
-      filename = ua->argv[i];
-   }
-
-   if (!open_new_client_db(ua)) {
-      return 1;
-   }
-
-   Bvfs fs(ua->jcr, ua->db);
-   bvfs_set_acl(ua, &fs);
-   fs.set_username(username);
-   if (str_to_int64(jobid) == 0) {
-      if (get_client_jobids(ua, &fs) <= 0) {
-         goto bail_out;
-      }
-   } else {
-      fs.set_jobids(jobid);
-   }
-   fs.set_handler(bvfs_result_handler, ua);
-   fs.set_limit(limit);
-   ua->bvfs = &fs;
-   if (pattern) {
-      fs.set_pattern(pattern);
-   }
-   if (filename) {
-      fs.set_filename(filename);
-   }
-
-   fs.set_offset(offset);
-   fs.ls_all_files();
 
 bail_out:
    ua->bvfs = NULL;
