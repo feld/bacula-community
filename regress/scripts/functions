@@ -180,7 +180,7 @@ start_test()
       fi
       DEDUP_CONFIG_FMT=${DEDUP_CONFIG_FMT:-$default_config_dedup_fmt}
       DEDUP_FS_OPTION=${DEDUP_FS_OPTION:-bothsides}
-      mkdir ${working}/dde
+      mkdir -p ${working}/dde
       DEDUP_MAXIMUM_CONTAINER_SIZE=${DEDUP_MAXIMUM_CONTAINER_SIZE:-10MB}
       touch ${working}/dde/dde.conf # When dde.conf exists, DDE create a smaller Index
       $bperl -e 'add_attribute("$conf/bacula-sd.conf", "Plugin Directory", "$plugins", "Storage")'
