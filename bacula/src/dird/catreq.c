@@ -817,7 +817,7 @@ bool despool_attributes_from_file(JCR *jcr, const char *file)
          goto bail_out;
       }
       if (msglen > 0) {
-         if (msglen > (int32_t) sizeof_pool_memory(msg)) {
+         if (msglen >= (int32_t) sizeof_pool_memory(msg)) {
             msg = realloc_pool_memory(msg, msglen + 1);
          }
          nbytes = fread(msg, 1, msglen, spool_fd);
