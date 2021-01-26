@@ -544,10 +544,12 @@ static void label_from_barcodes(UAContext *ua, int drive)
       }
       ua->send_msg("%4d  %s\n", vl->Slot, vl->VolName);
    }
-   if (!get_yesno(ua, _("Do you want to label these Volumes? (yes|no): ")) ||
-       (ua->pint32_val == 0)) {
-      goto bail_out;
-   }
+   if ((find_arg(ua, "yes") < 0) &&
+      (!get_yesno(ua, _("Do you want to label these Volumes? (yes|no): ")) ||
+       (ua->pint32_val == 0))) {
+          goto bail_out;
+       }
+
    /* Select a pool */
    bmemset(&pr, 0, sizeof(pr));
    if (!select_pool_dbr(ua, &pr)) {
