@@ -117,6 +117,7 @@ static RES_ITEM cli_items[] = {
    {"MaximumBandwidthPerJob",store_speed,   ITEM(res_client.max_bandwidth_per_job), 0, 0, 0},
    {"CommCompression",       store_bool,    ITEM(res_client.comm_compression), 0, ITEM_DEFAULT, true},
    {"DisableCommand",        store_alist_str, ITEM(res_client.disable_cmds), 0, 0, 0},
+   {"MaximumJobErrorCount",  store_pint32,    ITEM(res_client.max_job_errors),  0, ITEM_DEFAULT, 1000},
 #if BEEF
    {"DedupIndexDirectory",   store_dir,    ITEM(res_client.dedup_index_dir), 0, 0, 0}, /* deprecated */
    {"EnableClientRehydration", store_bool,    ITEM(res_client.allow_dedup_cache), 0, ITEM_DEFAULT, false},

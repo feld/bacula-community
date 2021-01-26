@@ -713,7 +713,7 @@ finish_sending:
       berrno be;
       Jmsg(jcr, M_ERROR, 0, _("Read error on file %s. ERR=%s\n"),
          bctx.ff_pkt->snap_fname, be.bstrerror(bctx.ff_pkt->bfd.berrno));
-      if (jcr->JobErrors++ > 1000) {       /* insanity check */
+      if (jcr->JobErrors++ > me->max_job_errors) {       /* insanity check */
          Jmsg(jcr, M_FATAL, 0, _("Too many errors. JobErrors=%d.\n"), jcr->JobErrors);
       }
    } else if (bctx.ff_pkt->flags & FO_ENCRYPT) {
