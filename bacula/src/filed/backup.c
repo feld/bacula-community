@@ -713,7 +713,8 @@ finish_sending:
       berrno be;
       Jmsg(jcr, M_ERROR, 0, _("Read error on file %s. ERR=%s\n"),
          bctx.ff_pkt->snap_fname, be.bstrerror(bctx.ff_pkt->bfd.berrno));
-      if (jcr->JobErrors++ > me->max_job_errors) {       /* insanity check */
+      /* It's possible for user to set max job errors to 0 as an infinite value */
+      if (me->max_job_errors && (jcr->JobErrors++ > me->max_job_errors)) {       /* insanity check */
          Jmsg(jcr, M_FATAL, 0, _("Too many errors. JobErrors=%d.\n"), jcr->JobErrors);
       }
    } else if (bctx.ff_pkt->flags & FO_ENCRYPT) {
