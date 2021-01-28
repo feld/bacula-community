@@ -23,7 +23,7 @@ nice ctest --output-on-failure -D Nightly -R "^(disk|tape|changer):"
 rtn=$?
 i=0
 while [ $i -le 5 ]; do
-   if [ $rtn = 0 ] || [ "$rtn" = "8" ] ; then
+   if [ "$rtn" = 0 -o "$rtn" = "8" -o "$rtn" = 3 ] ; then
       break;
    fi
    echo "Submit failed, waiting 5 mins"
