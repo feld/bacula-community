@@ -617,10 +617,11 @@ static bRC endRestoreFile(bpContext *ctx)
 static bRC createFile(bpContext *ctx, struct restore_pkt *rp)
 {
 // printf("bpipe-fd: createFile\n");
-   if (strlen(rp->where) > 512) {
-      printf("Restore target dir too long. Restricting to first 512 bytes.\n");
+   uint sz = sizeof(((struct plugin_ctx *)ctx->pContext)->where);
+   if (strlen(rp->where) > sz) {
+      printf("Restore target dir too long. Restricting to first %u bytes.\n", sz);
    }
-   bstrncpy(((struct plugin_ctx *)ctx->pContext)->where, rp->where, 512);
+   bstrncpy(((struct plugin_ctx *)ctx->pContext)->where, rp->where, sz);
    ((struct plugin_ctx *)ctx->pContext)->replace = rp->replace;
    rp->create_status = CF_EXTRACT;
    return bRC_OK;

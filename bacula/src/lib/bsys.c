@@ -1959,6 +1959,10 @@ int main(int argc, char **argv)
 
    ok(get_user_home_directory("root", home.addr()) == 0, "get_user_home_directory()");
 
+   const char *p = "/@MYSQL/xxxx";
+   char type[10];
+   bstrncpy(type, p, 8);
+   ok(strcmp(type, "/@MYSQL") == 0, "bstrncpy()");
    return report();
 }
 #endif

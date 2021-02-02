@@ -176,7 +176,10 @@ int MSGS::add_custom_type(bool is_not, char *type)
    }
 
    int len = strlen(type);
-   t = (CUSTOM_TYPE*) malloc(sizeof(CUSTOM_TYPE)+len+1);
+   /* No need for additional byte for null terminating byte since
+    * placeholder for it is already in CUSTOM_TYPE struct
+    */
+   t = (CUSTOM_TYPE*) malloc(sizeof(CUSTOM_TYPE)+len);
    bstrncpy(t->kw, type, len+1);
    CUSTOM_TYPE *t2 = (CUSTOM_TYPE*) custom_type->insert(t, custom_type_insert);
    if (t2 == t) {

@@ -149,7 +149,7 @@ bool job_cmd(JCR *jcr)
     * Pass back an authorization key for the File daemon
     */
    if (jcr->sd_client) {
-      bstrncpy(sd_auth_key, "xxx", 3);
+      bstrncpy(sd_auth_key, "xxx", 4); /* include \0 */
    } else {
       bsnprintf(seed, sizeof(seed), "%p%d", jcr, JobId);
       make_session_key(sd_auth_key, seed, 1);

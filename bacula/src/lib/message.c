@@ -833,9 +833,8 @@ static void send_to_syslog(int mode, const char *msg)
    }
 
    while (*p && ((p2 = strchr(p, '\n')) != NULL)) {
-      len = MIN((int)sizeof(buf) - 1, p2 - p + 1); /* Add 1 to keep \n */
+      len = MIN((int)sizeof(buf), p2 - p + 1); /* Add 1 to keep \n */
       bstrncpy(buf, p, len);
-      buf[len] = 0;
       syslog(mode, "%s", buf);
       p = p2+1;                 /* skip \n */
    }
