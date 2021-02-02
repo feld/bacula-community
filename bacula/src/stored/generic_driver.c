@@ -47,7 +47,7 @@ cloud_driver *BaculaCloudDriver()
 }
 #endif
 /* taken from plugins */
-static ssize_t full_write(FILE *fp, char *ptr, int32_t nbytes, cancel_callback *cancel_cb=NULL) 
+static ssize_t full_write(FILE *fp, char *ptr, int32_t nbytes, cancel_callback *cancel_cb=NULL)
 {
    int fd = fileno(fp);
    int32_t nleft, nwritten;
@@ -157,9 +157,9 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
       max_concurrent_downloads = cloud->max_concurrent_downloads;
       upload_limit.set_bwlimit(cloud->upload_limit);
       download_limit.set_bwlimit(cloud->download_limit);
-      
+
       driver_command = cloud->driver_command;
-      
+
 
       pm_strcpy(host_env, "CLOUD_HOST=");
       pm_strcat(host_env, NPRTB(host_name));
@@ -214,7 +214,7 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
       pm_strcpy(max_concurrent_uploads_env, "CLOUD_MAX_CONCURRENT_UPLOADS=");
       pm_strcat(max_concurrent_uploads_env, b);
       envs[12] = max_concurrent_uploads_env;
-      
+
       sprintf(b, "%d", max_concurrent_downloads);
       pm_strcpy(max_concurrent_downloads_env, "CLOUD_MAX_CONCURRENT_DOWNLOADS=");
       pm_strcat(max_concurrent_downloads_env, b);
@@ -224,12 +224,12 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
       pm_strcpy(upload_limit_env, "CLOUD_UPLOAD_LIMIT=");
       pm_strcat(upload_limit_env, b);
       envs[14] = upload_limit_env;
-      
+
       sprintf(b, "%lld", (long long) cloud->download_limit);
       pm_strcpy(download_limit_env, "CLOUD_DOWNLOAD_LIMIT=");
       pm_strcat(download_limit_env, b);
       envs[15] = download_limit_env;
-      
+
       pm_strcpy(debug_env, "CLOUD_DEBUG=");
       if (chk_dbglvl(dbglvl)) pm_strcat(debug_env, "TRUE");
       envs[16] = debug_env;
@@ -331,21 +331,21 @@ int handle_error(int stat, POOLMEM *&err)
 
 /*
 Main contact point with the script. The script is always called with the following parameters
-in this exact order : 
-fct_name, 
-volume_name, 
-cache_name, 
-partname ("part.x"). 
+in this exact order :
+fct_name,
+volume_name,
+cache_name,
+partname ("part.x").
 
 Depending on fct_name, some parameters can be NULL ("*None*").
 
 call_fct Control I/Os with the script and calls read_cb and write_cb in return.
 
-read_cb : is called when data from the script is available for read. First argument is the data buffer ready 
+read_cb : is called when data from the script is available for read. First argument is the data buffer ready
 for read. Second argument is the size of the data. The last argument is the arg parameter that's been passed at cb creation.
 A typical read_cb function will parse the data buffer for some information/error message or copy the data buffer to file.
 
-write_cb : is called when the script is ready to write data. First argument is the data buffer to fill with data. 
+write_cb : is called when the script is ready to write data. First argument is the data buffer to fill with data.
 Second argument is the max size of the data. The last argument is the arg parameter that's been passed at cb creation.
 The write_cb function must return the actual written size in the data buffer within the write_cb function, 0 if the file is to be closed (eof)
 or -1 in case of error (in this case, data buffer contains the error text).
@@ -365,10 +365,10 @@ int generic_driver::call_fct(const char* fct_name,
 {
    POOL_MEM cmd(PM_FNAME);
    if (cache_path_name) {
-      Mmsg(cmd, "%s %s %s part.%d %s", 
+      Mmsg(cmd, "%s %s %s part.%d %s",
          driver_command, fct_name, NPRT(volume_name), part_number, cache_path_name);
    } else {
-      Mmsg(cmd, "%s %s %s part.%d", 
+      Mmsg(cmd, "%s %s %s part.%d",
          driver_command, fct_name, NPRT(volume_name), part_number);
    }
 
@@ -384,7 +384,7 @@ int generic_driver::call_fct(const char* fct_name,
                               POOLMEM *&err)
 {
    POOL_MEM cmd(PM_FNAME);
-   Mmsg(cmd, "%s %s %s %s", 
+   Mmsg(cmd, "%s %s %s %s",
       driver_command, fct_name, NPRT(volume_name), NPRT(part_name));
 
    return call_fct(cmd.addr(), read_cb, write_cb, cancel_cb, err);
@@ -423,7 +423,7 @@ int generic_driver::call_fct(char* cmd,
    }
 
    cancel = (cancel_cb && cancel_cb->fct && cancel_cb->fct(cancel_cb->arg));
-   
+
    while(!cancel) {
       int rfd = bpipe->rfd ? fileno(bpipe->rfd):-1;
       int wfd = bpipe->wfd ? fileno(bpipe->wfd):-1;
@@ -594,7 +594,7 @@ size_t copy_cache_part_to_cloud_write_cb(char *res, size_t block_size, void* arg
             if (_arg->xfer) {
                _arg->xfer->increment_processed_size(ret);
             }
-         } 
+         }
       }
    }
    return ret;
@@ -654,7 +654,7 @@ bool generic_driver::copy_cache_part_to_cloud(transfer *xfer)
          if (retry < max_upload_retries) {
             if (xfer->m_message) {
                Dmsg3(dbglvl, "%s retry #%d err=%d\n", xfer->m_message, (max_upload_retries-retry), ret);
-            } else { 
+            } else {
                Dmsg3(dbglvl, "generic_driver::copy_cache_part_to_cloud part.%d retry #%d err=%d\n", xfer->m_part, (max_upload_retries-retry), ret);
             }
             /* And we clean the cloud part, in case the cloud target is a mess */
@@ -680,7 +680,7 @@ bool generic_driver::copy_cache_part_to_cloud(transfer *xfer)
       free(fname);
       return (ret==0);
 
-   } else { 
+   } else {
       uint32_t retry = max_upload_retries;
       int ret=-1;
       while ((ret!=0) && (retry>0)) {
@@ -690,7 +690,7 @@ bool generic_driver::copy_cache_part_to_cloud(transfer *xfer)
          if (retry < max_upload_retries) {
             if (xfer->m_message) {
                Dmsg3(dbglvl, "%s retry #%d err=%d\n", xfer->m_message, (max_upload_retries-retry), ret);
-            } else { 
+            } else {
                Dmsg3(dbglvl, "generic_driver::copy_cache_part_to_cloud part.%d retry #%d err=%d\n", xfer->m_part, (max_upload_retries-retry), ret);
             }
             /* And we clean the cloud part, in case the cloud target is a mess */
@@ -904,7 +904,7 @@ int generic_driver::copy_cloud_part_to_cache(transfer *xfer)
 }
 
 bool generic_driver::restore_cloud_object(transfer *xfer, const char *cloud_fname)
-{ 
+{
    (void) (xfer);
    (void) (cloud_fname);
    /* not implemented */
@@ -1153,7 +1153,7 @@ size_t get_cloud_volumes_list_read_cb(char* res, size_t size, void *arg)
       volumes = _arg->volumes;
       remain = _arg->remain;
    }
-   
+
    if (volumes) {
       /* do the actual process */
       char * pch = strtok (res,"\n");

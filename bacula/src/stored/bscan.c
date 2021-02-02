@@ -97,7 +97,6 @@ static int num_plugin_objects = 0;
 static CONFIG *config;
 #define CONFIG_FILE "bacula-sd.conf"
 
-void *start_heap;
 char *configfile = NULL;
 
 static void usage()

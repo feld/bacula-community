@@ -53,7 +53,6 @@ static CONFIG *config;
 bool filter = false;                  /* any filter set ? */
 bool dedup = false;                   /* decode dedup reference */
 
-void *start_heap;
 #define CONFIG_FILE "bacula-sd.conf"
 char *configfile = NULL;
 bool detect_errors = false;
