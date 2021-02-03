@@ -94,6 +94,7 @@ $(BINDIR)/cdp-fd.dll: $(CDP_OBJS) $(LIBS_BACULA)
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/cdp-fd.a $^ $(LIBS_DLL) -o $@
+	$(BUILDDIR)/sign-binaries $@
 
 #$(LIBDIR)/libexchange-fd.a: DLL_DEFINE=USING_DLL
 
@@ -109,6 +110,7 @@ $(BINDIR)/exchange-fd.dll: $(EXCHANGE_OBJS) exchange-fd.def
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/exchange-fd.a $^ $(LIBS_DLL) -o $@
+	$(BUILDDIR)/sign-binaries $@
 
 $(BINDIR)/cdp-fd.dll: DLL_DEFINE=BUILDING_DLL
 
@@ -125,6 +127,7 @@ $(BINDIR)/bpipe-fd.dll: $(BPIPE_OBJS) bpipe-fd.def $(LIBS_BACULA)
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(CFLAGS) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/bpipe-fd.a $^ $(LIBS_DLL) -o $@
+	$(BUILDDIR)/sign-binaries $@
 
 $(BINDIR)/alldrives-fd.dll: DLL_DEFINE=BUILDING_DLL
 
@@ -132,6 +135,7 @@ $(BINDIR)/alldrives-fd.dll: $(OBJDIR)/alldrives-fd.o $(LIBS_BACULA)
 	@echo "Linking $@"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) $(CFLAGS) $(LDFLAGS) -mdll -mwindows -Wl,--out-implib,$(OBJDIR)/alldrives-fd.a $^ $(LIBS_DLL) -o $@
+	$(BUILDDIR)/sign-binaries $@
 
 include $(BUILDDIR)/Makefile.rules
 

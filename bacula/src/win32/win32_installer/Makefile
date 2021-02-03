@@ -184,5 +184,4 @@ $(INSTALL_EXE): winbacula.nsi $(addprefix release32/,$(BACULA_BINARIES) $(SCRIPT
 	makensis -V3 $(DEFINES) winbacula.nsi
 	../sign-binaries ../release32/bacula-*$(VERSION).exe
 
-
 include $(BUILDDIR)/Makefile.rules
