@@ -58,7 +58,7 @@ bool drivetype(const char *fname, char *dt, int dtlen)
    UINT type;
 
    /* Copy Drive Letter, colon, and backslash to rootpath. bstrncpy will null-terminate the string  */
-   bstrncpy(rootpath, fname, sizeof(rootpath);
+   bstrncpy(rootpath, fname, sizeof(rootpath));
 
    type = GetDriveType(rootpath);
 
