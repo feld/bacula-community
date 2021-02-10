@@ -28,7 +28,11 @@
  */
 
 #include "s3_driver.h"
+
+#if BEEF
 #include "bee_s3_cloud_glacier.h"
+#endif
+
 #include <dlfcn.h>
 #include <fcntl.h>
 
