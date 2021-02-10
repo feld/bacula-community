@@ -9,10 +9,11 @@
 
 # No optimization for now for easy debugging
 
-FDDIR=../../../filed
-SRCDIR=../../..
-LIBDIR=../../../lib
 FDPLUGDIR=..
+SRCDIR=$(FDPLUGDIR)/../..
+FDDIR=$(SRCDIR)/filed
+LIBDIR=$(SRCDIR)/lib
+PLUGINLIBDIR=$(FDPLUGDIR)/pluginlib
 
 topdir = @BUILD_DIR@
 working_dir=@working_dir@
@@ -34,10 +35,10 @@ all: docker-fd.la
 	@echo "Compiling $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -I${FDPLUGDIR} -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -c $(@:.lo=.c)
 
-$(FDPLUGDIR)/pluglib.lo:
-	$(MAKE) -C $(FDPLUGDIR) pluglib.lo
+$(PLUGINLIBDIR)/pluginlib.lo: $(PLUGINLIBDIR)/pluginlib.cpp $(PLUGINLIBDIR)/pluginlib.h
+	$(MAKE) -C $(PLUGINLIBDIR) pluginlib.lo
 
-docker-fd.la: Makefile $(DOCKEROBJ) $(FDPLUGDIR)/pluglib.lo $(DOCKERSRCH)
+docker-fd.la: Makefile $(DOCKEROBJ) $(PLUGINLIBDIR)/pluginlib.lo $(DOCKERSRCH)
 	@echo "Linking $(@:.la=.so) ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 
