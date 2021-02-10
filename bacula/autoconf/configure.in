@@ -3326,13 +3326,6 @@ AC_SUBST(LDAP_INC)
 AC_SUBST(LDAP_LIBS)
 
 dnl
-
-dnl Enable/Disable plugin support
-dnl
-
-PLUGCONFILES=""
-
-dnl
 dnl Bacula Pluggable Authentication Modules - Director Plugins
 dnl
 
