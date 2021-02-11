@@ -430,6 +430,7 @@ src/qt-console/.*.swp
 src/qt-console/1
 src/qt-console/diff
 src/qt-console/bat.pro
+src/qt-console/bat.pro.mingw64
 src/qt-console/install_conf_file
 src/qt-console/config.out
 src/qt-console/.kdbgrc.bat
