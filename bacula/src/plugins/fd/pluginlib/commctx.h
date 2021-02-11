@@ -23,8 +23,7 @@
  * @version 1.2.0
  * @date 2020-01-05
  *
- * @copyright Copyright (c) 2021 All rights reserved.
- *            IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #ifndef PLUGINLIB_COMMCTX_H

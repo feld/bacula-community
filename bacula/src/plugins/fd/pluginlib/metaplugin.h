@@ -1,19 +1,21 @@
 /*
-   Bacula® - The Network Backup Solution
+   Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2007-2017 Bacula Systems SA
-   All rights reserved.
+   Copyright (C) 2000-2020 Kern Sibbald
 
-   The main author of Bacula is Kern Sibbald, with contributions from many
-   others, a complete list can be found in the file AUTHORS.
+   The original author of Bacula is Kern Sibbald, with contributions
+   from many others, a complete list can be found in the file AUTHORS.
 
-   Licensees holding a valid Bacula Systems SA license may use this file
-   and others of this release in accordance with the proprietary license
-   agreement provided in the LICENSE file.  Redistribution of any part of
-   this release is not permitted.
+   You may use this file and others of this release according to the
+   license defined in the LICENSE file, which includes the Affero General
+   Public License, v3.0 ("AGPLv3") and some additional permissions and
+   terms pursuant to its AGPLv3 Section 7.
 
-   Bacula® is a registered trademark of Kern Sibbald.
-*/
+   This notice must be preserved when any source code is
+   conveyed and/or propagated.
+
+   Bacula(R) is a registered trademark of Kern Sibbald.
+ */
 /**
  * @file metaplugin.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
@@ -21,8 +23,7 @@
  * @version 2.1.0
  * @date 2020-12-23
  *
- * @copyright Copyright (c) 2021 All rights reserved.
- *            IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #include "pluginlib.h"
@@ -48,6 +49,8 @@ extern const char *PLUGIN_DESCRIPTION;
 // Plugin linking time variables
 extern const char *PLUGINPREFIX;
 extern const char *PLUGINNAME;
+extern const char *PLUGINNAMESPACE;
+extern const bool CUSTOMNAMESPACE;
 extern const char *PLUGINAPI;
 extern const char *BACKEND_CMD;
 
@@ -65,7 +68,7 @@ extern const char *valid_params[];
 class METAPLUGIN: public SMARTALLOC
 {
 public:
-   enum class MODE
+   enum MODE
    {
       NONE = 0,
       BACKUP_FULL,
@@ -101,11 +104,11 @@ public:
    ~METAPLUGIN();
 
 private:
-   enum ListingMode
+   enum LISTING
    {
       ListingNone,
-      Listing,
-      QueryParams,
+      ListingMode,
+      ListingQueryParams,
    };
 
    // TODO: define a variable which will signal job cancel
@@ -121,7 +124,7 @@ private:
    char replace;                 // the replace variable for restore job
    bool robjsent;                // set when RestoreObject was sent during Full backup
    bool estimate;                // used when mode is METAPLUGIN_BACKUP_* but we are doing estimate only
-   ListingMode listing;          // used for a Listing procedure for estimate
+   LISTING listing;              // used for a Listing procedure for estimate
    bool nodata;                  // set when backend signaled no data for backup or no data for restore
    bool nextfile;                // set when IO_CLOSE got FNAME: command
    bool openerror;               // show if "openfile" was unsuccessful

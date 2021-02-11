@@ -1,19 +1,21 @@
 /*
-   Bacula® - The Network Backup Solution
+   Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2007-2017 Bacula Systems SA
-   All rights reserved.
+   Copyright (C) 2000-2020 Kern Sibbald
 
-   The main author of Bacula is Kern Sibbald, with contributions from many
-   others, a complete list can be found in the file AUTHORS.
+   The original author of Bacula is Kern Sibbald, with contributions
+   from many others, a complete list can be found in the file AUTHORS.
 
-   Licensees holding a valid Bacula Systems SA license may use this file
-   and others of this release in accordance with the proprietary license
-   agreement provided in the LICENSE file.  Redistribution of any part of
-   this release is not permitted.
+   You may use this file and others of this release according to the
+   license defined in the LICENSE file, which includes the Affero General
+   Public License, v3.0 ("AGPLv3") and some additional permissions and
+   terms pursuant to its AGPLv3 Section 7.
 
-   Bacula® is a registered trademark of Kern Sibbald.
-*/
+   This notice must be preserved when any source code is
+   conveyed and/or propagated.
+
+   Bacula(R) is a registered trademark of Kern Sibbald.
+ */
 /**
  * @file metaplugin.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
@@ -21,8 +23,7 @@
  * @version 2.1.0
  * @date 2020-12-23
  *
- * @copyright Copyright (c) 2021 All rights reserved.
- *            IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #include "metaplugin.h"
@@ -145,7 +146,7 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       ctx(NULL),
       backend_available(false),
       backend_error(PM_MESSAGE),
-      mode(MODE::NONE),
+      mode(NONE),
       JobId(0),
       JobName(NULL),
       since(0),
@@ -376,7 +377,7 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
       if (strcasecmp(parser.argk[i], "listing") == 0){
          /* found, so check the value if provided */
          if (parser.argv[i]){
-            listing = Listing;
+            listing = ListingMode;
             DMSG0(ctx, DINFO, "listing procedure param found\n");
          }
       }
@@ -384,7 +385,7 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
       if (strcasecmp(parser.argk[i], "query") == 0){
          /* found, so check the value if provided */
          if (parser.argv[i]){
-            listing = QueryParams;
+            listing = ListingQueryParams;
             DMSG0(ctx, DINFO, "query procedure param found\n");
          }
       }
@@ -630,102 +631,98 @@ bRC METAPLUGIN::terminate_all_backends(bpContext *ctx)
 bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
 {
    int32_t rc;
-   int len;
-   bRC status = bRC_OK;
-   POOLMEM *cmd;
+   POOL_MEM cmd;
    char lvl;
 
-   cmd = get_pool_memory(PM_FNAME);
-   len = sizeof_pool_memory(cmd);
    /* we will be sending Job Info data */
-   bsnprintf(cmd, len, "Job\n");
+   pm_strcpy(cmd, "Job\n");
    rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
-      status = bRC_Error;
-      goto bailout;
+      return bRC_Error;
    }
    /* required parameters */
-   bsnprintf(cmd, len, "Name=%s\n", JobName);
+   Mmsg(cmd, "Name=%s\n", JobName);
    rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
-      status = bRC_Error;
-      goto bailout;
+      return bRC_Error;
    }
-   bsnprintf(cmd, len, "JobID=%i\n", JobId);
+   Mmsg(cmd, "JobID=%i\n", JobId);
    rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
-      status = bRC_Error;
-      goto bailout;
+      return bRC_Error;
    }
-   bsnprintf(cmd, len, "Type=%c\n", type);
+   Mmsg(cmd, "Type=%c\n", type);
    rc = backend.ctx->write_command(ctx, cmd);
    if (rc < 0){
       /* error */
-      status = bRC_Error;
-      goto bailout;
+      return bRC_Error;
    }
    /* optional parameters */
-   if (mode != MODE::RESTORE){
+   if (mode != RESTORE){
       switch (mode){
-         case MODE::BACKUP_FULL:
+         case BACKUP_FULL:
             lvl = 'F';
             break;
-         case MODE::BACKUP_DIFF:
+         case BACKUP_DIFF:
             lvl = 'D';
             break;
-         case MODE::BACKUP_INCR:
+         case BACKUP_INCR:
             lvl = 'I';
             break;
          default:
             lvl = 0;
       }
       if (lvl){
-         bsnprintf(cmd, len, "Level=%c\n", lvl);
+         Mmsg(cmd, "Level=%c\n", lvl);
          rc = backend.ctx->write_command(ctx, cmd);
          if (rc < 0){
             /* error */
-            status = bRC_Error;
-            goto bailout;
+         return bRC_Error;
          }
       }
    }
    if (since){
-      bsnprintf(cmd, len, "Since=%ld\n", since);
+      Mmsg(cmd, "Since=%ld\n", since);
       rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
-         status = bRC_Error;
-         goto bailout;
+         return bRC_Error;
       }
    }
    if (where){
-      bsnprintf(cmd, len, "Where=%s\n", where);
+      Mmsg(cmd, "Where=%s\n", where);
       rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
-         status = bRC_Error;
-         goto bailout;
+         return bRC_Error;
       }
    }
    if (regexwhere){
-      bsnprintf(cmd, len, "RegexWhere=%s\n", regexwhere);
+      Mmsg(cmd, "RegexWhere=%s\n", regexwhere);
       rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
-         status = bRC_Error;
-         goto bailout;
+         return bRC_Error;
       }
    }
    if (replace){
-      bsnprintf(cmd, len, "Replace=%c\n", replace);
+      Mmsg(cmd, "Replace=%c\n", replace);
       rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0){
          /* error */
-         status = bRC_Error;
-         goto bailout;
+         return bRC_Error;
+      }
+   }
+
+   if (CUSTOMNAMESPACE){
+      Mmsg(cmd, "Namespace=%s\n", PLUGINNAMESPACE);
+      rc = backend.ctx->write_command(ctx, cmd);
+      if (rc < 0){
+         /* error */
+         return bRC_Error;
       }
    }
    backend.ctx->signal_eod(ctx);
@@ -733,12 +730,10 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
    if (!backend.ctx->read_ack(ctx)){
       DMSG0(ctx, DERROR, "Wrong backend response to Job command.\n");
       JMSG0(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to Job command.\n");
-      status = bRC_Error;
+      return bRC_Error;
    }
 
-bailout:
-   free_pool_memory(cmd);
-   return status;
+   return bRC_OK;
 }
 
 /*
@@ -967,7 +962,7 @@ bRC METAPLUGIN::send_startrestore(bpContext *ctx)
    /* here we expect a PIPE: command only */
    if (scan_parameter_str(cmd, "PIPE:", extpipename)){
       /* got PIPE: */
-      DMSG(ctx, DINFO, "PIPE:%s\n", extpipename);
+      DMSG(ctx, DINFO, "PIPE:%s\n", extpipename.c_str());
       backend.ctx->set_extpipename(extpipename.c_str());
       /* TODO: decide if plugin should verify if extpipe is available */
       pm_strcpy(cmd, "OK\n");
@@ -1093,7 +1088,7 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
          break;
       case BACKEND_JOB_INFO_ESTIMATE:
          /* Start Estimate or Listing (4) */
-         if (listing){
+         if (listing != ListingNone){
             DMSG0(ctx, DINFO, "Start Listing (4) ...\n");
             if (send_startlisting(ctx) != bRC_OK){
                backend.ctx->terminate(ctx);
@@ -1162,15 +1157,15 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       switch (lvl) {
          case 'F':
             DMSG0(ctx, D2, "backup level = Full\n");
-            mode = MODE::BACKUP_FULL;
+            mode = BACKUP_FULL;
             break;
          case 'I':
             DMSG0(ctx, D2, "backup level = Incr\n");
-            mode = MODE::BACKUP_INCR;
+            mode = BACKUP_INCR;
             break;
          case 'D':
             DMSG0(ctx, D2, "backup level = Diff\n");
-            mode = MODE::BACKUP_DIFF;
+            mode = BACKUP_DIFF;
             break;
          default:
             DMSG0(ctx, D2, "unsupported backup level!\n");
@@ -1199,7 +1194,7 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       DMSG(ctx, DINFO, "RegexWhere=%s\n", NPRT(regexwhere));
       getBaculaVar(bVarReplace, &replace);
       DMSG(ctx, DINFO, "Replace=%c\n", replace);
-      mode = MODE::RESTORE;
+      mode = RESTORE;
       break;
 
    case bEventEndRestoreJob:
@@ -1740,11 +1735,11 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
       case IO_OPEN:
          DMSG(ctx, D2, "IO_OPEN: (%s)\n", io->fname);
          switch (mode){
-            case MODE::BACKUP_FULL:
-            case MODE::BACKUP_INCR:
-            case MODE::BACKUP_DIFF:
+            case BACKUP_FULL:
+            case BACKUP_INCR:
+            case BACKUP_DIFF:
                return perform_backup_open(ctx, io);
-            case MODE::RESTORE:
+            case RESTORE:
                nodata = true;
                break;
             default:
@@ -1757,9 +1752,9 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
             DMSG2(ctx, D2, "IO_READ buf=%p len=%d\n", io->buf, io->count);
          }
          switch (mode){
-            case MODE::BACKUP_FULL:
-            case MODE::BACKUP_INCR:
-            case MODE::BACKUP_DIFF:
+            case BACKUP_FULL:
+            case BACKUP_INCR:
+            case BACKUP_DIFF:
                return perform_read_data(ctx, io);
             default:
                return bRC_Error;
@@ -1771,7 +1766,7 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
             DMSG2(ctx, D2, "IO_WRITE buf=%p len=%d\n", io->buf, io->count);
          }
          switch (mode){
-            case MODE::RESTORE:
+            case RESTORE:
                return perform_write_data(ctx, io);
             default:
                return bRC_Error;
@@ -1784,11 +1779,11 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
             return bRC_Error;
          }
          switch (mode){
-            case MODE::RESTORE:
+            case RESTORE:
                return perform_write_end(ctx, io);
-            case MODE::BACKUP_FULL:
-            case MODE::BACKUP_INCR:
-            case MODE::BACKUP_DIFF:
+            case BACKUP_FULL:
+            case BACKUP_INCR:
+            case BACKUP_DIFF:
                return perform_read_metadata(ctx);
             default:
                return bRC_Error;
@@ -1844,7 +1839,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    int reqparams = 2;
 
    /* The first file in Full backup, is the RestoreObject */
-   if (!estimate && mode == MODE::BACKUP_FULL && robjsent == false) {
+   if (!estimate && mode == BACKUP_FULL && robjsent == false) {
       ConfigFile ini;
 
       /* robj for the first time, allocate the buffer */
@@ -1910,8 +1905,8 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
                default:
                   /* we need to signal error */
                   sp->type = FT_REG;
-                  DMSG2(ctx, DERROR, "Invalid file type: %c for %s\n", type, fname);
-                  JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", type, fname);
+                  DMSG2(ctx, DERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
+                  JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
             }
             DMSG6(ctx, DINFO, "STAT:%c size:%lld uid:%d gid:%d mode:%06o nl:%d\n", type, size, uid, gid, perms, nlinks);
             reqparams--;
@@ -2003,7 +1998,7 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
 
    if (!estimate){
       /* The current file was the restore object, so just ask for the next file */
-      if (mode == MODE::BACKUP_FULL && robjsent == false) {
+      if (mode == BACKUP_FULL && robjsent == false) {
          robjsent = true;
          return bRC_More;
       }
@@ -2219,7 +2214,7 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
    DMSG0(ctx, D1, "METAPLUGIN::queryParameter\n");
 
    if (listing == ListingNone){
-      listing = QueryParams;
+      listing = ListingQueryParams;
       Mmsg(cmd, "%s query=%s", qp->command, qp->parameter);
       if (prepare_backend(ctx, BACKEND_JOB_INFO_ESTIMATE, cmd.c_str()) == bRC_Error){
          return bRC_Error;

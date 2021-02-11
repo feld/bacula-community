@@ -1,7 +1,7 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2019 Kern Sibbald
+   Copyright (C) 2000-2020 Kern Sibbald
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -15,14 +15,15 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
-*/
-/*
- * This is a Bacula plugin for backup/restore Docker using native tools.
+ */
+/**
+ * @file dkinfo.c
+ * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @brief This is a Bacula plugin for backup/restore Docker using native tools.
+ * @version 1.2.1
+ * @date 2020-01-05
  *
- * Author: Radosław Korzeniewski, MMXIX
- * radoslaw@korzeniewski.net, radekk@inteos.pl
- * Inteos Sp. z o.o. http://www.inteos.pl/
- *
+ * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  * TODO: add unittests
  */
 

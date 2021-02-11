@@ -1,27 +1,29 @@
 /*
-   Bacula® - The Network Backup Solution
+   Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2007-2017 Bacula Systems SA
-   All rights reserved.
+   Copyright (C) 2000-2020 Kern Sibbald
 
-   The main author of Bacula is Kern Sibbald, with contributions from many
-   others, a complete list can be found in the file AUTHORS.
+   The original author of Bacula is Kern Sibbald, with contributions
+   from many others, a complete list can be found in the file AUTHORS.
 
-   Licensees holding a valid Bacula Systems SA license may use this file
-   and others of this release in accordance with the proprietary license
-   agreement provided in the LICENSE file.  Redistribution of any part of
-   this release is not permitted.
+   You may use this file and others of this release according to the
+   license defined in the LICENSE file, which includes the Affero General
+   Public License, v3.0 ("AGPLv3") and some additional permissions and
+   terms pursuant to its AGPLv3 Section 7.
 
-   Bacula® is a registered trademark of Kern Sibbald.
-*/
-/*
- * File:   test_rhv_backend.c
- * Author: radekk, radoslaw@korzeniewski.net
+   This notice must be preserved when any source code is
+   conveyed and/or propagated.
+
+   Bacula(R) is a registered trademark of Kern Sibbald.
+ */
+/**
+ * @file test_metaplugin_backend.cpp
+ * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @brief This is a dumb and extremely simple backend simulator used for test Metaplugin.
+ * @version 2.1.0
+ * @date 2020-12-23
  *
- * Copyright (c) 2017 by Inteos sp. z o.o.
- * All rights reserved. IP transferred to Bacula Systems according to agreement.
- * This is a dumb and extremely simple backend simulator used for test swift Plugin.
- *
+ * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #include <stdio.h>
@@ -60,7 +62,7 @@ bool regress_backup_other_file = false;
 #define BUFLEN             4096
 #define BIGBUFLEN          65536
 
-    void LOG(const char *txt)
+void LOG(const char *txt)
 {
    char _buf[BUFLEN];
 
@@ -371,7 +373,9 @@ void perform_backup()
    const char *longfilename = longfilenamestr;
 
    // test for fname > 500c
+#if __cplusplus > 201103L
    static_assert(sizeof(longfilenamestr) > 500);
+#endif
    snprintf(buf, BIGBUFLEN, "FNAME:%s/%s\n", PLUGINPREFIX, longfilename);
    write_plugin('C', buf);
    write_plugin('C', "STAT:F 234560 901 901 0100640 1\n");
