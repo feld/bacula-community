@@ -3,24 +3,14 @@
 #
 # Copyright (C) 2000-2020 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#  Author: Radoslaw Korzeniewski, radoslaw@korzeniewski.net
+#
 
-#  Author: Radoslaw Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
-
-@MCOMMON@
-
-# No optimization for now for easy debugging
-
-SRCDIR = ../../..
-FDDIR = $(SRCDIR)/filed
-LIBDIR = $(SRCDIR)/lib
-FINDLIBDIR = $(SRCDIR)/findlib
-FDPLUGDIR=..
-
-topdir = @BUILD_DIR@
-working_dir=@working_dir@
-thisdir = src/plugins/fd/pluginlib
+include ../Makefile.inc
 
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
+LIBBACOBJ = $(LIBDIR)/libbac.la
 
 PLUGINLIBSSRC = pluginlib.cpp pluginlib.h
 PLUGINLIBSOBJ = $(filter %.lo,$(PLUGINLIBSSRC:.cpp=.lo))
@@ -52,12 +42,8 @@ TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 
 # COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
 COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ)
-# COMMONPLUGINTESTS = pluginlib_test iso8601_test
+# COMMONPLUGINTESTS = iso8601_test
 COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test commctx_test
-
-.SUFFIXES:    .c .cpp .lo
-
-LIBBAC = -lbac -L$(LIBDIR)/.libs
 
 .c.lo:
 	@echo "Compiling $< ..."
@@ -71,60 +57,58 @@ LIBBAC = -lbac -L$(LIBDIR)/.libs
 	@echo "Pattern compiling c++ $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I$(SRCDIR) -I$(FDDIR) -I$(FDPLUGDIR) -I$(LIBDIR) -I$(FINDLIBDIR) -I. -c $<
 
-all: $(COMMONPLUGINOBJ) $(COMMONPLUGINTESTS) $(TESTMETAPLUGINBACKENDOBJ)
+all: $(COMMONPLUGINOBJ) # $(TESTMETAPLUGINBACKENDOBJ)
+
+tests: $(COMMONPLUGINTESTS)
 
 $(UNITTESTSOBJ):
 	$(MAKE) -C $(LIBDIR) unittests.lo
 
-test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
+$(LIBBACOBJ):
+	$(MAKE) -C $(LIBDIR) libbac.la
+
+test_metaplugin_backend.lo: Makefile $(TESTMETAPLUGINBACKENDSRC)
 	@echo "Compiling backend $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DLOGDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
-pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST)
+pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
 
-smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTEST)
+smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTALISTTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(SMARTALISTTESTOBJ) -o $@
 
-smartptr_test: Makefile $(SMARTPTRTESTOBJ) $(SMARTPTRTEST)
+smartptr_test: Makefile $(SMARTPTRTESTOBJ) $(SMARTPTRTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(SMARTPTRTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(SMARTPTRTESTOBJ) -o $@
 
-commctx_test: Makefile $(COMMCTXTESTOBJ) $(COMMCTXTEST)
+commctx_test: Makefile $(COMMCTXTESTOBJ) $(COMMCTXTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(COMMCTXTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(COMMCTXTESTOBJ) -o $@
 
-iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC)
+iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LIBCURL) $(LIBBAC) $(PLUGINLIBSTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
 
 install: all
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bpipe-fd.la $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.la
 
-Makefile: Makefile.in $(topdir)/config.status
-	cd $(topdir) \
-	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
-
 libtool-clean:
 	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
-	@$(RMF) *.la
+	@find . -name '*.la' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
 	@$(RMF) -r .libs _libs
 
-clean:	libtool-clean
-	@rm -f main *.so *.o 1 2 3
+clean: libtool-clean
+	@rm -f main *.so *.o
 	@rm -f $(COMMONPLUGINTESTS)
 
 distclean: clean
-	@rm -f Makefile *.la *.lo
-	@rm -rf .libs
 
 libtool-uninstall:
-	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.so
-
-uninstall: @LIBTOOL_UNINSTALL_TARGET@
 
 depend:
+
+uninstall: $(LIBTOOL_UNINSTALL_TARGET)

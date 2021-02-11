@@ -1,0 +1,29 @@
+#
+# Makefile for building FD plugins PluginLibrary for Bacula
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#  Author: Radoslaw Korzeniewski, radoslaw@korzeniewski.net
+#
+
+@MCOMMON@
+
+topdir = @BUILD_DIR@
+working_dir = @working_dir@
+SYBASE_TMPDIR = @sybase_tmpdir@
+SYBASE_CONFIG = @sysconfdir@/sbt.conf
+ORACLE_TMPDIR = @oracle_tmpdir@
+SAP_TMPDIR = @sap_tmpdir@
+RMAN_SCRIPT_DIR = @sysconfdir@
+RSYNC_INC = @RSYNC_INC@
+RSYNC_LIBS = @RSYNC_LIBS@
+LIBTOOL_UNINSTALL_TARGET = @LIBTOOL_UNINSTALL_TARGET@
+
+SRCDIR = $(topdir)/src
+FDDIR = $(SRCDIR)/filed
+LIBDIR = $(SRCDIR)/lib
+FDPLUGDIR = $(SRCDIR)/plugins/fd
+PLUGINLIBDIR = $(FDPLUGDIR)/pluginlib
+
+.SUFFIXES:    .c .cpp   .lo

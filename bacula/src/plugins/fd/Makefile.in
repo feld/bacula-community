@@ -5,20 +5,8 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 #
-@MCOMMON@
 
-
-# No optimization for now for easy debugging
-
-FDDIR=../../filed
-SRCDIR=../..
-LIBDIR=../../lib
-PLUGINLIBDIR=./pluginlib
-
-topdir = @BUILD_DIR@
-thisdir = src/plugins/fd
-
-.SUFFIXES:    .c .lo
+include Makefile.inc
 
 .c.lo:
 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DTEST_PROGRAM -c $<
@@ -61,9 +49,12 @@ install-test-plugin: all
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-deltaseq-fd.la $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/test-deltaseq-fd.la
 
+install-docker:
+	$(MAKE) -C docker install
+
 Makefile: Makefile.in $(topdir)/config.status
 	cd $(topdir) \
-	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+	  && CONFIG_FILES=$(FDPLUGDIR)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 libtool-clean:
 	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
@@ -80,6 +71,6 @@ distclean: clean
 libtool-uninstall:
 	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.so
 
-uninstall: @LIBTOOL_UNINSTALL_TARGET@
+uninstall: $(LIBTOOL_UNINSTALL_TARGET)
 
 depend:
