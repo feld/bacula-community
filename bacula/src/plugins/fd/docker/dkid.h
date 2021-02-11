@@ -62,7 +62,7 @@ public:
    DKID& operator= (POOL_MEM &data);
    bool operator== (DKID &other);
    bool operator!= (DKID &other);
-#ifdef TEST_PROGRAM
+#ifdef DEBUG
    void dump();
 #endif
 
