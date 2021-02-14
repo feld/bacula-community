@@ -55,6 +55,7 @@ static int unmarkcmd(UAContext *ua, TREE_CTX *tree);
 static int unmarkdircmd(UAContext *ua, TREE_CTX *tree);
 static int quitcmd(UAContext *ua, TREE_CTX *tree);
 static int donecmd(UAContext *ua, TREE_CTX *tree);
+static int ducmd(UAContext *ua, TREE_CTX *tree);
 static int dot_lsdircmd(UAContext *ua, TREE_CTX *tree);
 static int dot_lscmd(UAContext *ua, TREE_CTX *tree);
 static int dot_helpcmd(UAContext *ua, TREE_CTX *tree);
@@ -71,6 +72,7 @@ static struct cmdstruct commands[] = {
  { NT_("dir"),        dircmd,       _("long list current directory, wildcards allowed")},
  { NT_(".dir"),       dot_dircmd,   _("long list current directory, wildcards allowed")},
  { NT_("done"),       donecmd,      _("leave file selection mode")},
+ { NT_("du"),         ducmd,        _("show size of files/directories")},
  { NT_("estimate"),   estimatecmd,  _("estimate restore size")},
  { NT_("exit"),       donecmd,      _("same as done command")},
  { NT_("find"),       findcmd,      _("find files, wildcards allowed")},
@@ -264,6 +266,7 @@ int insert_tree_handler(void *ctx, int num_fields, char **row)
       node->FileIndex = FileIndex;
       node->JobId = JobId;
       node->type = type;
+      node->size = statp.st_size;
       node->soft_link = S_ISLNK(statp.st_mode) != 0;
       node->delta_seq = delta_seq;
       node->can_access = can_access;
@@ -561,8 +564,28 @@ static int dot_lscmd(UAContext *ua, TREE_CTX *tree)
 
    return 1;
 }
+/* This helper sums size of all files in directories below recursively. If node is a file, it returns it's size */
+static uint64_t sum_tree_level(TREE_NODE *node) {
+   uint64_t size = 0;
 
-static int lscmd(UAContext *ua, TREE_CTX *tree)
+   if (!tree_node_has_child(node)) {
+      size = node->size;
+   } else {
+      TREE_NODE *s_node;
+      foreach_child(s_node, node) {
+         if (s_node->child.size() == 0) {
+            size+=s_node->size;
+         } else {
+            size+=sum_tree_level(s_node);
+         }
+      }
+   }
+
+   return size;
+}
+
+/* List files and directories, 'du' switch decides if size is printed as well */
+static int list_files(UAContext *ua, TREE_CTX *tree, bool du)
 {
    TREE_NODE *node;
 
@@ -579,10 +602,28 @@ static int lscmd(UAContext *ua, TREE_CTX *tree)
          } else {
             tag = "";
          }
-         ua->send_msg("%s%s%s\n", tag, node->fname, tree_node_has_child(node)?"/":"");
+
+         if (du) {
+            char ed1[30];
+            uint64_t size = sum_tree_level(node);
+            edit_uint64_with_suffix(size, ed1);
+            ua->send_msg("%-7s   %s%s%s\n", ed1, tag, node->fname, tree_node_has_child(node)?"/":"");
+         } else {
+            ua->send_msg("%s%s%s\n", tag, node->fname, tree_node_has_child(node)?"/":"");
+         }
       }
    }
    return 1;
+}
+
+static int lscmd(UAContext *ua, TREE_CTX *tree)
+{
+   return list_files(ua, tree, false);
+}
+
+static int ducmd(UAContext *ua, TREE_CTX *tree)
+{
+   return list_files(ua, tree, true);
 }
 
 /*

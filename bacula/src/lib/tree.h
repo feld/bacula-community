@@ -61,8 +61,9 @@ struct s_tree_node {
    char *fname;                       /* file name */
    int32_t FileIndex;                 /* file index */
    uint32_t JobId;                    /* JobId */
-   int32_t delta_seq;                 /* current delta sequence */
+   int16_t delta_seq;                 /* current delta sequence */
    uint16_t fname_len;                /* filename length */
+   uint64_t size;                     /* Size of file or directory (as a sum of files inside) */
    int type: 8;                       /* node type */
    unsigned int extract: 1;           /* extract item */
    unsigned int extract_dir: 1;       /* extract dir entry only */
@@ -85,8 +86,9 @@ struct s_tree_root {
    const char *fname;                 /* file name */
    int32_t FileIndex;                 /* file index */
    uint32_t JobId;                    /* JobId */
-   int32_t delta_seq;                 /* current delta sequence */
+   int16_t delta_seq;                 /* current delta sequence */
    uint16_t fname_len;                /* filename length */
+   uint64_t size;                     /* Size of file or directory (as a sum of files inside) */
    unsigned int type: 8;              /* node type */
    unsigned int extract: 1;           /* extract item */
    unsigned int extract_dir: 1;       /* extract dir entry only */
