@@ -33,7 +33,7 @@
 
 /* Forward referenced functions */
 static int purge_files_from_client(UAContext *ua, CLIENT *client);
-static int purge_jobs_from_client(UAContext *ua, CLIENT *client);
+static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char *job);
 int truncate_cmd(UAContext *ua, const char *cmd);
 
 static const char *select_jobsfiles_from_client =
@@ -49,7 +49,7 @@ static const char *select_jobs_from_client =
  *   Purge records from database
  *
  *     Purge Files (from) [Job|JobId|Client|Volume]
- *     Purge Jobs  (from) [Client|Volume]
+ *     Purge Jobs  (from) [Client|Volume|Name]
  *     Purge Volumes
  *
  *  N.B. Not all above is implemented yet.
@@ -78,6 +78,7 @@ int purge_cmd(UAContext *ua, const char *cmd)
    static const char *jobs_keywords[] = {
       NT_("Client"),
       NT_("Volume"),
+      NT_("Name"),
       NULL};
 
    /* Special case for the "Action On Purge", this option is working only on
@@ -129,7 +130,7 @@ int purge_cmd(UAContext *ua, const char *cmd)
          /* We restrict the client list to ClientAcl, maybe something to change later */
          client = get_client_resource(ua, JT_SYSTEM);
          if (client) {
-            purge_jobs_from_client(ua, client);
+            purge_jobs_from_client(ua, client, NULL);
          }
          return 1;
       case 1:                         /* Volume */
@@ -137,6 +138,29 @@ int purge_cmd(UAContext *ua, const char *cmd)
             purge_jobs_from_volume(ua, &mr, /*force*/true);
          }
          return 1;
+      /* Job specified by it's base name (e.g. BackupClient1) */
+      case 2:
+         client = get_client_resource(ua, JT_SYSTEM);
+         if (!client) {
+            return 0;
+         }
+
+         if ((i = find_arg_with_value(ua, "name")) >= 0) {
+            if (!is_name_valid(ua->argv[i], NULL)) {
+               ua->error_msg(_("Invalid jobname!\n"));
+               return 0;
+            }
+
+            if (!acl_access_ok(ua, Job_ACL, ua->argv[i])) {
+               ua->error_msg(_("Unauthorized command from this console "
+                               "for Job=%s.\n"), ua->argv[i]);
+               return 0;
+            }
+            return purge_jobs_from_client(ua, client, ua->argv[i]);
+         } else {
+            ua->error_msg(_("No job name specified!\n"));
+            return 0;
+         }
       }
    /* Volume */
    case 2:
@@ -168,7 +192,7 @@ int purge_cmd(UAContext *ua, const char *cmd)
       /* We restrict the client list to ClientAcl, maybe something to change later */
       client = get_client_resource(ua, JT_SYSTEM);
       if (client) {
-         purge_jobs_from_client(ua, client);
+         purge_jobs_from_client(ua, client, NULL);
       }
       break;
    case 2:                            /* Volume */
@@ -237,8 +261,10 @@ static int purge_files_from_client(UAContext *ua, CLIENT *client)
  * it and all File records for that Job.  This is simple enough that no
  * temporary tables are needed. We simply make an in memory list of
  * the JobIds then delete the Job, Files, and JobMedia records in that list.
+ * If 'job' arg is not null, then all jobs of that name are deleted for specified client.
+ * Otherwise, all client's jobs are deleted.
  */
-static int purge_jobs_from_client(UAContext *ua, CLIENT *client)
+static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char* job)
 {
    struct del_ctx del;
    POOL_MEM query(PM_MESSAGE);
@@ -259,7 +285,16 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client)
 
    ua->info_msg(_("Begin purging jobs from Client \"%s\"\n"), cr.Name);
 
-   Mmsg(query, select_jobs_from_client, edit_int64(cr.ClientId, ed1));
+   if (job) {
+      /* Limit purged jobs to specified job's name */
+      char esc[MAX_ESCAPE_NAME_LENGTH];
+      db_escape_string(ua->jcr, ua->jcr->db, esc, job, strlen(job));
+      Mmsg(query, "SELECT JobId,PurgedFiles FROM Job WHERE ClientId=%s AND Name='%s'",
+           edit_int64(cr.ClientId, ed1), esc);
+   } else {
+      Mmsg(query, select_jobs_from_client, edit_int64(cr.ClientId, ed1));
+   }
+
    Dmsg1(150, "select sql=%s\n", query.c_str());
    db_sql_query(ua->db, query.c_str(), job_delete_handler, (void *)&del);
 
