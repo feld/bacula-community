@@ -31,7 +31,8 @@ extern DLL_IMP_EXP char *version;
 extern DLL_IMP_EXP char *dist_name;
 extern DLL_IMP_EXP int beef;
 
-const int dbglvl = 55;
+const int dbglvl  = 55;
+const int dbglvl2 = 150;
 #ifdef HAVE_WIN32
 const char *plugin_type = "-fd.dll";
 #else
@@ -1831,7 +1832,7 @@ static ssize_t my_plugin_bread(BFILE *bfd, void *buf, size_t count)
    struct io_pkt io;
 
    Dsm_check(999);
-   Dmsg0(dbglvl, "plugin_bread\n");
+   Dmsg0(dbglvl2, "plugin_bread\n");
    if (!plugin || !jcr->plugin_ctx) {
       return 0;
    }
@@ -1864,7 +1865,7 @@ static ssize_t my_plugin_bwrite(BFILE *bfd, void *buf, size_t count)
    struct io_pkt io;
 
    Dsm_check(999);
-   Dmsg0(dbglvl, "plugin_bwrite\n");
+   Dmsg0(dbglvl2, "plugin_bwrite\n");
    if (!plugin || !jcr->plugin_ctx) {
       Dmsg0(0, "No plugin context\n");
       return 0;
