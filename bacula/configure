@@ -648,13 +648,14 @@ DINCLUDE
 DEBUG
 FDLIBS
 CAP_LIBS
+DIR_PLUGIN_DIR
 BPAM_LDAP_TARGET_INSTALL
 BPAM_LDAP_TARGET
+FD_PLUGIN_DIR
+docker_bin
 LDAP_LIBS
 LDAP_INC
 LDAP_LDFLAGS
-FD_PLUGIN_DIR
-docker_bin
 GPFS_CFLAGS
 XATTROBJS
 ACLOBJS
@@ -753,7 +754,6 @@ CONS_SRC
 CONS_OBJ
 CONS_INC
 STORED_DIR
-DIR_PLUGIN_DIR
 DIR_TOOLS
 DIRD_DIR
 ALL_DIRS
@@ -1059,8 +1059,8 @@ enable_acl
 enable_xattr
 enable_gpfs
 with_gpfsdir
-enable_docker_plugin
 with_ldap
+enable_docker_plugin
 enable_ldap_bpam
 with_systemd
 '
@@ -20134,8 +20134,6 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
-  free (data);
-  free (data3);
   return 0;
 }
 _ACEOF
@@ -22096,7 +22094,7 @@ fi
 
 DIRD_DIR="src/dird"
 DIR_TOOLS="DIRTOOLS"
-DIR_PLUGIN_DIR="src/plugins/dir"
+# DIR_PLUGIN_DIR="src/plugins/dir"
 
 if test x$build_dird = xyes; then
    DIRD_DIR="src/dird"
@@ -22108,7 +22106,7 @@ fi
 
 
 
-
+# AC_SUBST(DIR_PLUGIN_DIR)
 
 # Check whether --enable-build-stored was given.
 if test "${enable_build_stored+set}" = set; then :
@@ -31176,78 +31174,6 @@ fi
 fi
 
 
-
-PLUGCONFILES=""
-
-support_docker=auto
-# Check whether --enable-docker-plugin was given.
-if test "${enable_docker_plugin+set}" = set; then :
-  enableval=$enable_docker_plugin;
-      if test x$enableval = xyes; then
-         support_docker=yes
-      elif test x$enableval = xno; then
-         support_docker=disabled
-      fi
-
-
-fi
-
-if test x$support_docker = xyes -o x$support_docker = xauto; then
-   # Extract the first word of "docker", so it can be a program name with args.
-set dummy docker; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_docker_bin+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$docker_bin"; then
-  ac_cv_prog_docker_bin="$docker_bin" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in "/usr/bin/"
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_docker_bin="yes"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_docker_bin" && ac_cv_prog_docker_bin="no"
-fi
-fi
-docker_bin=$ac_cv_prog_docker_bin
-if test -n "$docker_bin"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $docker_bin" >&5
-$as_echo "$docker_bin" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-   if test x$docker_bin = xyes; then
-      support_docker=yes
-      FD_PLUGIN_DIR="$FD_PLUGIN_DIR src/plugins/fd/docker"
-      PLUGCONFILES="${PLUGCONFILES} src/plugins/fd/docker/Makefile"
-   else
-      if test x$support_docker = xyes; then
-         echo " "
-         echo "You enabled a Docker Plugin build but 'docker' command not found."
-         echo " "
-         exit 1
-      fi
-      support_docker=no
-   fi
-fi
-
-
-
 LDAP_LIBS=""
 LDAP_LDFLAGS=""
 LDAP_INC=""
@@ -31447,8 +31373,73 @@ fi
 
 
 
+support_docker=auto
+# Check whether --enable-docker-plugin was given.
+if test "${enable_docker_plugin+set}" = set; then :
+  enableval=$enable_docker_plugin;
+      if test x$enableval = xyes; then
+         support_docker=yes
+      elif test x$enableval = xno; then
+         support_docker=disabled
+      fi
 
-PLUGCONFILES=""
+
+fi
+
+if test x$support_docker = xyes -o x$support_docker = xauto; then
+   # Extract the first word of "docker", so it can be a program name with args.
+set dummy docker; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_docker_bin+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$docker_bin"; then
+  ac_cv_prog_docker_bin="$docker_bin" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in "/usr/bin/"
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_docker_bin="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_docker_bin" && ac_cv_prog_docker_bin="no"
+fi
+fi
+docker_bin=$ac_cv_prog_docker_bin
+if test -n "$docker_bin"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $docker_bin" >&5
+$as_echo "$docker_bin" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+   if test x$docker_bin = xyes; then
+      support_docker=yes
+      FD_PLUGIN_DIR="${FD_PLUGIN_DIR} src/plugins/fd/docker"
+   else
+      if test x$support_docker = xyes; then
+         echo " "
+         echo "You enabled a Docker Plugin build but 'docker' command not found."
+         echo " "
+         exit 1
+      fi
+      support_docker=no
+   fi
+fi
+
+
 
 
 support_ldap_bpam=auto
@@ -31477,8 +31468,7 @@ if test x$support_ldap_bpam = xyes -o x$support_ldap_bpam = xauto; then
    fi
 fi
 if test x$support_ldap_bpam = xyes; then
-   DIR_PLUGIN_DIR="$DIR_PLUGIN_DIR src/plugins/dir/ldap/src"
-   PLUGCONFILES="${PLUGCONFILES} src/plugins/dir/ldap/src/Makefile"
+   DIR_PLUGIN_DIR="${DIR_PLUGIN_DIR} src/plugins/dir/ldap"
 fi
 
 
@@ -31960,7 +31950,7 @@ if test "x${subsysdir}" = "x${sbindir}" ; then
    exit 1
 fi
 
-ac_config_files="$ac_config_files autoconf/Make.common Makefile manpages/Makefile scripts/btraceback scripts/bconsole scripts/baculabackupreport scripts/bacula scripts/bacula-ctl-dir scripts/bacula-ctl-fd scripts/bacula-ctl-sd scripts/devel_bacula scripts/Makefile scripts/logrotate scripts/mtx-changer scripts/disk-changer scripts/logwatch/Makefile scripts/logwatch/logfile.bacula.conf scripts/bat.desktop scripts/bat.desktop.xsu scripts/bat.desktop.consolehelper scripts/bat.console_apps scripts/bacula-tray-monitor.desktop src/Makefile src/host.h src/console/Makefile src/console/bconsole.conf src/qt-console/bat.conf src/qt-console/bat.pro src/qt-console/bat.pro.mingw32 src/qt-console/bat.pro.mingw64 src/qt-console/install_conf_file src/qt-console/tray-monitor/tray-monitor.conf src/qt-console/tray-monitor/bacula-tray-monitor.conf src/qt-console/tray-monitor/tray-monitor.pro src/qt-console/tray-monitor/tray-monitor.pro.mingw32 src/qt-console/tray-monitor/tray-monitor.pro.mingw64 src/qt-console/tray-monitor/install_conf_file src/dird/Makefile src/dird/bacula-dir.conf src/lib/Makefile src/stored/Makefile src/stored/bacula-sd.conf src/filed/Makefile src/filed/bacula-fd.conf src/cats/Makefile src/cats/make_catalog_backup.pl src/cats/make_catalog_backup src/cats/delete_catalog_backup src/cats/create_postgresql_database src/cats/update_postgresql_tables src/cats/make_postgresql_tables src/cats/grant_postgresql_privileges src/cats/drop_postgresql_tables src/cats/drop_postgresql_database src/cats/create_mysql_database src/cats/update_mysql_tables src/cats/make_mysql_tables src/cats/grant_mysql_privileges src/cats/drop_mysql_tables src/cats/drop_mysql_database src/cats/create_sqlite3_database src/cats/update_sqlite3_tables src/cats/make_sqlite3_tables src/cats/grant_sqlite3_privileges src/cats/drop_sqlite3_tables src/cats/drop_sqlite3_database src/cats/sqlite src/cats/mysql src/cats/create_bacula_database src/cats/update_bacula_tables src/cats/grant_bacula_privileges src/cats/make_bacula_tables src/cats/drop_bacula_tables src/cats/drop_bacula_database src/cats/install-default-backend src/findlib/Makefile src/tools/Makefile src/plugins/fd/Makefile src/plugins/sd/Makefile src/plugins/dir/Makefile po/Makefile.in updatedb/update_mysql_tables updatedb/update_sqlite3_tables updatedb/update_postgresql_tables updatedb/update_mysql_tables_9_to_10 updatedb/update_sqlite3_tables_9_to_10 updatedb/update_postgresql_tables_9_to_10 updatedb/update_mysql_tables_10_to_11 updatedb/update_sqlite3_tables_10_to_11 updatedb/update_postgresql_tables_10_to_11 updatedb/update_mysql_tables_11_to_12 updatedb/update_sqlite3_tables_11_to_12 updatedb/update_postgresql_tables_11_to_12 updatedb/update_postgresql_tables_1021_to_1022 updatedb/update_postgresql_tables_1022_to_1023 updatedb/update_mysql_tables_1020_to_1021 updatedb/update_mysql_tables_1021_to_1022 updatedb/update_mysql_tables_1022_to_1023 examples/nagios/check_bacula/Makefile platforms/rpms/redhat/bacula.spec platforms/rpms/redhat/bacula-bat.spec platforms/rpms/redhat/bacula-docs.spec platforms/rpms/redhat/bacula-mtx.spec platforms/rpms/suse/bacula.spec platforms/rpms/suse/bacula-bat.spec platforms/rpms/suse/bacula-docs.spec platforms/rpms/suse/bacula-mtx.spec $PLUGCONFILES $PFILES"
+ac_config_files="$ac_config_files autoconf/Make.common Makefile manpages/Makefile scripts/btraceback scripts/bconsole scripts/baculabackupreport scripts/bacula scripts/bacula-ctl-dir scripts/bacula-ctl-fd scripts/bacula-ctl-sd scripts/devel_bacula scripts/Makefile scripts/logrotate scripts/mtx-changer scripts/disk-changer scripts/logwatch/Makefile scripts/logwatch/logfile.bacula.conf scripts/bat.desktop scripts/bat.desktop.xsu scripts/bat.desktop.consolehelper scripts/bat.console_apps scripts/bacula-tray-monitor.desktop src/Makefile src/host.h src/console/Makefile src/console/bconsole.conf src/qt-console/bat.conf src/qt-console/bat.pro src/qt-console/bat.pro.mingw32 src/qt-console/bat.pro.mingw64 src/qt-console/install_conf_file src/qt-console/tray-monitor/tray-monitor.conf src/qt-console/tray-monitor/bacula-tray-monitor.conf src/qt-console/tray-monitor/tray-monitor.pro src/qt-console/tray-monitor/tray-monitor.pro.mingw32 src/qt-console/tray-monitor/tray-monitor.pro.mingw64 src/qt-console/tray-monitor/install_conf_file src/dird/Makefile src/dird/bacula-dir.conf src/lib/Makefile src/stored/Makefile src/stored/bacula-sd.conf src/filed/Makefile src/filed/bacula-fd.conf src/cats/Makefile src/cats/make_catalog_backup.pl src/cats/make_catalog_backup src/cats/delete_catalog_backup src/cats/create_postgresql_database src/cats/update_postgresql_tables src/cats/make_postgresql_tables src/cats/grant_postgresql_privileges src/cats/drop_postgresql_tables src/cats/drop_postgresql_database src/cats/create_mysql_database src/cats/update_mysql_tables src/cats/make_mysql_tables src/cats/grant_mysql_privileges src/cats/drop_mysql_tables src/cats/drop_mysql_database src/cats/create_sqlite3_database src/cats/update_sqlite3_tables src/cats/make_sqlite3_tables src/cats/grant_sqlite3_privileges src/cats/drop_sqlite3_tables src/cats/drop_sqlite3_database src/cats/sqlite src/cats/mysql src/cats/create_bacula_database src/cats/update_bacula_tables src/cats/grant_bacula_privileges src/cats/make_bacula_tables src/cats/drop_bacula_tables src/cats/drop_bacula_database src/cats/install-default-backend src/findlib/Makefile src/tools/Makefile src/plugins/fd/Makefile.inc src/plugins/sd/Makefile src/plugins/dir/Makefile.inc po/Makefile.in updatedb/update_mysql_tables updatedb/update_sqlite3_tables updatedb/update_postgresql_tables updatedb/update_mysql_tables_9_to_10 updatedb/update_sqlite3_tables_9_to_10 updatedb/update_postgresql_tables_9_to_10 updatedb/update_mysql_tables_10_to_11 updatedb/update_sqlite3_tables_10_to_11 updatedb/update_postgresql_tables_10_to_11 updatedb/update_mysql_tables_11_to_12 updatedb/update_sqlite3_tables_11_to_12 updatedb/update_postgresql_tables_11_to_12 updatedb/update_postgresql_tables_1021_to_1022 updatedb/update_postgresql_tables_1022_to_1023 updatedb/update_mysql_tables_1020_to_1021 updatedb/update_mysql_tables_1021_to_1022 updatedb/update_mysql_tables_1022_to_1023 examples/nagios/check_bacula/Makefile platforms/rpms/redhat/bacula.spec platforms/rpms/redhat/bacula-bat.spec platforms/rpms/redhat/bacula-docs.spec platforms/rpms/redhat/bacula-mtx.spec platforms/rpms/suse/bacula.spec platforms/rpms/suse/bacula-bat.spec platforms/rpms/suse/bacula-docs.spec platforms/rpms/suse/bacula-mtx.spec $PFILES"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -33124,9 +33114,9 @@ do
     "src/cats/install-default-backend") CONFIG_FILES="$CONFIG_FILES src/cats/install-default-backend" ;;
     "src/findlib/Makefile") CONFIG_FILES="$CONFIG_FILES src/findlib/Makefile" ;;
     "src/tools/Makefile") CONFIG_FILES="$CONFIG_FILES src/tools/Makefile" ;;
-    "src/plugins/fd/Makefile") CONFIG_FILES="$CONFIG_FILES src/plugins/fd/Makefile" ;;
+    "src/plugins/fd/Makefile.inc") CONFIG_FILES="$CONFIG_FILES src/plugins/fd/Makefile.inc" ;;
     "src/plugins/sd/Makefile") CONFIG_FILES="$CONFIG_FILES src/plugins/sd/Makefile" ;;
-    "src/plugins/dir/Makefile") CONFIG_FILES="$CONFIG_FILES src/plugins/dir/Makefile" ;;
+    "src/plugins/dir/Makefile.inc") CONFIG_FILES="$CONFIG_FILES src/plugins/dir/Makefile.inc" ;;
     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
     "updatedb/update_mysql_tables") CONFIG_FILES="$CONFIG_FILES updatedb/update_mysql_tables" ;;
     "updatedb/update_sqlite3_tables") CONFIG_FILES="$CONFIG_FILES updatedb/update_sqlite3_tables" ;;
@@ -33154,7 +33144,6 @@ do
     "platforms/rpms/suse/bacula-bat.spec") CONFIG_FILES="$CONFIG_FILES platforms/rpms/suse/bacula-bat.spec" ;;
     "platforms/rpms/suse/bacula-docs.spec") CONFIG_FILES="$CONFIG_FILES platforms/rpms/suse/bacula-docs.spec" ;;
     "platforms/rpms/suse/bacula-mtx.spec") CONFIG_FILES="$CONFIG_FILES platforms/rpms/suse/bacula-mtx.spec" ;;
-    "$PLUGCONFILES") CONFIG_FILES="$CONFIG_FILES $PLUGCONFILES" ;;
     "$PFILES") CONFIG_FILES="$CONFIG_FILES $PFILES" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -34853,8 +34842,8 @@ Configuration on `date`:
    build-dird:                ${build_dird}
    build-stored:              ${build_stored}
    Plugin support:            ${have_plugins}
-   LDAP support:             ${ldap_support}
-   LDAP StartTLS support:    ${ldap_start_tls_support}
+   LDAP support:              ${ldap_support}
+   LDAP StartTLS support:     ${ldap_start_tls_support}
    AFS support:               ${have_afs}
    ACL support:               ${have_acl}
    XATTR support:             ${have_xattr}
