@@ -77,23 +77,23 @@ test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
 	@echo "Compiling backend $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DLOGDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
-pluginlib_test: Makefile $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
+pluginlib_test: $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
 
-smartalist_test: Makefile $(SMARTALISTTESTOBJ) $(SMARTALISTTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
+smartalist_test: $(SMARTALISTTESTOBJ) $(SMARTALISTTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(SMARTALISTTESTOBJ) -o $@
 
-smartptr_test: Makefile $(SMARTPTRTESTOBJ) $(SMARTPTRTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
+smartptr_test: $(SMARTPTRTESTOBJ) $(SMARTPTRTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(SMARTPTRTESTOBJ) -o $@
 
-commctx_test: Makefile $(COMMCTXTESTOBJ) $(COMMCTXTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
+commctx_test: $(COMMCTXTESTOBJ) $(COMMCTXTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(COMMCTXTESTOBJ) -o $@
 
-iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACOBJ)
+iso8601_test: $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
 
