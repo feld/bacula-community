@@ -55,10 +55,11 @@ all: Makefile
 
 depend:
 	@for I in ${all_subdirs}; \
-	   do (cd $$I; echo "==>Entering directory `pwd`"; $(MAKE) DESTDIR=$(DESTDIR) $@ || exit 1); done
+	   do echo "==> Entering directory $$I" ; \
+	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I $@ ; done
 	@for I in ${pluginsdirs}; \
-	   do echo "==>Entering directory ${I}"
-	      $(MAKE) DESTDIR=$(DESTDIR) -C ${I} $@ ; done
+	   do echo "==> Plugin directory $$I" ; \
+	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I $@ ; done
 
 bacula-fd: Makefile
 	@for I in ${fd_subdirs}; \
@@ -70,7 +71,7 @@ bacula-fd: Makefile
 
 plugins:
 	@for I in ${pluginsdirs}; \
-	   do echo "==> Plugin directory" $$I; \
+	   do echo "==> Plugin directory" $$I ; \
 	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I all ; done
 
 #-------------------------------------------------------------------------
@@ -166,7 +167,7 @@ uninstall-autostart-sd:
 
 install-plugins:
 	@for I in ${pluginsdirs}; \
-	   do echo "==> Plugin directory $$I"; \
+	   do echo "==> Plugin directory $$I" ; \
 	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I install ; done
 
 Makefile: Makefile.in

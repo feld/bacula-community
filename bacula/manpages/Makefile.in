@@ -11,7 +11,7 @@ MAN8 = bacula.8 bacula-dir.8 bacula-fd.8 bacula-sd.8 \
        btraceback.8 dbcheck.8 bwild.8 bregex.8
 
 MAN1 = bsmtp.1 bat.1
-      
+
 all:
 
 nothing:
@@ -44,7 +44,7 @@ clean:
 	@$(RMF) *~ 1 2 3 *.bak
 	@find . -name .#* -exec $(RMF) {} \;
 
-depend:      
+depend:
 
 distclean: clean
 	$(RMF) Makefile

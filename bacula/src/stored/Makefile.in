@@ -352,7 +352,7 @@ acsls-changer.o: acsls-changer.c
 # libdir points to /opt/bacula/lib, but libtools decides to store libraries to
 # /opt/bacula/lib64 on some platforms. We can add the two directories in rpath
 # to workaround the problem.
-acsls-changer: Makefile $(ACSLSCHGOBJS) 
+acsls-changer: Makefile $(ACSLSCHGOBJS)
 	$(CXX) $(TTOOL_LDFLAGS) $(LDFLAGS) -L../lib/.libs $(ACSLSCHGOBJS) -L../lib -lbac $(LIBS) $(GETTEXT_LIBS) -Wl,-rpath $(libdir) -o $@
 
 Makefile: $(srcdir)/Makefile.in $(topdir)/config.status
@@ -452,7 +452,7 @@ install-swift-cloud: bacula-sd-cloud-swift-driver.la
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bacula-sd-cloud-swift-driver$(DEFAULT_SHARED_OBJECT_TYPE) $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bacula-sd-cloud-swift-driver.la
 
-install-aligned:  bacula-sd-aligned-driver.la 
+install-aligned:  bacula-sd-aligned-driver.la
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bacula-sd-aligned-driver$(DEFAULT_SHARED_OBJECT_TYPE) $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bacula-sd-aligned-driver.la
@@ -509,7 +509,9 @@ depend:
 	@$(SED) "/^# DO NOT DELETE:/,$$ d" Makefile.bak > Makefile
 	@$(ECHO) "# DO NOT DELETE: nice dependency list follows" >> Makefile
 	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) -I$(srcdir) -I$(basedir) -I$(ACSLS_LIBDIR)/src/h *.c >> Makefile
-	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) -I$(srcdir) -I$(basedir) -std=c++11 *.cpp >> Makefile || true
+	@set -- *.cpp ; if test -f "$1" ; then \
+	   $(CXX) -S -M $(CPPFLAGS) $(XINC) $(S3_INC) -I$(srcdir) -I$(basedir) -std=c++11 *.cpp >> Makefile ; \
+	fi
 	@if test -f Makefile ; then \
 	    $(RMF) Makefile.bak; \
 	else \
