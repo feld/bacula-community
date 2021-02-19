@@ -10,7 +10,7 @@ check_exit_code()
 {
    if [ $? != 0 ] ; then
       echo "Bad exit code giving up"
-      exit 1 
+      exit 1
    fi
 }
 
@@ -43,7 +43,7 @@ if [ x$PREBUILT != xyes ]; then
   fi
 fi
 scripts/create_sed
-# In default bacula-dir.conf.in, change default file 
+# In default bacula-dir.conf.in, change default file
 # to backup to be build directory
 echo "s%File = @sbindir@%File = @BUILD_DIR@%g" >tmp/t$$
 sed -f tmp/t$$ build/src/dird/bacula-dir.conf.in >tmp/o$$
@@ -72,6 +72,7 @@ if [ x$PREBUILT != xyes ]; then
   make ${MAKEOPT}
   check_exit_code
   make install
+  make install-plugins
 fi
 if [ a${KEEP_SOURCE} = a ]; then
    rm -rf examples patches

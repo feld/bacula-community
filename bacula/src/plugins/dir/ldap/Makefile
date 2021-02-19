@@ -6,7 +6,7 @@
 #
 #
 
-include ../../Makefile.inc
+include ../Makefile.inc
 
 LDAPSRC = ldap-dir.c
 LDAPTESTSRC = ldaptest.c
@@ -39,7 +39,7 @@ install: $(BPAM_LDAP_TARGET_INSTALL)
 
 install-ldap: ldap-dir.la
 	@echo "Installing plugin $(^:.la=.so) ..."
-	$(MKDIR) $(DESTDIR)$(plugindir)
+	$(NO_ECHO)$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) ldap-dir.la $(DESTDIR)$(plugindir)
 	$(NO_ECHO)$(RMF) $(DESTDIR)$(plugindir)/ldap-dir.la
 
@@ -47,21 +47,17 @@ install-ldaptest: ldaptest
 	@echo "Installing $< ..."
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $< $(DESTDIR)$(sbindir)
 
-Makefile: Makefile.in $(topdir)/config.status
-	cd $(topdir) \
-	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
-
 $(LIBTOOL_CLEAN_TARGET):
-	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
-	@$(RMF) *.la
-	@$(RMF) -r .libs _libs
+	$(NO_ECHO)find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
+	$(NO_ECHO)$(RMF) *.la
+	$(NO_ECHO)$(RMF) -r .libs _libs
 
 clean: $(LIBTOOL_CLEAN_TARGET)
-	@rm -f main ldaptest *.so *.o
+	$(NO_ECHO)rm -f main ldaptest *.so *.o
 
 distclean: clean
-	@rm -f Makefile *.la *.lo
-	@rm -rf .libs
+	$(NO_ECHO)rm -f Makefile *.la *.lo
+	$(NO_ECHO)rm -rf .libs
 
 $(LIBTOOL_UNINSTALL_TARGET):
 	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/ldap-dir.so

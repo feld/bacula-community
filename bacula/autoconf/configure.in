@@ -620,7 +620,7 @@ AC_ARG_ENABLE(build-dird,
 
 DIRD_DIR="src/dird"
 DIR_TOOLS="DIRTOOLS"
-DIR_PLUGIN_DIR="src/plugins/dir"
+# DIR_PLUGIN_DIR="src/plugins/dir"
 
 if test x$build_dird = xyes; then
    DIRD_DIR="src/dird"
@@ -632,7 +632,7 @@ fi
 
 AC_SUBST(DIRD_DIR)
 AC_SUBST(DIR_TOOLS)
-AC_SUBST(DIR_PLUGIN_DIR)
+# AC_SUBST(DIR_PLUGIN_DIR)
 
 dnl -------------------------------------------
 dnl stored  (default on)
@@ -3351,7 +3351,7 @@ if test x$support_ldap_bpam = xyes -o x$support_ldap_bpam = xauto; then
    fi
 fi
 if test x$support_ldap_bpam = xyes; then
-   DIR_PLUGIN_DIR="${DIR_PLUGIN_DIR} src/plugins/dir/ldap/src"
+   DIR_PLUGIN_DIR="${DIR_PLUGIN_DIR} src/plugins/dir/ldap"
 fi
 
 AC_SUBST(BPAM_LDAP_TARGET)

@@ -8,39 +8,48 @@
 include Makefile.inc
 
 .c.lo:
-	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${DIRDIR} -DTEST_PROGRAM -c $<
+	@echo "Compiling $< ..."
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${DIRDIR} -I${LIBDIR} -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
-all: dirpluglib.lo
+%.lo: %.c %.h
+	@echo "Pattern compiling $< ..."
+	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${DIRDIR} -I${LIBDIR} -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -c $(@:.lo=.c)
 
-example-plugin-dir.lo: example-plugin-dir.c ${DIRDIR}/dir_plugins.h
-	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CFLAGS) -I../.. -I${DIRDIR} -c example-plugin-dir.c
+all: dirpluglib.lo example-plugin-dir.la test-authentication-api-dir.la
 
-example-plugin-dir.la: Makefile example-plugin-dir.lo
-	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared example-plugin-dir.lo -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
+# example-plugin-dir.lo: example-plugin-dir.c ${DIRDIR}/dir_plugins.h
+# 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CFLAGS) -I../.. -I${DIRDIR} -c example-plugin-dir.c
 
-test-authentication-api-dir.lo: test-authentication-api-dir.c ${DIRDIR}/dir_plugins.h
-	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CFLAGS) -I../.. -I${DIRDIR} -c test-authentication-api-dir.c
+example-plugin-dir.la: example-plugin-dir.lo
+	@echo "Linking $(@:.la=.so) ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared example-plugin-dir.lo -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 
-test-authentication-api-dir.la: Makefile test-authentication-api-dir.lo dirpluglib.lo
+# test-authentication-api-dir.lo: test-authentication-api-dir.c ${DIRDIR}/dir_plugins.h
+# 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CFLAGS) -I../.. -I${DIRDIR} -c test-authentication-api-dir.c
+
+test-authentication-api-dir.la: test-authentication-api-dir.lo dirpluglib.lo
 	@echo "Linking $(@:.la=.so) ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 
 install: all
-	$(MKDIR) $(DESTDIR)$(plugindir)
+	$(NO_ECHO)$(MKDIR) $(DESTDIR)$(plugindir)
+
+install-bpam-ldap:
+	$(MAKE) -C ldap install
 
 $(LIBTOOL_CLEAN_TARGET):
-	find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
-	$(RMF) *.la
-	$(RMF) -r .libs _libs
+	$(NO_ECHO)find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
+	$(NO_ECHO)$(RMF) *.la
+	$(NO_ECHO)$(RMF) -r .libs _libs
 
 clean: $(LIBTOOL_CLEAN_TARGET)
-	rm -f main *.so *.o 1 2 3
+	$(NO_ECHO)rm -f main *.so *.o 1 2 3
 
 distclean: clean
-	rm -f Makefile
+	$(NO_ECHO)rm -f Makefile
 
 $(LIBTOOL_UNINSTALL_TARGET):
-	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/example-plugin-dir.la
+	$(NO_ECHO)$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/example-plugin-dir.la
 
 uninstall: $(LIBTOOL_UNINSTALL_TARGET)
 
