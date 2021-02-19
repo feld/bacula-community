@@ -1451,7 +1451,7 @@ static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd)
 
    /* Get JobId from ujobid */
    } else if ((pos = find_arg_with_value(ua, "ujobid")) >= 0) {
-      bstrncpy(jr.Job, ua->argv[pos], MAX_NAME_LENGTH);
+      bstrncpy(jr.Job, ua->argv[pos], sizeof(jr.Job));
 
    /* Return all backup jobid for a client list */
    } else if ((pos = find_arg_with_value(ua, "client")) >= 0 ||
