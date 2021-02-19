@@ -93,8 +93,6 @@ iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACO
 
 install: all
 	$(MKDIR) $(DESTDIR)$(plugindir)
-	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bpipe-fd.la $(DESTDIR)$(plugindir)
-	$(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.la
 
 libtool-clean:
 	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)

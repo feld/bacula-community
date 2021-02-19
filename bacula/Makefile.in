@@ -22,12 +22,15 @@ dummy:
 
 # --client-only directories
 fd_subdirs = src scripts src/lib src/findlib src/filed \
-       @READLINE_SRC@ @BAT_DIR@ src/console @FD_PLUGIN_DIR@
+       @READLINE_SRC@ @BAT_DIR@ src/console
 
 # Non-client-only directores
-subdirs =    src/cats @DIRD_DIR@ @STORED_DIR@ src/tools @DIR_PLUGIN_DIR@
+subdirs =    src/cats @DIRD_DIR@ @STORED_DIR@ src/tools
 
 all_subdirs = ${fd_subdirs} ${@ALL_DIRS@} manpages
+
+# plugins enabled
+pluginsdirs = @FD_PLUGIN_DIR@ @DIR_PLUGIN_DIR@
 
 DIST =	INSTALL README.configure configure Makefile Makefile.in ChangeLog
 
@@ -52,15 +55,23 @@ all: Makefile
 
 depend:
 	@for I in ${all_subdirs}; \
-	  do (cd $$I; echo "==>Entering directory `pwd`"; $(MAKE) DESTDIR=$(DESTDIR) $@ || exit 1); done
-	
-bacula-fd: Makefile	
+	   do (cd $$I; echo "==>Entering directory `pwd`"; $(MAKE) DESTDIR=$(DESTDIR) $@ || exit 1); done
+	@for I in ${pluginsdirs}; \
+	   do echo "==>Entering directory ${I}"
+	      $(MAKE) DESTDIR=$(DESTDIR) -C ${I} $@ ; done
+
+bacula-fd: Makefile
 	@for I in ${fd_subdirs}; \
 	  do (cd $$I; echo "==>Entering directory `pwd`"; \
 	      $(MAKE) DESTDIR=$(DESTDIR) all || \
 	      (echo ""; echo ""; echo "   ====== Error in `pwd` ======"; \
 	       echo ""; echo ""; false ) || false) || exit 1; \
 	done
+
+plugins:
+	@for I in ${pluginsdirs}; \
+	   do echo "==> Plugin directory" $$I; \
+	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I all ; done
 
 #-------------------------------------------------------------------------
 
@@ -153,6 +164,11 @@ uninstall-autostart-fd:
 uninstall-autostart-sd:
 	(cd platforms && $(MAKE) DESTDIR=$(DESTDIR) $@ || exit 1)
 
+install-plugins:
+	@for I in ${pluginsdirs}; \
+	   do echo "==> Plugin directory $$I"; \
+	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I install ; done
+
 Makefile: Makefile.in
 	cd $(topdir) \
 	    && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
@@ -176,7 +192,7 @@ Makefiles:
 	(cd src/qt-console/tray-monitor; \
 	 chmod 755 install_conf_file build-depkgs-qt-console)
 
-clean:
+clean: clean-plugins
 	@for I in ${all_subdirs} ; \
 	  do (cd $$I; echo "==>Entering directory `pwd`"; ${MAKE} $@ || exit 1); done
 	@(cd platforms; echo "==>Entering directory `pwd`"; ${MAKE} $@ || exit 1)
@@ -185,6 +201,10 @@ clean:
 	@$(RMF) -r autom4te.cache
 	@find . -name ".#*" -exec $(RMF) {} \;
 
+clean-plugins:
+	@for I in ${pluginsdirs}; \
+	   do echo "==> Plugin directory" $$I; \
+	      $(MAKE) DESTDIR=$(DESTDIR) -C $$I clean ; done
 
 # clean for distribution
 distclean:

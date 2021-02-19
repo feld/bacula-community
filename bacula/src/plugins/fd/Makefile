@@ -52,23 +52,19 @@ install-test-plugin: all
 install-docker:
 	$(MAKE) -C docker install
 
-Makefile: Makefile.in $(topdir)/config.status
-	cd $(topdir) \
-	  && CONFIG_FILES=$(FDPLUGDIR)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
-
-libtool-clean:
+$(LIBTOOL_CLEAN_TARGET):
 	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
 	@$(RMF) *.la
 	@$(RMF) -r .libs _libs
 
-clean:	libtool-clean
+clean: $(LIBTOOL_CLEAN_TARGET)
 	@rm -f main *.so *.o 1 2 3
 
 distclean: clean
 	@rm -f Makefile *.la *.lo
 	@rm -rf .libs
 
-libtool-uninstall:
+$(LIBTOOL_UNINSTALL_TARGET):
 	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.so
 
 uninstall: $(LIBTOOL_UNINSTALL_TARGET)

@@ -40,7 +40,7 @@ $(UNITTESTSOBJ):
 $(LIBBACOBJ):
 	$(MAKE) -C $(LIBDIR) libbac.la
 
-docker-fd.la: Makefile $(DOCKEROBJ) $(PLUGINLIBDIR)/pluginlib.lo $(DOCKERSRCH) $(LIBDIR)/libbac.la
+docker-fd.la: Makefile $(DOCKEROBJ) $(PLUGINLIBDIR)/pluginlib.lo $(DOCKERSRCH)
 	@echo "Linking $(@:.la=.so) ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 

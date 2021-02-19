@@ -4,19 +4,8 @@
 # Copyright (C) 2000-2015 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-@MCOMMON@
 
-
-# No optimization for now for easy debugging
-
-DIRDIR=../../dird
-SRCDIR=../..
-LIBDIR=../../lib
-
-topdir = @BUILD_DIR@
-thisdir = src/plugins/dir
-
-.SUFFIXES:    .c .o .lo
+include Makefile.inc
 
 .c.lo:
 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${DIRDIR} -DTEST_PROGRAM -c $<
@@ -39,29 +28,20 @@ test-authentication-api-dir.la: Makefile test-authentication-api-dir.lo dirplugl
 install: all
 	$(MKDIR) $(DESTDIR)$(plugindir)
 
-# $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) example-plugin-dir.la $(DESTDIR)$(plugindir)
-# $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-authentication-api-dir.la $(DESTDIR)$(plugindir)
-# $(RMF) $(DESTDIR)$(plugindir)/example-plugin-dir.la
-# $(RMF) $(DESTDIR)$(plugindir)/test-authentication-api-dir.la
-
-libtool-clean:
+$(LIBTOOL_CLEAN_TARGET):
 	find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
 	$(RMF) *.la
 	$(RMF) -r .libs _libs
 
-clean: @LIBTOOL_CLEAN_TARGET@
+clean: $(LIBTOOL_CLEAN_TARGET)
 	rm -f main *.so *.o 1 2 3
 
 distclean: clean
 	rm -f Makefile
 
-libtool-uninstall:
+$(LIBTOOL_UNINSTALL_TARGET):
 	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/example-plugin-dir.la
 
-Makefile: Makefile.in $(topdir)/config.status
-	cd $(topdir) \
-	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
-
-uninstall: @LIBTOOL_UNINSTALL_TARGET@
+uninstall: $(LIBTOOL_UNINSTALL_TARGET)
 
 depend:

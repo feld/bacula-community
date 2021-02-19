@@ -392,14 +392,14 @@ src/lib/libbacpy.a
 src/plugins/dir/*.o
 src/plugins/dir/*.so
 src/plugins/dir/main
-src/plugins/dir/Makefile
+src/plugins/dir/Makefile.inc
 src/plugins/dir/.libs
 
 # src/plugins/fd/
 src/plugins/fd/*.o
 src/plugins/fd/*.so
 src/plugins/fd/main
-src/plugins/fd/Makefile
+src/plugins/fd/Makefile.inc
 src/plugins/fd/.libs
 
 # src/plugins/sd/

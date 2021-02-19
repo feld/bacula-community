@@ -5,31 +5,13 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 #
-@MCOMMON@
 
-# No optimization for now for easy debugging
-
-DIRDIR=../../../../dird
-SRCDIR=../../../..
-LIBDIR=../../../../lib
-DIRPLUGDIR=../..
-
-topdir = @BUILD_DIR@
-working_dir=@working_dir@
-thisdir = src/plugins/dir/ldap/src
-
-LDAP_LIBS=@LDAP_LIBS@
-LDAP_LDFLAGS=@LDAP_LDFLAGS@
-LDAP_INC=@LDAP_INC@
-BPAM_LDAP_TARGET = @BPAM_LDAP_TARGET@
-BPAM_LDAP_TARGET_INSTALL = @BPAM_LDAP_TARGET_INSTALL@
+include ../../Makefile.inc
 
 LDAPSRC = ldap-dir.c
 LDAPTESTSRC = ldaptest.c
 LDAPOBJ = $(LDAPSRC:.c=.lo)
 LDAPTESTOBJ = $(LDAPTESTSRC:.c=.lo)
-
-.SUFFIXES:    .c .lo
 
 # ldap-dir.la ldaptest
 all: $(BPAM_LDAP_TARGET)
@@ -56,35 +38,35 @@ ldaptest: $(LDAPTESTOBJ) Makefile
 install: $(BPAM_LDAP_TARGET_INSTALL)
 
 install-ldap: ldap-dir.la
-	@echo "Installing plugin ... $(^:.la=.so)"
+	@echo "Installing plugin $(^:.la=.so) ..."
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) ldap-dir.la $(DESTDIR)$(plugindir)
 	$(NO_ECHO)$(RMF) $(DESTDIR)$(plugindir)/ldap-dir.la
 
 install-ldaptest: ldaptest
-	@echo "Installing ldaptest ..."
-	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) ldaptest $(DESTDIR)$(sbindir)
+	@echo "Installing $< ..."
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $< $(DESTDIR)$(sbindir)
 
 Makefile: Makefile.in $(topdir)/config.status
 	cd $(topdir) \
 	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
-libtool-clean:
+$(LIBTOOL_CLEAN_TARGET):
 	@find . -name '*.lo' -print | xargs $(LIBTOOL_CLEAN) $(RMF)
 	@$(RMF) *.la
 	@$(RMF) -r .libs _libs
 
-clean:	libtool-clean
+clean: $(LIBTOOL_CLEAN_TARGET)
 	@rm -f main ldaptest *.so *.o
 
 distclean: clean
 	@rm -f Makefile *.la *.lo
 	@rm -rf .libs
 
-libtool-uninstall:
+$(LIBTOOL_UNINSTALL_TARGET):
 	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/ldap-dir.so
 	$(LIBTOOL_UNINSTALL) $(RMF) $(DESTDIR)$(plugindir)/msad-fd.so
 
-uninstall: @LIBTOOL_UNINSTALL_TARGET@
+uninstall: $(LIBTOOL_UNINSTALL_TARGET)
 
 depend:
