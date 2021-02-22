@@ -283,7 +283,6 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char* job)
    del.JobId = (JobId_t *)malloc(sizeof(JobId_t) * del.max_ids);
    del.PurgedFiles = (char *)malloc(del.max_ids);
 
-   ua->info_msg(_("Begin purging jobs from Client \"%s\"\n"), cr.Name);
 
    if (job) {
       /* Limit purged jobs to specified job's name */
@@ -291,8 +290,11 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char* job)
       db_escape_string(ua->jcr, ua->jcr->db, esc, job, strlen(job));
       Mmsg(query, "SELECT JobId,PurgedFiles FROM Job WHERE ClientId=%s AND Name='%s'",
            edit_int64(cr.ClientId, ed1), esc);
+      ua->info_msg(_("Begin purging jobs \"%s\" from Client \"%s\"\n"), job, cr.Name);
+
    } else {
       Mmsg(query, select_jobs_from_client, edit_int64(cr.ClientId, ed1));
+      ua->info_msg(_("Begin purging jobs from Client \"%s\"\n"), cr.Name);
    }
 
    Dmsg1(150, "select sql=%s\n", query.c_str());
