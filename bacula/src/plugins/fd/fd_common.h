@@ -117,9 +117,17 @@ inline void operator delete(void *buf, char const * file, int line)
 #endif
 #endif  /* !SMARTALLOC */
 
+#ifdef UNITTESTS
+
+#define Dmsg(context, level,  ...) printf( __VA_ARGS__ )
+#define Jmsg(context, level,  ...) printf( __VA_ARGS__ )
+
+#else
+
 #define Dmsg(context, level,  ...) bfuncs->DebugMessage(context, __FILE__, __LINE__, level, __VA_ARGS__ )
 #define Jmsg(context, type,  ...) bfuncs->JobMessage(context, __FILE__, __LINE__, type, 0, __VA_ARGS__ )
 
+#endif
 
 #ifdef USE_CMD_PARSER
 #include "lib/cmd_parser.h"
@@ -169,86 +177,116 @@ private:
 public:
    char level;                  /* level of the job */
 
-   char base[MAX_NAME_LENGTH];  /* base name */
-   char key[MAX_NAME_LENGTH];   /* group of backup */
-   char name[MAX_NAME_LENGTH];  /* job name */
-   char prev[MAX_NAME_LENGTH];  /* based on jobname */
-   char root[MAX_NAME_LENGTH];  /* root of this branch */
-   char rootdiff[MAX_NAME_LENGTH];  /* root of diff if any */
+   POOLMEM *base;               /* base name */
+   POOLMEM *key;                /* group of backup */
+   POOLMEM *name;               /* job name */
+   POOLMEM *prev;               /* based on jobname */
+   POOLMEM *root;               /* root of this branch */
+   POOLMEM *rootdiff;           /* root of diff if any */
 
    btime_t job_time;           /* job time */
 
    void init() {
       level = 0;
       job_time = 0;
+      if (!base) {
+         base = get_pool_memory(PM_FNAME);
+         key = get_pool_memory(PM_FNAME);
+         name = get_pool_memory(PM_FNAME);
+         prev = get_pool_memory(PM_FNAME);
+         root = get_pool_memory(PM_FNAME);
+         rootdiff = get_pool_memory(PM_FNAME);
+      }
       *key = *name = *prev = *root = *rootdiff = 0;
       set_base("jobs.dat");
       ctx = NULL;
    }
 
    void set_base(const char *b) {
-      strncpy(base, b, sizeof(base));
+      pm_strcpy(base, b);
    }
 
-   joblist(bpContext *actx) { init(); ctx = actx; }
+   joblist(bpContext *actx): ctx(NULL), level(0), base(NULL), key(NULL), name(NULL), prev(NULL), root(NULL), rootdiff(NULL), job_time(0)
+   {
+      init();
+      ctx = actx;
+   }
 
    joblist(bpContext *actx, 
         const char *akey, 
         const char *jobname, 
         const char *prevjobname, 
-        char joblevel) 
+       char joblevel):
+   ctx(NULL), level(0), base(NULL), key(NULL), name(NULL), prev(NULL), root(NULL), rootdiff(NULL), job_time(0)
    {
       init();
       ctx = actx;
       if (jobname) {
-         strncpy(name, jobname, MAX_NAME_LENGTH);
+         pm_strcpy(name, jobname);
       }
 
       if (prevjobname) {
-         strncpy(prev, prevjobname, MAX_NAME_LENGTH);
+         pm_strcpy(prev, prevjobname);
       }
 
       level = joblevel;
 
       if (akey) {
-         strncpy(key, akey, MAX_NAME_LENGTH);
+         pm_strcpy(key, akey);
 
       } else {
          get_key_from_name();
       }
    }
 
-   ~joblist() { }
+   ~joblist() {
+      free_pool_memory(base);
+      free_pool_memory(key);
+      free_pool_memory(name);
+      free_pool_memory(prev);
+      free_pool_memory(root);
+      free_pool_memory(rootdiff);
+   }
 
    /* Will extract the name from the full job name */
    bool get_key_from_name() {
+      key = check_pool_memory_size(key, sizeof_pool_memory(name));
+      return get_key_from_name(ctx, name, key, sizeof_pool_memory(key));
+   };
+
+   /* Will extract the name from the full job name */
+   static bool get_key_from_name(bpContext *ctx, const char *n, char *d, int len) {
       // pluginTest.2012-07-19_16.59.21_11
-      int l = strlen(name);
+      int l = strlen(n);
       int dlen = 23; // strlen(".2012-07-19_16.59.21_11");
 
       if (l > dlen) {           /* we probably have a key */
          int start = l - dlen;
-         if (name[start] == '.' &&
-             B_ISDIGIT(name[start + 1]) &&   // 2
-             B_ISDIGIT(name[start + 2]) &&   // 0
-             B_ISDIGIT(name[start + 3]) &&   // 1
-             B_ISDIGIT(name[start + 4]) &&   // 2
-             name[start + 5] == '-' &&       // -
-             B_ISDIGIT(name[start + 6]) &&   // 0
-             B_ISDIGIT(name[start + 7]))     // 7
+         if (start + 1 > len) {
+            Dmsg(ctx, dbglvl+100, "Key is too long\n");
+            return false;
+         }
+         if (n[start] == '.' &&
+             B_ISDIGIT(n[start + 1]) &&   // 2
+             B_ISDIGIT(n[start + 2]) &&   // 0
+             B_ISDIGIT(n[start + 3]) &&   // 1
+             B_ISDIGIT(n[start + 4]) &&   // 2
+             n[start + 5] == '-' &&       // -
+             B_ISDIGIT(n[start + 6]) &&   // 0
+             B_ISDIGIT(n[start + 7]))     // 7
          {
-            bstrncpy(key, name, start + 1);
-            Dmsg(ctx, dbglvl+100, "key is %s from jobname %s\n", key, name);
+            bstrncpy(d, n, start + 1);
+            Dmsg(ctx, dbglvl+100, "key is %s from jobname %s\n", d, n);
             return true;
          }
       }
-      Dmsg(ctx, dbglvl+100, "Unable to get key from jobname %s\n", name);
+      Dmsg(ctx, dbglvl+100, "Unable to get key from jobname %s\n", n);
       return false;
-   }
+   };
 
    bool find_job(const char *name, POOLMEM **data=NULL);   /* set root, job_time */
    bool find_root_job();
-   void store_job(char *data);
+   bool store_job(char *data);
    void prune_jobs(char *build_cmd(void *arg, const char *data, const char *job), 
                    void *arg, alist *jobs);
 };
@@ -260,12 +298,12 @@ bool joblist::find_job(const char *name, POOLMEM **data)
    BFILE fp;
    FILE *f;
    POOLMEM *tmp;
-   char buf[1024];
-   char curkey[MAX_NAME_LENGTH];  /* key */
-   char curjobname[MAX_NAME_LENGTH]; /* jobname */
-   char prevjob[MAX_NAME_LENGTH]; /* last jobname */
-   char rootjob[MAX_NAME_LENGTH]; /* root jobname */
-   char t[MAX_NAME_LENGTH];
+   POOLMEM *buf;
+   POOLMEM *curkey;             /* key */
+   POOLMEM *curjobname;         /* jobname */
+   POOLMEM *prevjob;            /* last jobname */
+   POOLMEM *rootjob;            /* root jobname */
+   char t[MAX_NAME_LENGTH];     /* store time */
    char curlevel;
    bool ok=false;
 
@@ -277,6 +315,12 @@ bool joblist::find_job(const char *name, POOLMEM **data)
    set_portable_backup(&fp);
 
    tmp = get_pool_memory(PM_FNAME);
+   buf = get_pool_memory(PM_FNAME);
+   curkey = get_pool_memory(PM_FNAME);
+   curjobname = get_pool_memory(PM_FNAME);
+   prevjob = get_pool_memory(PM_FNAME);
+   rootjob = get_pool_memory(PM_FNAME);
+
    Mmsg(tmp, "%s/%s", working, base);
 
    P(joblist_mutex);
@@ -295,16 +339,20 @@ bool joblist::find_job(const char *name, POOLMEM **data)
       goto bail_out;
    }
 
-   while (!ok && fgets(buf, sizeof(buf), f) != NULL) {
+   while (!ok && bfgets(buf, f) != NULL) {
+      curkey = check_pool_memory_size(curkey, sizeof_pool_memory(buf));
+      curjobname = check_pool_memory_size(curjobname, sizeof_pool_memory(buf));
+      rootjob = check_pool_memory_size(rootjob, sizeof_pool_memory(buf));
+      prevjob = check_pool_memory_size(prevjob, sizeof_pool_memory(buf));
       *curkey = *curjobname = *rootjob = *prevjob = 0;
-
+      
       Dmsg(ctx, dbglvl+100, "line = [%s]\n", buf);
 
-      if (sscanf(buf, "time=%60s level=%c key=%127s name=%127s root=%127s prev=%127s", 
-                 t, &curlevel, curkey, curjobname, rootjob, prevjob) != 6) {
+      if (scan_string(buf, "time=%60s level=%c key=%s name=%s root=%s prev=%s", 
+                      t, &curlevel, curkey, curjobname, rootjob, prevjob) != 6) {
 
-         if (sscanf(buf, "time=%60s level=F key=%127s name=%127s", 
-                        t, curkey, curjobname) != 3) {
+         if (scan_string(buf, "time=%60s level=F key=%s name=%s", 
+                         t, curkey, curjobname) != 3) {
             Dmsg(ctx, dbglvl+100, "Bad line l=[%s]\n", buf);
             continue;
          }
@@ -314,9 +362,9 @@ bool joblist::find_job(const char *name, POOLMEM **data)
           strcmp(key, curkey) == 0)
       {
          job_time = str_to_uint64(t);
-         bstrncpy(root, rootjob, MAX_NAME_LENGTH);
+         pm_strcpy(root, rootjob);
          if (curlevel == 'D') {
-            bstrncpy(rootdiff, curjobname, MAX_NAME_LENGTH);
+            pm_strcpy(rootdiff, curjobname);
          }
 
          if (data) {
@@ -335,6 +383,11 @@ bool joblist::find_job(const char *name, POOLMEM **data)
 
 bail_out:
    V(joblist_mutex);
+   free_pool_memory(buf);
+   free_pool_memory(curkey);
+   free_pool_memory(curjobname);
+   free_pool_memory(prevjob);
+   free_pool_memory(rootjob);
    free_pool_memory(tmp);
    return ok;
 
@@ -346,11 +399,11 @@ bool joblist::find_root_job()
    BFILE fp;
    FILE *f;
    POOLMEM *tmp;
-   char buf[1024];
-   char curkey[MAX_NAME_LENGTH];  /* key */
-   char curjobname[MAX_NAME_LENGTH]; /* jobname */
-   char prevjob[MAX_NAME_LENGTH]; /* last jobname */
-   char rootjob[MAX_NAME_LENGTH]; /* root jobname */
+   POOLMEM *buf;
+   POOLMEM *curkey;             /* key */
+   POOLMEM *curjobname;         /* jobname */
+   POOLMEM *prevjob;            /* last jobname */
+   POOLMEM *rootjob;            /* root jobname */
    char t[MAX_NAME_LENGTH];
    char curlevel;
    bool ok=false;
@@ -359,9 +412,15 @@ bool joblist::find_root_job()
    job_time = 0;
 
    if (level == 'F') {
-      bstrncpy(root, name, MAX_NAME_LENGTH);
+      pm_strcpy(root, name);
       return true;
    }
+
+   buf = get_pool_memory(PM_FNAME);
+   curkey = get_pool_memory(PM_FNAME);
+   curjobname = get_pool_memory(PM_FNAME);
+   prevjob = get_pool_memory(PM_FNAME);
+   rootjob = get_pool_memory(PM_FNAME);
 
    binit(&fp);
    set_portable_backup(&fp);
@@ -386,17 +445,21 @@ bool joblist::find_root_job()
       goto bail_out;
    }
 
-   while (!ok && fgets(buf, sizeof(buf), f) != NULL) {
+   while (!ok && bfgets(buf, f) != NULL) {
+      curkey = check_pool_memory_size(curkey, sizeof_pool_memory(buf));
+      curjobname = check_pool_memory_size(curjobname, sizeof_pool_memory(buf));
+      rootjob = check_pool_memory_size(rootjob, sizeof_pool_memory(buf));
+      prevjob = check_pool_memory_size(prevjob, sizeof_pool_memory(buf));
       *curkey = *curjobname = *rootjob = *prevjob = 0;
 
       Dmsg(ctx, dbglvl+100, "line = [%s]\n", buf);
 
-      if (sscanf(buf, "time=%60s level=%c key=%127s name=%127s root=%127s prev=%127s", 
-                 t, &curlevel, curkey, curjobname, rootjob, prevjob) != 6) {
+      if (scan_string(buf, "time=%60s level=%c key=%s name=%s root=%s prev=%s", 
+                      t, &curlevel, curkey, curjobname, rootjob, prevjob) != 6) {
 
-         if (sscanf(buf, "time=%60s level=F key=%127s name=%127s", 
-                        t, curkey, curjobname) == 3) {
-            bstrncpy(rootjob, curjobname, MAX_NAME_LENGTH);
+         if (scan_string(buf, "time=%60s level=F key=%s name=%s", 
+                         t, curkey, curjobname) == 3) {
+            pm_strcpy(rootjob, curjobname);
             *prevjob = 0;
             curlevel = 'F';
 
@@ -409,10 +472,10 @@ bool joblist::find_root_job()
       if (strcmp(key,  curkey)  == 0  &&
           strcmp(prev, curjobname) == 0) 
       {
-         bstrncpy(root, rootjob, MAX_NAME_LENGTH);
+         pm_strcpy(root, rootjob);
 
          if (curlevel == 'D') {
-            bstrncpy(rootdiff, curjobname, MAX_NAME_LENGTH);
+            pm_strcpy(rootdiff, curjobname);
          }
          ok = true;
          Dmsg(ctx, dbglvl+100, "Found job root %s -> %s -> %s\n",
@@ -425,21 +488,28 @@ bool joblist::find_root_job()
 bail_out:
    V(joblist_mutex);
    free_pool_memory(tmp);
+   free_pool_memory(buf);
+   free_pool_memory(curkey);
+   free_pool_memory(curjobname);
+   free_pool_memory(prevjob);
+   free_pool_memory(rootjob);
+
    return true;
 }
 
 /* Store the current job in the jobs.dat for a specific data list */
-void joblist::store_job(char *data)
+bool joblist::store_job(char *data)
 {
    BFILE fp;
    int l;
    POOLMEM *tmp = NULL;
    btime_t now;
+   bool ret = true;
 
    /* Not initialized, no need to store jobs */
    if (*name == 0 || !level) {
       Dmsg(ctx, dbglvl+100, "store_job fail name=%s level=%d\n", name, level);
-      return;
+      return false;
    }
 
    find_root_job();
@@ -455,6 +525,7 @@ void joblist::store_job(char *data)
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to update the job history. ERR=%s\n",
            be.bstrerror(errno));
+      ret = false;
       goto bail_out;
    }
 
@@ -471,17 +542,23 @@ void joblist::store_job(char *data)
                now, level, key, name, root, prev, strlen(data), data);
    }
 
+   unbash_spaces(data);
+
    if (bwrite(&fp, tmp, l) != l) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to update the job history. ERR=%s\n",
            be.bstrerror(errno));
+      ret = false;
    }
 
-   bclose(&fp);
+   if (bclose(&fp)) {
+      ret = false;
+   }
 
 bail_out:
    V(joblist_mutex);
    free_pool_memory(tmp);
+   return ret;
 }
 
 /* Prune jobs at the end of the job, this function can generate commands
@@ -496,10 +573,10 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
    POOLMEM *tmpout;
    POOLMEM *data;
    POOLMEM *buf;
-   char curkey[MAX_NAME_LENGTH];  /* key */
-   char jobname[MAX_NAME_LENGTH]; /* jobname */
-   char prevjob[MAX_NAME_LENGTH]; /* last jobname */
-   char rootjob[MAX_NAME_LENGTH]; /* root jobname */
+   POOLMEM *curkey;             /* key */
+   POOLMEM *curjobname;         /* jobname */
+   POOLMEM *prevjob;            /* last jobname */
+   POOLMEM *rootjob;            /* root jobname */
    char t[MAX_NAME_LENGTH];
    uint32_t datalen;
    char curlevel;
@@ -528,7 +605,12 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
 
    buf = get_pool_memory(PM_FNAME);
    data = get_pool_memory(PM_FNAME);
-   *buf = *data = 0;
+   curkey = get_pool_memory(PM_FNAME);
+   curjobname = get_pool_memory(PM_FNAME);
+   prevjob = get_pool_memory(PM_FNAME);
+   rootjob = get_pool_memory(PM_FNAME);
+
+   *curkey = *curjobname = *prevjob = *rootjob = *buf = *data = 0;
 
    P(joblist_mutex);
    if (bopen(&fp, tmp, O_RDONLY, 0) < 0) {
@@ -554,37 +636,23 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
       goto bail_out;
    }
 
-   while (fgets(buf, sizeof_pool_memory(buf), f) != NULL) {
-      *data = *curkey = *jobname = *rootjob = *prevjob = 0;
+   while (bfgets(buf, f) != NULL) {
+      curkey = check_pool_memory_size(curkey, sizeof_pool_memory(buf));
+      curjobname = check_pool_memory_size(curjobname, sizeof_pool_memory(buf));
+      rootjob = check_pool_memory_size(rootjob, sizeof_pool_memory(buf));
+      prevjob = check_pool_memory_size(prevjob, sizeof_pool_memory(buf));
+      data = check_pool_memory_size(data, sizeof_pool_memory(buf));
+      *data = *curkey = *curjobname = *rootjob = *prevjob = 0;
       keep = false;
       datalen = 0;
-      
+
       len = strlen(buf);
-      if (len > 0 && buf[len -1] != '\n') {
-         /* The line is larger than the buffer, we need to capture the rest */
-         bool ok=false;
-         while (!ok) {
-            Dmsg(ctx, dbglvl+100, "Reading extra 1024 bytes, len=%d\n", len);
-            buf = check_pool_memory_size(buf, sizeof_pool_memory(buf) + 1024);
-            if (fgets(buf + len, 1023, f) == NULL) {
-               ok = true;
-            }
-            len = strlen(buf);
-            if (buf[len - 1] == '\n') {
-               ok = true;
-            }
-            if (len > 32000) {  /* sanity check */
-               ok = true;
-            }
-         }
-      }
-
       /* We don't capture the vol list, because our sscanf is limited to 1000 bytes  */
-      if (sscanf(buf, "time=%60s level=%c key=%127s name=%127s root=%127s prev=%127s vollen=%d vol=", 
-                 t, &curlevel, curkey, jobname, rootjob, prevjob, &datalen) != 7) {
+      if (scan_string(buf, "time=%60s level=%c key=%s name=%s root=%s prev=%s vollen=%d vol=", 
+                      t, &curlevel, curkey, curjobname, rootjob, prevjob, &datalen) != 7) {
 
-         if (sscanf(buf, "time=%60s level=F key=%127s name=%127s vollen=%d vol=", 
-                    t, curkey, jobname, &datalen) == 4) {
+         if (scan_string(buf, "time=%60s level=F key=%s name=%s vollen=%d vol=", 
+                         t, curkey, curjobname, &datalen) == 4) {
             *rootdiff = *rootjob = *prevjob = 0;
             curlevel = 'F';
 
@@ -600,7 +668,7 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
          unbash_spaces(data);
 
          if (datalen != strlen(data)) {
-            Dmsg(ctx, dbglvl+100, "Bad data line datalen != strlen(data) %d != %d\n", datalen, strlen(data)); 
+            Dmsg(ctx, dbglvl+100, "Bad data line datalen != strlen(data) %d != %d\n", datalen, (int)strlen(data)); 
             Dmsg(ctx, dbglvl+100, "v=[%s]\n", data);
          }
       }
@@ -608,10 +676,10 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
 
       if (!keep &&
           (strcmp(key,  curkey)  != 0 ||
-           strcmp(name, jobname) == 0 ||
-           strcmp(prev, jobname) == 0 ||
-           strcmp(root, jobname) == 0 ||
-           strcmp(rootdiff, jobname) == 0))
+           strcmp(name, curjobname) == 0 ||
+           strcmp(prev, curjobname) == 0 ||
+           strcmp(root, curjobname) == 0 ||
+           strcmp(rootdiff, curjobname) == 0))
       {
          keep = true;
       } 
@@ -626,17 +694,17 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
 
       } else if (build_cmd) {
          count++;
-         Dmsg(ctx, dbglvl+100, "Can prune jobname %s\n", jobname);
+         Dmsg(ctx, dbglvl+100, "Can prune jobname %s\n", curjobname);
 
          char *p2 = data;
          for(char *p = data; *p; p++) {
             if (*p == ',') {
                *p = 0;
-               jobs->append(bstrdup(build_cmd(arg, p2, jobname)));
+               jobs->append(bstrdup(build_cmd(arg, p2, curjobname)));
                p2 = p + 1 ;
             }
          }
-         jobs->append(bstrdup(build_cmd(arg, p2, jobname)));
+         jobs->append(bstrdup(build_cmd(arg, p2, curjobname)));
 
       } else if (jobs) {
          jobs->append(bstrdup(data));
@@ -669,12 +737,98 @@ bail_out:
    free_pool_memory(tmpout);
    free_pool_memory(data);
    free_pool_memory(buf);
+   free_pool_memory(curkey);
+   free_pool_memory(curjobname);
+   free_pool_memory(prevjob);
+   free_pool_memory(rootjob);
 
    Dmsg(ctx, dbglvl+100, "Pruning %d jobs\n", count);
 }
 
 
 #endif  /* ! USE_JOB_LIST */
+
+#ifdef USE_SP_DECODE
+/* ***BEEF*** */
+static int sp_decode(char *str, POOLMEM **ret)
+{
+   int  len;                    /* len of the original string */
+   int  salt;                   /* salt key used to hide the len */
+   char pepper;                 /* pepper key used to hide the string */
+   int  retval  = 0;
+   POOLMEM *buf = get_pool_memory(PM_FNAME);
+   **ret = 0;
+
+   /* The original string should be smaller than
+    * the base64 form
+    */
+   buf = check_pool_memory_size(buf, strlen(str));
+   base64_to_bin(buf, sizeof_pool_memory(buf),
+                 str, strlen(str));
+
+   /* The two intergers are on 3 digits, the password
+    * is starting after 8 bytes
+    */
+   if (sscanf(buf, "%d:%d:", &salt, &len) != 2) {
+      Dmsg0(0, "Unable to decode given malformed string\n");
+      goto cleanup;
+   }
+
+   pepper = salt % 256;
+
+   len = len ^ salt;            /* get original len */
+   if (len > MAX_NAME_LENGTH || (len+8) >= sizeof_pool_memory(buf)) {
+      Dmsg0(0, "Unable to decode given string, len is too long\n");
+      goto cleanup;
+   }
+
+   /* skip %03d:%03d:pass, and force the end of string */
+   buf[8+len] = 0;
+
+   for(char *p = buf + 8 ; len > 0 ; len--) {
+      *p = *p ^ pepper;
+      p++;
+   }
+   pm_strcpy(ret, buf + 8);
+   retval = 1;
+
+cleanup:
+   free_pool_memory(buf);
+   return retval;
+}
+
+#endif
+
+#ifdef USE_FULL_READ
+/* Handle signal when reading from a pipe, functions based on
+ * fread doesn't work very well.
+ */
+static int32_t full_read(int in, char *buf, int32_t nbytes)  {
+   ssize_t  nleft, nread;
+   nleft = nbytes;
+
+   while (nleft > 0) {
+      errno = 0;
+      nread = read(in, buf, nleft);
+      if (nread == -1) {
+         if (errno == EINTR) {
+            continue;
+         } 
+      }
+      if (nread < 0) {
+         return nread;             /* error */
+      }
+
+      nleft -= nread;
+      buf += nread;
+
+      if (nread == 0) {
+         return nbytes - nleft;
+      }
+   }
+   return nbytes - nleft;
+};
+#endif
 
 #ifdef USE_FULL_WRITE
 static int32_t full_write(int fd, const char *ptr, int32_t nbytes, bool *canceled=NULL)
@@ -699,14 +853,25 @@ static int32_t full_write(int fd, const char *ptr, int32_t nbytes, bool *cancele
 
 #ifdef USE_MAKEDIR
 /* Skip leading slash(es) */
-static bool makedir(char *path, mode_t mode)
+static bool makedir(char *path, bool is_dir, mode_t mode)
 {
    struct stat statp;
    char *p = path;
+   char *last;
 
+   /* Handle specific windows paths */
+#if HAVE_WIN32
+   if (strncmp(p, "\\\\?\\", 4) == 0) {
+      p += 4;                   /* Skip windows special path */
+   }
+   if (B_ISALPHA(p[0]) && p[1] == ':' && p[2] == '\\') {
+      p += 3;                   /* Skip Windows drive */
+   }
+#endif
    while (IsPathSeparator(*p)) {
       p++;
    }
+   last = p;
    while ((p = first_path_separator(p))) {
       char save_p;
       save_p = *p;
@@ -724,7 +889,38 @@ static bool makedir(char *path, mode_t mode)
       while (IsPathSeparator(*p)) {
          p++;
       }
+      last = p;
+   }
+   if (is_dir && last && last[0] != '\0') {
+      mkdir(path, mode);        // Create the last directory
    }
    return true;
 }
 #endif
+
+#ifdef USE_LISTUSERS
+/* TODO: Adapt the code for windows */
+static bool list_users(alist *list, POOLMEM *&error)
+{
+   POOL_MEM tmp1;
+   BPIPE *pfd;
+   *error = 0;
+
+   /* Simple way to list users, used by unix_user plugin parameter */
+   pfd = open_bpipe((char *)"cut -d: -f1 /etc/passwd", 0, "r");
+   if (!pfd) {
+      Mmsg(error,  "Unable to list users");
+      return false;
+   }
+   while (bfgets(tmp1.addr(), pfd->rfd)) {
+      strip_trailing_junk(tmp1.c_str());
+      if (tmp1.c_str()[0] && tmp1.c_str()[0] != '#') {
+         list->append(bstrdup(tmp1.c_str()));
+      }
+   }
+   if (close_bpipe(pfd) != 0) {
+      Mmsg(error, "Unable to list users");
+   }
+   return list->size() > 0;
+}
+#endif  // USE_LISTUSERS
