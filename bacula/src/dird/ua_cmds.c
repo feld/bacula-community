@@ -158,7 +158,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\t[expired] [all | allpools | allfrompool] [pool=<pool>] [mediatype=<type>] volume=<volume-name> [yes]"),
    true},
 
- { NT_("purge"),      purge_cmd,     _("Purge records from catalog"), NT_("files jobs volume=<vol> [mediatype=<type> pool=<pool> allpools storage=<st> drive=<num>]"),  true},
+ { NT_("purge"),      purge_cmd,     _("Purge records from catalog"), NT_("files [client=<cli> jobid=<id>] | jobs [client=<cli> name=<jobname>] | volume=<vol> [mediatype=<type> pool=<pool> allpools storage=<st> drive=<num>]"),  true},
  { NT_("quit"),       quit_cmd,      _("Terminate Bconsole session"), NT_(""),              false},
  { NT_("query"),      query_cmd,     _("Query catalog"), NT_("[<query-item-number>]"),      false},
 #if BEEF
