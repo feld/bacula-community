@@ -511,7 +511,8 @@ void do_verify_volume(JCR *jcr)
 
             if (vctx.stream == STREAM_SPARSE_DATA
                 || vctx.stream == STREAM_SPARSE_COMPRESSED_DATA
-                || vctx.stream == STREAM_SPARSE_GZIP_DATA) {
+                || vctx.stream == STREAM_SPARSE_GZIP_DATA
+                || vctx.full_stream & STREAM_BIT_OFFSETS) {
                vctx.skip_sparse_header(&wbuf, &wsize);
             }
 
