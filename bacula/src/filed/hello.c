@@ -144,10 +144,6 @@ bool send_hello_sd(JCR *jcr, char *Job, int tlspsk)
 
 /* ======================== */
 
-#ifdef COMMUNITY
-bool send_fdcaps(JCR *jcr, BSOCK *sd) { return false; }
-bool recv_sdcaps(JCR *jcr) { return false; }
-#else
 /*
  */
 bool send_fdcaps(JCR *jcr, BSOCK *sd)
@@ -206,7 +202,6 @@ bool recv_sdcaps(JCR *jcr)
    jcr->max_dedup_block_size = max_block_size;
    return true;
 }
-#endif
 
 /* Commands sent to Director */
 static char hello[]    = "Hello %s calling %d tlspsk=%d\n";

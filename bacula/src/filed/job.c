@@ -2779,10 +2779,8 @@ static int storage_cmd(JCR *jcr)
       }
 
       /* Receive and send capabilities */
-      if (beef) {
-         if (!recv_sdcaps(jcr) || !send_fdcaps(jcr, jcr->store_bsock)) {
-            return false;
-         }
+      if (!recv_sdcaps(jcr) || !send_fdcaps(jcr, jcr->store_bsock)) {
+         return false;
       }
 
       if (!auth.authenticate_storagedaemon()) {
