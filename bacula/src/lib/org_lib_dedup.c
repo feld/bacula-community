@@ -21,7 +21,9 @@
 
 int bhash_info(int hash_id, const char **hash_name)
 {
-   *hash_name = "N/A";
+   if (hash_name) {
+      *hash_name = "N/A";
+   }
    return 0;
 }
 
