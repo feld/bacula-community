@@ -153,6 +153,7 @@ static RES_ITEM dev_items[] = {
    {"RequiresMount",         store_bit,  ITEM(res_dev.cap_bits), CAP_REQMOUNT, ITEM_DEFAULT, 0},
    {"OfflineOnUnmount",      store_bit,  ITEM(res_dev.cap_bits), CAP_OFFLINEUNMOUNT, ITEM_DEFAULT, 0},
    {"BlockChecksum",         store_bit,  ITEM(res_dev.cap_bits), CAP_BLOCKCHECKSUM, ITEM_DEFAULT, 1},
+   {"UseLintape",            store_bit,  ITEM(res_dev.cap_bits), CAP_LINTAPE, ITEM_DEFAULT, 0},
    {"Enabled",               store_bool, ITEM(res_dev.enabled), 0, ITEM_DEFAULT, 1},
    {"AutoSelect",            store_bool, ITEM(res_dev.autoselect), 0, ITEM_DEFAULT, 1},
    {"ReadOnly",              store_bool, ITEM(res_dev.read_only), 0, ITEM_DEFAULT, 0},

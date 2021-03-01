@@ -69,7 +69,7 @@ public:
    void show_tape_alerts(DCR *dcr, alert_list_type type,
       alert_list_which which, alert_cb alert_callback);
    int delete_alerts();
-
+   bool check_lintape_eod();
    alist *alert_list;
 };
 

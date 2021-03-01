@@ -149,6 +149,7 @@ typedef struct {
 #define CAP_BLOCKCHECKSUM  (1<<23)    /* Create/test block checksum */
 #define CAP_LSEEK          (1<<24)    /* Has lseek function defined i.e. basically File storage */
 #define CAP_SYNCONCLOSE    (1<<25)    /* Need to call fsync() when releasing/closing the device */
+#define CAP_LINTAPE        (1<<26)    /* If has the Lintape interface */
 
 /* Test state */
 #define dev_state(dev, st_state) ((dev)->state & (st_state))

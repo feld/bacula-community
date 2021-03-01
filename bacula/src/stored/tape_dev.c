@@ -57,6 +57,7 @@
 
 #include "bacula.h"
 #include "stored.h"
+#include "lintape.h"
 
 #ifndef O_NONBLOCK
 #define O_NONBLOCK 0
@@ -623,6 +624,9 @@ bool tape_dev::fsf(int num)
              */
             } else if (at_eof() && errno == ENOSPC) {
                stat = 0;
+            /* With IBM Lintape, we need to check the Error sense of the device */
+            } else if (at_eof() && errno == EIO && check_lintape_eod()) {
+               stat = 0;
             } else {
                berrno be;
                set_eot();
@@ -1126,4 +1130,85 @@ void tape_dev::term(DCR *dcr)
 {
    delete_alerts();
    DEVICE::term(dcr);
+}
+
+/* Official documentation
+ * https://www.ibm.com/support/pages/node/652827
+ *
+ * TS3310 TApe Library SCSI Reference, look for "REQUEST SENSE"
+ * https://www.ibm.com/support/pages/system/files/support/ssg/ssgdocs.nsf/0/b321b010cdcf56e58525773b0070c925/$FILE/GA32-0476-01.pdf
+ */
+bool tape_dev::check_lintape_eod()
+{
+#ifdef HAVE_LINUX_OS
+   if (has_cap(CAP_LINTAPE)) {
+      int rc;
+      char buf[128];
+      lintape_request_sense sense;
+      memset(&sense, 0, sizeof(sense));
+
+      rc = d_ioctl(m_fd, SIOC_REQSENSE, (char*)&sense);
+      if (rc != 0) {
+         Dmsg0(150, "Unable to perform SIOC_REQSENSE\n");
+         return false;
+      }
+
+      if (chk_dbglvl(150)) {
+         d_msg(__FILE__, __LINE__, 150,
+               "Information Field Valid Bit-------%d\n"
+               "Error Code------------------------0x%02x\n"
+               "Segment Number--------------------0x%02x\n"
+               "filemark Detected Bit-------------%d\n"
+               "End Of Medium Bit-----------------%d\n"
+               "Illegal Length Indicator Bit------%d\n"
+               "Sense Key-------------------------0x%02x\n"
+               "  Information Bytes---------------0x%02x 0x%02x 0x%02x 0x%02x\n"
+               "Additional Sense Length-----------0x%02x\n"
+               "Command Specific Information------0x%02x 0x%02x 0x%02x 0x%02x\n"
+               "Additional Sense Code-------------0x%02x\n"
+               "Additional Sense Code Qualifier---0x%02x\n"
+               "Field Replaceable Unit Code-------0x%02x\n"
+               "Sense Key Specific Valid Bit------%d\n"
+               "  Command Data Block Bit----------%d\n"
+               "  Bit Pointer Valid Bit-----------%d\n"
+               "    System Information Message----0x%02x\n"
+               "  Field Pointer-------------------0x%02x%02x\n"
+               "Vendor----------------------------%s\n",
+               (int)sense.valid,
+               (int)sense.err_code,
+               (int)sense.segnum,
+               (int)sense.fm,
+               (int)sense.eom,
+               (int)sense.ili,
+               (int)sense.key,
+               sense.valid?(int)(sense.info >> 24) :0,
+               sense.valid?(int)(sense.info >> 16) :0,
+               sense.valid?(int)(sense.info >> 8)  :0,
+               sense.valid?(int)(sense.info & 0xFF):0,
+               (int)sense.addlen,
+               (int)(sense.cmdinfo >> 24), (int)(sense.cmdinfo >> 16),
+               (int)(sense.cmdinfo >> 8), (int)(sense.cmdinfo & 0xFF),
+               (int)sense.asc,
+               (int)sense.ascq,
+               (int)sense.fru,
+               (int)sense.sksv,
+               sense.sksv?(int)sense.cd  :0,
+               sense.sksv?(int)sense.bpv :0,
+               (sense.sksv && sense.bpv)?(int)sense.sim :0,
+               sense.sksv?(int)sense.field[0] :0,
+               sense.sksv?(int)sense.field[1] :0,
+               smartdump((char*)sense.vendor, sizeof(sense.vendor),
+                         buf, sizeof(buf), NULL));
+      }
+      if (sense.err_code) {
+         /* The following values are reported to be correct by Mariusz Czulada
+          * on the bacula-devel list in 2007
+          */
+         return sense.key == 0x08 &&
+                sense.asc == 0x00 &&
+                sense.ascq == 0x05;
+      }
+   }
+#endif
+   return false;
 }
