@@ -34,7 +34,7 @@
    Kern Sibbald, July 2001
 
      Note, the original W.Z. Venema smtp.c had no license and no
-     copyright.  
+     copyright.
      See:
         http://archives.neohapsis.com/archives/postfix/2000-05/1520.html
 
@@ -77,7 +77,7 @@ static char my_hostname[MAXSTRING];
 static bool content_utf8 = false;
 static resolv_type default_resolv_type = RESOLV_PROTO_IPV4;
 
-/* 
+/*
  * Take input that may have names and other stuff and strip
  *  it down to the mail box address ... i.e. what is enclosed
  *  in < >.  Otherwise add < >.
@@ -253,7 +253,8 @@ int main (int argc, char *argv[])
 #if defined(HAVE_WIN32)
    SOCKET s;
 #else
-   int s, r;
+   int r;
+   int s = -1;
    struct passwd *pwd;
 #endif
    char *cp, *p;
@@ -271,7 +272,7 @@ int main (int argc, char *argv[])
 #else
    const char *options = "48ac:d:f:h:r:s:l:S:H:?";
 #endif
-    
+
    int custom_header_count = 0;
    int custom_header_max = (sizeof(custom_headers) / sizeof(char *));
 
@@ -587,7 +588,7 @@ lookup_host:
    get_response(); /* banner */
    chat("HELO %s\r\n", my_hostname);
    chat("MAIL FROM:%s\r\n", cleanup_addr(from_addr, buf, sizeof(buf)));
-   
+
    for (i = 0; i < argc; i++) {
       char *m = argv[i];
       if (m) {
