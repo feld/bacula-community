@@ -1148,7 +1148,7 @@ static bool check_resources()
             OK = false;
          }
       }
-      if (!job->storage && !job->pool->storage) {
+      if (!job->storage && (job->pool && !job->pool->storage)) {
          Jmsg(NULL, M_FATAL, 0, _("No storage specified in Job \"%s\" nor in Pool.\n"),
             job->name());
          OK = false;
