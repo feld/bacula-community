@@ -441,8 +441,11 @@ get_first_keyword()
 static char *
 get_previous_keyword(int current_point, int nb)
 {
-   int i, end=-1, start, inquotes=0;
-   char *s=NULL;
+   int i;
+   int end = -1;
+   int start = -1;
+   int inquotes = 0;
+   char *s = NULL;
 
    while (nb-- >= 0) {
       /* first we look for a space before the current word */
@@ -475,6 +478,11 @@ get_previous_keyword(int current_point, int nb)
          }
          current_point = start;
       }
+   }
+
+   if (start == -1 || end == -1) {
+      // something went wrong during scan
+      return NULL;
    }
 
    s = (char *)malloc(end - start + 2);
