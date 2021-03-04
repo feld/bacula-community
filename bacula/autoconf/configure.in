@@ -1891,20 +1891,44 @@ dnl --------------------------------------------------------------------------
 AC_LANG_PUSH(C++)
 AC_CACHE_CHECK(for typeof, ba_cv_have_typeof,
    [
-       AC_TRY_RUN(
-	  [
-	      main(){char *a = 0; a = (typeof a)a;}
-	  ], [
-	      ba_cv_have_typeof=yes
-	  ], [
-	      ba_cv_have_typeof=no
-	  ], [
-	      ba_cv_have_typeof=no
-	  ]
-       )
+      AC_TRY_RUN(
+         [
+            main(){char *a = 0; a = (typeof a)a;}
+         ], [
+            ba_cv_have_typeof=yes
+         ], [
+            ba_cv_have_typeof=no
+         ], [
+            ba_cv_have_typeof=no
+         ]
+      )
    ]
 )
-test $ba_cv_have_typeof = yes && AC_DEFINE([HAVE_TYPEOF], 1, [Defind to 1 if compiler has typeof])
+if test $ba_cv_have_typeof = yes; then
+   AC_DEFINE([HAVE_TYPEOF], 1, [Defind to 1 if compiler has typeof])
+   AC_DEFINE([TYPEOF_FUNC], typeof, [Define to nonstandard `typeof` supported by compiler])
+else
+AC_CACHE_CHECK(for __typeof, ba_cv_have_utypeof,
+   [
+      AC_TRY_RUN(
+         [
+            main(){char *a = 0; a = (__typeof a)a;}
+         ], [
+            ba_cv_have_utypeof=yes
+         ], [
+            ba_cv_have_utypeof=no
+         ], [
+            ba_cv_have_utypeof=no
+         ]
+      )
+   ]
+)
+if test $ba_cv_have_utypeof = yes; then
+   AC_DEFINE([HAVE_TYPEOF], 1, [Defind to 1 if compiler has typeof])
+   AC_DEFINE([TYPEOF_FUNC], __typeof, [Define to nonstandard `typeof` supported by compiler])
+fi
+fi
+
 AC_LANG_POP(C++)
 
 AC_C_CONST

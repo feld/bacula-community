@@ -79,8 +79,25 @@ extern void unserial_string(uint8_t * * const ptr, char * const str, int max);
 #define unser_check(x, s) ASSERT(unser_length(x) == ((uint32_t)(s)))
 
 /*  ser_assign(ptr, len) -- assign current position to ptr and go len bytes forward  */
-#define ser_assign(ptr, len) { ptr = (typeof(ptr))ser_ptr; ser_ptr += (len); }
-#define unser_assign(ptr, len) { ptr = (typeof(ptr))ser_ptr; ser_ptr += (len); }
+#ifdef HAVE_TYPEOF
+#define ser_assign(ptr, len) { ptr = (TYPEOF_FUNC(ptr))ser_ptr; ser_ptr += (len); }
+#define unser_assign(ptr, len) { ptr = (TYPEOF_FUNC(ptr))ser_ptr; ser_ptr += (len); }
+#else
+#define ser_assign(ptr, len)            \
+   {                                    \
+      void **_p1 = (void **)(&ser_ptr); \
+      void **_p2 = (void **)(&ptr);     \
+      *_p2 = *_p1;                      \
+      ser_ptr += (len);                 \
+   }
+#define unser_assign(ptr, len)          \
+   {                                    \
+      void **_p1 = (void **)(&ser_ptr); \
+      void **_p2 = (void **)(&ptr);     \
+      *_p2 = *_p1;                      \
+      ser_ptr += (len);                 \
+   }
+#endif
 
 /*                          Serialisation                   */
 

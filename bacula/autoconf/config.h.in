@@ -1064,6 +1064,9 @@
 /* Defind to 1 if compiler has typeof */
 #undef HAVE_TYPEOF
 
+/* Define to nonstandard `typeof` supported by compiler */
+#undef TYPEOF_FUNC
+
 /* Define to 1 if you don't have `tm_zone' but do have the external array
    `tzname'. */
 #undef HAVE_TZNAME
