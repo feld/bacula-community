@@ -346,7 +346,7 @@ bool find_config_file(const char *config_file, char *full_path, int max_path);
 /* Loop through each resource of type, returning in var */
 #ifdef HAVE_TYPEOF
 #define foreach_res(var, type) \
-        for((var)=NULL; ((var)=(typeof(var))GetNextRes((type), (RES *)var));)
+        for((var)=NULL; ((var)=(TYPEOF_FUNC(var))GetNextRes((type), (RES *)var));)
 #else
 #define foreach_res(var, type) \
     for(var=NULL; (*((void **)&(var))=(void *)GetNextRes((type), (RES *)var));)

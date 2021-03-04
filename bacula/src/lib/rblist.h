@@ -38,7 +38,7 @@
  */
 #ifdef HAVE_TYPEOF
 #define foreach_rblist(var, tree) \
-   for (((var)=(typeof(var))(tree)->first()); (var); ((var)=(typeof(var))(tree)->next(var)))
+   for (((var)=(TYPEOF_FUNC(var))(tree)->first()); (var); ((var)=(TYPEOF_FUNC(var))(tree)->next(var)))
 #else
 #define foreach_rblist(var, tree) \
    for ((*((void **)&(var))=(void*)((tree)->first())); (var); (*((void **)&(var))=(void*)((tree)->next(var))))

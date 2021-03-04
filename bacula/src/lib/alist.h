@@ -34,7 +34,7 @@ extern bool is_null(const void *ptr);
  */
 #ifdef HAVE_TYPEOF
 #define foreach_alist(var, list) \
-        for((var)=(typeof(var))(list)->first(); (var); (var)=(typeof(var))(list)->next() )
+        for((var)=(TYPEOF_FUNC(var))(list)->first(); (var); (var)=(TYPEOF_FUNC(var))(list)->next() )
 #else
 #define foreach_alist(var, list) \
     for((*((void **)&(var))=(void*)((list)->first())); \
@@ -44,7 +44,7 @@ extern bool is_null(const void *ptr);
 
 #ifdef HAVE_TYPEOF
 #define foreach_alist_index(inx, var, list) \
-        for(inx=0; ((var)=(typeof(var))(list)->get(inx)); inx++ )
+        for(inx=0; ((var)=(TYPEOF_FUNC(var))(list)->get(inx)); inx++ )
 #else
 #define foreach_alist_index(inx, var, list) \
     for(inx=0; ((*((void **)&(var))=(void*)((list)->get(inx)))); inx++ )

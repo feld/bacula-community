@@ -46,7 +46,7 @@
  */
 #ifdef HAVE_TYPEOF
 #define foreach_dlist(var, list) \
-        for((var)=NULL; ((var)=(typeof(var))(list)->next(var)); )
+        for((var)=NULL; ((var)=(TYPEOF_FUNC(var))(list)->next(var)); )
 #else
 #define foreach_dlist(var, list) \
     for((var)=NULL; (*((void **)&(var))=(void*)((list)->next(var))); )

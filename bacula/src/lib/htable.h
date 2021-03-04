@@ -35,7 +35,7 @@
  *
  */
 
-/* 
+/*
  * BIG_MALLOC is to provide a large malloc service to htable
  */
 #define BIG_MALLOC
@@ -45,9 +45,9 @@
  */
 #ifdef HAVE_TYPEOF
 #define foreach_htable(var, tbl) \
-        for((var)=(typeof(var))((tbl)->first()); \
+        for((var)=(TYPEOF_FUNC(var))((tbl)->first()); \
            (var); \
-           (var)=(typeof(var))((tbl)->next()))
+           (var)=(TYPEOF_FUNC(var))((tbl)->next()))
 #else
 #define foreach_htable(var, tbl) \
         for((*((void **)&(var))=(void *)((tbl)->first())); \
@@ -58,7 +58,7 @@
 union key_val {
    char *key;                   /* char key */
    uint64_t ikey;               /* integer key */
-}; 
+};
 
 struct hlink {
    void *next;                        /* next hash item */
