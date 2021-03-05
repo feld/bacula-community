@@ -86,6 +86,27 @@ typedef struct {
    int bacula_client_test_metric2;
 } fdstatmetrics_t;
 
+class bnet_poll_manager: public SMARTALLOC
+{
+private:
+   pthread_cond_t  m_cond;
+   pthread_mutex_t m_mutex;
+   int32_t         m_check_done; /* small state machine to sync the two threads */
+
+   int32_t         m_count;     /* Current value, at 0 we send the POLL */
+   int32_t         m_check;     /* configuration file value */
+
+public:
+   bnet_poll_manager(int32_t val);
+   ~bnet_poll_manager();
+
+   void init(int32_t val);
+   void destroy();
+   void send(JCR *jcr, BSOCK *sd);
+   void recv(JCR *jcr, const char *msg);
+};
+
+
 void allow_os_suspensions();
 void prevent_os_suspensions();
 bool update_permanent_stats(void *data);

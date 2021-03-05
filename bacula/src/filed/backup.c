@@ -67,7 +67,11 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 {
    BSOCK *sd;
    bool ok = true;
-   // TODO landonf: Allow user to specify encryption algorithm
+
+   /* Initialize the poll manager if we have the configuration set */
+   if (me->sd_packet_check) {
+      jcr->sd_packet_mgr = New(bnet_poll_manager(me->sd_packet_check));
+   }
 
    sd = jcr->store_bsock;
 
@@ -226,6 +230,7 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 
    crypto_session_end(jcr);
 
+   bdelete_and_null(jcr->sd_packet_mgr);
 
    Dmsg1(100, "end blast_data ok=%d\n", ok);
    return ok;
@@ -780,6 +785,9 @@ static int send_data(bctx_t &bctx, int stream)
    while ((sd->msglen=(uint32_t)bread(&bctx.ff_pkt->bfd, bctx.rbuf, bctx.rsize)) > 0) {
       if (!process_and_send_data(bctx)) {
          goto err;
+      }
+      if (jcr->sd_packet_mgr) {
+         jcr->sd_packet_mgr->send(jcr, sd); // Send a POLL request if needed
       }
    } /* end while read file data */
    goto finish_sending;

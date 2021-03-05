@@ -3493,3 +3493,82 @@ int response(JCR *jcr, BSOCK *sd, char *resp, const char *cmd)
    }
    return 0;
 }
+
+/* 
+ * Small helper to manager a POLL request when the heartbeat is started
+ * When we send POLL, we get a OK message, but if the heartbeat is started
+ * the message is discarded. The following class is doing the synchronization
+ * between the two threads after a POLL message.
+ */
+bnet_poll_manager::bnet_poll_manager(int32_t val)
+{
+   pthread_cond_init(&m_cond, NULL);
+   pthread_mutex_init(&m_mutex, NULL);
+   init(val);
+}
+
+/* Call one time per job in blast_data_to_storage_daemon() */
+void bnet_poll_manager::init(int32_t val)
+{
+   m_check = val;               /* Value of the config file */
+   m_count = val;               /* Current value */
+   m_check_done = 0;            /* small state machine to sync the two threads */
+}
+
+bnet_poll_manager::~bnet_poll_manager()
+{
+   destroy();
+}
+
+void bnet_poll_manager::destroy()
+{
+   pthread_cond_destroy(&m_cond);
+   pthread_mutex_destroy(&m_mutex);
+}
+
+/* Send a POLL and get the answer every X packets, called in save_data() */
+void bnet_poll_manager::send(JCR *jcr, BSOCK *sd)
+{
+   int32_t val = m_count;
+
+   if (val == 0) {
+      Dmsg1(DT_NETWORK|10, "Request a POLL after %d packets...\n", m_check);
+      m_check_done = 1; /* We sent the request */
+      sd->signal(BNET_POLL);
+
+      struct timespec t;
+
+      P(m_mutex);
+      do {
+         t.tv_sec = time(NULL) + 5;
+         t.tv_nsec = 0;
+         pthread_cond_timedwait(&m_cond, &m_mutex, &t);
+      } while (m_check_done == 1 && !jcr->is_canceled());
+      V(m_mutex);
+
+      if (m_check_done == 2) {
+         Dmsg0(DT_NETWORK|10, "Got it\n");
+      }
+      m_check_done = 0;
+   }
+
+   val--;
+
+   if (val < 0) {               /* Initialization or loop found */
+      val = m_check;
+   }
+
+   m_count = val;
+}
+
+/* Called from the heartbeat thread */
+void bnet_poll_manager::recv(JCR *jcr, const char *msg)
+{
+   if (m_check_done == 1 && strncmp(msg, "2000 OK\n", 8) == 0) {
+      Dmsg0(DT_NETWORK|10, "Wake up the other thread after POLL\n");
+      P(m_mutex);
+      m_check_done = 2;
+      pthread_cond_signal(&m_cond);
+      V(m_mutex);
+   }
+}

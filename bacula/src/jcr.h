@@ -160,6 +160,7 @@ class htable;
 class BACL;
 class BXATTR;
 class snapshot_manager;
+class bnet_poll_manager;
 
 struct CRYPTO_CTX {
    bool pki_sign;                     /* Enable PKI Signatures? */
@@ -448,6 +449,9 @@ public:
    uint32_t EndFile;
    uint32_t StartBlock;
    uint32_t EndBlock;
+
+   bnet_poll_manager *sd_packet_mgr;  /* Manage POLL requests to control the flow */
+
    int32_t sd_dedup;                  /* set if SD has dedup */
    int32_t sd_hash;                   /* SD hash type */
    int32_t sd_hash_size;              /* SD hash size */

@@ -136,6 +136,7 @@ struct CLIENT {
    utime_t heartbeat_interval;        /* Interval to send heartbeats */
    uint32_t max_network_buffer_size;  /* max network buf size */
    uint32_t max_job_errors;           /* Maximum number of errors tolerated by the client to fail the job */
+   int32_t sd_packet_check;           /* Send a POLL request every X data packets */
    bool comm_compression;             /* Enable comm line compression */
    bool pki_sign;                     /* Enable Data Integrity Verification via Digital Signatures */
    bool pki_encrypt;                  /* Enable Data Encryption */
