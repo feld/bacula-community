@@ -222,6 +222,10 @@ EOF
        $bperl -e 'add_attribute("$conf/bacula-dir.conf", "SpoolAttributes", "No", "Job")'
        variant_name="${variant_name} NoSpoolAttributes"
    fi
+   if [ x$FORCE_SDPACKETCHECK = xyes ]; then
+       $bperl -e 'add_attribute("$conf/bacula-fd.conf", "SDPacketCheck", "500", "FileDaemon")'
+       variant_name="${variant_name} SDCheckPacket"
+   fi
    if [ x$FORCE_ENCRYPTION = xyes ]; then
        $bperl -e 'setup_fd_encryption()'
        variant_name="${variant_name} Encryption"
