@@ -40,7 +40,7 @@ const char *plugin_type = "-fd.so";
 
 extern bool save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
 extern bool check_changes(JCR *jcr, FF_PKT *ff_pkt);
-extern int metadata_save(JCR *jcr, plugin_metadata *plug_meta);
+extern int metadata_save(JCR *jcr, const plugin_metadata *plug_meta);
 
 /* Function pointers to be set here */
 extern DLL_IMP_EXP int     (*plugin_bopen)(BFILE *bfd, const char *fname, uint64_t flags, mode_t mode);
@@ -702,8 +702,6 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
                ff_pkt->restore_obj.object = sp.restore_obj.object;
                ff_pkt->restore_obj.object_len = sp.restore_obj.object_len;
             }
-         } else if (sp.type == FT_PLUGIN_METADATA) {
-            ff_pkt->plug_meta = sp.plug_meta;
          } else {
             Dsm_check(999);
             if (!sp.fname) {
@@ -713,6 +711,11 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
             }
             pm_strcpy(fname, sp.fname);
             pm_strcpy(link, sp.link);
+
+            if (sp.plug_meta) {
+               /* File has some metadata assigned to it */
+               ff_pkt->plug_meta = sp.plug_meta;
+            }
 
             ff_pkt->fname = fname.c_str();
             ff_pkt->snap_fname = fname.c_str();
@@ -1215,15 +1218,25 @@ bool plugin_set_attributes(JCR *jcr, ATTR *attr, BFILE *ofd)
    return true;
 }
 
+/*
+ * The Plugin file's metadata backup.
+ * Stream of metadata packets is being decoded, serialized and sent to the storage daemon for storing
+ * on the volume. Each metadata packet type has its own STREAM_* type.
+ *
+ * in:
+ *    jcr - Job Control Record
+ *    ff_pkt - file save packet
+ * out:
+ *    true - backup completed successfully (or there was no metadata to backup at all)
+ *    false - backup of metadata failed
+ */
 bool plugin_backup_metadata(JCR *jcr, FF_PKT *ff_pkt)
 {
-   Plugin *plugin = jcr->plugin;
-
    /* Backup metadata if provided */
    if (ff_pkt->plug_meta) {
       if (!metadata_save(jcr, ff_pkt->plug_meta)) {
          Jmsg2(jcr, M_ERROR, 0, _("Failed to backup metadata for plugin: \"%s\" fname: %s"),
-               plugin->file, ff_pkt->fname);
+               jcr->plugin->file, ff_pkt->fname);
          return false;
       }
    }

@@ -173,9 +173,9 @@ struct FF_PKT {
    int32_t FileIndex;                 /* FileIndex of this file */
    int32_t LinkFI;                    /* FileIndex of main hard linked file */
    int32_t delta_seq;                 /* Delta Sequence number */
-   struct restore_object restore_obj;
-   struct plugin_object plugin_obj;
-   plugin_metadata *plug_meta;
+   struct restore_object restore_obj; /* Info about restore object */
+   struct plugin_object plugin_obj;   /* Plugin Object */
+   const plugin_metadata *plug_meta;  /* Metadata packet provided by plugin */
    struct f_link *linked;             /* Set if this file is hard linked */
    int type;                          /* FT_ type from above */
    int ff_errno;                      /* errno */

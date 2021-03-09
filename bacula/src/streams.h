@@ -102,9 +102,8 @@
 #define STREAM_ENCRYPTED_FILE_COMPRESSED_DATA  32    /* Encrypted, compressed data */
 #define STREAM_ENCRYPTED_WIN32_COMPRESSED_DATA 33    /* Encrypted, compressed Win32 BackupRead data */
 #define STREAM_PLUGIN_OBJECT                   34    /* Plugin object */
-#define STREAM_PLUGIN_META_HEADER              35    /* Plugin metadata header for file being backed up */
-#define STREAM_PLUGIN_META_BLOB                36    /* Plugin metadata (blob) for file being backed up */
-#define STREAM_PLUGIN_META_CATALOG             37    /* Plugin metadata (to be stored in catalog) for file being backed up */
+#define STREAM_PLUGIN_META_BLOB                35    /* Plugin metadata (blob) for file being backed up */
+#define STREAM_PLUGIN_META_CATALOG             36    /* Plugin metadata (to be stored in catalog) for file being backed up */
 
 #define STREAM_ADATA_BLOCK_HEADER             200    /* Adata block header */
 #define STREAM_ADATA_RECORD_HEADER            201    /* Adata record header */

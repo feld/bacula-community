@@ -231,7 +231,16 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
    return ok;
 }
 
-bool metadata_save(JCR *jcr, plugin_metadata *plug_meta)
+/*
+ * Called by plugin_metadata_backup() for each file for which there is
+ * metadata provided by the plugin.
+ * Using the plugin_metadata class it iterates over metadata packets, serialize it and sends
+ * it to the sd one by one.
+ *
+ *  Returns: true if OK
+ *           false if error (size of the meta packet is too big or communication with the sd failed)
+ */
+bool metadata_save(JCR *jcr, const plugin_metadata *plug_meta)
 {
    bool stat = false;
    BSOCK *sd = jcr->store_bsock;

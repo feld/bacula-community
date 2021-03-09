@@ -121,11 +121,12 @@ enum metadata_type {
 };
 
 /*
- * This packet is used for storing plugin's metadata.
+ * This class is used to store single plugin's metadata packet along with providing some
+ * helper methods (e.g. for serialization of the data so that it can be send to the sd).
 */
 class meta_pkt: public SMARTALLOC {
    private:
-      bool decoded; /* Was metadata packed decoded from serialized stream or not */
+      bool decoded;              /* Was metadata packed decoded from serialized stream or not */
 
    public:
       uint32_t total_size;       /* Total size of metadata stream (consiting of packets) */
@@ -135,6 +136,7 @@ class meta_pkt: public SMARTALLOC {
       uint32_t buf_len;          /* Length of buffer */
       void *buf;                 /* Can be either passed by the user or allocated for deserialization */
 
+      /* Constructor, allows to assign most of needed fields in place */
       meta_pkt(metadata_type type=plugin_meta_invalid, uint32_t len=0, void *buf=NULL, uint16_t idx=0)  {
          this->buf_len = len;
          this->type = type;
@@ -146,7 +148,8 @@ class meta_pkt: public SMARTALLOC {
          decoded = false;
       };
 
-      /* Build metadata packet from serialized stream */
+      /* Constructor, class object can be either created from stream (which will be deserialized)
+       * or just initialized with some init values. */
       meta_pkt(void *stream) {
          if (stream) {
             unser_declare;
@@ -173,7 +176,7 @@ class meta_pkt: public SMARTALLOC {
 
       ~meta_pkt() {
          if (decoded) {
-            bfree(buf);
+            bfree(buf); /* Metadata packet contains buffer allocated by this class, needs freeing */
          }
       };
 
@@ -207,31 +210,25 @@ class meta_pkt: public SMARTALLOC {
  * meta_mgr->add_packet(plugin_meta_blog, buf1, buf1_len);
  * meta_mgr->add_packet(plugin_meta_catalog_email, buf2, buf2_len);
  *
- * Then just simply return meta_mgr as an 'plug_meta' field in save_packet structure and
- * set save_packet`s type to FT_PLUGIN_METADATA. Bacula will then take care of all of the packets
- * added to the list and store it onto the volume one by one.
+ * Then just simply return meta_mgr as an 'plug_meta' field in save_packet structure.
+ * Bacula will then take care of all of the packets added to the list and store it
+ * onto the volume one by one.
  */
 class plugin_metadata: public SMARTALLOC {
    private:
       uint32_t total_size;       /* Total size of metadata stream (consiting of many packets) */
       uint16_t total_count;      /* Total count of metadata packets in the stream */
-      alist *packets;            /* List of packets in the stream */
+      mutable alist packets;     /* List of packets in the stream */
 
    public:
       plugin_metadata() {
-         packets = New(alist(5, false));
+         packets.init(5, false);
          total_size = 0;
          total_count = 0;
       };
 
       ~plugin_metadata() {
-         /* Remove packets from list, delete each of them */
-         while (!packets->empty()) {
-            meta_pkt *mp = (meta_pkt *)packets->pop();
-            delete mp;
-         }
-
-        delete packets;
+         reset();
       };
 
       /* Create packet with specified attributes, add it to the list */
@@ -241,32 +238,32 @@ class plugin_metadata: public SMARTALLOC {
          mp->total_size = total_size;
          mp->total_count = total_count;
 
-         packets->push(mp);
+         packets.push(mp);
 
          /* Update all packets with new total size and count */
-         foreach_alist(mp, packets) {
+         foreach_alist(mp, &packets) {
             mp->total_size = total_size;
             mp->total_count = total_count;
          }
 
       };
 
-      uint32_t size() {
+      uint32_t size() const {
          return total_size;
       };
 
-      uint16_t count() {
+      uint16_t count() const {
          return total_count;
       };
 
-      meta_pkt *get(int index) {
-         return (meta_pkt *)packets->get(index);
+      meta_pkt *get(int index) const {
+         return (meta_pkt *)packets.get(index);
       };
 
       void reset() {
-         //Free allocated metadata packets
-         while (!packets->empty()) {
-            meta_pkt *mp = (meta_pkt *)packets->pop(); // remove from list
+         /* Remove packets from list, delete each of them */
+         while (!packets.empty()) {
+            meta_pkt *mp = (meta_pkt *)packets.pop(); // remove from list
             delete mp;
          }
 
@@ -294,7 +291,7 @@ struct save_pkt {
    char *cmd;                         /* command */
    struct restore_object restore_obj; /* Info about restore object */
    struct plugin_object plugin_obj;   /* Plugin Object */
-   plugin_metadata *plug_meta;        /* Metadata packet provided by plugin */
+   const plugin_metadata *plug_meta;  /* Metadata packet provided by plugin */
    uint32_t delta_seq;                /* Delta sequence number */
    int32_t LinkFI;                    /* LinkFI if LINKSAVED */
    int32_t pkt_end;                   /* end packet sentinel */
