@@ -21,9 +21,12 @@ echo "s%  Schedule =%# Schedule =%g" >${outf}
 cp $scripts/bacula-dir.conf $tmp/1
 sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
 
-nbpacket=10
+nbpacket=100
 
 $bperl -e "add_attribute('$conf/bacula-fd.conf', 'SDPacketCheck', '$nbpacket', 'FileDaemon')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'CommCompression', 'no', 'Storage')"
+$bperl -e "add_attribute('$conf/bacula-fd.conf', 'CommCompression', 'no', 'FileDaemon')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'CommCompression', 'no', 'Director')"
 
 change_jobname BackupClient1 $JobName
 start_test
@@ -79,6 +82,12 @@ echo "test test" > ${cwd}/build/src/dird/xxx
 grep "Request a POLL after $nbpacket packets..." $working/*fd.trace > /dev/null
 if [ $? != 0 ]; then
     print_debug "ERROR: Should find a POLL request in $working/*fd.trace"
+    estat=1
+fi
+
+grep "Adjust the number of packet sent before a POLL" $working/*fd.trace > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find some autotuning request in $working/*fd.trace"
     estat=1
 fi
 
