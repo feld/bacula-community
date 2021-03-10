@@ -94,8 +94,10 @@ private:
    int32_t         m_check_done; /* small state machine to sync the two threads */
 
    int32_t         m_count;     /* Current value, at 0 we send the POLL */
-   int32_t         m_check;     /* configuration file value */
-
+   int32_t         m_check;     /* Configuration file value */
+   btime_t         m_last_call; /* Adjust settings dynanically if needed */
+   uint64_t        m_sent;      /* Bytes sent since the last call */
+   
 public:
    bnet_poll_manager(int32_t val);
    ~bnet_poll_manager();

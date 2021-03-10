@@ -3510,9 +3510,11 @@ bnet_poll_manager::bnet_poll_manager(int32_t val)
 /* Call one time per job in blast_data_to_storage_daemon() */
 void bnet_poll_manager::init(int32_t val)
 {
+   m_sent = 0;                  /* Amount of data sent */ 
    m_check = val;               /* Value of the config file */
    m_count = val;               /* Current value */
    m_check_done = 0;            /* small state machine to sync the two threads */
+   m_last_call = time(NULL);
 }
 
 bnet_poll_manager::~bnet_poll_manager()
@@ -3532,12 +3534,29 @@ void bnet_poll_manager::send(JCR *jcr, BSOCK *sd)
    int32_t val = m_count;
 
    if (val == 0) {
-      Dmsg1(DT_NETWORK|10, "Request a POLL after %d packets...\n", m_check);
+      char ed1[50];
+      Dmsg2(DT_NETWORK|10, "Request a POLL after %d packets %sB...\n", m_check,
+            edit_uint64_with_suffix(m_sent, ed1));
+
+      /* We need to monitor the time we spend in this function and the time
+       * between two checks. If it is less than few secs we should be able to
+       * increase the count. We stop the automatic tuning if more than 500MB are
+       * sent between two points.
+       */
+      btime_t now = time(NULL);
+      if (m_sent < 500*1024*1024L && (now - m_last_call) < 3) {
+         m_check = m_check * 2;
+         Dmsg1(DT_NETWORK|10, "Adjust the number of packet sent before a POLL to %d\n", m_check);
+      }
+      m_last_call = now;
+
       m_check_done = 1; /* We sent the request */
       sd->signal(BNET_POLL);
 
+      /* Now we wait for the SD to answer, the packet will arrive in the
+       * Heartbeat thread 
+       */
       struct timespec t;
-
       P(m_mutex);
       do {
          t.tv_sec = time(NULL) + 5;
@@ -3556,8 +3575,10 @@ void bnet_poll_manager::send(JCR *jcr, BSOCK *sd)
 
    if (val < 0) {               /* Initialization or loop found */
       val = m_check;
+      m_sent = 0;
    }
 
+   m_sent += (sd->msglen > 0) ? sd->msglen : 0;
    m_count = val;
 }
 
