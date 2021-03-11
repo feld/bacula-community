@@ -20,8 +20,8 @@
  * @file test_metaplugin_backend.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a dumb and extremely simple backend simulator used for test Metaplugin.
- * @version 2.1.0
- * @date 2020-12-23
+ * @version 2.1.1
+ * @date 2021-03-10
  *
  * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
@@ -58,10 +58,17 @@ bool regress_error_estimate_stderr = false;
 bool regress_error_listing_stderr = false;
 bool regress_error_restore_stderr = false;
 bool regress_backup_other_file = false;
+bool regress_metadata_support = false;
+
 
 #define BUFLEN             4096
 #define BIGBUFLEN          65536
 
+/**
+ * @brief saves the log text to logfile
+ *
+ * @param txt log text to save
+ */
 void LOG(const char *txt)
 {
    char _buf[BUFLEN];
@@ -83,6 +90,12 @@ void LOG(const char *txt)
    write(logfd, _buf, p);
 }
 
+/**
+ * @brief Reads the raw packet from plugin.
+ *
+ * @param buf the memory buffer to save packet payload
+ * @return int the size of the packer read
+ */
 int read_plugin(char * buf)
 {
    int len;
@@ -132,6 +145,12 @@ int read_plugin(char * buf)
    return len;
 }
 
+/**
+ * @brief Sends/writes the data to plugin with assembling the raw packet.
+ *
+ * @param cmd the packet type to sent
+ * @param str the text to write
+ */
 void write_plugin(const char cmd, const char *str)
 {
    int len;
@@ -151,18 +170,27 @@ void write_plugin(const char cmd, const char *str)
    LOG(buflog);
 }
 
+/**
+ * @brief Sends the EOD packet to plugin.
+ */
 void signal_eod(){
    printf("F000000\n");
    fflush(stdout);
    LOG("<< EOD <<");
 }
 
+/**
+ * @brief Sends the termination packet to plugin.
+ */
 void signal_term(){
    printf("T000000\n");
    fflush(stdout);
    LOG("<< TERM <<");
 }
 
+/**
+ * @brief Perform test backup.
+ */
 void perform_backup()
 {
    // Backup Loop
@@ -389,6 +417,42 @@ void perform_backup()
    write_plugin('D', "/* here comes another file line    */");
    write_plugin('D', "/* here comes another file line    */");
    signal_eod();
+
+   if (regress_metadata_support)
+   {
+      snprintf(buf, BIGBUFLEN, "FNAME:%s/office/%d/document.docx\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "STAT:D 10240 100 100 040755 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+
+      write_plugin('C', "METADATA_STREAM\n");
+         write_plugin('D', "{ \"bacula.custom.data\": \"Inteos\"\n  \"system.custom.data\":\"Bacula\" }\n");
+      signal_eod();
+
+      write_plugin('C', "METADATA_STREAM\n");
+         write_plugin('D', "This is a binary data!");
+      signal_eod();
+
+      // disabled intentionally
+      // write_plugin('C', "METADATA_CATALOG\n");
+      //    write_plugin('D', "TABLE1: { field1: \"value1\", field2: \"value2\", field3: \"value3\"}");
+      // signal_eod();
+
+      // write_plugin('C', "METADATA_CATALOG\n");
+      //    write_plugin('D', "TABLE2: { field2: \"value1\", field2: \"value2\", field3: \"value3\"}");
+      // signal_eod();
+
+      signal_eod();  // end of file attributes
+
+      write_plugin('I', "TEST14 - backup metadata");
+      write_plugin('C', "DATA\n");
+      write_plugin('D', "/* here comes a file data contents */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      signal_eod();
+   }
 
    /* this is the end of all data */
    signal_eod();
@@ -664,58 +728,51 @@ int main(int argc, char** argv) {
       // "regress_error_restore_stderr",
       // "regress_backup_plugin_objects",
       // "regress_error_backup_abort",
-      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0){
          regress_error_plugin_params = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_start_job=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_start_job=1\n") == 0){
          regress_error_start_job = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0){
          regress_error_backup_no_files = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0){
          regress_error_backup_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0){
          regress_error_estimate_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0){
          regress_error_listing_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0){
          regress_error_restore_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0){
          regress_backup_plugin_objects = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0){
          regress_error_backup_abort = true;
          continue;
       }
-      if (strcmp(buf, "regress_backup_other_file=1\n") == 0)
-      {
+      if (strcmp(buf, "regress_backup_other_file=1\n") == 0){
          regress_backup_other_file = true;
          continue;
       }
-      if (sscanf(buf, "listing=%s\n", buf) == 1)
-      {
+      if (strcmp(buf, "regress_metadata_support=1\n") == 0){
+         regress_metadata_support = true;
+         continue;
+      }
+      if (sscanf(buf, "listing=%s\n", buf) == 1){
          strcpy(listing, buf);
          continue;
       }

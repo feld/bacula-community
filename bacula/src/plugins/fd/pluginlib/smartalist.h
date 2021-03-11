@@ -39,7 +39,7 @@ template <typename T>
 class smart_alist : public alist
 {
 public:
-   smart_alist(int num = 10) : alist(num, not_owned_by_alist) {};
+   smart_alist(int num = 10) : alist(num, not_owned_by_alist) {}
    ~smart_alist()
    {
       T * it;
@@ -52,7 +52,7 @@ public:
             }
          }
       }
-   };
+   }
 };
 
 #endif   /* _SMARTALIST_H_ */

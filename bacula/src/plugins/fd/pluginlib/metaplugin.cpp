@@ -64,6 +64,7 @@ static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
 // Not used! static bRC checkFile(bpContext *ctx, char *fname);
 static bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
 static bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
+static bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp);
 
 /* Pointers to Bacula functions */
 bFuncs *bfuncs = NULL;
@@ -92,6 +93,7 @@ static pFuncs pluginFuncs =
    NULL,                        /* No restore file list */
    NULL,                        /* No checkStream */
    queryParameter,
+   metadataRestore,
 };
 
 #ifdef __cplusplus
@@ -175,7 +177,8 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       acldatalen(0),
       acldata(PM_MESSAGE),
       xattrdatalen(0),
-      xattrdata(PM_MESSAGE)
+      xattrdata(PM_MESSAGE),
+      metadatas_list(10, true)
 {
    /* TODO: we have a ctx variable stored internally, decide if we use it
     * for every method or rip it off as not required in our code */
@@ -770,6 +773,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       "regress_backup_plugin_objects",
       "regress_backup_other_file",
       "regress_error_backup_abort",
+      "regress_metadata_support",
       NULL,
    };
 #endif
@@ -803,11 +807,9 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       }
 
 #ifdef DEVELOPER
-      if (!found)
-      {
+      if (!found){
          // now handle regression tests commands
-         for (int a = 0; regress_valid_params[a] != NULL; a++ )
-         {
+         for (int a = 0; regress_valid_params[a] != NULL; a++ ){
             DMSG3(ctx, DVDEBUG, "regress=> '%s' vs '%s' [%d]\n", param, regress_valid_params[a], strlen(regress_valid_params[a]));
             if (strncasecmp(param, regress_valid_params[a], strlen(regress_valid_params[a])) == 0){
                found = true;
@@ -1477,6 +1479,77 @@ bRC METAPLUGIN::perform_read_xattr(bpContext *ctx)
    return bRC_OK;
 }
 
+/**
+ * @brief Reads metadata info from backend and adds it as a metadata packet.
+ *
+ * @param ctx for Bacula debug and jobinfo messages
+ * @param type detected Metadata type
+ * @param sp save packet
+ * @return bRC bRC_OK when success, bRC_Error when some error
+ */
+bRC METAPLUGIN::perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp)
+{
+   POOL_MEM data(PM_MESSAGE);
+
+   DMSG0(ctx, DINFO, "perform_read_metadata_info\n");
+
+   int len = backend.ctx->read_data(ctx, data);
+   if (len < 0){
+      DMSG1(ctx, DERROR, "Cannot read METADATA(%i) information from backend.\n", type);
+      return bRC_Error;
+   }
+
+   DMSG1(ctx, DINFO, "read METADATA info len: %i\n", len);
+   if (!backend.ctx->read_ack(ctx)){
+      /* should get EOD */
+      DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
+      return bRC_Error;
+   }
+
+   // Bacula API for metadata requires that a plugin
+   // handle metadata buffer allocation
+   POOLMEM *ptr = (POOLMEM *)bmalloc(len);
+   memcpy(ptr, data.addr(), len);
+
+   // add it to the list for reference to not lot it
+   metadatas_list.append(ptr);
+   metadatas.add_packet(type, len, ptr);
+   sp->plug_meta = &metadatas;
+
+   return bRC_OK;
+}
+
+/**
+ * @brief Does metadata command scan and map to metadata types.
+ *
+ * @param cmd a command string read from backend
+ * @return metadata_type returned from map
+ */
+metadata_type METAPLUGIN::scan_metadata_type(const POOL_MEM &cmd)
+{
+   DMSG1(ctx, DDEBUG, "scan_metadata_type checking: %s\n", cmd.c_str());
+   for (int i = 0; plugin_metadata_map[i].command != NULL; i++)
+   {
+      if (bstrcmp(cmd.c_str(), plugin_metadata_map[i].command)){
+         DMSG2(ctx, DDEBUG, "match: %s => %d\n", plugin_metadata_map[i].command, plugin_metadata_map[i].type);
+         return plugin_metadata_map[i].type;
+      }
+   }
+
+   return plugin_meta_invalid;
+}
+
+const char * METAPLUGIN::prepare_metadata_type(metadata_type type)
+{
+   for (int i = 0; plugin_metadata_map[i].command != NULL; i++){
+      if (plugin_metadata_map[i].type == type){
+         return plugin_metadata_map[i].command;
+      }
+   }
+
+   return "METADATA_STREAM\n";
+}
+
 /*
  * Sends ACL data from restore stream to backend.
  * TODO: The method has a limitation and accept a single xacl_pkt call for
@@ -1532,7 +1605,6 @@ bRC METAPLUGIN::perform_write_acl(bpContext* ctx, xacl_pkt* xacl)
  */
 bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, xacl_pkt* xacl)
 {
-   int rc;
    POOL_MEM cmd(PM_FNAME);
 
    if (xacl->count > 0){
@@ -1541,7 +1613,7 @@ bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, xacl_pkt* xacl)
       backend.ctx->write_command(ctx, cmd.c_str());
       /* send xattrs data */
       DMSG1(ctx, DINFO, "writeXATTR: %i\n", xacl->count);
-      rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
+      int rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
       if (rc < 0){
          /* got some error */
          return bRC_Error;
@@ -1551,6 +1623,7 @@ bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, xacl_pkt* xacl)
          return bRC_Error;
       }
    }
+
    return bRC_OK;
 }
 
@@ -1581,14 +1654,12 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
       if (backend.ctx->read_command(ctx, cmd) > 0){
          /* yup, should read FNAME, ACL or XATTR from backend, check which one */
          DMSG(ctx, DDEBUG, "read_command(1): %s\n", cmd.c_str());
-         if (scan_parameter_str(cmd, "FNAME:", fname))
-         {
+         if (scan_parameter_str(cmd, "FNAME:", fname)){
             /* got FNAME: */
             nextfile = true;
             return bRC_OK;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ:", fname))
-         {
+         if (scan_parameter_str(cmd, "PLUGINOBJ:", fname)){
             /* got Plugin Object header */
             nextfile = true;
             pluginobject = true;
@@ -1644,43 +1715,36 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
    sp->plugin_obj.path = fname.c_str();
    DMSG0(ctx, DDEBUG, "perform_read_pluginobject()\n");
    // loop on plugin objects parameters from backend and EOD
-   while (true)
-   {
-      if (backend.ctx->read_command(ctx, cmd) > 0)
-      {
+   while (true){
+      if (backend.ctx->read_command(ctx, cmd) > 0){
          DMSG(ctx, DDEBUG, "read_command(1): %s\n", cmd.c_str());
          if (scan_parameter_str(cmd, "PLUGINOBJ_CAT:", plugin_obj_cat)){
             DMSG1(ctx, DDEBUG, "category: %s\n", plugin_obj_cat.c_str());
             sp->plugin_obj.object_category = plugin_obj_cat.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_TYPE:", plugin_obj_type))
-         {
+         if (scan_parameter_str(cmd, "PLUGINOBJ_TYPE:", plugin_obj_type)){
             DMSG1(ctx, DDEBUG, "type: %s\n", plugin_obj_type.c_str());
             sp->plugin_obj.object_type = plugin_obj_type.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_NAME:", plugin_obj_name))
-         {
+         if (scan_parameter_str(cmd, "PLUGINOBJ_NAME:", plugin_obj_name)){
             DMSG1(ctx, DDEBUG, "name: %s\n", plugin_obj_name.c_str());
             sp->plugin_obj.object_name = plugin_obj_name.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_SRC:", plugin_obj_src))
-         {
+         if (scan_parameter_str(cmd, "PLUGINOBJ_SRC:", plugin_obj_src)){
             DMSG1(ctx, DDEBUG, "src: %s\n", plugin_obj_src.c_str());
             sp->plugin_obj.object_source = plugin_obj_src.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_UUID:", plugin_obj_uuid))
-         {
+         if (scan_parameter_str(cmd, "PLUGINOBJ_UUID:", plugin_obj_uuid)){
             DMSG1(ctx, DDEBUG, "uuid: %s\n", plugin_obj_uuid.c_str());
             sp->plugin_obj.object_uuid = plugin_obj_uuid.c_str();
             continue;
          }
          POOL_MEM param(PM_NAME);
-         if (scan_parameter_str(cmd, "PLUGINOBJ_SIZE:", param))
-         {
+         if (scan_parameter_str(cmd, "PLUGINOBJ_SIZE:", param)){
             if (!size_to_uint64(param.c_str(), strlen(param.c_str()), &plugin_obj_size)){
                // error in convert
                DMSG1(ctx, DERROR, "Cannot convert Plugin Object Size to integer! p=%s\n", param.c_str());
@@ -1710,7 +1774,6 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
    }
 
    return bRC_Error;
-
 }
 
 /*
@@ -1875,11 +1938,15 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    sp->fname = fname.c_str();
 
    if (!pluginobject){
-      // here we handle standard metadata
+      // here we handle metadata information
       reqparams--;
 
-      while (backend.ctx->read_command(ctx, cmd) > 0)
-      {
+      // ensure clear state for metadatas
+      sp->plug_meta = NULL;
+      metadatas.reset();
+      metadatas_list.destroy();
+
+      while (backend.ctx->read_command(ctx, cmd) > 0){
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
          if (sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d", &type, &size, &uid, &gid, &perms, &nlinks) == 6){
             sp->statp.st_size = size;
@@ -1912,45 +1979,55 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
             reqparams--;
             continue;
          }
-         if (bsscanf(cmd.c_str(), "TSTAMP:%ld %ld %ld", &sp->statp.st_atime, &sp->statp.st_mtime, &sp->statp.st_ctime) == 3)
-         {
+         if (bsscanf(cmd.c_str(), "TSTAMP:%ld %ld %ld", &sp->statp.st_atime, &sp->statp.st_mtime, &sp->statp.st_ctime) == 3){
             DMSG3(ctx, DINFO, "TSTAMP:%ld(at) %ld(mt) %ld(ct)\n", sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
             continue;
          }
-         if (scan_parameter_str(cmd, "LSTAT:", lname) == 1)
-         {
+         if (scan_parameter_str(cmd, "LSTAT:", lname) == 1) {
             sp->link = lname.c_str();
             reqparams--;
             DMSG(ctx, DINFO, "LSTAT:%s\n", lname.c_str());
             continue;
          }
          POOL_MEM tmp(PM_FNAME);
-         if (scan_parameter_str(cmd, "PIPE:", tmp)){
+         if (scan_parameter_str(cmd, "PIPE:", tmp)) {
             /* handle PIPE command */
             DMSG(ctx, DINFO, "read pipe at: %s\n", tmp.c_str());
             int extpipe = open(tmp.c_str(), O_RDONLY);
-            if (extpipe > 0)
-            {
+            if (extpipe > 0) {
                DMSG0(ctx, DINFO, "ExtPIPE file available.\n");
                backend.ctx->set_extpipe(extpipe);
                pm_strcpy(tmp, "OK\n");
                backend.ctx->write_command(ctx, tmp.c_str());
-               continue;
             } else {
                /* here are common error signaling */
                berrno be;
                DMSG(ctx, DERROR, "ExtPIPE file open error! Err=%s\n", be.bstrerror());
-               JMSG(ctx, backend.ctx->is_abort_on_error() ? M_FATAL : M_ERROR, "ExtPIPE file open error! Err=%s\n", be.bstrerror());
+               JMSG(ctx, backend.ctx->jmsg_err_level(), "ExtPIPE file open error! Err=%s\n", be.bstrerror());
                pm_strcpy(tmp, "Err\n");
                backend.ctx->signal_error(ctx, tmp.c_str());
                return bRC_Error;
             }
+            continue;
+         }
+         metadata_type mtype = scan_metadata_type(cmd);
+         if (mtype != plugin_meta_invalid) {
+            DMSG1(ctx, DDEBUG, "metaData handling: %d\n", mtype);
+            if (perform_read_metadata_info(ctx, mtype, sp) != bRC_OK) {
+               DMSG0(ctx, DERROR, "Cannot perform_read_metadata_info!\n");
+               JMSG0(ctx, backend.ctx->jmsg_err_level(), "Cannot perform_read_metadata_info!\n");
+               return bRC_Error;
+            }
+            continue;
+         } else {
+            DMSG1(ctx, DERROR, "Invalid File Attributes command: %s\n", cmd.c_str());
+            JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid File Attributes command: %s\n", cmd.c_str());
+            return bRC_Error;
          }
       }
 
       DMSG0(ctx, DINFO, "File attributes end.\n");
-      if (reqparams > 0)
-      {
+      if (reqparams > 0) {
          DMSG0(ctx, DERROR, "Protocol error, not enough file attributes from backend.\n");
          JMSG0(ctx, M_FATAL, "Protocol error, not enough file attributes from backend.\n");
          return bRC_Error;
@@ -1958,8 +2035,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
 
    } else {
       // handle Plugin Object parameters
-      if (perform_read_pluginobject(ctx, sp) != bRC_OK)
-      {
+      if (perform_read_pluginobject(ctx, sp) != bRC_OK) {
          // signal error
          return bRC_Error;
       }
@@ -1967,7 +2043,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       size = sp->plugin_obj.object_size;
    }
 
-   if (backend.ctx->is_error()){
+   if (backend.ctx->is_error()) {
       return bRC_Error;
    }
 
@@ -2289,6 +2365,38 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
    return ret;
 }
 
+/**
+ * @brief Sends metadata to backend for restore.
+ *
+ * @param ctx for Bacula debug and jobinfo messages
+ * @param mp
+ * @return bRC
+ */
+bRC METAPLUGIN::metadataRestore(bpContext *ctx, struct meta_pkt *mp)
+{
+   POOL_MEM cmd(PM_FNAME);
+
+   if (mp->buf != NULL && mp->buf_len > 0){
+      /* send command METADATA */
+      // pm_strcpy(cmd, "METADATA_STREAM\n");
+      pm_strcpy(cmd, prepare_metadata_type(mp->type));
+      backend.ctx->write_command(ctx, cmd.c_str());
+      /* send metadata stream data */
+      DMSG1(ctx, DINFO, "writeMetadata: %i\n", mp->buf_len);
+      int rc = backend.ctx->write_data(ctx, (char*)mp->buf, mp->buf_len);
+      if (rc < 0){
+         /* got some error */
+         return bRC_Error;
+      }
+      /* signal end of metadata stream to restore and get ack */
+      if (!backend.ctx->send_ack(ctx)){
+         return bRC_Error;
+      }
+   }
+
+   return bRC_OK;
+}
+
 /*
  * Called here to make a new instance of the plugin -- i.e. when
  * a new Job is started.  There can be multiple instances of
@@ -2496,4 +2604,14 @@ static bRC queryParameter(bpContext *ctx, struct query_pkt *qp)
    DMSG2(ctx, D1, "queryParameter: %s:%s\n", qp->command, qp->parameter);
    METAPLUGIN *self = pluginclass(ctx);
    return self->queryParameter(ctx, qp);
+}
+
+/* Metadata Restore interface */
+static bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp)
+{
+   ASSERT_CTX;
+
+   DMSG2(ctx, D1, "metadataRestore: %d %d\n", mp->total_size, mp->type);
+   METAPLUGIN *self = pluginclass(ctx);
+   return self->metadataRestore(ctx, mp);
 }

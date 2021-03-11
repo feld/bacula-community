@@ -20,8 +20,8 @@
  * @file metaplugin.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula metaplugin interface.
- * @version 2.1.0
- * @date 2020-12-23
+ * @version 2.2.0
+ * @date 2021-03-08
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
@@ -30,6 +30,7 @@
 #include "ptcomm.h"
 #include "lib/ini.h"
 #include "pluginlib/commctx.h"
+#include "pluginlib/smartalist.h"
 
 
 #define USE_CMD_PARSER
@@ -59,6 +60,14 @@ extern struct ini_items plugin_items_dump[];
 
 // the list of valid plugin options
 extern const char *valid_params[];
+
+struct metadataTypeMap
+{
+   const char *command;
+   metadata_type type;
+};
+
+extern const metadataTypeMap plugin_metadata_map[];
 
 /*
  * This is a main plugin API class. It manages a plugin context.
@@ -94,6 +103,7 @@ public:
    bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
    bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
    bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
+   bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp);
    void setup_backend_command(bpContext *ctx, POOL_MEM &exepath);
    METAPLUGIN(bpContext *bpctx);
 #if __cplusplus > 201103L
@@ -148,6 +158,8 @@ private:
    POOL_MEM xattrdata;           // the buffer for XATTR data received from backend
    cmd_parser parser;            // Plugin command parser
    ConfigFile ini;               // Restore ini file handler
+   alist metadatas_list;         //
+   plugin_metadata metadatas;    //
 
    bRC parse_plugin_command(bpContext *ctx, const char *command, alist *params);
    bRC parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop);
@@ -173,6 +185,10 @@ private:
    bRC perform_write_acl(bpContext *ctx, struct xacl_pkt * xacl);
    bRC perform_read_xattr(bpContext *ctx);
    bRC perform_write_xattr(bpContext *ctx, struct xacl_pkt * xacl);
+   bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
+   // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
+   metadata_type scan_metadata_type(const POOL_MEM &cmd);
+   const char *prepare_metadata_type(metadata_type type);
    int check_ini_param(char *param);
    bool check_plugin_param(const char *param, alist *params);
    int get_ini_count();
