@@ -76,34 +76,34 @@ END
 #endif
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION VER_MAJOR,VER_MINOR,VER_BUILD,VER_REVISION
-	PRODUCTVERSION VER_MAJOR,VER_MINOR,VER_BUILD,VER_REVISION
-	FILEFLAGSMASK 0x3fL
-	FILEFLAGS FILEFLAGS_ARG
-	FILEOS VOS_NT_WINDOWS32
-	FILETYPE VFT_APP
-	FILESUBTYPE 0x0L
-	BEGIN
-		BLOCK "StringFileInfo"
-		BEGIN
-			BLOCK "040904e0"
-			BEGIN
-				VALUE "Comments", "by Kern Sibbald\0"
-				VALUE "CompanyName", "Bacula Systems(R) SA\0"
-				VALUE "FileDescription", FILEDESCRIPTION_ARG
-				VALUE "ProductName", PRODUCTNAME_ARG
-				VALUE "FileVersion", VERSION
-				VALUE "InternalName", "Bacula\0"
-				VALUE "LegalCopyright", "Copyright (C) 1999-2021 Kern Sibbald.\0"
-				VALUE "LegalTrademarks", "Bacula Systems(R)\0"
-				VALUE "ProductVersion", VERSION
-			END
-		END
-		BLOCK "VarFileInfo"
-		BEGIN
-			VALUE "Translation", 0x0409, 1252
-		END
-	END
+    FILEVERSION VER_MAJOR,VER_MINOR,VER_BUILD,VER_REVISION
+    PRODUCTVERSION VER_MAJOR,VER_MINOR,VER_BUILD,VER_REVISION
+    FILEFLAGSMASK 0x3fL
+    FILEFLAGS FILEFLAGS_ARG
+    FILEOS VOS_NT_WINDOWS32
+    FILETYPE VFT_APP
+    FILESUBTYPE 0x0L
+    BEGIN
+        BLOCK "StringFileInfo"
+        BEGIN
+            BLOCK "040904e4"
+            BEGIN
+                VALUE "Comments", "by Kern Sibbald\0"
+                VALUE "CompanyName", "Bacula Systems(R) SA\0"
+                VALUE "FileDescription", FILEDESCRIPTION_ARG
+                VALUE "ProductName", PRODUCTNAME_ARG
+                VALUE "FileVersion", VERSION
+                VALUE "InternalName", "Bacula\0"
+                VALUE "LegalCopyright", "Copyright (C) 1999-2021 Kern Sibbald.\0"
+                VALUE "LegalTrademarks", "Bacula Systems(R)\0"
+                VALUE "ProductVersion", VERSION
+            END
+        END
+        BLOCK "VarFileInfo"
+        BEGIN
+            VALUE "Translation", 0x0409, 1252
+        END
+    END
 /* End of Version info */
 
 
@@ -147,8 +147,8 @@ BEGIN
     LTEXT           "      by Kern Sibbald",-1,134,38,78,10
     LTEXT           "For more information, see:",-1,115,60,100,10
     LTEXT           "         www.bacula.org",-1,115,70,100,10
-    LTEXT           "Copyright (C) 2000-2020, Kern Sibbald",-1,7,120,175,10
-    LTEXT           "Licensed by Kern Sibbald",-1,7,130,175,10
+    LTEXT           "Copyright (C) 1999-2021, Kern Sibbald",-1,7,120,175,10
+    LTEXT           "Licensed by Kern Sibbald.",-1,7,130,175,10
     RTEXT           "Build Date:",-1,108,24,42,8
     RTEXT           "Bacula Version:",-1,100,9,50,8
     LTEXT           VERSION,-1,159,10,65,8
