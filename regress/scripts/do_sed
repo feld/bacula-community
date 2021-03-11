@@ -22,6 +22,7 @@ sed -f ${out} ${rscripts}/win32-bacula-dir-systemstate.conf.in >${rscripts}/win3
 sed -f ${out} ${rscripts}/plugin-test-bacula-dir.conf.in >${rscripts}/plugin-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/plugin-handleXACL-test-bacula-dir.conf.in >${rscripts}/plugin-handleXACL-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/swift-plugin-test-bacula-dir.conf.in >${rscripts}/swift-plugin-test-bacula-dir.conf
+sed -f ${out} ${rscripts}/rhv-plugin-test-bacula-dir.conf.in >${rscripts}/rhv-plugin-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/kubernetes-plugin-test-bacula-dir.conf.in >${rscripts}/kubernetes-plugin-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/k8s_backend.in >${rscripts}/k8s_backend
 sed -f ${out} ${rscripts}/xenserver-plugin-test-bacula-dir.conf.in >${rscripts}/xenserver-plugin-test-bacula-dir.conf

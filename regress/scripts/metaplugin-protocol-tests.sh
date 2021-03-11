@@ -23,7 +23,7 @@
 #  . scripts/metaplugin-protocol-tests.sh
 #
 
-if [ "x$JobBackup1" = "x" -o "x$JobBackup2" = "x" -o "x$JobBackup3" = "x" -o "x$JobBackup4" = "x" -o "x$FilesetBackup1" = "x" ]
+if [ "x$JobBackup1" = "x" ] || [ "x$JobBackup2" = "x" ] || [ "x$JobBackup3" = "x" ] || [ "x$JobBackup4" = "x" ] || [ "x$FilesetBackup1" = "x" ]
 then
    echo "You have to setup required variables!"
    exit 2
@@ -119,6 +119,28 @@ END_OF_DATA
 
 run_bconsole
 
+# now backup with metadata information
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Backup metadata
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log7.out
+status client=$CLIENT
+setdebug level=500 client=$CLIENT trace=1
+run job=$JobBackup5 yes
+wait
+status client=$CLIENT
+messages
+llist job=$JobBackup5
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
+
 # now test estimate job
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @#
@@ -187,7 +209,7 @@ BFILE3=$(grep "$Plugin/bucket" ${cwd}/tmp/log1.out | grep -c lockfile)
 BFILE4=$(grep "$Plugin/bucket" ${cwd}/tmp/log1.out | grep -c file.xattr)
 BFILE5=$(grep "$Plugin/bucket" ${cwd}/tmp/log1.out | grep -c vmsnap.iso)
 BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log1.out)
-if [ "x$RET" != "xT" -o "$BFILE1" -ne 1 -o "$BFILE2" -ne 1 -o "$BFILE3" -ne 1 -o $BFILE4 -ne 1 -o $BFILE5 -ne 1 -o $BEND -ne 1 ]
+if [ "x$RET" != "xT" ] || [ "$BFILE1" -ne 1 ] || [ "$BFILE2" -ne 1 ] || [ "$BFILE3" -ne 1 ] || [ "$BFILE4" -ne 1 ] || [ "$BFILE5" -ne 1 ] || [ "$BEND" -ne 1 ]
 then
    echo "log1" $RET $BFILE1 $BFILE2 $BFILE3 $BFILE4 $BFILE5 $BEND
    bstat=1
@@ -216,7 +238,7 @@ BFILE4=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c file.xattr)
 BFILE5=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c vmsnap.iso)
 BFILE6=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c vm222-other-file.iso)
 BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log5.out)
-if [ "x$RET" != "xT" -o $BFILE1 -ne 2 -o $BFILE2 -ne 2 -o $BFILE3 -ne 2 -o $BFILE4 -ne 2 -o $BFILE5 -ne 2 -o $BFILE6 -ne 1 -o $BEND -ne 2 ]
+if [ "x$RET" != "xT" ] || [ "$BFILE1" -ne 2 ] || [ "$BFILE2" -ne 2 ] || [ "$BFILE3" -ne 2 ] || [ "$BFILE4" -ne 2 ] || [ "$BFILE5" -ne 2 ] || [ "$BFILE6" -ne 1 ] || [ "$BEND" -ne 2 ]
 then
    echo "log5" "$RET" "$BFILE1" "$BFILE2" "$BFILE3" "$BFILE4" "$BFILE5" "$BFILE6" "$BEND"
    bstat=$((bstat+8))
@@ -225,17 +247,26 @@ fi
 RET=$(grep "jobstatus:" ${cwd}/tmp/log6.out | awk '{print $2}')
 COMME=$(grep -c COMM_STDERR ${cwd}/tmp/log6.out)
 BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log6.out)
-if [ "x$RET" != "xT" -o "$COMME" -ne 1 -o "$BEND" -ne 1 ]
+if [ "x$RET" != "xT" ] || [ "$COMME" -ne 1 ] || [ "$BEND" -ne 1 ]
 then
    echo "log6" "$RET" "$COMME" "$BEND"
    bstat=$((bstat+16))
+fi
+
+RET=$(grep "jobstatus:" ${cwd}/tmp/log7.out | awk '{print $2}')
+META=$(grep -c "TEST14 - backup metadata" ${cwd}/tmp/log7.out)
+BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log7.out)
+if [ "x$RET" != "xT" ] || [ "$META" -ne 1 ] || [ "$BEND" -ne 1 ]
+then
+   echo "log7" "$RET" "$META" "$BEND"
+   bstat=$((bstat+32))
 fi
 
 EFILE1=$(grep -c vm1.iso ${cwd}/tmp/log3.out)
 EFILE2=$(grep -c vm2.iso ${cwd}/tmp/log3.out)
 EFILE3=$(grep -c lockfile ${cwd}/tmp/log3.out)
 EFILE4=$(grep -c vmsnap.iso ${cwd}/tmp/log3.out)
-if [ "$EFILE1" -ne 2 -o "$EFILE2" -ne 1 -o "$EFILE3" -ne 1 -o "$EFILE4" -ne 1 ]
+if [ "$EFILE1" -ne 2 ] || [ "$EFILE2" -ne 1 ] || [ "$EFILE3" -ne 1 ] || [ "$EFILE4" -ne 1 ]
 then
    echo "log3" "$EFILE1" "$EFILE2" "$EFILE3"
    estat=1
@@ -246,7 +277,7 @@ LFILE2=$(grep "drwxr-xr-x" ${cwd}/tmp/llog2.out | grep -c bucket)
 LFILE3=$(grep "rw-r-----" ${cwd}/tmp/llog3.out | grep -c bucket)
 LFILE4=$(grep "rw-r-----" ${cwd}/tmp/llog4.out | grep -c vm2.iso)
 LFILE5=$(grep "lrwxrwxrwx" ${cwd}/tmp/llog4.out | grep -c vmsnap.iso)
-if [ "$LFILE1" -ne 1 -o "$LFILE2" -ne 2 -o "$LFILE3" -ne 2 -o "$LFILE4" -ne 1 -o "$LFILE5" -ne 1 ]
+if [ "$LFILE1" -ne 1 ] || [ "$LFILE2" -ne 2 ] || [ "$LFILE3" -ne 2 ] || [ "$LFILE4" -ne 1 ] || [ "$LFILE5" -ne 1 ]
 then
    echo "llog1" "$LFILE1" "$LFILE2" "$LFILE3" "$LFILE4" "$LFILE5"
    dstat=1
@@ -254,7 +285,7 @@ fi
 
 RET=$(grep "jobstatus:" ${cwd}/tmp/log4.out | awk '{print $2}')
 REND=$(grep -w -c "TESTEND" ${cwd}/tmp/log4.out)
-if [ "x$RET" != "xT" -o "$REND" -ne 1 ]
+if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ]
 then
    echo "log4" "$RET" "$REND"
    rstat=1
