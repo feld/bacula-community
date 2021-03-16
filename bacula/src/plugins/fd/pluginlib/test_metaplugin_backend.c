@@ -193,10 +193,23 @@ void signal_term(){
  */
 void perform_backup()
 {
-   // Backup Loop
-   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vm1.iso\n", PLUGINPREFIX, mypid);
+   // This is a test for FileIndex Query
+   snprintf(buf, BIGBUFLEN, "FileIndex\n");
    write_plugin('C', buf);
-   write_plugin('C', "STAT:F 1048576 100 100 100640 1\n");
+   char firesponse[32] = {0};    // well the file index is int32_t so max 11 chars
+   read_plugin(firesponse);
+   int fileindex = atoi(firesponse);
+   snprintf(buf, BIGBUFLEN, "TEST05 - FileIndex query: %d", fileindex);
+   write_plugin('I', buf);
+
+   // here we store the linked.file origin fname
+   char fileindex_link[256];
+   snprintf(fileindex_link, 256, "%s/bucket/%d/vm1.iso", PLUGINPREFIX, mypid);
+
+   // Backup Loop
+   snprintf(buf, BIGBUFLEN, "FNAME:%s\n", fileindex_link);           // we use it here
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:F 1048576 100 100 100640 2\n");           // this will be the first file hardlinked
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    write_plugin('I', "TEST5");
    signal_eod();
@@ -215,8 +228,7 @@ void perform_backup()
    write_plugin('I', "TEST5Acl");
    signal_eod();
 
-   if (regress_error_backup_no_files)
-   {
+   if (regress_error_backup_no_files) {
       write_plugin('E', "No files found for pattern container1/otherobject\n");
       signal_eod();
       return;
@@ -453,6 +465,16 @@ void perform_backup()
       write_plugin('D', "/* here comes another file line    */");
       signal_eod();
    }
+
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/office/%d/linked.file\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   snprintf(buf, BIGBUFLEN, "STAT:L 10240 100 100 040755 2 %d\n", fileindex);
+   write_plugin('C', buf);
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   snprintf(buf, BIGBUFLEN, "LSTAT:%s\n", fileindex_link);
+   write_plugin('C', buf);
+   signal_eod();
+   signal_eod();
 
    /* this is the end of all data */
    signal_eod();

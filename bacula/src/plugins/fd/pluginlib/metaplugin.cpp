@@ -865,14 +865,12 @@ bRC METAPLUGIN::send_startjob(bpContext *ctx, const char *command)
    POOL_MEM cmd;
 
    pm_strcpy(cmd, command);
-   if (backend.ctx->write_command(ctx, cmd) < 0)
-   {
+   if (backend.ctx->write_command(ctx, cmd) < 0){
       /* error */
       return bRC_Error;
    }
 
-   if (!backend.ctx->read_ack(ctx))
-   {
+   if (!backend.ctx->read_ack(ctx)){
       strip_trailing_newline(cmd.c_str());
       DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", cmd.c_str());
       JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", cmd.c_str());
@@ -1675,6 +1673,11 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
             perform_read_xattr(ctx);
             continue;
          }
+         if (bstrcmp(cmd.c_str(), "FileIndex")){
+            /* got FileIndex query */
+            perform_file_index_query(ctx);
+            continue;
+         }
          /* error in protocol */
          DMSG(ctx, DERROR, "Protocol error, got unknown command: %s\n", cmd.c_str());
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
@@ -1695,6 +1698,21 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
    return bRC_Error;
 }
 
+bRC METAPLUGIN::perform_file_index_query(bpContext *ctx)
+{
+   POOL_MEM cmd(PM_FNAME);
+   int32_t fileindex;
+
+   getBaculaVar(bVarFileIndex, (void *)&fileindex);
+   Mmsg(cmd, "%d\n", fileindex);
+   if (backend.ctx->write_command(ctx, cmd) < 0){
+      /* error */
+      return bRC_Error;
+   }
+
+   return bRC_OK;
+}
+
 /**
  * @brief
  *
@@ -1706,8 +1724,7 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
 {
    POOL_MEM cmd(PM_FNAME);
 
-   if (strlen(fname.c_str()) == 0)
-   {
+   if (strlen(fname.c_str()) == 0){
       // input variable is not valid
       return bRC_Error;
    }
@@ -1899,6 +1916,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    int uid, gid;
    uint perms;
    int nlinks;
+   int32_t nfi;
    int reqparams = 2;
 
    /* The first file in Full backup, is the RestoreObject */
@@ -1948,34 +1966,51 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
 
       while (backend.ctx->read_command(ctx, cmd) > 0){
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
-         if (sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d", &type, &size, &uid, &gid, &perms, &nlinks) == 6){
+         // int nrscan = sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d", &type, &size, &uid, &gid, &perms, &nlinks);
+         nfi = -1;
+         int nrscan = sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d %d", &type, &size, &uid, &gid, &perms, &nlinks, &nfi);
+         DMSG1(ctx, DVDEBUG, "read_command-nrscan: %d\n", nrscan);
+         if (nrscan >= 6)
+         {
             sp->statp.st_size = size;
             sp->statp.st_nlink = nlinks;
             sp->statp.st_uid = uid;
             sp->statp.st_gid = gid;
             sp->statp.st_mode = perms;
-            switch (type){
-               case 'F':
-                  sp->type = FT_REG;
-                  break;
-               case 'E':
-                  sp->type = FT_REGE;
-                  break;
-               case 'D':
-                  sp->type = FT_DIREND;
-                  sp->link = sp->fname;
-                  break;
-               case 'S':
-                  sp->type = FT_LNK;
-                  reqparams++;
-                  break;
-               default:
-                  /* we need to signal error */
-                  sp->type = FT_REG;
-                  DMSG2(ctx, DERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
-                  JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
+            switch (type)
+            {
+            case 'F':
+               sp->type = FT_REG;
+               break;
+            case 'E':
+               sp->type = FT_REGE;
+               break;
+            case 'D':
+               sp->type = FT_DIREND;
+               sp->link = sp->fname;
+               break;
+            case 'S':
+               sp->type = FT_LNK;
+               reqparams++;
+               break;
+            case 'L':
+               if (nrscan > 6){
+                  sp->type = FT_LNKSAVED;
+                  sp->LinkFI = nfi;
+               } else {
+                  DMSG1(ctx, DERROR, "Invalid stat packet: %s\n", cmd.c_str());
+                  JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid stat packet: %s\n", cmd.c_str());
+                  return bRC_Error;
+               }
+               break;
+            default:
+               /* we need to signal error */
+               sp->type = FT_REG;
+               DMSG2(ctx, DERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
+               JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
             }
-            DMSG6(ctx, DINFO, "STAT:%c size:%lld uid:%d gid:%d mode:%06o nl:%d\n", type, size, uid, gid, perms, nlinks);
+            DMSG4(ctx, DINFO, "STAT:%c size:%lld uid:%d gid:%d\n", type, size, uid, gid);
+            DMSG3(ctx, DINFO, " mode:%06o nl:%d fi:%d\n", perms, nlinks, nfi);
             reqparams--;
             continue;
          }
@@ -2050,6 +2085,8 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    sp->portable = true;
    sp->statp.st_blksize = 4096;
    sp->statp.st_blocks = size / 4096 + 1;
+
+   // DMSG1(ctx, DVDEBUG, "sp->plug_meta = %p\n", sp->plug_meta);
 
    return bRC_OK;
 }

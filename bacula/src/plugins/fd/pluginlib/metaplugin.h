@@ -186,6 +186,7 @@ private:
    bRC perform_read_xattr(bpContext *ctx);
    bRC perform_write_xattr(bpContext *ctx, struct xacl_pkt * xacl);
    bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
+   bRC perform_file_index_query(bpContext *ctx);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
    metadata_type scan_metadata_type(const POOL_MEM &cmd);
    const char *prepare_metadata_type(metadata_type type);
