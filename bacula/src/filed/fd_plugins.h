@@ -274,7 +274,7 @@ class plugin_metadata: public SMARTALLOC {
 
 /*
  * This packet is used for file save info transfer.
-*/
+ */
 struct save_pkt {
    int32_t pkt_size;                  /* size of this packet */
    char *fname;                       /* Full path and filename */
@@ -299,7 +299,7 @@ struct save_pkt {
 
 /*
  * This packet is used for file restore info transfer.
-*/
+ */
 struct restore_pkt {
    int32_t pkt_size;                  /* size of this packet */
    bplugin_mode_t plugin_mode;        /* Not used anymore, don't remove */
@@ -323,7 +323,7 @@ struct restore_pkt {
 
 /*
  * This packet is used for file restore info transfer.
-*/
+ */
 struct restore_filelist_pkt {
    int32_t pkt_size;                  /* size of this packet */
    bplugin_mode_t plugin_mode;        /* Not used anymore, don't remove */

@@ -712,7 +712,8 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
             pm_strcpy(fname, sp.fname);
             pm_strcpy(link, sp.link);
 
-            if (sp.plug_meta) {
+            ff_pkt->plug_meta = NULL;
+            if (sp.plug_meta){
                /* File has some metadata assigned to it */
                ff_pkt->plug_meta = sp.plug_meta;
             }
