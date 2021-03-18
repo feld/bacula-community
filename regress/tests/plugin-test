@@ -157,6 +157,18 @@ mod
 mod
 1
 My new string
+mod
+4
+yes
+mod
+5
+test1
+mod
+5
+test2
+mod
+5
+test3="this is a test"
 yes
 yes
 wait
@@ -209,6 +221,12 @@ fi
 grep "excludeme.c = 7" $working/*trace > /dev/null
 if [ $? != 0 ]; then
     print_debug "ERROR: AcceptFile API problem, look at excludeme.c"
+    estat=1
+fi
+
+grep '[test1][test2][test3="this is a test"]' $tmp/log3.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: list plugin option keyword not available in $tmp/log3.out"
     estat=1
 fi
 
