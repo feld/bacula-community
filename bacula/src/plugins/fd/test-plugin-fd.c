@@ -114,6 +114,7 @@ static struct ini_items test_items[] = {
    { "string2",  ini_store_str,  "2nd String",        0},
    { "ok",       ini_store_bool, "boolean",           0},
    { "req",      ini_store_bool, "boolean",           1, "yes"},
+   { "list",       ini_store_alist_str, "list",       0},
 
 // We can also use the ITEMS_DEFAULT  
 // { "ok",       ini_store_bool, "boolean",           0, ITEMS_DEFAULT},
@@ -282,7 +283,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       }
       rop = (restore_object_pkt *)value;
       bfuncs->DebugMessage(ctx, fi, li, dbglvl, 
-                           "Get RestoreObject len=%d JobId=%d oname=%s type=%d data=%.127s\n",
+                           "Get RestoreObject len=%d JobId=%d oname=%s type=%d data=%.256s\n",
                            rop->object_len, rop->JobId, rop->object_name, rop->object_type,
                            rop->object);
       FILE *fp;
@@ -309,6 +310,16 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          if (ini.parse(ini.out_fname)) {
             bfuncs->JobMessage(ctx, fi, li, M_INFO, 0, "string1 = %s\n", 
                                ini.items[0].val.strval);
+            if (ini.items[4].found) {
+               POOL_MEM tmp;
+               char *elt;
+               foreach_alist(elt, ini.items[4].val.alistval) {
+                  pm_strcat(tmp, "[");
+                  pm_strcat(tmp, elt);
+                  pm_strcat(tmp, "]");
+               }
+               bfuncs->JobMessage(ctx, fi, li, M_INFO, 0, "list = %s\n", tmp.c_str());
+            }
          } else {
             bfuncs->JobMessage(ctx, fi, li, M_ERROR, 0, "Can't parse config\n");
          }
@@ -734,7 +745,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
 
    if (sp->type != FT_REG) {
       bfuncs->DebugMessage(ctx, fi, li, dbglvl,
-                           "Creating RestoreObject len=%d oname=%s data=%.127s\n", 
+                           "Creating RestoreObject len=%d oname=%s data=%.256s\n", 
                            sp->restore_obj.object_len, sp->restore_obj.object_name, sp->restore_obj.object);
    }
 
