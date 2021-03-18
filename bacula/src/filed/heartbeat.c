@@ -107,7 +107,11 @@ extern "C" void *sd_heartbeat_thread(void *arg)
             Dmsg2(100, "Got m=%d BNET_SIG %d from SD\n", m, sd->msglen);
          } else {
             Dmsg3(100, "Got m=%d msglen=%d bytes from SD. MSG=%s\n", m, sd->msglen, sd->msg);
-            jcr->sd_packet_mgr->recv(jcr, sd->msg); // Might be to ack a POLL request
+            if (jcr->sd_packet_mgr)
+            {
+               // Might be to ack a POLL request
+               jcr->sd_packet_mgr->recv(jcr, sd->msg);
+            }
          }
       }
       Dmsg2(200, "wait_intr=%d stop=%d\n", n, sd->is_stop());
