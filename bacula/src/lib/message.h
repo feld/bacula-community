@@ -80,7 +80,7 @@ enum {
    /* Keep M_ABORT=1 for dlist.h */
    M_ABORT = 1,                       /* MUST abort immediately */
    M_DEBUG,                           /* debug message */
-   M_EVENTS,                          /* Event messages use event_send_msg() */
+   M_EVENTS,                          /* Event messages use events_send_msg() */
    M_FATAL,                           /* Fatal error, stopping job */
    M_ERROR,                           /* Error, but recoverable */
    M_WARNING,                         /* Warning message */
