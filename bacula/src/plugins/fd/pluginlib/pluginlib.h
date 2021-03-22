@@ -178,3 +178,4 @@ bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param);
 inline bool scan_parameter_str(const POOL_MEM &cmd, const char *prefix, POOL_MEM &param) { return scan_parameter_str(cmd.c_str(), prefix, param); }
 
 #endif   /* _PLUGINLIB_H_ */
+
