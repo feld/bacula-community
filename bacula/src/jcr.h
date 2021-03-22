@@ -460,7 +460,7 @@ public:
    uint32_t min_dedup_block_size;     /* Minimum desired dedup block size */
    uint32_t max_dedup_block_size;     /* TODO, above this size send raw data */
    pthread_t heartbeat_id;            /* id of heartbeat thread */
-   volatile bool hb_started;          /* heartbeat running */
+   volatile int hb_status;            /* heartbeat running/stopped  0: not running, 1 running, -1 stopped */
    BSOCK *hb_bsock;                   /* duped SD socket */
    BSOCK *hb_dir_bsock;               /* duped DIR socket */
    alist *RunScripts;                 /* Commands to run before and after job */
