@@ -1264,8 +1264,11 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          TODO: PETITION: Our plugin (RHV WhiteBearSolutions) search the packet E CANCEL.
          TODO: If you modify this behaviour, please you notify us.
       */
-      bsscanf("CANCEL", "%s", tmp.c_str());
-      backend.ctx->signal_error(ctx, tmp.c_str());
+      if (backend.ctx != NULL) {
+         // XXX: something is going different then designed here, as backend.ctx is NULL
+         bsscanf("CANCEL", "%s", tmp.c_str());
+         backend.ctx->signal_error(ctx, tmp.c_str());
+      }
       break;
 
    default:
