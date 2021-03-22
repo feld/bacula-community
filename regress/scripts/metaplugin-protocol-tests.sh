@@ -165,9 +165,29 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @#
 @output /dev/null
 messages
-@$out ${cwd}/tmp/log4.out
+@$out ${cwd}/tmp/rlog1.out
 setdebug level=500 client=$CLIENT trace=1
 restore fileset=$FilesetBackup1 where=${cwd}/tmp select all storage=File done
+yes
+wait
+messages
+llist job=RestoreFiles
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
+# restore with metadata
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Restore
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/rlog2.out
+setdebug level=500 client=$CLIENT trace=1
+restore fileset=$FilesetBackup5 where=${cwd}/tmp select all storage=File done
 yes
 wait
 messages
@@ -182,6 +202,7 @@ run_bconsole
 TEST=1
 for ppath in / containers containers/bucket1 containers/bucket2
 do
+
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @#
 @# Listing
@@ -283,11 +304,19 @@ then
    dstat=1
 fi
 
-RET=$(grep "jobstatus:" ${cwd}/tmp/log4.out | awk '{print $2}')
-REND=$(grep -w -c "TESTEND" ${cwd}/tmp/log4.out)
+RET=$(grep "jobstatus:" ${cwd}/tmp/rlog1.out | awk '{print $2}')
+REND=$(grep -w -c "TESTEND" ${cwd}/tmp/rlog1.out)
 if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ]
 then
-   echo "log4" "$RET" "$REND"
+   echo "rlog1" "$RET" "$REND"
+   rstat=1
+fi
+
+RET=$(grep "jobstatus:" ${cwd}/tmp/rlog2.out | tail -1 | awk '{print $2}')
+REND=$(grep -w -c "TESTEND" ${cwd}/tmp/rlog2.out)
+if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ]
+then
+   echo "rlog2" "$RET" "$REND"
    rstat=1
 fi
 

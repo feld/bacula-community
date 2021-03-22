@@ -307,7 +307,11 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
          f_eod = f_error = f_fatal = true;
          return -1;
       }
-      DMSG(ctx, DDEBUG, "RECV: %c\n", header.status);
+
+      // some packet commands require data
+      header.length[6] = 0; /* end of string */
+
+      DMSG2(ctx, DDEBUG, "RECV: %c %s\n", header.status, header.length);
 
       /* check for protocol status */
       if (header.status == 'F'){
@@ -321,9 +325,6 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
          terminate(ctx);
          return 0;
       }
-
-      // other packet commands require data
-      header.length[6] = 0; /* end of string */
 
       // convert packet length from ASCII to binary
       int32_t msglen = atoi(header.length);
@@ -575,7 +576,9 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
    header = &myheader;
 #endif
    header->status = cmd;
-   DMSG2(ctx, DDEBUG, "SENT: %c %s\n", header->status, buf ? buf : "");
+   char bindata[17];
+   transcript_bin_data_to_display(bindata, buf, len);
+   DMSG2(ctx, DDEBUG, "SENT: %c %s\n", header->status, bindata);
    if (bsnprintf(header->length, sizeof(PTHEADER), "%06i", len) != 6){
       /* problem rendering packet header */
       DMSG0(ctx, DERROR, "Problem rendering packet header for command.\n");
@@ -594,8 +597,7 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
       status = write(wfd, buf, len);
    }
 #endif
-   if (status < 0)
-   {
+   if (status < 0){
       // error
       DMSG0(ctx, DERROR, "PTCOMM cannot write packet to backend.\n");
       JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "PTCOMM cannot write packet to backend.\n");

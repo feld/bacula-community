@@ -145,6 +145,29 @@ int read_plugin(char * buf)
    return len;
 }
 
+void read_plugin_data_stream()
+{
+   int len = read_plugin(buf);
+   if (len == 0){
+      /* empty file to restore */
+      LOG("#> Empty data.");
+      return;
+   }
+   bool loopgo = true;
+   int fsize = len;
+   while (loopgo){
+      len = read_plugin(buf);
+      fsize += len;
+      if (len > 0){
+         LOG("#> data stream saved.");
+         continue;
+      } else {
+         loopgo = false;
+         snprintf(buflog, 4096, "#> data END = %i", fsize);
+      }
+   }
+}
+
 /**
  * @brief Sends/writes the data to plugin with assembling the raw packet.
  *
@@ -434,7 +457,7 @@ void perform_backup()
    {
       snprintf(buf, BIGBUFLEN, "FNAME:%s/office/%d/document.docx\n", PLUGINPREFIX, mypid);
       write_plugin('C', buf);
-      write_plugin('C', "STAT:D 10240 100 100 040755 1\n");
+      write_plugin('C', "STAT:F 10240 100 100 040755 1\n");
       write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
 
       write_plugin('C', "METADATA_STREAM\n");
@@ -613,8 +636,7 @@ void perform_restore(){
    int fsize;
    bool loopgo = true;
 
-   if (regress_error_restore_stderr)
-   {
+   if (regress_error_restore_stderr) {
       // test some stderror handling
       errno = EACCES;
       perror("I've got some unsuspected error which I'd like to display on stderr (COMM_STDERR)");
@@ -622,15 +644,15 @@ void perform_restore(){
 
    /* Restore Loop (5) */
    LOG("#> Restore Loop.");
-   while (true){
+   while (true) {
       read_plugin(buf);
       /* check if FINISH job */
-      if (strcmp(buf, "FINISH\n") == 0){
+      if (strcmp(buf, "FINISH\n") == 0) {
          LOG("#> finish files.");
          break;
       }
       /* check for ACL command */
-      if (strcmp(buf, "ACL\n") == 0){
+      if (strcmp(buf, "ACL\n") == 0) {
          while (read_plugin(buf) > 0);
          LOG("#> ACL data saved.");
          write_plugin('I', "TEST5R - acl data saved.");
@@ -638,9 +660,8 @@ void perform_restore(){
          continue;
       }
 
-
       /* check for XATTR command */
-      if (strcmp(buf, "XATTR\n") == 0){
+      if (strcmp(buf, "XATTR\n") == 0) {
          while (read_plugin(buf) > 0);
          LOG("#> XATTR data saved.");
          write_plugin('I', "TEST5R - xattr data saved.");
@@ -648,7 +669,7 @@ void perform_restore(){
          continue;
       }
       /* check if FNAME then follow file parameters */
-      if (strncmp(buf, "FNAME:", 6) == 0){
+      if (strncmp(buf, "FNAME:", 6) == 0) {
          /* we read here a file parameters */
          while (read_plugin(buf) > 0);
          /* signal OK */
@@ -661,6 +682,16 @@ void perform_restore(){
 #endif
          continue;
       }
+
+      /* check for METADATA stream */
+      if (strncmp(buf, "METADATA_STREAM", 15) == 0){
+         // handle metadata
+         read_plugin_data_stream();
+         /* signal OK */
+         write_plugin('C', "OK\n");
+         continue;
+      }
+
       /* check if DATA command, so read the data packets */
       if (strcmp(buf, "DATA\n") == 0){
          len = read_plugin(buf);
