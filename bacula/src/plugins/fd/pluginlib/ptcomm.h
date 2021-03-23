@@ -172,7 +172,7 @@ public:
     *    -1 - when encountered any error
     *    <n> - the number of bytes sent, success
     */
-   inline int32_t signal_eod(bpContext *ctx) { return sendbackend(ctx, 'F', NULL, 0); }
+   inline int32_t signal_eod(bpContext *ctx) { return sendbackend(ctx, 'F', "000000", 0); }
 
    /**
     * @brief Signal end of communication to the backend.
@@ -183,7 +183,7 @@ public:
     *    -1 - when encountered any error
     *    <n> - the number of bytes sent, success
     */
-   inline int32_t signal_term(bpContext *ctx) { return sendbackend(ctx, 'T', NULL, 0); }
+   inline int32_t signal_term(bpContext *ctx) { return sendbackend(ctx, 'T', "000000", 0); }
 
    void terminate(bpContext *ctx);
 

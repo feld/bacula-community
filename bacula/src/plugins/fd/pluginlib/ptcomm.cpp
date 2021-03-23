@@ -311,7 +311,7 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
       // some packet commands require data
       header.length[6] = 0; /* end of string */
 
-      DMSG2(ctx, DDEBUG, "RECV: %c %s\n", header.status, header.length);
+      DMSG2(ctx, DDEBUG, "HEADERRECV: %c %s\n", header.status, header.length);
 
       /* check for protocol status */
       if (header.status == 'F'){
@@ -436,14 +436,15 @@ int32_t PTCOMM::handle_read_header(bpContext *ctx, char cmd)
 int32_t PTCOMM::handle_payload(bpContext *ctx, char *buf, int32_t nbytes)
 {
    // handle raw data read as payload
-   if(!recvbackend_data(ctx, buf, nbytes))
-   {
+   if(!recvbackend_data(ctx, buf, nbytes)){
       // error
       DMSG0(ctx, DERROR, "PTCOMM cannot get packet payload from backend.\n");
       JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "PTCOMM cannot get packet payload from backend.\n");
       f_eod = f_error = f_fatal = true;
       return -1;
    }
+   char bindata[17];
+   DMSG1(ctx, DDEBUG, "RECV> %s\n", asciidump(buf, nbytes, bindata, 17));
 
    return nbytes;
 }
@@ -504,8 +505,7 @@ int32_t PTCOMM::recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t b
 {
    int32_t length = remaininglen;
 
-   if (!f_cont)
-   {
+   if (!f_cont){
       // handle header
       length = handle_read_header(ctx, cmd);
       if (length < 0)
@@ -513,8 +513,7 @@ int32_t PTCOMM::recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t b
    }
 
    // handle data payload
-   if (length > 0)
-   {
+   if (length > 0){
       // we will need subsequent call to handle remaining data only when `buf` to short
       f_cont = length > bufsize;
       int32_t nbytes = f_cont * bufsize + (!f_cont) * length;
@@ -576,16 +575,17 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
    header = &myheader;
 #endif
    header->status = cmd;
-   char bindata[17];
-   transcript_bin_data_to_display(bindata, buf, len);
-   DMSG2(ctx, DDEBUG, "SENT: %c %s\n", header->status, bindata);
-   if (bsnprintf(header->length, sizeof(PTHEADER), "%06i", len) != 6){
+
+   if (bsnprintf(header->length, sizeof(header->length), "%06i\n", len) != 7){
       /* problem rendering packet header */
       DMSG0(ctx, DERROR, "Problem rendering packet header for command.\n");
       JMSG0(ctx, M_FATAL, "Problem rendering packet header for command.\n");
       return -1;
    }
-   header->length[6] = '\n';
+   // header->length[6] = '\n';
+
+   char bindata[17];
+   DMSG3(ctx, DDEBUG, "SENT: %c %s %s\n", header->status, header->length, asciidump(buf, len, bindata, sizeof(bindata)));
 
 #ifdef NEED_REVIEW
    status = sendbackend_data(ctx, (char*)header, len + sizeof(PTHEADER));

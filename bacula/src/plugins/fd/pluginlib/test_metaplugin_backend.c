@@ -406,7 +406,21 @@ void perform_backup()
       write_plugin('A', "Some error...\n");
       return;
    }
-
+#if 0
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/directory\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   signal_eod();
+   write_plugin('I', "TEST15 - backup dir + xattrs");
+   write_plugin('C', "DATA\n");
+   write_plugin('D', "/* here comes a file data contents */");
+   write_plugin('D', "/* here comes another file line    */");
+   signal_eod();
+   write_plugin('C', "XATTR\n");
+   write_plugin('D', "bacula.custom.data=Inteos\nsystem.custom.data=Bacula\n");
+   signal_eod();
+#endif
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
@@ -699,6 +713,8 @@ void perform_restore(){
             /* empty file to restore */
             LOG("#> Empty file.");
             continue;
+         } else {
+            LOG("#> file data saved.");
          }
          loopgo = true;
          fsize = len;

@@ -616,15 +616,3 @@ bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param)
 
    return false;
 }
-
-void transcript_bin_data_to_display(char (&buf)[17], const char *data, int len)
-{
-   for (int a = 0; a < len && a < 16; a++) {
-      if (isalnum(data[a]) || isspace(data[a])){
-         buf[a] = data[a];
-      } else {
-         buf[a] = '.';
-      }
-      buf[a + 1] = 0;
-   }
-}
