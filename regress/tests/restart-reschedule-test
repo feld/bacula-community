@@ -115,13 +115,13 @@ bstat=`expr $bstat + $?`
 $rscripts/diff.pl -s $cwd/build -d $tmp/bacula-restores4/$cwd/build
 bstat=`expr $bstat + $?`
 
-nb=`grep Incomplete $tmp/log4.out | wc -l`
+nb=`grep Cancel $tmp/log4.out | wc -l`
 if [ "$nb" -ne 1 ]; then
     print_debug "ERROR: Expected 1 incomplete job in status dir output $tmp/log4.out, got $nb"
     estat=1
 fi
 
-nb=`grep ' 5.* I ' $tmp/log4.out | wc -l`
+nb=`grep ' 5.* A ' $tmp/log4.out | wc -l`
 if [ "$nb" -ne 1 ]; then
     print_debug "ERROR: Expected 1 incomplete job in status dir output $tmp/log4.out, got $nb"
     estat=1
