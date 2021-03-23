@@ -786,14 +786,14 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
 
          /* Copy PluginObjects */
-         Mmsg(query, "INSERT INTO PluginObject (JobId, Path, Filename, PluginName, ObjectCategory,"
-              "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize) "
-        "SELECT %s, Path, Filename, PluginName, ObjectCategory,"
-              "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize FROM PluginObject WHERE JobId=%s",
-           new_jobid, old_jobid);
-
+         Mmsg(query, "INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory,"
+               "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize) "
+               "SELECT %s, Path, Filename, PluginName, ObjectCategory,"
+               "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize FROM Object WHERE JobId=%s",
+               new_jobid, old_jobid);
          if (!db_sql_query(wjcr->db, query.c_str(), NULL, NULL)) {
-            Jmsg(jcr, M_WARNING, 0, _("Error copying PluginObject for JobId=%ld"), old_jobid);
+            Jmsg(jcr, M_WARNING, 0, _("Error copying PluginObject for JobId=%ld: %s"),
+                  old_jobid, db_strerror(jcr->db));
          }
       }
 
