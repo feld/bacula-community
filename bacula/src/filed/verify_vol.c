@@ -409,6 +409,11 @@ void do_verify_volume(JCR *jcr)
          jcr->unlock();
          break;
 
+      case STREAM_PLUGIN_META_BLOB:
+      case STREAM_PLUGIN_META_CATALOG:
+         //TODO Add some metadata verification when it is possible
+         break;
+
       default:
          break;
       }

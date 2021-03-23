@@ -1032,7 +1032,7 @@ void do_restore(JCR *jcr)
       case STREAM_PLUGIN_META_CATALOG:
          {
             if (!jcr->plugin) {
-               Jmsg(jcr, M_ERROR, 0, _("No plugin related to metadata packet found, metadata restore failed!\n"));
+               Dmsg0(10, "No plugin related to metadata packet found, metadata restore failed!\n");
                goto get_out;
             }
 
@@ -1043,6 +1043,11 @@ void do_restore(JCR *jcr)
             Dmsg1(400, "[metadata plugin packet] type: %d\n", mp.type);
             Dmsg1(400, "[metadata plugin packet] index: %d\n", mp.index);
             Dmsg2(400, "[metadata plugin packet] buf: %.*s\n", mp.buf_len, mp.buf);
+
+            if (!plug_func(jcr->plugin)->metadataRestore) {
+               Dmsg0(10, "Found plugin metadata, but plugin's metadataRestore callback is empty!\n");
+               break;
+            }
 
             int rc = plug_func(jcr->plugin)->metadataRestore(jcr->plugin_ctx, &mp);
             if (rc != bRC_OK) {

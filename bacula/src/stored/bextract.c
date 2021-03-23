@@ -473,6 +473,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
 
    case STREAM_RESTORE_OBJECT:
    case STREAM_PLUGIN_OBJECT:
+   case STREAM_PLUGIN_META_BLOB:
+   case STREAM_PLUGIN_META_CATALOG:
       /* nothing to do */
       break;
 

@@ -113,6 +113,10 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
          return "contRESTORE-OBJECT";
       case STREAM_PLUGIN_OBJECT:
          return "contPLUGIN-OBJECT";
+      case STREAM_PLUGIN_META_BLOB:
+         return "convPLUGIN-METADATA-BINARY";
+      case STREAM_PLUGIN_META_CATALOG:
+         return "convPLUGIN-METADATA-CATALOG";
       case STREAM_SPARSE_DATA:
          return "contSPARSE-DATA";
       case STREAM_SPARSE_GZIP_DATA:
@@ -187,6 +191,10 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
       return "RESTORE-OBJECT";
    case STREAM_PLUGIN_OBJECT:
       return "PLUGIN-OBJECT";
+   case STREAM_PLUGIN_META_BLOB:
+      return "PLUGIN-METADATA-BINARY";
+   case STREAM_PLUGIN_META_CATALOG:
+      return "PLUGIN-METADATA-CATALOG";
    case STREAM_SPARSE_DATA:
       return "SPARSE-DATA";
    case STREAM_SPARSE_GZIP_DATA:

@@ -150,6 +150,12 @@ const char *stream_to_ascii(int stream)
          return _("Plugin Data");
       case STREAM_RESTORE_OBJECT:
          return _("Restore Object");
+      case STREAM_PLUGIN_OBJECT:
+         return _("Plugin Object");
+      case STREAM_PLUGIN_META_BLOB:
+         return _("Plugin metadata (binary)");
+      case STREAM_PLUGIN_META_CATALOG:
+         return _("Plugin metadata (catalog)");
       case STREAM_XACL_AIX_TEXT:
          return _("AIX ACL attribs");
       case STREAM_XACL_DARWIN_ACCESS:
