@@ -262,7 +262,7 @@ bool BSOCKCORE::connect(JCR * jcr, int retry_interval, utime_t max_retry_time,
       bmicrosleep(retry_interval, 0);
       now = time(NULL);
       if (begin_time + max_retry_time <= now) {
-         Qmsg4(jcr, M_FATAL, 0, _("Unable to connect to %s on %s:%d. ERR=%s\n"),
+         Qmsg4(jcr, M_WARNING, 0, _("Unable to connect to %s on %s:%d. ERR=%s\n"),
                name, host, port, be.bstrerror());
          goto bail_out;
       }
