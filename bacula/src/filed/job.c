@@ -596,7 +596,7 @@ static int fd_testnetwork(JCR *jcr, BSOCK *bs, int64_t bytes, int64_t nbrtt,
       *wspeed = bytes * 1000000 / (end - start);
 
       if (bs) {
-         bs->fsend("2000 OK bytes=%lld duration=%lldms write_speed=%sB/s\n",
+         bs->fsend("2000 OK FD wrote bytes=%lld to SD duration=%lldms write_speed=%sB/s\n",
                    bytes, end/1000 - start/1000,
                    edit_uint64_with_suffix(*wspeed, ed1));
       }
@@ -609,7 +609,7 @@ static int fd_testnetwork(JCR *jcr, BSOCK *bs, int64_t bytes, int64_t nbrtt,
       *rspeed = nb2 * 1000000 / (end - start);
 
       if (bs) {
-         bs->fsend("2000 OK bytes=%lld duration=%lldms read_speed=%sB/s\n",
+         bs->fsend("2000 OK FD read bytes=%lld from SD duration=%lldms read_speed=%sB/s\n",
                    nb2, end/1000 - start/1000,
                    edit_uint64_with_suffix(*rspeed, ed1));
       }
