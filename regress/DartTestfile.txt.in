@@ -46,6 +46,12 @@ ADD_TEST(misc:console-disable-job-test "@regressdir@/tests/console-disable-job-t
 ADD_TEST(misc:console-acl-test "@regressdir@/tests/console-acl-test")
 ADD_TEST(misc:console-disable-jobs-all-test "@regressdir@/tests/console-disable-jobs-all-test")
 ADD_TEST(misc:hangup-blowup-test "@regressdir@/tests/hangup-blowup-test")
+ADD_TEST(misc:counter-test "@regressdir@/tests/counter-test")
+ADD_TEST(misc:fileset-kw-test "@regressdir@/tests/fileset-kw-test")
+ADD_TEST(misc:events-test "@regressdir@/tests/events-test")
+ADD_TEST(misc:events-filter-test "@regressdir@/tests/events-filter-test")
+ADD_TEST(misc:events-pruning-test "@regressdir@/tests/events-pruning-test")
+
 SET_TESTS_PROPERTIES(misc:hangup-blowup-test PROPERTIES TIMEOUT "60")
 ADD_TEST(misc:copy-job-res-rename-test "@regressdir@/tests/copy-job-res-rename-test")
 ADD_TEST(misc:copy-job-error-test "@regressdir@/tests/copy-job-error-test")
