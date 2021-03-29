@@ -23,10 +23,17 @@
 #ifndef _UNITTESTS_H_
 #define _UNITTESTS_H_
 
+#include "bacula.h"
+
 // Test success if value x is not zero
 #define ok(x, label) _ok(__FILE__, __LINE__, #x, (x), label)
 // Test success if value x is zero
 #define nok(x, label) _nok(__FILE__, __LINE__, #x, (x), label)
+
+// Test success if value x is a valid path
+#define stat_ok(x) _stat_ok(__FILE__, __LINE__, (x))
+// Test success if value x is not a valid path
+#define stat_nok(x) _stat_nok(__FILE__, __LINE__, (x))
 
 #define is(x, y, label) _is(__FILE__, __LINE__, #x, (x), (y), label)
 #define isnt(x, y, label) _isnt(__FILE__, __LINE__, #x, (x), (y), label)
@@ -59,6 +66,8 @@ bool _is(const char *file, int l, const char *op, const char *str, const char *s
 bool _isnt(const char *file, int l, const char *op, const char *str, const char *str2, const char *label);
 bool _is(const char *file, int l, const char *op, int64_t nb, int64_t nb2, const char *label);
 bool _isnt(const char *file, int l, const char *op, int64_t nb, int64_t nb2, const char *label);
+bool _stat_ok(const char *file, int l, const char *path);
+bool _stat_nok(const char *file, int l, const char *path);
 int report();
 void terminate(int sig);
 void prolog(const char *name, bool lmgr=false, bool motd=true);
@@ -74,5 +83,55 @@ public:
    ~Unittests() { epilog(); };
    void configure(uint64_t v) { configure_test(v); };
 };
+
+/* POOL_MEM subclass with convenience methods */
+class bstring : public POOL_MEM {
+public:
+
+	bstring() : POOL_MEM() {};
+   bstring(const char *str) : POOL_MEM(str) {};
+   bstring(const bstring &fmt, ...): POOL_MEM() {
+      va_list   arg_ptr;
+      int len, maxlen;
+
+      for (;;) {
+         maxlen = this->max_size() - 1;
+         va_start(arg_ptr, fmt);
+         len = bvsnprintf(this->c_str(), maxlen, fmt, arg_ptr);
+         va_end(arg_ptr);
+         if (len < 0 || len >= (maxlen-5)) {
+            this->realloc_pm(maxlen + maxlen/2);
+            continue;
+         }
+         break;
+      }
+   };
+
+   bstring &operator=(const char * str) {
+      pm_strcpy(*this, str);
+      return *this;
+   };
+
+   // Allows cast to "char *"
+   operator char *() const {
+      return c_str();
+   };
+
+   int append(const char *str) {
+      return strcat(str);
+   }
+};
+
+/* Set of utilitary functions to manipulate the filesystem */
+void fsu_mkfile(const char *path);
+void fsu_mkfile(const char *path, const char *fcontents);
+void fsu_mkdir(const char *path);
+void fsu_mkpath(const char *path);
+void fsu_rmdir(const char *path);
+void fsu_rmfile(const char *path);
+void fsu_touch(const char *path);
+void fsu_mvfile(const char *src, const char *dst);
+void fsu_cpfile(const char *src, const char *dst);
+void unix_to_win_path(char *path);
 
 #endif /* _UNITTESTS_H_ */

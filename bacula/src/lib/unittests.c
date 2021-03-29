@@ -275,3 +275,206 @@ void epilog()
    sm_dump(false);
    Pmsg0(-1, "==== Finish ====\n");
 };
+
+bool _stat_ok(const char *file, int l, const char *fpath)
+{
+   struct stat statbuf;
+   return _ok(file, l, "stat_ok", stat(fpath, &statbuf) == 0, fpath);
+}
+
+bool _stat_nok(const char *file, int l, const char *fpath)
+{
+   struct stat statbuf;
+   return _ok(file, l, "stat_nok", stat(fpath, &statbuf) != 0, fpath);
+}
+
+void fsu_rmdir(const char *dirPath)
+{
+#ifndef HAVE_WIN32
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "rm -r \"%s\"", dirPath);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not remove Directory: %s\n", dirPath);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#else
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "rd /s /q \"%s\"", dirPath);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not remove Directory: %s\n", dirPath);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#endif
+}
+
+void fsu_rmfile(const char *fpath)
+{
+   int rc = unlink(fpath);
+
+   if (rc == -1) {
+      switch(errno) {
+         case EACCES:
+            printf("(Unlink %s) Permission Denied\n", fpath);
+            break;
+         case ENOENT:
+            printf("(Unlink %s) File not found\n", fpath);
+            break;
+         case EBUSY:
+            printf("(Unlink %s) File busy\n", fpath);
+            break;
+         default:
+            printf("(Unlink %s) Default Error\n", fpath);
+            break;
+      }
+
+      exit(-1);
+   }
+}
+
+void fsu_touch(const char *fpath)
+{
+#ifndef HAVE_WIN32
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "touch \"%s\"", fpath);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not touch file: %s\n", fpath);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#else
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "echo.> \"%s\"", fpath);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not touch file: %s\n", fpath);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#endif
+}
+
+void fsu_mvfile(char *src, char *dst)
+{
+#ifndef HAVE_WIN32
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "mv \"%s\" \"%s\"", src, dst);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not move file %s into %s. RC = %d\n", src, dst, rc);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#else
+   char *win_src = bstrdup(src);
+   unix_to_win_path(win_src);
+   char *win_dst = bstrdup(dst);
+   unix_to_win_path(win_dst);
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "move \"%s\" \"%s\"", win_src, win_dst);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not move file %s into %s. RC = %d\n", win_src, win_dst, rc);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+   free(win_src);
+   free(win_dst);
+#endif
+}
+
+void fsu_cpfile(char *src, char *dst)
+{
+#ifndef HAVE_WIN32
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "cp \"%s\" \"%s\"", src, dst);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not move file %s into %s. RC = %d\n", src, dst, rc);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#else
+   char *win_src = bstrdup(src);
+   unix_to_win_path(win_src);
+   char *win_dst = bstrdup(dst);
+   unix_to_win_path(win_dst);
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "copy \"%s\" \"%s\"", win_src, win_dst);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not move file %s into %s. RC = %d\n", win_src, win_dst, rc);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#endif
+}
+
+void fsu_mkdir(const char *path)
+{
+   if (mkdir(path, 0777) != 0) {
+      printf("ERROR : Could not create Directory: %s\n", path);
+      exit(-1);
+   }
+}
+
+void fsu_mkpath(const char *newPath)
+{
+#ifndef HAVE_WIN32
+   POOLMEM *syscmd = get_pool_memory(PM_MESSAGE);
+   Mmsg(syscmd, "mkdir -p \"%s\"", newPath);
+   int rc = system(syscmd);
+   if (rc < 0) {
+      printf("ERROR : Could not create path %s. Error: %d\n",
+            newPath, rc);
+      exit(-1);
+   }
+   free_and_null_pool_memory(syscmd);
+#else
+   POOLMEM *fullPath = get_pool_memory(PM_MESSAGE);
+   Mmsg(fullPath, "%s", dirPath, newPath);
+   int rc = _mkdir(fullPath);
+   if (rc < 0) {
+      printf("ERROR : Could not create path %s. Error: %s\n",
+            newPath, strerror(errno));
+      exit(-1);
+   }
+   free_and_null_pool_memory(fullPath);
+#endif
+}
+
+void fsu_mkfile(const char *fpath, const char *fcontents)
+{
+   FILE *fp = fopen(fpath, "wb");
+
+   if (!fp) {
+      printf("ERROR : Could not open File: %s\n", fpath);
+      exit(-1);
+   }
+
+   if (fprintf(fp, "%s", fcontents) < 0) {
+      printf("ERROR : Could not write File: %s\n", fpath);
+      exit(-1);
+   }
+
+   fclose(fp);
+}
+
+void fsu_mkfile(const char *fpath)
+{
+   fsu_mkfile(fpath, fpath);
+}
+
+void unix_to_win_path(char *path)
+{
+   for (int i = 0; path[i] != '\0'; i++) {
+      if (path[i] == '/') {
+         path[i] = '\\';
+      }
+   }
+   return;
+}
