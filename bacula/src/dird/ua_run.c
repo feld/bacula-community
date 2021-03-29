@@ -512,36 +512,9 @@ static bool get_fileset(UAContext *ua, run_ctx &rc)
 /*
  * Fill in storage data according to what is setup
  *  in the run context, and make sure the user
- *  has authorized access to it.
+ *  has authorized access to it. If no storage is found, list from job/pool is used later (see set_jcr_default_store()).
  */
 static bool get_storage(UAContext *ua, run_ctx &rc)
-{
-   if (rc.store_name) {
-      rc.store->store = GetStoreResWithName(rc.store_name);
-      pm_strcpy(rc.store->store_source, _("Command input"));
-      if (!rc.store->store) {
-         if (*rc.store_name != 0) {
-            ua->warning_msg(_("Storage \"%s\" not found.\n"), rc.store_name);
-         }
-         rc.store->store = select_storage_resource(ua);
-         pm_strcpy(rc.store->store_source, _("user selection"));
-      }
-   } else if (!rc.store->store) {
-      get_job_storage(rc.store, rc.job, NULL);      /* use default */
-   }
-   if (!rc.store->store) {
-      ua->error_msg(_("No storage specified.\n"));
-      return false;
-   } else if (!acl_access_ok(ua, Storage_ACL, rc.store->store->name())) {
-      ua->error_msg(_("No authorization. Storage \"%s\".\n"),
-               rc.store->store->name());
-      return false;
-   }
-   Dmsg1(800, "Using storage=%s\n", rc.store->store->name());
-   return true;
-}
-
-static bool get_storage_from_job_record(UAContext *ua, run_ctx &rc)
 {
    if (rc.restart) {
       char name[MAX_NAME_LENGTH];
@@ -554,16 +527,36 @@ static bool get_storage_from_job_record(UAContext *ua, run_ctx &rc)
             Dmsg1(50, "Found Storage resource related to the JobId=%ld\n",
                   rc.JobId);
             return true;
-         }
+         } else {
          Dmsg1(50, "Could not find any Storage resource related to the one refered by JobId=%ld\n",
                rc.JobId);
+         }
 
       } else {
          Dmsg1(50, "Could not find any Storage record in catalog related to the one refered by JobId=%ld\n",
                rc.JobId);
       }
+   } else if (rc.store_name) {
+      rc.store->store = GetStoreResWithName(rc.store_name);
+      pm_strcpy(rc.store->store_source, _("Command input"));
+      if (!rc.store->store) {
+         if (*rc.store_name != 0) {
+            ua->warning_msg(_("Storage \"%s\" not found.\n"), rc.store_name);
+         }
+         rc.store->store = select_storage_resource(ua);
+         pm_strcpy(rc.store->store_source, _("user selection"));
+      }
    }
-   get_job_storage(rc.store, rc.job, NULL);
+
+   if (!rc.store->store) {
+      get_job_storage(rc.store, rc.job, NULL);      /* use default */
+   }
+   if (rc.store->store && !acl_access_ok(ua, Storage_ACL, rc.store->store->name())) {
+      ua->error_msg(_("No authorization. Storage \"%s\".\n"),
+               rc.store->store->name());
+      return false;
+   }
+
    return true;
 }
 
@@ -698,8 +691,6 @@ static bool get_jobid_from_list(UAContext *ua, sellist &sl, run_ctx &rc)
    if (!get_client(ua, rc)) {
       return false;
    }
-
-   get_storage_from_job_record(ua, rc);
 
    bmemset(&fr, 0, sizeof(fr));
    fr.FileSetId = rc.jr.FileSetId;
@@ -1876,8 +1867,10 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
 {
    char ec1[30], edl[50];
    char dt[MAX_TIME_LENGTH];
+   STORE *wstore = jcr->store_mngr->get_wstore();
 
    Dmsg1(800, "JobType=%c\n", jcr->getJobType());
+   STORE *rstore = jcr->store_mngr->get_rstore();
    switch (jcr->getJobType()) {
    case JT_ADMIN:
       if (ua->api) {
@@ -1893,7 +1886,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  job->name(),
                  jcr->fileset->name(),
                  NPRT(jcr->client->name()),
-                 jcr->wstore?jcr->wstore->name():"*None*",
+                 wstore?wstore->name():"*None*",
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->JobPriority);
       } else {
@@ -1907,7 +1900,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  job->name(),
                  jcr->fileset->name(),
                  NPRT(jcr->client->name()),
-                 jcr->wstore?jcr->wstore->name():"*None*",
+                 wstore?wstore->name():"*None*",
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->JobPriority);
       }
@@ -1942,7 +1935,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->fileset->name(),
                  NPRT(jcr->pool->name()),
                  next_pool,
-                 jcr->wstore?jcr->wstore->name():"*None*",
+                 wstore?wstore->name():"*None*",
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->JobPriority,
                  jcr->plugin_options?"Plugin Options: ":"",
@@ -1972,7 +1965,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->fileset->name(),
                  NPRT(jcr->pool->name()), jcr->pool_source,
                  next_pool,
-                 jcr->wstore?jcr->wstore->name():"*None*", jcr->wstore_source,
+                 wstore?wstore->name():"*None*", jcr->store_mngr->get_wsource(),
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->JobPriority,
                  jcr->plugin_options?"Plugin Options: ":"",
@@ -2021,7 +2014,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
               jcr->client->name(),
               jcr->fileset->name(),
               NPRT(jcr->pool->name()), jcr->pool_source,
-              jcr->rstore->name(), jcr->rstore_source,
+              rstore->name(), jcr->store_mngr->get_rsource(),
               Name,
               verify_list,
               bstrutime(dt, sizeof(dt), jcr->sched_time),
@@ -2043,7 +2036,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
               jcr->client->name(),
               jcr->fileset->name(),
               NPRT(jcr->pool->name()), jcr->pool_source,
-              jcr->rstore->name(), jcr->rstore_source,
+              rstore->name(), jcr->store_mngr->get_rsource(),
               Name,
               verify_list,
               bstrutime(dt, sizeof(dt), jcr->sched_time),
@@ -2090,7 +2083,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->fileset->name(),
                  client_name,
                  jcr->client->name(),
-                 jcr->rstore->name(),
+                 rstore->name(),
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->catalog->name(),
                  jcr->JobPriority,
@@ -2117,7 +2110,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->fileset->name(),
                  client_name,
                  jcr->client->name(),
-                 jcr->rstore->name(),
+                 rstore->name(),
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->catalog->name(),
                  jcr->JobPriority,
@@ -2148,7 +2141,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->fileset->name(),
                  client_name,
                  jcr->client->name(),
-                 jcr->rstore->name(),
+                 rstore->name(),
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->catalog->name(),
                  jcr->JobPriority,
@@ -2175,7 +2168,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                  jcr->fileset->name(),
                  client_name,
                  jcr->client->name(),
-                 jcr->rstore->name(),
+                 rstore->name(),
                  bstrutime(dt, sizeof(dt), jcr->sched_time),
                  jcr->catalog->name(),
                  jcr->JobPriority,
@@ -2212,7 +2205,7 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
                         "Plugin Options:  %s\n"),
               replace,
               jcr->client->name(),
-              jcr->rstore->name(),
+              rstore->name(),
               jcr->RestoreJobId==0?"*None*":edit_uint64(jcr->RestoreJobId, ec1),
               bstrutime(dt, sizeof(dt), jcr->sched_time),
               jcr->catalog->name(),
@@ -2252,8 +2245,8 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
            jcr->fileset->name(),
            NPRT(jcr->pool->name()),
            jcr->next_pool?jcr->next_pool->name():"*None*",
-           jcr->rstore->name(),
-           jcr->wstore?jcr->wstore->name():"*None*",
+           rstore->name(),
+           wstore?wstore->name():"*None*",
            jcr->MigrateJobId==0?"*None*":edit_uint64(jcr->MigrateJobId, ec1),
            bstrutime(dt, sizeof(dt), jcr->sched_time),
            jcr->catalog->name(),
@@ -2285,8 +2278,8 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
            NPRT(jcr->pool->name()), jcr->pool_source,
            jcr->next_pool?jcr->next_pool->name():"*None*",
                NPRT(jcr->next_pool_source),
-           jcr->rstore->name(), jcr->rstore_source,
-           jcr->wstore?jcr->wstore->name():"*None*", jcr->wstore_source,
+           rstore->name(), jcr->store_mngr->get_rsource(),
+           wstore?wstore->name():"*None*", jcr->store_mngr->get_wsource(),
            jcr->MigrateJobId==0?"*None*":edit_uint64(jcr->MigrateJobId, ec1),
            bstrutime(dt, sizeof(dt), jcr->sched_time),
            jcr->catalog->name(),

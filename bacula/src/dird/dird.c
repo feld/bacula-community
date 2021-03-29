@@ -203,7 +203,7 @@ static void usage()
 static void dir_debug_print(JCR *jcr, FILE *fp)
 {
    fprintf(fp, "\twstore=%p rstore=%p wjcr=%p client=%p reschedule_count=%d SD_msg_chan_started=%d\n",
-           jcr->wstore, jcr->rstore, jcr->wjcr, jcr->client, jcr->reschedule_count, (int)jcr->SD_msg_chan_started);
+           jcr->store_mngr->get_wstore(), jcr->store_mngr->get_rstore(), jcr->wjcr, jcr->client, jcr->reschedule_count, (int)jcr->SD_msg_chan_started);
 }
 
 /*********************************************************************

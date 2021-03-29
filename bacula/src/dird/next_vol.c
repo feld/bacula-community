@@ -104,7 +104,7 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
    int retry = 0;
    bool ok;
    bool InChanger;
-   STORE *store = jcr->wstore;
+   STORE *store = jcr->store_mngr->get_wstore();
 
    bstrncpy(mr->MediaType, store->media_type, sizeof(mr->MediaType));
    Dmsg6(dbglvl, "find_next_vol_for_append: JobId=%u PoolId=%d, MediaType=%s index=%d create=%d prune=%d\n",

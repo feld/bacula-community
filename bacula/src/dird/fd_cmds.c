@@ -455,7 +455,7 @@ static bool send_fileset(JCR *jcr)
 {
    FILESET *fileset = jcr->fileset;
    BSOCK   *fd = jcr->file_bsock;
-   STORE   *store = jcr->wstore;
+   STORE   *store = jcr->store_mngr->get_wstore();
    int num;
    bool include = true;
 

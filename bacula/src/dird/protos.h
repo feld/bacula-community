@@ -138,13 +138,6 @@ extern void init_jcr_job_record(JCR *jcr);
 extern void update_job_end(JCR *jcr, int TermCode);
 extern void copy_rwstorage(JCR *jcr, alist *storage, const char *where);
 extern void set_rwstorage(JCR *jcr, USTORE *store);
-extern void free_rwstorage(JCR *jcr);
-extern void copy_wstorage(JCR *jcr, alist *storage, const char *where);
-extern void set_wstorage(JCR *jcr, USTORE *store);
-extern void free_wstorage(JCR *jcr);
-extern void copy_rstorage(JCR *jcr, alist *storage, const char *where);
-extern void set_rstorage(JCR *jcr, USTORE *store);
-extern void free_rstorage(JCR *jcr);
 extern bool setup_job(JCR *jcr);
 extern void create_clones(JCR *jcr);
 extern int create_restore_bootstrap_file(JCR *jcr);
@@ -177,7 +170,7 @@ extern BSOCK *open_sd_bsock(UAContext *ua);
 extern void close_sd_bsock(UAContext *ua);
 extern bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
                               int max_retry_time, int verbose);
-extern bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore,
+extern bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
               bool send_bsr=false);
 extern bool start_storage_daemon_message_thread(JCR *jcr);
 extern int bget_dirmsg(BSOCK *bs);
@@ -295,7 +288,7 @@ int     do_prompt(UAContext *ua, const char *automsg, const char *msg, char *pro
 int     do_alist_prompt(UAContext *ua, const char *automsg, const char *msg,
               alist *selected);
 CAT    *get_catalog_resource(UAContext *ua);
-STORE  *get_storage_resource(UAContext *ua, bool use_default, bool unique=false);
+bool    get_storage_resource(UAContext *ua, USTORE *ustore, bool use_default, bool unique=false);
 int     get_storage_drive(UAContext *ua, STORE *store);
 int     get_storage_slot(UAContext *ua, STORE *store);
 int     get_media_type(UAContext *ua, char *MediaType, int max_media);

@@ -337,10 +337,7 @@ public:
    JOB *job;                          /* Job resource */
    JOB *verify_job;                   /* Job resource of verify previous job */
    alist *plugin_config;              /* List of ConfigFile needed for restore */
-   alist *rstorage;                   /* Read storage possibilities */
-   STORE *rstore;                     /* Selected read storage */
-   alist *wstorage;                   /* Write storage possibilities */
-   STORE *wstore;                     /* Selected write storage */
+   StorageManager *store_mngr;
    CLIENT *client;                    /* Client resource */
    POOL *pool;                        /* Pool resource = write for migration */
    POOL *next_pool;                   /* Next pool override */
@@ -379,8 +376,6 @@ public:
    POOLMEM *pool_source;              /* Where pool came from */
    POOLMEM *next_pool_source;         /* Where next pool came from */
    POOLMEM *rpool_source;             /* Where migrate read pool came from */
-   POOLMEM *rstore_source;            /* Where read storage came from */
-   POOLMEM *wstore_source;            /* Where write storage came from */
    POOLMEM *catalog_source;           /* Where catalog came from */
    POOLMEM *next_vol_list;            /* Volumes previously requested */
    rblist  *bsr_list;                 /* Bootstrap that can be needed during restore */

@@ -256,8 +256,8 @@ bool do_mac_init(JCR *jcr)
 
    if (set_mac_next_pool(jcr, &pool)) {
       /* If pool storage specified, use it for restore */
-      copy_rstorage(wjcr, pool->storage, _("Pool resource"));
-      copy_rstorage(jcr, pool->storage, _("Pool resource"));
+      wjcr->store_mngr->set_rstore(pool->storage, _("Pool resource"));
+      jcr->store_mngr->set_rstore(pool->storage, _("Pool resource"));
 
       wjcr->pool = jcr->pool;
       wjcr->next_pool = jcr->next_pool;
@@ -358,6 +358,8 @@ bool do_mac(JCR *jcr)
    STORE *store;
    char *store_address;
    uint32_t store_port;
+   STORE *rstore = NULL;
+   STORE *wstore = NULL;
 
    /*
     * If wjcr is NULL, there is nothing to do for this job,
@@ -402,12 +404,9 @@ bool do_mac(JCR *jcr)
     * Now separate the read and write storages. jcr has no wstor...
     *  they all go into wjcr.
     */
-   free_rwstorage(wjcr);
-   wjcr->rstore = NULL;
-   wjcr->wstore = jcr->wstore;
-   jcr->wstore = NULL;
-   wjcr->wstorage = jcr->wstorage;
-   jcr->wstorage = NULL;
+   wjcr->store_mngr->reset_rwstorage();
+   wjcr->store_mngr->set_wstorage(jcr->store_mngr->get_wstore_list(), _("MAC JOB"));
+   jcr->store_mngr->reset_wstorage();
 
    /* TODO: See priority with bandwidth parameter */
    if (jcr->job->max_bandwidth > 0) {
@@ -450,16 +449,18 @@ bool do_mac(JCR *jcr)
       jcr->sd_calls_client = jcr->client->sd_calls_client;
    }
 
+   rstore = jcr->store_mngr->get_rstore();
+   wstore = wjcr->store_mngr->get_wstore();
    Dmsg2(dbglevel, "Read store=%s, write store=%s\n",
-      ((STORE *)jcr->rstorage->first())->name(),
-      ((STORE *)wjcr->wstorage->first())->name());
+      rstore->name(),
+      wstore->name());
 
    /*
     * Now start a job with the read Storage daemon sending the bsr.
     *  This call returns the sd_auth_key
     */
    Dmsg1(200, "Start job with read (jcr) storage daemon. Jid=%d\n", jcr->JobId);
-   if (!start_storage_daemon_job(jcr, jcr->rstorage, NULL, /*send_bsr*/true)) {
+   if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), NULL, /*send_bsr*/true)) {
       goto bail_out;
    }
    Dmsg0(150, "Read storage daemon connection OK\n");
@@ -476,7 +477,7 @@ bool do_mac(JCR *jcr)
     * Now start a job with the write Storage daemon sending.
     */
    Dmsg1(200, "Start Job with write (wjcr) storage daemon. Jid=%d\n", jcr->JobId);
-   if (!start_storage_daemon_job(wjcr, NULL, wjcr->wstorage, /*no_send_bsr*/false)) {
+   if (!start_storage_daemon_job(wjcr, NULL, wjcr->store_mngr->get_wstore_list(), /*no_send_bsr*/false)) {
       goto bail_out;
    }
    Dmsg0(150, "Write storage daemon connection OK\n");
@@ -536,7 +537,7 @@ bool do_mac(JCR *jcr)
       }
 
       /* Setup the storage address and port */
-      store = wjcr->wstore;
+      store = wjcr->store_mngr->get_wstore();
       if (store->SDDport == 0) {
          store->SDDport = store->SDport;
       }
@@ -572,7 +573,7 @@ bool do_mac(JCR *jcr)
        *
        * Send Storage daemon address to the writing SD
        */
-      store = jcr->rstore;
+      store = jcr->store_mngr->get_rstore();
       if (store->SDDport == 0) {
          store->SDDport = store->SDport;
       }
@@ -613,10 +614,8 @@ bool do_mac(JCR *jcr)
 
 bail_out:
    /* Put back jcr write storages for proper cleanup */
-   jcr->wstorage = wjcr->wstorage;
-   jcr->wstore = wjcr->wstore;
-   wjcr->wstore = NULL;
-   wjcr->wstorage = NULL;
+   jcr->store_mngr->set_wstorage(wjcr->store_mngr->get_wstore_list(), "rollback");
+   wjcr->store_mngr->reset_wstorage();
    wjcr->file_bsock = NULL;
 
    if (ok) {
@@ -948,12 +947,12 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
         jcr->FSCreateTime,
         jcr->rpool?jcr->rpool->name():"*None*",
         jcr->rpool_source,
-        jcr->rstore?jcr->rstore->name():"*None*",
-        NPRT(jcr->rstore_source),
+        jcr->store_mngr->get_rstore()?jcr->store_mngr->get_rstore()->name():"*None*",
+        NPRT(jcr->store_mngr->get_rsource()),
         jcr->pool?jcr->pool->name():"*None*",
         jcr->pool_source,
-        jcr->wstore?jcr->wstore->name():"*None*",
-        NPRT(jcr->wstore_source),
+        jcr->store_mngr->get_wstore()?jcr->store_mngr->get_wstore()->name():"*None*",
+        NPRT(jcr->store_mngr->get_wsource()),
         jcr->catalog?jcr->catalog->name():"*None*",
         jcr->catalog_source,
         sdt,
@@ -996,7 +995,7 @@ bool set_mac_wstorage(UAContext *ua, JCR *jcr, POOL *pool, POOL *next_pool,
    }
 
    /* If pool storage specified, use it instead of job storage for backup */
-   copy_wstorage(jcr, next_pool->storage, source);
+   jcr->store_mngr->set_wstorage(next_pool->storage, source);
 
    return true;
 }

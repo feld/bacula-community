@@ -47,6 +47,7 @@ static bool perform_full_name_substitution(JCR *jcr, MEDIA_DBR *mr, POOL_DBR *pr
 bool newVolume(JCR *jcr, MEDIA_DBR *mr, STORE *store, POOL_MEM &errmsg)
 {
    POOL_DBR pr;
+   STORE *wstore = jcr->store_mngr->get_wstore();
 
    bmemset(&pr, 0, sizeof(pr));
 
@@ -74,7 +75,7 @@ bool newVolume(JCR *jcr, MEDIA_DBR *mr, STORE *store, POOL_MEM &errmsg)
    mr->clear();
    set_pool_dbr_defaults_in_media_dbr(mr, &pr);
    jcr->VolumeName[0] = 0;
-   bstrncpy(mr->MediaType, jcr->wstore->media_type, sizeof(mr->MediaType));
+   bstrncpy(mr->MediaType, wstore->media_type, sizeof(mr->MediaType));
    generate_plugin_event(jcr, bDirEventNewVolume); /* return void... */
    if (jcr->VolumeName[0] && is_volume_name_legal(NULL, jcr->VolumeName)) {
       bstrncpy(mr->VolumeName, jcr->VolumeName, sizeof(mr->VolumeName));

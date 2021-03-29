@@ -1111,15 +1111,16 @@ done:
  * If use_default is set, we assume that any keyword without a value
  *   is the name of the Storage resource wanted.
  */
-STORE *get_storage_resource(UAContext *ua, bool use_default, bool unique)
+bool get_storage_resource(UAContext *ua, USTORE *ustore, bool use_default, bool unique)
 {
    char store_name[MAX_NAME_LENGTH];
-   STORE *store = NULL;
    int jobid;
    JCR *jcr;
    int i;
    char ed1[50];
+
    *store_name = 0;
+   ustore->store = NULL;
 
    for (i=1; i<ua->argc; i++) {
       if (use_default && !ua->argv[i]) {
@@ -1133,30 +1134,35 @@ STORE *get_storage_resource(UAContext *ua, bool use_default, bool unique)
          /* Default argument is storage (except in enable/disable command) */
          if (store_name[0]) {
             ua->error_msg(_("Storage name given twice.\n"));
-            return NULL;
+            goto bail_out;
          }
          bstrncpy(store_name, ua->argk[i], sizeof(store_name));
          if (store_name[0] == '?') {
             *store_name = 0;
             break;
          }
+
+         pm_strcpy(ustore->store_source, _("Command line"));
       } else {
          if (strcasecmp(ua->argk[i], NT_("storage")) == 0 ||
              strcasecmp(ua->argk[i], NT_("sd")) == 0) {
             bstrncpy(store_name, NPRTB(ua->argv[i]), sizeof(store_name));
+            pm_strcpy(ustore->store_source, _("Command line (storage parameter)"));
 
          } else if (strcasecmp(ua->argk[i], NT_("jobid")) == 0) {
             jobid = str_to_int64(ua->argv[i]);
             if (jobid <= 0) {
                ua->error_msg(_("Expecting jobid=nn command, got: %s\n"), ua->argk[i]);
-               return NULL;
+               goto bail_out;
             }
             if (!(jcr=get_jcr_by_id(jobid))) {
                ua->error_msg(_("JobId %s is not running.\n"), edit_int64(jobid, ed1));
-               return NULL;
+               goto bail_out;
             }
-            if (jcr->wstore) {
-               bstrncpy(store_name, jcr->wstore->name(), sizeof(store_name));
+            STORE *wstore = jcr->store_mngr->get_wstore();
+            if (wstore) {
+               bstrncpy(store_name, wstore->name(), sizeof(store_name));
+               pm_strcpy(ustore->store_source, _("Command line (jobid parameter)"));
             }
             free_jcr(jcr);
 
@@ -1164,25 +1170,29 @@ STORE *get_storage_resource(UAContext *ua, bool use_default, bool unique)
                     strcasecmp(ua->argk[i], NT_("jobname")) == 0) {
             if (!ua->argv[i]) {
                ua->error_msg(_("Expecting job=xxx, got: %s.\n"), ua->argk[i]);
-               return NULL;
+               goto bail_out;
             }
             if (!(jcr=get_jcr_by_partial_name(ua->argv[i]))) {
                ua->error_msg(_("Job \"%s\" is not running.\n"), ua->argv[i]);
-               return NULL;
+               goto bail_out;
             }
-            if (jcr->wstore) {
-               bstrncpy(store_name, jcr->wstore->name(), sizeof(store_name));
+            STORE *wstore = jcr->store_mngr->get_wstore();
+            if (wstore) {
+               bstrncpy(store_name, wstore->name(), sizeof(store_name));
+               pm_strcpy(ustore->store_source, _("Command line (job/jobname parameter)"));
             }
             free_jcr(jcr);
 
          } else if (strcasecmp(ua->argk[i], NT_("ujobid")) == 0) {
             if (!ua->argv[i]) {
                ua->error_msg(_("Expecting ujobid=xxx, got: %s.\n"), ua->argk[i]);
-               return NULL;
+               goto bail_out;
             }
             if ((jcr=get_jcr_by_full_name(ua->argv[i]))) {
-               if (jcr->wstore) {
-                  bstrncpy(store_name, jcr->wstore->name(), sizeof(store_name));
+               STORE *wstore = jcr->store_mngr->get_wstore();
+               if (wstore) {
+                  bstrncpy(store_name, wstore->name(), sizeof(store_name));
+                  pm_strcpy(ustore->store_source, _("Command line (ujobid parameter)"));
                }
                free_jcr(jcr);
             }
@@ -1194,22 +1204,25 @@ STORE *get_storage_resource(UAContext *ua, bool use_default, bool unique)
    }
 
    if (store_name[0] != 0) {
-      store = (STORE *)GetResWithName(R_STORAGE, store_name);
-      if (!store && strcmp(store_name, "storage") != 0) {
+      ustore->store = (STORE *)GetResWithName(R_STORAGE, store_name);
+      if (!ustore->store && strcmp(store_name, "storage") != 0) {
          /* Looks that the first keyword of the line was not a storage name, make
           * sure that it's not "storage=" before we print the following message
           */
          ua->error_msg(_("Storage resource \"%s\": not found\n"), store_name);
       }
    }
-   if (store && !acl_access_ok(ua, Storage_ACL, store->name())) {
-      store = NULL;
+   if (ustore->store && !acl_access_ok(ua, Storage_ACL, ustore->store->name())) {
+      ustore->store = NULL;
    }
    /* No keywords found, so present a selection list */
-   if (!store) {
-      store = select_storage_resource(ua, unique);
+   if (!ustore->store) {
+      ustore->store = select_storage_resource(ua, unique);
+      pm_strcpy(ustore->store_source, _("User selection"));
    }
-   return store;
+
+bail_out:
+   return ustore->store != NULL;
 }
 
 /* Get drive that we are working with for this storage */
@@ -1545,7 +1558,7 @@ int scan_storage_cmd(UAContext *ua, const char *cmd,
                      uint32_t **results)  /* List of MediaId */
 {
    bool allpools=false, has_vol = false;;
-   STORE *store;
+   USTORE ustore;
 
    *nb = 0;
    *results = NULL;
@@ -1595,12 +1608,12 @@ int scan_storage_cmd(UAContext *ua, const char *cmd,
 
    if (storage) {
       /* Choose storage */
-      ua->jcr->wstore = store =  get_storage_resource(ua, false);
-      if (!store) {
+      if (!get_storage_resource(ua, &ustore, false)) {
          goto bail_out;
       }
-      bstrncpy(storage, store->dev_name(), MAX_NAME_LENGTH);
-      set_storageid_in_mr(store, mr);
+      ua->jcr->store_mngr->set_wstorage(ustore.store, ustore.store_source);
+      bstrncpy(storage, ustore.store->dev_name(), MAX_NAME_LENGTH);
+      set_storageid_in_mr(ustore.store, mr);
    }
 
    if (!open_db(ua)) {
@@ -1663,7 +1676,7 @@ bail_out:
    }
 
    close_db(ua);
-   ua->jcr->wstore = NULL;
+   ua->jcr->store_mngr->reset_wstorage();
    if (*results) {
       free(*results);
       *results = NULL;

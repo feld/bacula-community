@@ -413,7 +413,6 @@ void do_collect_storage(UAContext *ua, STORE *store, bool doall, display_format_
 {
    int i;
    BSOCK *sd;
-   USTORE lstore;
    POOL_MEM buf;
 
    if (!acl_access_ok(ua, Storage_ACL, store->name())) {
@@ -430,9 +429,8 @@ void do_collect_storage(UAContext *ua, STORE *store, bool doall, display_format_
       ua->error_msg(_("Restricted Client or Job does not permit access to  Storage daemons\n"));
       return;
    }
-   lstore.store = store;
-   pm_strcpy(lstore.store_source, _("unknown source"));
-   set_wstorage(ua->jcr, &lstore);
+
+   ua->jcr->store_mngr->set_wstorage(store, _("unknown source"));
    /* Try connecting for up to 15 seconds */
    if (!ua->api) ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
@@ -483,7 +481,7 @@ int collect_cmd(UAContext *ua, const char *cmd)
    bool doall = true;
    display_format_t format = COLLECT_SIMPLE;
    char **margk;
-   STORE *store = NULL;
+   USTORE ustore;
    CLIENT *client = NULL;
 
    Dmsg1(20, "cmd:%s:\n", cmd);
@@ -519,7 +517,7 @@ int collect_cmd(UAContext *ua, const char *cmd)
          Dmsg0(20, "statistics format JSON\n");
          continue;
       }
-      if (strcasecmp(ua->argk[i], "client") == 0 && store == NULL) {
+      if (strcasecmp(ua->argk[i], "client") == 0 && ustore.store == NULL) {
          client = get_client_resource(ua, JT_BACKUP_RESTORE);
          if (!client) {
             goto bailout;
@@ -527,8 +525,7 @@ int collect_cmd(UAContext *ua, const char *cmd)
          continue;
       }
       if (strcasecmp(ua->argk[i], "storage") == 0 && client == NULL) {
-         store = get_storage_resource(ua, false /*no default*/, true/*unique*/);
-         if (!store) {
+         if (!get_storage_resource(ua, &ustore, false /*no default*/, true/*unique*/)) {
             goto bailout;
          }
          continue;
@@ -560,8 +557,8 @@ int collect_cmd(UAContext *ua, const char *cmd)
       case 0:                         /* Director, the default behavior */
          break;
       case 1:
-         store = select_storage_resource(ua, true/*unique*/);
-         if (!store) {
+         ustore.store = select_storage_resource(ua, true/*unique*/);
+         if (!ustore.store) {
             goto bailout;
          }
          break;
@@ -580,9 +577,9 @@ int collect_cmd(UAContext *ua, const char *cmd)
       /* do collect client */
       do_collect_client(ua, client, doall, format, margc, margk);
    } else
-   if (store){
+   if (ustore.store){
       /* do collect storage */
-      do_collect_storage(ua, store, doall, format, margc, margk);
+      do_collect_storage(ua, ustore.store, doall, format, margc, margk);
    } else {
       /* it is simpler to handle JSON array here */
       if (format == COLLECT_JSON){

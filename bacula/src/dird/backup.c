@@ -107,12 +107,12 @@ bool do_backup_init(JCR *jcr)
      return do_vbackup_init(jcr);
    }
 
-   free_rstorage(jcr);                   /* we don't read so release */
+   jcr->store_mngr->reset_rstorage();
 
    /* If pool storage specified, use it instead of job storage */
-   copy_wstorage(jcr, jcr->pool->storage, _("Pool resource"));
+   jcr->store_mngr->set_wstorage(jcr->pool->storage, _("Pool resource"));
 
-   if (!jcr->wstorage) {
+   if (!jcr->store_mngr->get_wstore()) {
       Jmsg(jcr, M_FATAL, 0, _("No Storage specification found in Job or Pool.\n"));
       return false;
    }
@@ -452,7 +452,8 @@ bool run_storage_and_start_message_thread(JCR *jcr, BSOCK *sd)
  */
 bool do_backup(JCR *jcr)
 {
-   int stat;
+   bool sd_job_started = false, wstore_group = false;
+   int stat, iter_no = 1;
    BSOCK   *fd, *sd;
    STORE *store;
    char *store_address;
@@ -533,18 +534,89 @@ bool do_backup(JCR *jcr)
     */
    Dmsg0(110, "Open connection with storage daemon\n");
    jcr->setJobStatus(JS_WaitSD);
-   /*
-    * Start conversation with Storage daemon
-    */
-   if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-      return false;
+
+   if (jcr->store_mngr->get_wstore_list()->size() != 1) {
+      wstore_group = true;
    }
-   /*
-    * Now start a job with the Storage daemon
-    */
-   if (!start_storage_daemon_job(jcr, NULL, jcr->wstorage)) {
-      return false;
+
+   if (wstore_group) {
+      /* Apply policy for the write storage list */
+      jcr->store_mngr->apply_policy(true);
+      Jmsg(jcr, M_INFO, 0, _("Possible storage choices: %s\n"),
+            jcr->store_mngr->print_wlist());
+      iter_no = 2;
    }
+
+   /* We are doing two iterations here:
+    *    - First one with 'wait' set to false in start_storage_dameon_job() call
+    *      to check if we can use any device from the list without waiting at all
+    *    - Second iteration is performed when no device was avalable - this time we wait for a device to
+    *      become available (hence setting wait to true in start_storage_daemon())
+    * Each iteration traverses storage list and try to reserve each. If any of the storages is ok to use,
+    * we stop the loops.
+    */
+   for (int iter=0; iter<iter_no; iter++) {
+      if (wstore_group) {
+         if (iter == 0) {
+            Jmsg(jcr, M_INFO, 0, _("Trying to start job on any storage from the list without "
+                     "waiting for busy devices first.\n"));
+         } else {
+            Jmsg(jcr, M_INFO, 0, _("All devices are currently busy, need to wait at each try of storage reservation.\n"));
+         }
+      }
+
+      foreach_alist(store, jcr->store_mngr->get_wstore_list()) {
+         jcr->store_mngr->set_current_wstorage(store);
+
+         if (jcr->store_bsock) {
+            jcr->store_bsock->close();
+         }
+
+         /*
+          * Start conversation with Storage daemon
+          */
+         if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
+            Jmsg(jcr, M_INFO, 0, _("Failed connect to the storage: %s\n"),
+                  jcr->store_mngr->get_wstore()->name());
+            continue;
+         } else {
+            Jmsg(jcr, M_INFO, 0, _("Connected to the storage: %s\n"),
+                  jcr->store_mngr->get_wstore()->name());
+         }
+
+         alist wlist;
+         wlist.init(10, not_owned_by_alist);
+         wlist.append(store);
+
+         /*
+          * Now start a job with the Storage daemon with temporary, single-item list.
+          * We wait on the storage if there is only 1 storage defined,
+          * else 'iter' is used as a bool in start_storage_daemon_job(),
+          * because we have only 2 iterations (so 'iter' variable is either 0 or 1)
+          */
+         if (!start_storage_daemon_job(jcr, NULL, &wlist, wstore_group ? (bool)iter : true)) {
+            Jmsg(jcr, M_INFO, 0, _("Failed to start job on the storage: %s\n"),
+                  jcr->store_mngr->get_wstore()->name());
+            continue;
+         } else {
+            Jmsg(jcr, M_INFO, 0, _("Started job on storage: %s\n"),
+                  jcr->store_mngr->get_wstore()->name());
+            sd_job_started = true;
+            break;
+         }
+      }
+
+      if(sd_job_started) {
+         /* Now break from the outer loop as well */
+         break;
+      }
+   }
+
+   if(!sd_job_started) {
+      Jmsg(jcr, M_FATAL, 0, _("Failed to start job on any of the storages defined!\n"));
+      goto bail_out;
+   }
+
    sd = jcr->store_bsock;
    if (jcr->client) {
       jcr->sd_calls_client = jcr->client->sd_calls_client;
@@ -591,7 +663,7 @@ bool do_backup(JCR *jcr)
 
    send_snapshot_retention(jcr, jcr->snapshot_retention);
 
-   store = jcr->wstore;
+   store = jcr->store_mngr->get_wstore();
 
    if (jcr->sd_calls_client) {
       if (jcr->FDVersion < 10) {
@@ -606,7 +678,7 @@ bool do_backup(JCR *jcr)
          goto bail_out;
       }
 
-      store_address = jcr->wstore->address;  /* dummy */
+      store_address = store->address;  /* dummy */
       store_port = 0;           /* flag that SD calls FD */
    } else {
       /*
@@ -903,6 +975,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
    utime_t RunTime;
    POOL_MEM base_info;
    POOL_MEM vol_info;
+   STORE *wstore = jcr->store_mngr->get_wstore();
 
    remove_dummy_jobmedia_records(jcr);
 
@@ -1104,7 +1177,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
         jcr->fileset->name(), jcr->FSCreateTime,
         jcr->pool->name(), jcr->pool_source,
         jcr->catalog->name(), jcr->catalog_source,
-        jcr->wstore->name(), jcr->wstore_source,
+        wstore->name(), jcr->store_mngr->get_wsource(),
         schedt,
         sdt,
         edt,

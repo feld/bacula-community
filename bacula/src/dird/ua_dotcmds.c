@@ -1665,11 +1665,8 @@ static void do_storage_cmd(UAContext *ua, STORE *store, const char *cmd)
 {
    BSOCK *sd;
    JCR *jcr = ua->jcr;
-   USTORE lstore;
 
-   lstore.store = store;
-   pm_strcpy(lstore.store_source, _("unknown source"));
-   set_wstorage(jcr, &lstore);
+   jcr->store_mngr->set_wstorage(store, _("unknown source"));
    /* Try connecting for up to 15 seconds */
    ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
@@ -1721,7 +1718,7 @@ static void do_client_cmd(UAContext *ua, CLIENT *client, const char *cmd)
 static bool admin_cmds(UAContext *ua, const char *cmd)
 {
    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-   STORE *store=NULL;
+   USTORE ustore;
    CLIENT *client=NULL;
    bool dir=false;
    bool do_deadlock=false;
@@ -1764,17 +1761,16 @@ static bool admin_cmds(UAContext *ua, const char *cmd)
       if (strcasecmp(ua->argk[i], NT_("store")) == 0 ||
           strcasecmp(ua->argk[i], NT_("storage")) == 0 ||
           strcasecmp(ua->argk[i], NT_("sd")) == 0) {
-         store = NULL;
          if (ua->argv[i]) {
-            store = (STORE *)GetResWithName(R_STORAGE, ua->argv[i]);
+            ustore.store = (STORE *)GetResWithName(R_STORAGE, ua->argv[i]);
          }
-         if (!store) {
-            store = get_storage_resource(ua, false/*no default*/);
+         if (!ustore.store) {
+            get_storage_resource(ua, &ustore, false/*no default*/);
          }
       }
    }
 
-   if (!dir && !store && !client) {
+   if (!dir && !ustore.store && !client) {
       /*
        * We didn't find an appropriate keyword above, so
        * prompt the user.
@@ -1788,7 +1784,7 @@ static bool admin_cmds(UAContext *ua, const char *cmd)
          dir=true;
          break;
       case 1:
-         store = get_storage_resource(ua, false/*no default*/);
+         get_storage_resource(ua, &ustore, false/*no default*/);
          break;
       case 2:
          client = select_client_resource(ua, JT_BACKUP_RESTORE);
@@ -1798,8 +1794,8 @@ static bool admin_cmds(UAContext *ua, const char *cmd)
       }
    }
 
-   if (store) {
-      do_storage_cmd(ua, store, remote_cmd);
+   if (ustore.store) {
+      do_storage_cmd(ua, ustore.store, remote_cmd);
    }
 
    if (client) {

@@ -262,9 +262,10 @@ bool do_a_command(UAContext *ua)
       return false;
    }
 
-   if (ua->jcr->wstorage) {
-      while (ua->jcr->wstorage->size()) {
-         ua->jcr->wstorage->remove(0);
+   alist *wstorage = ua->jcr->store_mngr->get_wstore_list();
+   if (!wstorage->empty()) {
+      while (wstorage->size()) {
+         wstorage->remove(0);
       }
    }
 
@@ -335,7 +336,7 @@ static int add_cmd(UAContext *ua, const char *cmd)
    MEDIA_DBR mr;
    int num, i, max, startnum;
    char name[MAX_NAME_LENGTH];
-   STORE *store;
+   USTORE ustore;
    int Slot = 0, InChanger = 0;
 
    ua->send_msg(_(
@@ -365,8 +366,8 @@ static int add_cmd(UAContext *ua, const char *cmd)
    }
 
    /* Get media type */
-   if ((store = get_storage_resource(ua, false/*no default*/)) != NULL) {
-      bstrncpy(mr.MediaType, store->media_type, sizeof(mr.MediaType));
+   if (get_storage_resource(ua, &ustore, false/*no default*/)) {
+      bstrncpy(mr.MediaType, ustore.store->media_type, sizeof(mr.MediaType));
    } else if (!get_media_type(ua, mr.MediaType, sizeof(mr.MediaType))) {
       return 1;
    }
@@ -435,7 +436,7 @@ static int add_cmd(UAContext *ua, const char *cmd)
       num = 1;
    }
 
-   if (store && store->autochanger) {
+   if (ustore.store && ustore.store->autochanger) {
       if (!get_pint(ua, _("Enter slot (0 for none): "))) {
          return 1;
       }
@@ -452,7 +453,7 @@ static int add_cmd(UAContext *ua, const char *cmd)
       mr.Slot = Slot++;
       mr.InChanger = InChanger;
       mr.Enabled = 1;
-      set_storageid_in_mr(store, &mr);
+      set_storageid_in_mr(ustore.store, &mr);
       Dmsg1(200, "Create Volume %s\n", mr.VolumeName);
       if (!db_create_media_record(ua->jcr, ua->db, &mr)) {
          ua->error_msg("%s", db_strerror(ua->db));
@@ -1048,11 +1049,8 @@ static void do_storage_setdebug(UAContext *ua, STORE *store,
                char *options, char *tags)
 {
    BSOCK *sd;
-   USTORE lstore;
 
-   lstore.store = store;
-   pm_strcpy(lstore.store_source, _("unknown source"));
-   set_wstorage(ua->jcr, &lstore);
+   ua->jcr->store_mngr->set_wstorage(store, _("unknown source"));
    /* Try connecting for up to 15 seconds */
    ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
@@ -1211,7 +1209,7 @@ static void do_all_setdebug(UAContext *ua, int64_t level,
  */
 static int setdebug_cmd(UAContext *ua, const char *cmd)
 {
-   STORE *store;
+   USTORE ustore;
    CLIENT *client;
    int64_t level=0, tags=0;
    int trace_flag = -1;
@@ -1306,18 +1304,16 @@ static int setdebug_cmd(UAContext *ua, const char *cmd)
       if (strcasecmp(ua->argk[i], NT_("store")) == 0 ||
           strcasecmp(ua->argk[i], NT_("storage")) == 0 ||
           strcasecmp(ua->argk[i], NT_("sd")) == 0) {
-         store = NULL;
          if (ua->argv[i]) {
-            store = GetStoreResWithName(ua->argv[i]);
-            if (store) {
-               do_storage_setdebug(ua, store, level, trace_flag,
+            ustore.store = GetStoreResWithName(ua->argv[i]);
+            if (ustore.store) {
+               do_storage_setdebug(ua, ustore.store, level, trace_flag,
                   hangup, blowup, options, tags_str);
                return 1;
             }
          }
-         store = get_storage_resource(ua, false/*no default*/, true/*unique*/);
-         if (store) {
-            do_storage_setdebug(ua, store, level, trace_flag,
+         if (get_storage_resource(ua, &ustore, false/*no default*/, true/*unique*/)) {
+            do_storage_setdebug(ua, ustore.store, level, trace_flag,
                hangup, blowup, options, tags_str);
             return 1;
          }
@@ -1337,9 +1333,8 @@ static int setdebug_cmd(UAContext *ua, const char *cmd)
       do_dir_setdebug(ua, level, trace_flag, options, tags_str);
       break;
    case 1:
-      store = get_storage_resource(ua, false/*no default*/, true/*unique*/);
-      if (store) {
-         do_storage_setdebug(ua, store, level, trace_flag, hangup, blowup,
+      if (get_storage_resource(ua, &ustore, false/*no default*/, true/*unique*/)) {
+         do_storage_setdebug(ua, ustore.store, level, trace_flag, hangup, blowup,
             options, tags_str);
       }
       break;
@@ -2392,7 +2387,7 @@ int memory_cmd(UAContext *ua, const char *cmd)
 
 static void do_storage_cmd(UAContext *ua, const char *command)
 {
-   USTORE store;
+   USTORE ustore;
    BSOCK *sd;
    JCR *jcr = ua->jcr;
    char dev_name[MAX_NAME_LENGTH];
@@ -2404,20 +2399,19 @@ static void do_storage_cmd(UAContext *ua, const char *command)
    }
    Dmsg2(120, "%s: %s\n", command, ua->UA_sock->msg);
 
-   store.store = get_storage_resource(ua, true/*arg is storage*/);
-   if (!store.store) {
+   if (!get_storage_resource(ua, &ustore, true/*arg is storage*/)) {
       return;
    }
-   pm_strcpy(store.store_source, _("unknown source"));
-   set_wstorage(jcr, &store);
-   drive = get_storage_drive(ua, store.store);
+
+   jcr->store_mngr->set_wstorage(ustore.store, ustore.store_source);
+   drive = get_storage_drive(ua, ustore.store);
    /* For the disable/enable/unmount commands, the slot is not mandatory */
    if (strcasecmp(command, "disable") == 0 ||
        strcasecmp(command, "enable")  == 0 ||
        strcasecmp(command, "unmount")  == 0) {
       slot = 0;
    } else {
-      slot = get_storage_slot(ua, store.store);
+      slot = get_storage_slot(ua, ustore.store);
    }
    /* Users may set a device name directly on the command line */
    if ((i = find_arg_with_value(ua, "device")) > 0) {
@@ -2431,11 +2425,11 @@ static void do_storage_cmd(UAContext *ua, const char *command)
       bstrncpy(dev_name, ua->argv[i], sizeof(dev_name));
 
    } else {                     /* We take the default device name */
-      bstrncpy(dev_name, store.store->dev_name(), sizeof(dev_name));
+      bstrncpy(dev_name, ustore.store->dev_name(), sizeof(dev_name));
    }
 
    Dmsg3(120, "Found storage, MediaType=%s DevName=%s drive=%d\n",
-      store.store->media_type, store.store->dev_name(), drive);
+      ustore.store->media_type, ustore.store->dev_name(), drive);
    Dmsg4(120, "Cmd: %s %s drive=%d slot=%d\n", command, dev_name, drive, slot);
 
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
@@ -2445,7 +2439,7 @@ static void do_storage_cmd(UAContext *ua, const char *command)
 
    /* Keep track of this important event */
    ua->send_events("DC0013", EVENTS_TYPE_COMMAND, "%s storage=%s dev=%s",
-                  command, store.store->name(), dev_name);
+                  command, ustore.store->name(), dev_name);
 
    sd = jcr->store_bsock;
    bash_spaces(dev_name);
@@ -2588,7 +2582,7 @@ int cloud_volumes_cmd(UAContext *ua, const char *cmd, const char *mode)
 bail_out:
    close_db(ua);
    close_sd_bsock(ua);
-   ua->jcr->wstore = NULL;
+   ua->jcr->store_mngr->reset_wstorage();
    if (results) {
       free(results);
    }
@@ -2602,7 +2596,7 @@ static int cloud_list_cmd(UAContext *ua, const char *cmd)
 {
    int drive = -1;
    int64_t size, mtime;
-   STORE *store = NULL;
+   USTORE ustore;
    MEDIA_DBR mr;
    POOL_DBR pr;
    BSOCK *sd = NULL;
@@ -2630,12 +2624,12 @@ static int cloud_list_cmd(UAContext *ua, const char *cmd)
    }
 
    /* Choose storage */
-   ua->jcr->wstore = store = get_storage_resource(ua, false);
-   if (!store) {
+   if (!get_storage_resource(ua, &ustore, false)) {
       goto bail_out;
    }
-   bstrncpy(storage, store->dev_name(), sizeof(storage));
-   bstrncpy(mr.MediaType, store->media_type, sizeof(mr.MediaType));
+   ua->jcr->store_mngr->set_wstorage(ustore.store, ustore.store_source);
+   bstrncpy(storage, ustore.store->dev_name(), sizeof(storage));
+   bstrncpy(mr.MediaType, ustore.store->media_type, sizeof(mr.MediaType));
 
    if ((sd=open_sd_bsock(ua)) == NULL) {
       Dmsg0(100, "Can't open connection to SD\n");
@@ -2736,7 +2730,7 @@ static int cloud_list_cmd(UAContext *ua, const char *cmd)
 bail_out:
    close_db(ua);
    close_sd_bsock(ua);
-   ua->jcr->wstore = NULL;
+   ua->jcr->store_mngr->reset_wstorage();
    return 1;
 }
 

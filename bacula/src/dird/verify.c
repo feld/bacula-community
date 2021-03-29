@@ -62,12 +62,11 @@ bool do_verify_init(JCR *jcr)
    case L_VERIFY_INIT:
    case L_VERIFY_CATALOG:
    case L_VERIFY_DISK_TO_CATALOG:
-      free_rstorage(jcr);
-      free_wstorage(jcr);
+      jcr->store_mngr->reset_rwstorage();
       break;
    case L_VERIFY_DATA:
    case L_VERIFY_VOLUME_TO_CATALOG:
-      free_wstorage(jcr);
+      jcr->store_mngr->reset_wstorage();
       break;
    default:
       Jmsg2(jcr, M_FATAL, 0, _("Unimplemented Verify level %d(%c)\n"), jcr->getJobLevel(),
@@ -95,8 +94,9 @@ bool do_verify(JCR *jcr)
    char *store_address;
    uint32_t store_port;
    const char *Name;
+   STORE *rstore = jcr->store_mngr->get_rstore();
 
-   free_wstorage(jcr);                   /* we don't write */
+   jcr->store_mngr->reset_wstorage();
 
    memset(&jcr->previous_jr, 0, sizeof(jcr->previous_jr));
 
@@ -258,7 +258,7 @@ bool do_verify(JCR *jcr)
       /*
        * Now start a job with the Storage daemon
        */
-      if (!start_storage_daemon_job(jcr, jcr->rstorage, NULL)) {
+      if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), NULL, true /* wait */)) {
          return false;
       }
       sd = jcr->store_bsock;
@@ -327,21 +327,21 @@ bool do_verify(JCR *jcr)
          if (!run_storage_and_start_message_thread(jcr, jcr->store_bsock)) {
             return false;
          }
-         store_address = jcr->rstore->address;  /* dummy */
+         store_address = rstore->address;  /* dummy */
          store_port = 0;           /* flag that SD calls FD */
       } else {
          /*
           * send Storage daemon address to the File daemon
           */
-         if (jcr->rstore->SDDport == 0) {
-            jcr->rstore->SDDport = jcr->rstore->SDport;
+         if (rstore->SDDport == 0) {
+            rstore->SDDport = rstore->SDport;
          }
 
-         store_address = get_storage_address(jcr->client, jcr->rstore);
-         store_port = jcr->rstore->SDDport;
+         store_address = get_storage_address(jcr->client, rstore);
+         store_port = rstore->SDDport;
       }
 
-      if (!send_store_addr_to_fd(jcr, jcr->rstore, store_address, store_port)) {
+      if (!send_store_addr_to_fd(jcr, rstore, store_address, store_port)) {
          goto bail_out;
       }
 

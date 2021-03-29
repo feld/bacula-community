@@ -147,7 +147,7 @@ static bool open_bootstrap_file(JCR *jcr, bootstrap_info &info)
    if (!jcr->RestoreBootstrap) {
       return false;
    }
-   bstrncpy(info.storage, jcr->rstore->name(), MAX_NAME_LENGTH);
+   bstrncpy(info.storage, jcr->store_mngr->get_rstore()->name(), MAX_NAME_LENGTH);
 
    bs = bfopen(jcr->RestoreBootstrap, "rb");
    if (!bs) {
@@ -194,7 +194,7 @@ static bool is_on_same_storage(JCR *jcr, char *new_one)
       return true;
    }
    /* same name */
-   if (!strcmp(new_one, jcr->rstore->name())) {
+   if (!strcmp(new_one, jcr->store_mngr->get_rstore()->name())) {
       return true;
    }
    new_store = (STORE *)GetResWithName(R_STORAGE, new_one);
@@ -207,8 +207,9 @@ static bool is_on_same_storage(JCR *jcr, char *new_one)
    /* if Port and Hostname/IP are same, we are talking to the same
     * Storage Daemon
     */
-   if (jcr->rstore->SDport != new_store->SDport ||
-       strcmp(jcr->rstore->address, new_store->address))
+   STORE *rstore = jcr->store_mngr->get_rstore();
+   if (rstore->SDport != new_store->SDport ||
+       strcmp(rstore->address, new_store->address))
    {
       return false;
    }
@@ -282,15 +283,16 @@ static bool send_bootstrap_file(JCR *jcr, BSOCK *sock,
  */
 static bool select_rstore(JCR *jcr, bootstrap_info &info)
 {
-   USTORE ustore;
+   STORE *store;
    int i;
 
 
-   if (!strcmp(jcr->rstore->name(), info.storage)) {
+   STORE *rstore = jcr->store_mngr->get_rstore();
+   if (!strcmp(rstore->name(), info.storage)) {
       return true;                 /* same SD nothing to change */
    }
 
-   if (!(ustore.store = (STORE *)GetResWithName(R_STORAGE,info.storage))) {
+   if (!(store = (STORE *)GetResWithName(R_STORAGE,info.storage))) {
       Jmsg(jcr, M_FATAL, 0,
            _("Could not get storage resource '%s'.\n"), info.storage);
       jcr->setJobStatus(JS_ErrorTerminated);
@@ -306,27 +308,26 @@ static bool select_rstore(JCR *jcr, bootstrap_info &info)
    /*
     * release current read storage and get a new one
     */
-   dec_read_store(jcr);
-   free_rstorage(jcr);
-   set_rstorage(jcr, &ustore);
+   jcr->store_mngr->dec_read_stores();
+   jcr->store_mngr->set_rstore(store, _("Job resource"));
    jcr->setJobStatus(JS_WaitSD);
    /*
     * Wait for up to 6 hours to increment read stoage counter
     */
    for (i=0; i < MAX_TRIES; i++) {
       /* try to get read storage counter incremented */
-      if (inc_read_store(jcr)) {
+      if (jcr->store_mngr->inc_read_stores(jcr)) {
          jcr->setJobStatus(JS_Running);
          return true;
       }
       bmicrosleep(10, 0);       /* sleep 10 secs */
       if (job_canceled(jcr)) {
-         free_rstorage(jcr);
+         jcr->store_mngr->reset_rstorage();
          return false;
       }
    }
    /* Failed to inc_read_store() */
-   free_rstorage(jcr);
+   jcr->store_mngr->reset_rstorage();
    Jmsg(jcr, M_FATAL, 0,
       _("Could not acquire read storage lock for \"%s\""), info.storage);
    return false;
@@ -396,7 +397,7 @@ bool restore_bootstrap(JCR *jcr)
       /*
        * Now start a job with the Storage daemon
        */
-      if (!start_storage_daemon_job(jcr, jcr->rstorage, NULL)) {
+      if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), NULL, true /* wait */)) {
          goto bail_out;
       }
 
@@ -423,6 +424,8 @@ bool restore_bootstrap(JCR *jcr)
          goto bail_out;
       }
 
+      STORE *rstore = jcr->store_mngr->get_rstore();
+
       if (jcr->sd_calls_client) {
          /*
           * SD must call "client" i.e. FD
@@ -438,7 +441,7 @@ bool restore_bootstrap(JCR *jcr)
             goto bail_out;
          }
 
-         store_address = jcr->rstore->address;  /* dummy */
+         store_address = rstore->address;  /* dummy */
          store_port = 0;                        /* flag that SD calls FD */
 
       } else {
@@ -454,17 +457,17 @@ bool restore_bootstrap(JCR *jcr)
           *   then wait for File daemon to make connection
           *   with Storage daemon.
           */
-         if (jcr->rstore->SDDport == 0) {
-            jcr->rstore->SDDport = jcr->rstore->SDport;
+         if (rstore->SDDport == 0) {
+            rstore->SDDport = rstore->SDport;
          }
 
-         store_address = get_storage_address(jcr->client, jcr->rstore);
-         store_port = jcr->rstore->SDDport;
+         store_address = get_storage_address(jcr->client, rstore);
+         store_port = rstore->SDDport;
       }
 
       /* TLS Requirement */
-      if (jcr->rstore->tls_enable) {
-         if (jcr->rstore->tls_require) {
+      if (rstore->tls_enable) {
+         if (rstore->tls_require) {
             tls_need = BNET_TLS_REQUIRED;
          } else {
             tls_need = BNET_TLS_OK;
@@ -544,7 +547,7 @@ bool do_restore(JCR *jcr)
    JOB_DBR rjr;                       /* restore job record */
    int stat;
 
-   free_wstorage(jcr);                /* we don't write */
+   jcr->store_mngr->reset_wstorage();
 
    if (!allow_duplicate_job(jcr)) {
       goto bail_out;
@@ -628,7 +631,7 @@ bool do_restore_init(JCR *jcr)
       delete jcr->plugin_config;
       jcr->plugin_config = NULL;
    }
-   free_wstorage(jcr);
+   jcr->store_mngr->reset_wstorage();
    return true;
 }
 

@@ -134,6 +134,28 @@ BSOCK *CLIENT::getBSOCK(int timeout)
    return globals->socket->get(timeout);
 }
 
+/* Store a storage group policy */
+void store_storage_mngr(LEX *lc, RES_ITEM *item, int index, int pass)
+{
+   lex_get_token(lc, T_STRING);
+   if (pass == 1) {
+      if (*(item->value)) {
+         scan_err5(lc, _("Attempt to redefine \"%s\" from \"%s\" to \"%s\" referenced on line %d : %s\n"),
+            item->name, *(item->value), lc->str, lc->line_no, lc->line);
+         return;
+      }
+
+      if (!StorageManager::check_policy(lc->str)) {
+         scan_err0(lc, _("Invalid storage policy!\n"));
+         return;
+      }
+
+      *(item->value) = bstrdup(lc->str);
+   }
+   scan_to_eol(lc);
+   set_bit(index, res_all.hdr.item_present);
+}
+
 bool CLIENT::getBSOCK_state(POOLMEM *&buf)
 {
    P(globals_mutex);
@@ -580,6 +602,7 @@ RES_ITEM job_items[] = {
    {"Level",     store_level,   ITEM(res_job.JobLevel),    0, 0, 0},
    {"Messages",  store_res,     ITEM(res_job.messages),  R_MSGS, ITEM_REQUIRED, 0},
    {"Storage",   store_alist_res, ITEM(res_job.storage),  R_STORAGE, 0, 0},
+   {"StoragePolicy",   store_storage_mngr, ITEM(res_job.storage_policy),  0, 0, 0},
    {"Pool",      store_res,     ITEM(res_job.pool),      R_POOL, ITEM_REQUIRED, 0},
    {"NextPool",  store_res,     ITEM(res_job.next_pool), R_POOL, 0, 0},
    {"FullBackupPool",  store_res, ITEM(res_job.full_pool),   R_POOL, 0, 0},
@@ -1859,6 +1882,9 @@ void free_resource(RES *rres, int type)
       if (res->res_job.run_cmds) {
          delete res->res_job.run_cmds;
       }
+      if (res->res_job.storage_policy) {
+         free(res->res_job.storage_policy);
+      }
       if (res->res_job.storage) {
          delete res->res_job.storage;
       }
@@ -2765,10 +2791,13 @@ extern "C" char *job_code_callback_director(JCR *jcr, const char* param, char *b
          }
          break;
       case 'w':
-         if (jcr->wstore) {
-            return jcr->wstore->name();
+         {
+            STORE *wstore = jcr->store_mngr->get_wstore();
+            if (wstore) {
+               return wstore->name();
+            }
+            break;
          }
-         break;
       case 'x':
          return jcr->spool_data ? yes : no;
       case 'D':

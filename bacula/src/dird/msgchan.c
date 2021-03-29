@@ -45,7 +45,7 @@ static char jobcmd[] = "JobId=%s job=%s job_name=%s client_name=%s "
    "rerunning=%d VolSessionId=%d VolSessionTime=%d sd_client=%d "
    "Authorization=%s\n";
 static char use_storage[] = "use storage=%s media_type=%s pool_name=%s "
-   "pool_type=%s append=%d copy=%d stripe=%d\n";
+   "pool_type=%s append=%d copy=%d stripe=%d wait=%d\n";
 static char use_device[] = "use device=%s\n";
 //static char query_device[] = _("query device=%s");
 
@@ -64,7 +64,7 @@ extern "C" void *msg_thread(void *arg);
 
 BSOCK *open_sd_bsock(UAContext *ua)
 {
-   STORE *store = ua->jcr->wstore;
+   STORE *store = ua->jcr->store_mngr->get_wstore();
 
    if (!is_bsock_open(ua->jcr->store_bsock)) {
       ua->send_msg(_("Connecting to Storage daemon %s at %s:%d ...\n"),
@@ -95,6 +95,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    BSOCK *sd = jcr->store_bsock;
    STORE *store;
    utime_t heart_beat;
+   STORE *wstore = jcr->store_mngr->get_wstore();
 
    if (is_bsock_open(sd)) {
       return true;                    /* already connected */
@@ -104,10 +105,15 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    }
 
    /* If there is a write storage use it */
-   if (jcr->wstore) {
-      store = jcr->wstore;
+   if (wstore) {
+      store = wstore;
    } else {
-      store = jcr->rstore;
+      store = jcr->store_mngr->get_rstore();
+   }
+
+   if (!store) {
+      Dmsg0(100, "No storage resource found in jcr!\n");
+      return false;
    }
 
    if (store->heartbeat_interval) {
@@ -174,7 +180,7 @@ static char OKbootstrap[] = "3000 OK bootstrap\n";
 /*
  * Start a job with the Storage daemon
  */
-bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool send_bsr)
+bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait, bool send_bsr)
 {
    bool ok = true;
    STORE *storage;
@@ -184,6 +190,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool send_
    POOL_MEM job_name, client_name, fileset_name;
    int copy = 0;
    int stripe = 0;
+   int sleep = wait;    /* 'wait' arg needs to be passed as an int through the network */
    char ed1[30], ed2[30];
    int sd_client;
 
@@ -290,7 +297,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool send_
          }
          bash_spaces(media_type);
          sd->fsend(use_storage, store_name.c_str(), media_type.c_str(),
-                   pool_name.c_str(), pool_type.c_str(), 0, copy, stripe);
+                   pool_name.c_str(), pool_type.c_str(), 0, copy, stripe, sleep);
          Dmsg1(100, "rstore >stored: %s", sd->msg);
          DEVICE *dev;
          /* Loop over alternative storage Devices until one is OK */
@@ -328,7 +335,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool send_
          pm_strcpy(media_type, storage->media_type);
          bash_spaces(media_type);
          sd->fsend(use_storage, store_name.c_str(), media_type.c_str(),
-                   pool_name.c_str(), pool_type.c_str(), 1, copy, stripe);
+               pool_name.c_str(), pool_type.c_str(), 1, copy, stripe, sleep);
 
          Dmsg1(100, "wstore >stored: %s", sd->msg);
          DEVICE *dev;
@@ -357,11 +364,11 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool send_
       POOL_MEM err_msg;
       if (sd->msg[0]) {
          pm_strcpy(err_msg, sd->msg); /* save message */
-         Jmsg(jcr, M_FATAL, 0, _("\n"
+         Jmsg(jcr, M_INFO, 0, _("\n"
               "     Storage daemon didn't accept Device \"%s\" because:\n     %s"),
               device_name.c_str(), err_msg.c_str()/* sd->msg */);
       } else {
-         Jmsg(jcr, M_FATAL, 0, _("\n"
+         Jmsg(jcr, M_INFO, 0, _("\n"
               "     Storage daemon didn't accept Device \"%s\" command.\n"),
               device_name.c_str());
       }

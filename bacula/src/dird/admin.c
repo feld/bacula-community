@@ -34,7 +34,7 @@
 
 bool do_admin_init(JCR *jcr)
 {
-   free_rstorage(jcr);
+   jcr->store_mngr->reset_rstorage();
    if (!allow_duplicate_job(jcr)) {
       return false;
    }

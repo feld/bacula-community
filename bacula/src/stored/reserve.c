@@ -47,7 +47,7 @@ static int is_pool_ok(DCR *dcr);
 
 /* Requests from the Director daemon */
 static char use_storage[]  = "use storage=%127s media_type=%127s "
-    "pool_name=%127s pool_type=%127s append=%d copy=%d stripe=%d\n";
+    "pool_name=%127s pool_type=%127s append=%d copy=%d stripe=%d wait=%d\n";
 static char use_device[]  = "use device=%127s\n";
 
 /* Responses sent to Director daemon */
@@ -269,7 +269,7 @@ static bool use_device_cmd(JCR *jcr)
    BSOCK *dir = jcr->dir_bsock;
    int32_t append;
    bool ok;
-   int32_t Copy, Stripe;
+   int32_t Copy, Stripe, Wait;
    DIRSTORE *store;
    RCTX rctx;
    alist *dirstore;
@@ -286,7 +286,7 @@ static bool use_device_cmd(JCR *jcr)
       Dmsg1(dbglvl, "<dird: %s", dir->msg);
       ok = sscanf(dir->msg, use_storage, store_name.c_str(),
                   media_type.c_str(), pool_name.c_str(),
-                  pool_type.c_str(), &append, &Copy, &Stripe) == 7;
+                  pool_type.c_str(), &append, &Copy, &Stripe, &Wait) == 8;
       if (!ok) {
          break;
       }
@@ -394,6 +394,13 @@ static bool use_device_cmd(JCR *jcr)
          if (ok) {
             break;
          }
+         if (!Wait) {
+            /* Director does some kind of 'quick round' now, does not want to wait for device to become available.
+             * If none of the devices is ready now, director will probably do a second use_device call,
+             * this time with 'wait' set to 1 */
+            break;
+         }
+
          /* Keep reservations locked *except* during wait_for_device() */
          unlock_reservations();
          /*
@@ -421,12 +428,7 @@ static bool use_device_cmd(JCR *jcr)
           *  means nothing configured.  If a device is suitable but busy
           *  with another Volume, we will not come here.
           */
-         unbash_spaces(dir->msg);
-         pm_strcpy(jcr->errmsg, dir->msg);
-         Jmsg(jcr, M_FATAL, 0, _("Device reservation failed for JobId=%d: %s\n"),
-              jcr->JobId, jcr->errmsg);
          dir->fsend(NO_device, dev_name.c_str());
-
          Dmsg1(dbglvl, ">dird: %s", dir->msg);
       }
    } else {

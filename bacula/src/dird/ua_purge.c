@@ -775,7 +775,7 @@ int truncate_cmd(UAContext *ua, const char *cmd)
 bail_out:
    close_db(ua);
    close_sd_bsock(ua);
-   ua->jcr->wstore = NULL;
+   ua->jcr->store_mngr->reset_wstorage();
    if (results) {
       free(results);
    }

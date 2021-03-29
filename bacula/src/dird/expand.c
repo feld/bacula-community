@@ -74,6 +74,8 @@ static int job_item(JCR *jcr, int code,
    const char *str = " ";
    char buf[20];
 
+   STORE *rstore = jcr->store_mngr->get_rstore();
+   STORE *wstore = jcr->store_mngr->get_wstore();
    switch (code) {
    case 1:                            /* Job */
       str = jcr->job->name();
@@ -105,20 +107,20 @@ static int job_item(JCR *jcr, int code,
       str = jcr->pool->name();
       break;
    case 9:                            /* Storage */
-      if (jcr->wstore) {
-         str = jcr->wstore->name();
+      if (wstore) {
+         str = wstore->name();
       } else {
-         str = jcr->rstore->name();
+         str = rstore->name();
       }
       break;
    case 10:                           /* Catalog */
       str = jcr->catalog->name();
       break;
    case 11:                           /* MediaType */
-      if (jcr->wstore) {
-         str = jcr->wstore->media_type;
+      if (wstore) {
+         str = wstore->media_type;
       } else {
-         str = jcr->rstore->media_type;
+         str = rstore->media_type;
       }
       break;
    case 12:                           /* JobName */

@@ -52,7 +52,7 @@ static char DotStatusJob[] = "JobId=%s JobStatus=%c JobErrors=%d\n";
 
 bool dot_status_cmd(UAContext *ua, const char *cmd)
 {
-   STORE *store;
+   USTORE ustore;
    CLIENT *client;
    JCR* njcr = NULL;
    s_last_job* job;
@@ -105,12 +105,11 @@ bool dot_status_cmd(UAContext *ua, const char *cmd)
          do_client_status(ua, client, ua->argk[2]);
       }
    } else if (strcasecmp(ua->argk[1], "storage") == 0) {
-      store = get_storage_resource(ua, false /*no default*/, true/*unique*/);
-      if (!store) {
+      if (!get_storage_resource(ua, &ustore, false /*no default*/, true/*unique*/)) {
          ua->send_msg("1900 Bad .status command, wrong argument.\n");
          return false;
       }
-      do_storage_status(ua, store, ua->argk[2]);
+      do_storage_status(ua, ustore.store, ua->argk[2]);
    } else {
       ua->send_msg("1900 Bad .status command, wrong argument.\n");
       return false;
@@ -123,7 +122,7 @@ bool dot_status_cmd(UAContext *ua, const char *cmd)
 static int do_network_status(UAContext *ua)
 {
    CLIENT *client = NULL;
-   USTORE  store;
+   USTORE ustore;
    JCR *jcr = ua->jcr;
    char *store_address, ed1[50];
    uint32_t store_port;
@@ -147,17 +146,16 @@ static int do_network_status(UAContext *ua)
       return 1;
    }
 
-   store.store = get_storage_resource(ua, false, true);
-   if (!store.store) {
+   if (!get_storage_resource(ua, &ustore, false, true)) {
       return 1;
    }
 
    jcr->client = client;
-   set_wstorage(jcr, &store);
+   jcr->store_mngr->set_wstorage(ustore.store, NULL);
 
    if (!ua->api) {
       ua->send_msg(_("Connecting to Storage %s at %s:%d\n"),
-                   store.store->name(), store.store->address, store.store->SDport);
+                   ustore.store->name(), ustore.store->address, ustore.store->SDport);
    }
 
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
@@ -165,7 +163,7 @@ static int do_network_status(UAContext *ua)
       goto bail_out;
    }
 
-   if (!start_storage_daemon_job(jcr, NULL, NULL)) {
+   if (!start_storage_daemon_job(jcr, NULL, NULL, true /* wait */ )) {
       goto bail_out;
    }
 
@@ -204,7 +202,7 @@ static int do_network_status(UAContext *ua)
          goto bail_out;
       }
 
-      store_address = store.store->address;  /* dummy */
+      store_address = ustore.store->address;  /* dummy */
       store_port = 0;                        /* flag that SD calls FD */
 
    } else {
@@ -213,21 +211,21 @@ static int do_network_status(UAContext *ua)
        *   then wait for File daemon to make connection
        *   with Storage daemon.
        */
-      if (store.store->SDDport == 0) {
-         store.store->SDDport = store.store->SDport;
+      if (ustore.store->SDDport == 0) {
+         ustore.store->SDDport = ustore.store->SDport;
       }
 
-      store_address = get_storage_address(jcr->client, store.store);
-      store_port = store.store->SDDport;
+      store_address = get_storage_address(jcr->client, ustore.store);
+      store_port = ustore.store->SDDport;
    }
 
-   if (!send_store_addr_to_fd(jcr, store.store, store_address, store_port)) {
+   if (!send_store_addr_to_fd(jcr, ustore.store, store_address, store_port)) {
       goto bail_out;
    }
 
    if (!ua->api) {
       ua->info_msg(_("Running network test between Client=%s and Storage=%s with %sB ...\n"),
-                   client->name(), store.store->name(), edit_uint64_with_suffix(nb, ed1));
+                   client->name(), ustore.store->name(), edit_uint64_with_suffix(nb, ed1));
    }
 
    if (!jcr->file_bsock->fsend("testnetwork bytes=%llu rtt=%llu\n", nb, nbrtt)) {
@@ -249,7 +247,7 @@ bail_out:
    free_bsock(jcr->store_bsock);
 
    jcr->client = NULL;
-   free_wstorage(jcr);
+   jcr->store_mngr->reset_wstorage();    /* we don't read so release */
    return 1;
 }
 
@@ -267,7 +265,7 @@ int qstatus_cmd(UAContext *ua, const char *cmd)
  */
 int status_cmd(UAContext *ua, const char *cmd)
 {
-   STORE *store;
+   USTORE ustore;
    CLIENT *client;
    int item, i;
 
@@ -295,12 +293,11 @@ int status_cmd(UAContext *ua, const char *cmd)
          }
          return 1;
       } else {
-         store = get_storage_resource(ua, false/*no default*/, true/*unique*/);
-         if (store) {
+         if (get_storage_resource(ua, &ustore, false/*no default*/, true/*unique*/)) {
             if (find_arg(ua, NT_("slots")) > 0) {
-               status_slots(ua, store);
+               status_slots(ua, ustore.store);
             } else {
-               do_storage_status(ua, store, NULL);
+               do_storage_status(ua, ustore.store, NULL);
             }
          }
          return 1;
@@ -327,9 +324,9 @@ int status_cmd(UAContext *ua, const char *cmd)
          do_director_status(ua);
          break;
       case 1:
-         store = select_storage_resource(ua, true/*unique*/);
-         if (store) {
-            do_storage_status(ua, store, NULL);
+         ustore.store = select_storage_resource(ua, true/*unique*/);
+         if (ustore.store) {
+            do_storage_status(ua, ustore.store, NULL);
          }
          break;
       case 2:
@@ -546,7 +543,6 @@ static void do_director_status(UAContext *ua)
 static void do_storage_status(UAContext *ua, STORE *store, char *cmd)
 {
    BSOCK *sd;
-   USTORE lstore;
    int i;
 
    if (!acl_access_ok(ua, Storage_ACL, store->name())) {
@@ -563,9 +559,7 @@ static void do_storage_status(UAContext *ua, STORE *store, char *cmd)
       ua->error_msg(_("Restricted Client or Job does not permit access to  Storage daemons\n"));
       return;
    }
-   lstore.store = store;
-   pm_strcpy(lstore.store_source, _("unknown source"));
-   set_wstorage(ua->jcr, &lstore);
+   ua->jcr->store_mngr->set_wstorage(store, _("unknown source"));
    /* Try connecting for up to 15 seconds */
    if (!ua->api) ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
@@ -725,8 +719,8 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, OutputWriter *ow)
       }
       if (ok) {
          mr.PoolId = jcr->jr.PoolId;
-         jcr->wstore = sp->store;
-         set_storageid_in_mr(jcr->wstore, &mr);
+         jcr->store_mngr->set_wstorage(sp->store, "PRT runtime");
+         set_storageid_in_mr(jcr->store_mngr->get_wstore(), &mr);
          Dmsg0(250, "call find_next_volume_for_append\n");
          /* no need to set ScratchPoolId, since we use fnv_no_create_vol */
          ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, errmsg);
@@ -754,7 +748,7 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, OutputWriter *ow)
 
    } else if (ua->api > 1) {
       POOL  *p = jcr->pool;
-      STORE *s = jcr->wstore;
+      STORE *s = jcr->store_mngr->get_wstore();
       ua->send_msg("%s",
                    ow->get_output(OT_CLEAR,
                       OT_START_OBJ,
@@ -1256,6 +1250,8 @@ static void list_running_jobs(UAContext *ua)
          }
       }
       status = jcr->JobStatus;
+      STORE *rstore = jcr->store_mngr->get_rstore();
+      STORE *wstore = jcr->store_mngr->get_wstore();
       switch (status) {
       case JS_Created:
          msg = _("is waiting execution");
@@ -1302,10 +1298,10 @@ static void list_running_jobs(UAContext *ua)
          break;
       case JS_WaitSD:
          emsg = (char *) get_pool_memory(PM_FNAME);
-         if (jcr->wstore) {
-            Mmsg(emsg, _("is waiting on Storage \"%s\""), jcr->wstore->name());
-         } else if (jcr->rstore) {
-            Mmsg(emsg, _("is waiting on Storage \"%s\""), jcr->rstore->name());
+         if (wstore) {
+            Mmsg(emsg, _("is waiting on Storage \"%s\""), wstore->name());
+         } else if (rstore) {
+            Mmsg(emsg, _("is waiting on Storage \"%s\""), rstore->name());
          } else {
             Mmsg(emsg, _("is waiting on Storage"));
          }
@@ -1384,11 +1380,11 @@ static void list_running_jobs(UAContext *ua)
                emsg = (char *)get_pool_memory(PM_FNAME);
                pool_mem = true;
             }
-            if (!jcr->client || !jcr->wstore) {
+            if (!jcr->client || !wstore) {
                Mmsg(emsg, _("is waiting for Client to connect to Storage daemon"));
             } else {
                Mmsg(emsg, _("is waiting for Client %s to connect to Storage %s"),
-                    jcr->client->name(), jcr->wstore->name());
+                    jcr->client->name(), wstore->name());
             }
             msg = emsg;
          }
@@ -1437,8 +1433,8 @@ static void list_running_jobs(UAContext *ua)
       } else if (ua->api > 1) {
          CLIENT   *c = jcr->client;
          FILESET  *f = jcr->fileset;
-         STORE    *w = jcr->wstore;
-         STORE    *r = jcr->rstore;
+         STORE    *w = wstore;
+         STORE    *r = rstore;
          JOB      *j = jcr->job;
          ua->send_msg("%s", ow.get_output(OT_CLEAR,
                          OT_START_OBJ,

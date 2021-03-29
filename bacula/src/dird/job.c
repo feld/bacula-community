@@ -34,6 +34,7 @@ static void job_monitor_destructor(watchdog_t *self);
 static bool job_check_maxwaittime(JCR *jcr);
 static bool job_check_maxruntime(JCR *jcr);
 static bool job_check_maxrunschedtime(JCR *jcr);
+static void set_jcr_default_store(JCR *jcr, JOB *job);
 
 /* Imported subroutines and variables */
 extern void term_scheduler();
@@ -93,6 +94,7 @@ JobId_t run_job(JCR *jcr)
 bool setup_job(JCR *jcr)
 {
    int errstat;
+   alist *rlist;
 
    jcr->lock();
    Dsm_check(100);
@@ -197,15 +199,12 @@ bool setup_job(JCR *jcr)
       goto bail_out;
    }
 
-   if (jcr->JobReads() && !jcr->rstorage) {
-      if (jcr->job->storage) {
-         copy_rwstorage(jcr, jcr->job->storage, _("Job resource"));
-      } else {
-         copy_rwstorage(jcr, jcr->job->pool->storage, _("Pool resource"));
-      }
+   rlist = jcr->store_mngr->get_rstore_list();
+   if (jcr->JobReads() && rlist->empty()) {
+      set_jcr_default_store(jcr, jcr->job);
    }
    if (!jcr->JobReads()) {
-      free_rstorage(jcr);
+      jcr->store_mngr->reset_rstorage();
    }
 
    /*
@@ -574,23 +573,24 @@ static bool cancel_file_daemon_job(UAContext *ua, const char *cmd, JCR *jcr)
 static bool cancel_sd_job(UAContext *ua, const char *cmd, JCR *jcr)
 {
    if (jcr->store_bsock) {
-      if (jcr->rstorage) {
-         copy_wstorage(ua->jcr, jcr->rstorage, _("Job resource"));
+      if (jcr->store_mngr->get_rstore()) {
+         ua->jcr->store_mngr->set_wstorage(jcr->store_mngr->get_rstore_list(), _("Job resource"));
       } else {
-         copy_wstorage(ua->jcr, jcr->wstorage, _("Job resource"));
+         ua->jcr->store_mngr->set_wstorage(jcr->store_mngr->get_wstore_list(), _("Job resource"));
       }
    } else {
-      USTORE store;
-      if (jcr->rstorage) {
-         store.store = jcr->rstore;
+      STORE *store;
+      if (jcr->store_mngr->get_rstore()) {
+         store = jcr->store_mngr->get_rstore();
       } else {
-         store.store = jcr->wstore;
+         store = jcr->store_mngr->get_wstore();
       }
-      set_wstorage(ua->jcr, &store);
+      ua->jcr->store_mngr->set_wstorage(store, "Job resource");
    }
 
-   if (!ua->jcr->wstore) {
-      ua->error_msg(_("Failed to select Storage daemon.\n"));
+   STORE *wstore = ua->jcr->store_mngr->get_wstore();
+   if (!wstore) {
+      ua->error_msg(_("Failed to select Storage daemon for jobid: %d.\n"), jcr->JobId);
       return false;
    }
 
@@ -600,7 +600,7 @@ static bool cancel_sd_job(UAContext *ua, const char *cmd, JCR *jcr)
    }
 
    Dmsg3(10, "Connected to storage daemon %s for cancel ua.jcr=%p jcr=%p\n",
-         ua->jcr->wstore->name(), ua->jcr, jcr);
+         wstore->name(), ua->jcr, jcr);
 
    BSOCK *sd = ua->jcr->store_bsock;
    sd->fsend("%s Job=%s\n", cmd, jcr->Job);
@@ -678,12 +678,11 @@ int cancel_inactive_job(UAContext *ua)
    /* At this time, we can't really guess the storage name from
     * the job record
     */
-   store.store = get_storage_resource(ua, false/*no default*/, true/*unique*/);
-   if (!store.store) {
+   if (get_storage_resource(ua, &store, false/*no default*/, true/*unique*/)) {
       goto bail_out;
    }
 
-   set_wstorage(jcr, &store);
+   jcr->store_mngr->set_wstorage(store.store, store.store_source);
    cancel_sd_job(ua, "cancel", jcr);
 
 bail_out:
@@ -828,20 +827,22 @@ void cancel_storage_daemon_job(JCR *jcr)
 
    ua->jcr = control_jcr;
    if (jcr->store_bsock) {
-      if (!ua->jcr->wstorage) {
-         if (jcr->rstorage) {
-            copy_wstorage(ua->jcr, jcr->rstorage, _("Job resource"));
+      alist *wlist = ua->jcr->store_mngr->get_wstore_list();
+      if (wlist->empty()) {
+         alist *rlist = jcr->store_mngr->get_rstore_list();
+         if (!rlist->empty()) {
+            ua->jcr->store_mngr->set_wstorage(jcr->store_mngr->get_rstore_list(), _("Job resource"));
          } else {
-            copy_wstorage(ua->jcr, jcr->wstorage, _("Job resource"));
+            ua->jcr->store_mngr->set_wstorage(jcr->store_mngr->get_wstore_list(), _("Job resource"));
          }
       } else {
-         USTORE store;
-         if (jcr->rstorage) {
-            store.store = jcr->rstore;
+         STORE *store;
+         if (jcr->store_mngr->get_rstore()) {
+            store = jcr->store_mngr->get_rstore();
          } else {
-            store.store = jcr->wstore;
+            store = jcr->store_mngr->get_wstore();
          }
-         set_wstorage(ua->jcr, &store);
+         ua->jcr->store_mngr->set_wstorage(store, "Job cancellation");
       }
 
       if (!connect_to_storage_daemon(ua->jcr, 10, SDConnectTimeout, 1)) {
@@ -1539,15 +1540,12 @@ void dird_free_jcr(JCR *jcr)
    free_and_null_pool_memory(jcr->next_pool_source);
    free_and_null_pool_memory(jcr->catalog_source);
    free_and_null_pool_memory(jcr->rpool_source);
-   free_and_null_pool_memory(jcr->wstore_source);
-   free_and_null_pool_memory(jcr->rstore_source);
    free_and_null_pool_memory(jcr->next_vol_list);
    free_and_null_pool_memory(jcr->component_fname);
 
-   /* Delete lists setup to hold storage pointers */
-   free_rwstorage(jcr);
-
    jcr->job_end_push.destroy();
+
+   delete jcr->store_mngr;
 
    if (jcr->JobId != 0)
       write_state_file(director->working_directory, "bacula-dir", get_first_port_host_order(director->DIRaddrs));
@@ -1565,9 +1563,7 @@ void dird_free_jcr(JCR *jcr)
 }
 
 /*
- * The Job storage definition must be either in the Job record
- *  or in the Pool record.  The Pool record overrides the Job
- *  record.
+ * Override storage from run parameters if set.
  */
 void get_job_storage(USTORE *store, JOB *job, RUN *run)
 {
@@ -1581,12 +1577,13 @@ void get_job_storage(USTORE *store, JOB *job, RUN *run)
       pm_strcpy(store->store_source, _("Run storage override"));
       return;
    }
-   if (job->pool->storage) {
-      store->store = (STORE *)job->pool->storage->first();
-      pm_strcpy(store->store_source, _("Pool resource"));
+}
+
+static void set_jcr_default_store(JCR *jcr, JOB *job) {
+   if (job->storage) {
+      copy_rwstorage(jcr, job->storage, _("Job resource"));
    } else {
-      store->store = (STORE *)job->storage->first();
-      pm_strcpy(store->store_source, _("Job resource"));
+      copy_rwstorage(jcr, job->pool->storage, _("Pool resource"));
    }
 }
 
@@ -1628,12 +1625,17 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    }
 
    jcr->JobPriority = job->Priority;
-   /* Copy storage definitions -- deleted in dir_free_jcr above */
-   if (job->storage) {
-      copy_rwstorage(jcr, job->storage, _("Job resource"));
+
+   if (job->storage_policy) {
+      if (strcmp(job->storage_policy, "LeastUsed") == 0) {
+         jcr->store_mngr = New(LeastUsedStore());
+      }
    } else {
-      copy_rwstorage(jcr, job->pool->storage, _("Pool resource"));
+      jcr->store_mngr = New(SimpleStoreMngr());
    }
+
+   set_jcr_default_store(jcr, job);
+
    /* check if we run a restore */
    if (jcr->getJobType() == JT_RESTORE && job->RestoreClient){
       jcr->client = GetClientResWithName(jcr->job->RestoreClient);
@@ -1709,9 +1711,9 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
 void copy_rwstorage(JCR *jcr, alist *storage, const char *where)
 {
    if (jcr->JobReads()) {
-      copy_rstorage(jcr, storage, where);
+      jcr->store_mngr->set_rstore(storage, where);
    }
-   copy_wstorage(jcr, storage, where);
+   jcr->store_mngr->set_wstorage(storage, where);
 }
 
 
@@ -1723,142 +1725,9 @@ void set_rwstorage(JCR *jcr, USTORE *store)
       return;
    }
    if (jcr->JobReads()) {
-      set_rstorage(jcr, store);
+      jcr->store_mngr->set_rstore(store->store, store->store_source);
    }
-   set_wstorage(jcr, store);
-}
-
-void free_rwstorage(JCR *jcr)
-{
-   free_rstorage(jcr);
-   free_wstorage(jcr);
-}
-
-/*
- * Copy the storage definitions from an alist to the JCR
- */
-void copy_rstorage(JCR *jcr, alist *storage, const char *where)
-{
-   if (storage) {
-      STORE *st;
-      if (jcr->rstorage) {
-         delete jcr->rstorage;
-      }
-      jcr->rstorage = New(alist(10, not_owned_by_alist));
-      foreach_alist(st, storage) {
-         jcr->rstorage->append(st);
-      }
-      if (!jcr->rstore_source) {
-         jcr->rstore_source = get_pool_memory(PM_MESSAGE);
-      }
-      pm_strcpy(jcr->rstore_source, where);
-      if (jcr->rstorage) {
-         jcr->rstore = (STORE *)jcr->rstorage->first();
-      }
-   }
-}
-
-
-/* Set storage override.  Remove all previous storage */
-void set_rstorage(JCR *jcr, USTORE *store)
-{
-   STORE *storage;
-
-   if (!store->store) {
-      return;
-   }
-   if (jcr->rstorage) {
-      free_rstorage(jcr);
-   }
-   if (!jcr->rstorage) {
-      jcr->rstorage = New(alist(10, not_owned_by_alist));
-   }
-   jcr->rstore = store->store;
-   if (!jcr->rstore_source) {
-      jcr->rstore_source = get_pool_memory(PM_MESSAGE);
-   }
-   pm_strcpy(jcr->rstore_source, store->store_source);
-   foreach_alist(storage, jcr->rstorage) {
-      if (store->store == storage) {
-         return;
-      }
-   }
-   /* Store not in list, so add it */
-   jcr->rstorage->prepend(store->store);
-}
-
-void free_rstorage(JCR *jcr)
-{
-   if (jcr->rstorage) {
-      delete jcr->rstorage;
-      jcr->rstorage = NULL;
-   }
-   jcr->rstore = NULL;
-}
-
-/*
- * Copy the storage definitions from an alist to the JCR
- */
-void copy_wstorage(JCR *jcr, alist *storage, const char *where)
-{
-   if (storage) {
-      STORE *st;
-      if (jcr->wstorage) {
-         delete jcr->wstorage;
-      }
-      jcr->wstorage = New(alist(10, not_owned_by_alist));
-      foreach_alist(st, storage) {
-         Dmsg1(100, "wstorage=%s\n", st->name());
-         jcr->wstorage->append(st);
-      }
-      if (!jcr->wstore_source) {
-         jcr->wstore_source = get_pool_memory(PM_MESSAGE);
-      }
-      pm_strcpy(jcr->wstore_source, where);
-      if (jcr->wstorage) {
-         jcr->wstore = (STORE *)jcr->wstorage->first();
-         Dmsg2(100, "wstore=%s where=%s\n", jcr->wstore->name(), jcr->wstore_source);
-      }
-   }
-}
-
-
-/* Set storage override. Remove all previous storage */
-void set_wstorage(JCR *jcr, USTORE *store)
-{
-   STORE *storage;
-
-   if (!store->store) {
-      return;
-   }
-   if (jcr->wstorage) {
-      free_wstorage(jcr);
-   }
-   if (!jcr->wstorage) {
-      jcr->wstorage = New(alist(10, not_owned_by_alist));
-   }
-   jcr->wstore = store->store;
-   if (!jcr->wstore_source) {
-      jcr->wstore_source = get_pool_memory(PM_MESSAGE);
-   }
-   pm_strcpy(jcr->wstore_source, store->store_source);
-   Dmsg2(50, "wstore=%s where=%s\n", jcr->wstore->name(), jcr->wstore_source);
-   foreach_alist(storage, jcr->wstorage) {
-      if (store->store == storage) {
-         return;
-      }
-   }
-   /* Store not in list, so add it */
-   jcr->wstorage->prepend(store->store);
-}
-
-void free_wstorage(JCR *jcr)
-{
-   if (jcr->wstorage) {
-      delete jcr->wstorage;
-      jcr->wstorage = NULL;
-   }
-   jcr->wstore = NULL;
+   jcr->store_mngr->set_wstorage(store->store, store->store_source);
 }
 
 void create_clones(JCR *jcr)

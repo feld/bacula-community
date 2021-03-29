@@ -395,8 +395,10 @@ public:
    POOLMEM *store_source;
 
    /* Methods */
-   USTORE() { store = NULL; store_source = get_pool_memory(PM_MESSAGE);
-              *store_source = 0; };
+   USTORE() { store = NULL;
+              store_source = get_pool_memory(PM_MESSAGE);
+              pm_strcpy(store_source, _("Unknown source"));
+   }
    ~USTORE() { destroy(); }
    void set_source(const char *where);
    void destroy();
@@ -480,6 +482,7 @@ public:
    CLIENT    *client;                 /* Who to backup */
    FILESET   *fileset;                /* What to backup -- Fileset */
    alist     *storage;                /* Where is device -- list of Storage to be used */
+   char      *storage_policy;         /* Storage policy (e.g. round robin, least used...) */
    POOL      *pool;                   /* Where is media -- Media Pool */
    POOL      *next_pool;              /* Next Pool for Copy/Migrate/VirtualFull */
    POOL      *full_pool;              /* Pool for Full backups */
@@ -779,6 +782,9 @@ public:
 #define GetJobResWithName(x) ((JOB *)GetResWithName(R_JOB, (x)))
 #define GetFileSetResWithName(x) ((FILESET *)GetResWithName(R_FILESET, (x)))
 #define GetCatalogResWithName(x) ((CAT *)GetResWithName(R_CATALOG, (x)))
+
+/* Director daemon's specific */
+void store_storage_mngr(LEX *lc, RES_ITEM *item, int index, int pass);
 
 /* Imported subroutines */
 void store_jobtype(LEX *lc, RES_ITEM *item, int index, int pass);

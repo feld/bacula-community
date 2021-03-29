@@ -1969,6 +1969,7 @@ static void free_name_list(NAME_LIST *name_list)
 void find_storage_resource(UAContext *ua, RESTORE_CTX &rx, char *Storage, char *MediaType)
 {
    STORE *store;
+   USTORE ustore;
 
    if (rx.store) {
       Dmsg1(200, "Already have store=%s\n", rx.store->name());
@@ -2040,9 +2041,10 @@ void find_storage_resource(UAContext *ua, RESTORE_CTX &rx, char *Storage, char *
    }
 
    /* Take command line arg, or ask user if none */
-   rx.store = get_storage_resource(ua, false /* don't use default */);
-   if (rx.store) {
-      Dmsg1(200, "Set store=%s\n", rx.store->name());
+
+   if (get_storage_resource(ua, &ustore, false /* don't use default */)) {
+      Dmsg2(200, "Set store=%s store source=%s\n", ustore.store->name(), ustore.store_source);
    }
 
+   rx.store = ustore.store;
 }

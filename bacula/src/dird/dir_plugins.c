@@ -310,6 +310,9 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
    if (!value) {
       return bRC_Error;
    }
+
+   STORE *rstore = jcr->store_mngr->get_rstore();
+   STORE *wstore = jcr->store_mngr->get_wstore();
    switch (var) {
    case bDirVarJobId:
       *((int *)value) = jcr->JobId;
@@ -348,10 +351,10 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
       Dmsg1(dbglvl, "Bacula: return bDirVarPool=%s\n", jcr->pool->hdr.name);
       break;
    case bDirVarStorage:
-      if (jcr->wstore) {
-         *((char **)value) = jcr->wstore->hdr.name;
-      } else if (jcr->rstore) {
-         *((char **)value) = jcr->rstore->hdr.name;
+      if (wstore) {
+         *((char **)value) = wstore->hdr.name;
+      } else if (rstore) {
+         *((char **)value) = rstore->hdr.name;
       } else {
          *((char **)value) = NULL;
          ret=bRC_Error;
@@ -359,8 +362,8 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
       Dmsg1(dbglvl, "Bacula: return bDirVarStorage=%s\n", NPRT(*((char **)value)));
       break;
    case bDirVarWriteStorage:
-      if (jcr->wstore) {
-         *((char **)value) = jcr->wstore->hdr.name;
+      if (wstore) {
+         *((char **)value) = wstore->hdr.name;
       } else {
          *((char **)value) = NULL;
          ret=bRC_Error;
@@ -368,8 +371,8 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
       Dmsg1(dbglvl, "Bacula: return bDirVarWriteStorage=%s\n", NPRT(*((char **)value)));
       break;
    case bDirVarReadStorage:
-      if (jcr->rstore) {
-         *((char **)value) = jcr->rstore->hdr.name;
+      if (rstore) {
+         *((char **)value) = rstore->hdr.name;
       } else {
          *((char **)value) = NULL;
          ret=bRC_Error;
@@ -381,10 +384,10 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
       Dmsg1(dbglvl, "Bacula: return bDirVarCatalog=%s\n", jcr->catalog->hdr.name);
       break;
    case bDirVarMediaType:
-      if (jcr->wstore) {
-         *((char **)value) = jcr->wstore->media_type;
-      } else if (jcr->rstore) {
-         *((char **)value) = jcr->rstore->media_type;
+      if (wstore) {
+         *((char **)value) = wstore->media_type;
+      } else if (rstore) {
+         *((char **)value) = rstore->media_type;
       } else {
          *((char **)value) = NULL;
          ret=bRC_Error;

@@ -65,7 +65,7 @@ bool do_vbackup_init(JCR *jcr)
    pm_strcpy(jcr->rpool_source, jcr->pool_source);
 
    /* If pool storage specified, use it for virtual full */
-   copy_rstorage(jcr, jcr->pool->storage, _("Pool resource"));
+   jcr->store_mngr->set_rstore(jcr->pool->storage, _("Pool resource"));
 
    Dmsg2(dbglevel, "Read pool=%s (From %s)\n", jcr->rpool->name(), jcr->rpool_source);
 
@@ -102,10 +102,10 @@ bool do_vbackup(JCR *jcr)
    db_list_ctx jobids;
    UAContext *ua;
 
-   Dmsg2(100, "rstorage=%p wstorage=%p\n", jcr->rstorage, jcr->wstorage);
+   Dmsg2(100, "rstorage=%p wstorage=%p\n", jcr->store_mngr->get_rstore_list(), jcr->store_mngr->get_wstore_list());
    Dmsg2(100, "Read store=%s, write store=%s\n",
-      ((STORE *)jcr->rstorage->first())->name(),
-      ((STORE *)jcr->wstorage->first())->name());
+      ((STORE *)jcr->store_mngr->get_rstore_list()->first())->name(),
+      ((STORE *)jcr->store_mngr->get_wstore_list()->first())->name());
 
    jcr->wasVirtualFull = true;        /* remember where we came from */
 
@@ -308,7 +308,7 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
    /*
     * Now start a job with the Storage daemon
     */
-   if (!start_storage_daemon_job(jcr, jcr->rstorage, jcr->wstorage, /*send_bsr*/true)) {
+   if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), jcr->store_mngr->get_wstore_list(), /*send_bsr*/true)) {
       return false;
    }
    Dmsg0(100, "Storage daemon connection OK\n");
@@ -396,6 +396,7 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
    double kbps, compression;
    utime_t RunTime;
    POOL_MEM query(PM_MESSAGE);
+   STORE *wstore = jcr->store_mngr->get_wstore();
 
    Dmsg2(100, "Enter vbackup_cleanup %d %c\n", TermCode, TermCode);
    memset(&cr, 0, sizeof(cr));
@@ -527,7 +528,7 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
         jcr->fileset->name(), jcr->FSCreateTime,
         jcr->pool->name(), jcr->pool_source,
         jcr->catalog->name(), jcr->catalog_source,
-        jcr->wstore->name(), jcr->wstore_source,
+        wstore->name(), jcr->store_mngr->get_wsource(),
         schedt,
         sdt,
         edt,

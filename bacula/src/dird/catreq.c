@@ -139,6 +139,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
    int can_create=0;
    int Enabled, Recycle;
    JobId_t JobId = 0;
+   STORE *wstore = jcr->store_mngr->get_wstore();
 
    bmemset(&sdmr, 0, sizeof(sdmr));
    bmemset(&jm, 0, sizeof(jm));
@@ -169,7 +170,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       ok = db_get_pool_record(jcr, jcr->db, &pr);
       if (ok) {
          mr.PoolId = pr.PoolId;
-         set_storageid_in_mr(jcr->wstore, &mr);
+         set_storageid_in_mr(wstore, &mr);
          mr.ScratchPoolId = pr.ScratchPoolId;
          ok = find_next_volume_for_append(jcr, &mr, index,
                                           can_create?fnv_create_vol : fnv_no_create_vol,
@@ -219,7 +220,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
              */
             if (mr.PoolId != jcr->jr.PoolId) {
                reason = _("not in Pool");
-            } else if (strcmp(mr.MediaType, jcr->wstore->media_type) != 0) {
+            } else if (strcmp(mr.MediaType, jcr->store_mngr->get_wmedia_type()) != 0) {
                reason = _("not correct MediaType");
             } else {
                /*
@@ -322,11 +323,11 @@ void catalog_request(JCR *jcr, BSOCK *bs)
        *   However, do so only if we are writing the tape, i.e.
        *   the number of VolWrites has increased.
        */
-      if (jcr->wstore && sdmr.VolWrites > mr.VolWrites) {
+      if (wstore && sdmr.VolWrites > mr.VolWrites) {
          Dmsg2(050, "Update StorageId old=%d new=%d\n",
-               mr.StorageId, jcr->wstore->StorageId);
+               mr.StorageId, wstore->StorageId);
          /* Update StorageId after write */
-         set_storageid_in_mr(jcr->wstore, &mr);
+         set_storageid_in_mr(wstore, &mr);
       } else {
          /* Nothing written, reset same StorageId */
          set_storageid_in_mr(NULL, &mr);

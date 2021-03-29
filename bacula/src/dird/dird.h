@@ -26,6 +26,7 @@
 #include "lib/runscript.h"
 #include "lib/breg.h"
 #include "dird_conf.h"
+#include "store_mngr.h"
 
 #define DIRECTOR_DAEMON 1
 

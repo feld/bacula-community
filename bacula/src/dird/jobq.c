@@ -47,7 +47,6 @@ extern "C" void *sched_wait(void *arg);
 static int  start_server(jobq_t *jq);
 static bool acquire_resources(JCR *jcr);
 static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je);
-static void dec_write_store(JCR *jcr);
 
 /*
  * Initialize a job queue
@@ -482,8 +481,8 @@ void *jobq_server(void *arg)
           *  put into the ready queue.
           */
          if (jcr->acquired_resource_locks) {
-            dec_read_store(jcr);
-            dec_write_store(jcr);
+            jcr->store_mngr->dec_read_stores();
+            jcr->store_mngr->dec_write_stores();
             update_client_numconcurrentjobs(jcr, -1);
             jcr->job->incNumConcurrentJobs(-1);
             jcr->acquired_resource_locks = false;
@@ -629,6 +628,7 @@ void *jobq_server(void *arg)
 static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je)
 {
    bool resched = false;
+   alist *store;
    /*
     * Reschedule the job if requested and possible
     */
@@ -743,15 +743,17 @@ static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je)
       njcr->diff_pool = jcr->diff_pool;
       njcr->JobStatus = -1;
       njcr->setJobStatus(jcr->JobStatus);
-      if (jcr->rstore) {
-         copy_rstorage(njcr, jcr->rstorage, _("previous Job"));
+      if (jcr->store_mngr->get_rstore()) {
+         store = jcr->store_mngr->get_rstore_list();
+         njcr->store_mngr->set_rstore(store, _("previous Job"));
       } else {
-         free_rstorage(njcr);
+         njcr->store_mngr->reset_rstorage();
       }
-      if (jcr->wstore) {
-         copy_wstorage(njcr, jcr->wstorage, _("previous Job"));
+      if (jcr->store_mngr->get_wstore()) {
+         store = jcr->store_mngr->get_wstore_list();
+         njcr->store_mngr->set_wstorage(store, _("previous Job"));
       } else {
-         free_wstorage(njcr);
+         njcr->store_mngr->reset_wstorage();
       }
       njcr->messages = jcr->messages;
       njcr->spool_data = jcr->spool_data;
@@ -793,29 +795,23 @@ static bool acquire_resources(JCR *jcr)
       return false;
    }
 #endif
-   if (jcr->rstore) {
-      Dmsg1(200, "Rstore=%s\n", jcr->rstore->name());
-      if (!inc_read_store(jcr)) {
-         Dmsg1(200, "Fail rncj=%d\n", jcr->rstore->getNumConcurrentJobs());
+   STORE *rstore = jcr->store_mngr->get_rstore();
+   if (rstore) {
+      Dmsg1(200, "Rstore=%s\n", rstore->name());
+      if (!jcr->store_mngr->inc_read_stores(jcr)) {
+         Dmsg1(200, "Fail rncj=%d\n", rstore->getNumConcurrentJobs());
          jcr->setJobStatus(JS_WaitStoreRes);
          return false;
       }
    }
 
-   if (jcr->wstore) {
-      Dmsg1(200, "Wstore=%s\n", jcr->wstore->name());
-      int num = jcr->wstore->getNumConcurrentJobs();
-      if (num < jcr->wstore->MaxConcurrentJobs) {
-         num = jcr->wstore->incNumConcurrentJobs(1);
-         Dmsg1(200, "Inc wncj=%d\n", num);
-      } else if (jcr->rstore) {
-         dec_read_store(jcr);
-         skip_this_jcr = true;
-      } else {
-         Dmsg1(200, "Fail wncj=%d\n", num);
-         skip_this_jcr = true;
+   if (!jcr->store_mngr->inc_write_stores(jcr)) {
+      if (jcr->store_mngr->get_rstore()) {
+         jcr->store_mngr->dec_read_stores();
       }
+      skip_this_jcr = true;
    }
+
    if (skip_this_jcr) {
       jcr->setJobStatus(JS_WaitStoreRes);
       return false;
@@ -826,8 +822,8 @@ static bool acquire_resources(JCR *jcr)
          update_client_numconcurrentjobs(jcr, 1);
       } else {
          /* Back out previous locks */
-         dec_write_store(jcr);
-         dec_read_store(jcr);
+         jcr->store_mngr->dec_write_stores();
+         jcr->store_mngr->dec_read_stores();
          jcr->setJobStatus(JS_WaitClientRes);
          return false;
       }
@@ -836,8 +832,8 @@ static bool acquire_resources(JCR *jcr)
       jcr->job->incNumConcurrentJobs(1);
    } else {
       /* Back out previous locks */
-      dec_write_store(jcr);
-      dec_read_store(jcr);
+      jcr->store_mngr->dec_write_stores();
+      jcr->store_mngr->dec_read_stores();
       update_client_numconcurrentjobs(jcr, -1);
       jcr->setJobStatus(JS_WaitJobRes);
       return false;
@@ -845,51 +841,4 @@ static bool acquire_resources(JCR *jcr)
 
    jcr->acquired_resource_locks = true;
    return true;
-}
-
-static pthread_mutex_t rstore_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-/*
- * Note: inc_read_store() and dec_read_store() are
- *   called from select_rstore() in src/dird/restore.c
- */
-bool inc_read_store(JCR *jcr)
-{
-   P(rstore_mutex);
-   int num = jcr->rstore->getNumConcurrentJobs();
-   int numread = jcr->rstore->getNumConcurrentReadJobs();
-   int maxread = jcr->rstore->MaxConcurrentReadJobs;
-   if (num < jcr->rstore->MaxConcurrentJobs &&
-       (jcr->getJobType() == JT_RESTORE ||
-        numread == 0     ||
-        maxread == 0     ||     /* No limit set */
-        numread < maxread))     /* Below the limit */
-   {
-      numread = jcr->rstore->incNumConcurrentReadJobs(1);
-      num = jcr->rstore->incNumConcurrentJobs(1);
-      Dmsg1(200, "Inc rncj=%d\n", num);
-      V(rstore_mutex);
-      return true;
-   }
-   V(rstore_mutex);
-   return false;
-}
-
-void dec_read_store(JCR *jcr)
-{
-   if (jcr->rstore) {
-      P(rstore_mutex);
-      jcr->rstore->incNumConcurrentReadJobs(-1);
-      int num = jcr->rstore->incNumConcurrentJobs(-1);
-      Dmsg1(200, "Dec rncj=%d\n", num);
-      V(rstore_mutex);
-   }
-}
-
-static void dec_write_store(JCR *jcr)
-{
-   if (jcr->wstore) {
-      int num = jcr->wstore->incNumConcurrentJobs(-1);
-      Dmsg1(200, "Dec wncj=%d\n", num);
-   }
 }
