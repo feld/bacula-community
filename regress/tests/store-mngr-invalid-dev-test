@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Simple test to check if storage groups are handling invalid device correctly
+#
+
+TestName="store-mngr-invalid-dev"
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+# Add simple job with store group
+cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Job {
+  Name = "StoreGroupJob"
+  Type = Backup
+  JobDefs = "DefaultJob"
+  Storage = File1, File2
+  Pool = Default
+  Maximum Concurrent Jobs = 10
+}
+END_OF_DATA
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "MaximumConcurrentJobs", "10", "Client")'
+
+# Make File1 contains invalid device
+sed -i "s/Device = FileChgr1/Device = DummyDev/g" $conf/bacula-dir.conf
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out  ${cwd}/tmp/log1.out
+label volume=TestVolume002 storage=File2 pool=Default slot=1 drive=0
+run job=StoreGroupJob level=Full yes
+run job=StoreGroupJob level=Full yes
+run job=StoreGroupJob level=Full yes
+@sleep 3
+list jobs
+wait
+@$out  ${cwd}/tmp/log2.out
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+# We should see that File2 is used each time, File1 should not be used at all since it has an invalid device
+n_file1=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File1\"" | wc -l`
+if [ $n_file1 -ne 0 ]; then
+   estat=1
+   print_debug "Wrong usage count for File1, expectd 3, got: ${n_file1}"
+fi
+
+n_file2=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File2\"" | wc -l`
+if [ $n_file2 -ne 3 ]; then
+   estat=1
+   print_debug "Wrong usage count for File2, expectd 1, got: ${n_file2}"
+fi
+
+end_test

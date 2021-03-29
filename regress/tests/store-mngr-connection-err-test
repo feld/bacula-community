@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Create storage group with unreachable device as a first one on the list.
+# Storage manager should skip it and use next one.
+#
+TestName="storage-mngr-connection-err"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+require_linux
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'SdConnectTimeout', '5', 'Director')"
+
+cat << EOF >> $conf/bacula-dir.conf
+Storage {
+  Name = File3
+# Do not use "localhost" here
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = 100
+  Password = "xxx/y9VVvh+609xUnhhJBI5aL"
+  Device = FileChgr3
+  Media Type = File3
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+EOF
+
+sed -i "s/Storage = File1/Storage = File3, File2, File1/g" $conf/bacula-dir.conf
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log2.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+n=`cat ${cwd}/tmp/log1.out | grep "Possible storage choices: \"File3, File2, File1\"" | wc -l`
+if [ $n -ne 1 ]; then
+   estat=1
+   print_debug "Did not found list of possible storages in job lob"
+fi
+
+# File3 should be skipped since it's not reachable, File2 should be used instead
+n_file2=`cat ${cwd}/tmp/log1.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File2\"" | wc -l`
+if [ $n_file2 -ne 1 ]; then
+   estat=1
+   print_debug "Wrong usage count for File2, expectd 1, got: ${n_file1}"
+fi
+
+n_file1=`cat ${cwd}/tmp/log1.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File1\"" | wc -l`
+if [ $n_file1 -ne 0 ]; then
+   estat=1
+   print_debug "Wrong usage count for File0, expectd 0, got: ${n_file1}"
+fi
+
+stop_bacula
+
+end_test
