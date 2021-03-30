@@ -406,13 +406,25 @@ void perform_backup()
       write_plugin('A', "Some error...\n");
       return;
    }
-#if 0
-   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/directory\n", PLUGINPREFIX, mypid);
+
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/data.dir/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    signal_eod();
-   write_plugin('I', "TEST15 - backup dir + xattrs");
+   write_plugin('I', "TEST15 - backup data dir");
+   write_plugin('C', "DATA\n");
+   write_plugin('D', "/* here comes a file data contents */");
+   write_plugin('D', "/* here comes another file line    */");
+   signal_eod();
+
+#if 0
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/directory.with.xattrs/\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   signal_eod();
+   write_plugin('I', "TEST16 - backup dir + xattrs");
    write_plugin('C', "DATA\n");
    write_plugin('D', "/* here comes a file data contents */");
    write_plugin('D', "/* here comes another file line    */");
@@ -421,6 +433,20 @@ void perform_backup()
    write_plugin('D', "bacula.custom.data=Inteos\nsystem.custom.data=Bacula\n");
    signal_eod();
 #endif
+
+#if 1
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/acl.dir/\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   signal_eod();
+   write_plugin('I', "TEST12 - backup dir");
+   signal_eod();
+   write_plugin('C', "ACL\n");
+   write_plugin('D', "user::rwx\ngroup::r-x\nother::r-x\n");
+   signal_eod();
+#endif
+
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
@@ -512,6 +538,25 @@ void perform_backup()
    write_plugin('C', buf);
    signal_eod();
    signal_eod();
+
+   // this plugin object should be the latest item to backup
+   if (regress_backup_plugin_objects)
+   {
+      // test Plugin Objects interface
+      write_plugin('I', "TEST PluginObject Last");
+      snprintf(buf, BIGBUFLEN, "PLUGINOBJ:%s/images/%d/last_po_item\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "PLUGINOBJ_CAT:POITEM\n");
+      write_plugin('C', "PLUGINOBJ_TYPE:POINTEM\n");
+      snprintf(buf, BIGBUFLEN, "PLUGINOBJ_NAME:%s%d/last_po_item - Name\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      snprintf(buf, BIGBUFLEN, "PLUGINOBJ_SRC:%s\n", PLUGINPREFIX);
+      write_plugin('C', buf);
+      write_plugin('C', "PLUGINOBJ_UUID:09bf8b2a-915d-11eb-8ebb-db6e14058a82\n");
+      write_plugin('C', "PLUGINOBJ_SIZE:1024kB\n");
+      signal_eod();
+      write_plugin('I', "TEST PluginObject Last - END");
+   }
 
    /* this is the end of all data */
    signal_eod();

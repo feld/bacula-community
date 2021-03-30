@@ -245,7 +245,7 @@ then
 fi
 
 RET=$(grep -c "objectid:" ${cwd}/tmp/log2.out)
-if [ "$RET" -ne 1 ]
+if [ "$RET" -le 1 ]
 then
    echo "log2" "$RET"
    bstat=$((bstat+4))

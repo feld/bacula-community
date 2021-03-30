@@ -139,6 +139,7 @@ private:
    bool nextfile;                // set when IO_CLOSE got FNAME: command
    bool openerror;               // show if "openfile" was unsuccessful
    bool pluginobject;            // set when IO_CLOSE got FNAME: command
+   bool pluginobjectsent;        // set when startBackupFile handled plugin object and endBackupFile has to check for nextfile
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
    bool accurate_warning;        // for sending accurate mode warning once */

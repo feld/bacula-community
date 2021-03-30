@@ -162,6 +162,7 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       nextfile(false),
       openerror(false),
       pluginobject(false),
+      pluginobjectsent(false),
       readacl(false),
       readxattr(false),
       accurate_warning(false),
@@ -1737,7 +1738,7 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
    // loop on plugin objects parameters from backend and EOD
    while (true){
       if (backend.ctx->read_command(ctx, cmd) > 0){
-         DMSG(ctx, DDEBUG, "read_command(1): %s\n", cmd.c_str());
+         DMSG(ctx, DDEBUG, "read_command(3): %s\n", cmd.c_str());
          if (scan_parameter_str(cmd, "PLUGINOBJ_CAT:", plugin_obj_cat)){
             DMSG1(ctx, DDEBUG, "category: %s\n", plugin_obj_cat.c_str());
             sp->plugin_obj.object_category = plugin_obj_cat.c_str();
@@ -1788,6 +1789,7 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
             /* no more plugin object params to backup */
             DMSG0(ctx, DINFO, "No more Plugin Object params from backend.\n");
             pluginobject = false;
+            pluginobjectsent = true;
             return bRC_OK;
          }
       }
@@ -2123,8 +2125,9 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
    // check for next file only when no previous error
    if (!openerror)
    {
-      if (estimate)
+      if (estimate || pluginobjectsent)
       {
+         pluginobjectsent = false;
          if (perform_read_metadata(ctx) != bRC_OK)
          {
             /* signal error */
