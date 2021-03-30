@@ -52,6 +52,7 @@ our @EXPORT = qw(update_some_files create_many_files check_multiple_copies
                   check_openfile check_cloud_hash check_bscan add_log_message compare_backup_content
                   check_tls_traces println add_virtual_changer check_events check_events_json
                   create_many_hardlinks check_dot_status parse_fuse_trace generate_random_seek
+                  check_storage_selection
 );
 
 
@@ -2504,6 +2505,50 @@ sub generate_random_seek
         }
         print "$pos:$sz\n";
     }
+}
+
+# We search for the @# "EXPECT: pattern" message and we compare the pattern
+# with the next "Storage:" line. If we have a missmatch, we display a message
+# and the status is in error.
+sub check_storage_selection
+{
+    my ($file) = @_;
+    my $error = 0;
+    my $selection="not set";
+    my $found = "";
+    my $nb=0;
+    my $nb_err=0;
+    my $err=0;
+    open(FP, $file) or die "ERROR: Unable to open $file $@";
+    while (my $line = <FP>) {
+        $nb++;
+        if ($line =~ /EXPECT: (.+?)"/) {
+            if ($error) {
+                print "ERROR: Expecting \"$selection\", got \"$found\". from $file:$nb_err\n";
+                $err++;
+            }
+            $error = 0;
+            $selection = $1;
+        }
+        # We might found multiple lines with Storage, we take the last one
+        if ($line =~ /Storage: .+?\((.+?)\)/) {
+            $found = $1;
+            if ($found ne $selection) {
+                $error = 1;
+                $nb_err = $nb;  # Keep the current line
+            } else {
+                $error = 0;
+            }
+        } else {
+            #print $line;
+        }
+    }
+    if ($error) {
+        print "ERROR: Expecting \"$selection\", got \"$found\" from $file:$nb_err\n";
+        $err++;
+    }
+    close(FP);
+    exit $err;
 }
 
 1;
