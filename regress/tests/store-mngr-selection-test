@@ -1,0 +1,196 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# This test is currently reporting errors, it is designed to test a behavior
+# that seems correct and that is not yet implemented. For example, the user
+# input should not be overwritten by Pool Storage. The FullBackupPool,
+# IncrementalBackupPool and DifferentialBackupPool can overwrite probably
+# only if the current level if updated during the job.
+#
+# TODO: Need to test with Schedule
+#
+# This script uses the virtual disk autochanger
+#
+TestName="store-mngr-selection-test"
+JobName=CopyJobSave
+. scripts/functions
+
+
+scripts/cleanup
+scripts/copy-migration-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
+sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
+change_jobname NightlySave $JobName
+
+start_test
+
+cat <<EOF >> $conf/bacula-dir.conf
+Pool {
+  Name = PoolFull
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365d             # one year
+  Storage = DiskChanger
+}
+Pool {
+  Name = PoolIncr
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365d             # one year
+  Storage = DiskChanger
+}
+Pool {
+  Name = PoolDiff
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365d             # one year
+  Storage = DiskChanger
+}
+Pool {
+  Name = NoStorage
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365d             # one year
+}
+EOF
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FullBackupPool", "PoolFull", "Job", "Save")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "IncrementalBackupPool", "PoolIncr", "Job", "Save")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "DifferentialBackupPool", "PoolDiff", "Job", "Save")'
+
+# Write out bconsole commands
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+@# setdebug level=100 storage=File
+label storage=File volume=FileVolume001 Pool=Scratch
+label storage=File volume=FileVolume002 Pool=Scratch
+label storage=File volume=FileVolume003 Pool=Scratch
+label storage=File volume=FileVolume004 Pool=Scratch
+label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Scratch drive=0
+label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Scratch drive=0
+label storage=DiskChanger volume=ChangerVolume003 slot=3 Pool=Scratch drive=0
+label storage=DiskChanger volume=ChangerVolume004 slot=4 Pool=Scratch drive=0
+@# run two jobs (both will be copied)
+@$out ${cwd}/tmp/log-menu.out
+@# "EXPECT: From Job resource"
+run job=$JobName
+no
+@# "EXPECT: From user selection"
+run job=$JobName
+mod
+2
+1
+no
+@# "EXPECT: From Command input"
+run job=$JobName storage=File
+no
+@#################################
+@$out ${cwd}/tmp/log-run.out
+@# "EXPECT: From Pool resource"
+run job=$JobName
+yes
+wait
+@# "EXPECT: From Pool resource"
+messages
+@# "EXPECT: From user selection"
+run job=$JobName
+mod
+2
+1
+yes
+wait
+@# "EXPECT: From user selection"
+messages
+@# "EXPECT: From Command input"
+run job=$JobName storage=File
+yes
+wait
+@# "EXPECT: From Command input"
+messages
+@# "EXPECT: From Job resource"
+run job=$JobName pool=NoStorage
+yes
+wait
+@# "EXPECT: From Job resource"
+messages
+@#################################
+@$out ${cwd}/tmp/log-override.out
+@# "EXPECT: From Job FullPool override"
+run job=Save level=Full
+no
+@# "EXPECT: From Job IncPool override"
+run job=Save level=Incremental
+no
+@# "EXPECT: From Job DiffPool override"
+run job=Save level=Differential
+no
+@# "EXPECT: From Command input"
+run job=Save level=Differential storage=File
+no
+@# "EXPECT: From user selection"
+run job=Save level=Differential
+mod
+2
+1
+no
+@#################################
+@# "EXPECT: From Job FullPool override"
+run job=Save level=Full
+yes
+wait
+@# "EXPECT: From Job FullPool override"
+messages
+@# "EXPECT: From Job IncPool override"
+run job=Save level=Incremental
+yes
+wait
+@# "EXPECT: From Job IncPool override"
+messages
+@# "EXPECT: From Job DiffPool override"
+run job=Save level=Differential
+yes
+wait
+@# "EXPECT: From Job DiffPool override"
+messages
+@# "EXPECT: From Command input"
+run job=Save level=Differential storage=File
+yes
+wait
+@# "EXPECT: From Command input"
+messages
+@#################################
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File
+stop_bacula
+
+$bperl -e "check_storage_selection('$tmp/log-menu.out')"
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e "check_storage_selection('$tmp/log-run.out')"
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e "check_storage_selection('$tmp/log-override.out')"
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+#check_two_logs
+#check_restore_diff
+
+end_test
