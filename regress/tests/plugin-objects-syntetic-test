@@ -30,18 +30,18 @@ fi
 
 cat <<EOF >${cwd}/tmp/bconcmds
 sqlquery
-INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
-       VALUES (1, '/dummy/path2', 'file1', 'plugin1', 'Category_first', 'Type_first', 'objName1', 'objSource1', 'objUUID1', 1);
-INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
-       VALUES (2, '/dummy/path2', 'file2', 'plugin2', 'Category_second', 'Type_second', 'objName2', 'objSource2', 'objUUID2', 2);
-INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
-       VALUES (2, '/dummy/path2', 'file2', 'plugin2', 'Category_second','Type_second', 'objName2', 'objSource2', 'objUUID2', 2);
-INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
-       VALUES (3, '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3);
-INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
-       VALUES (3, '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3);
-INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize)
-       VALUES (3, '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3);
+INSERT INTO Object (JobId, ObjectStatus, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectCount)
+       VALUES (1, 'T', '/dummy/path2', 'file1', 'plugin1', 'Category_first', 'Type_first', 'objName1', 'objSource1', 'objUUID1', 1, 123);
+INSERT INTO Object (JobId, ObjectStatus, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectCount)
+       VALUES (2, 'T', '/dummy/path2', 'file2', 'plugin2', 'Category_second', 'Type_second', 'objName2', 'objSource2', 'objUUID2', 2, 456);
+INSERT INTO Object (JobId, ObjectStatus, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectCount)
+       VALUES (2, 'T', '/dummy/path2', 'file2', 'plugin2', 'Category_second','Type_second', 'objName2', 'objSource2', 'objUUID2', 2, 456);
+INSERT INTO Object (JobId, ObjectStatus, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectCount)
+       VALUES (3, 'T', '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3, 789);
+INSERT INTO Object (JobId, ObjectStatus, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectCount)
+       VALUES (3, 'T', '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3, 789);
+INSERT INTO Object (JobId, ObjectStatus, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectCount)
+       VALUES (3, 'T', '/dummy/path3', 'file3', 'plugin3', 'Category_third', 'Type_third', 'objName3', 'objSource3', 'objUUID3', 3, 789);
 quit
 EOF
 
@@ -59,6 +59,24 @@ objects_lines=`cat ${cwd}/tmp/log2.out | grep 'Type_' | wc -l`
 if [ ${objects_lines} -ne 6 ]; then
    estat=2
    print_debug "ERROR: Wrong plugin objects count found in output: ${objects_lines}, expected 6"
+fi
+
+objects_lines=`cat ${cwd}/tmp/log2.out | grep '123' | wc -l`
+if [ ${objects_lines} -ne 1 ]; then
+   estat=2
+   print_debug "ERROR: Wrong number of plugin objects with '123' count found in output: ${objects_lines}, expected 1"
+fi
+
+objects_lines=`cat ${cwd}/tmp/log2.out | grep '456' | wc -l`
+if [ ${objects_lines} -ne 2 ]; then
+   estat=2
+   print_debug "ERROR: Wrong number of plugin objects with '456' count found in output: ${objects_lines}, expected 2"
+fi
+
+objects_lines=`cat ${cwd}/tmp/log2.out | grep '789' | wc -l`
+if [ ${objects_lines} -ne 3 ]; then
+   estat=2
+   print_debug "ERROR: Wrong number of plugin objects with '789' count found in output: ${objects_lines}, expected 3"
 fi
 
 # Type filter

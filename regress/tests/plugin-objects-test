@@ -68,6 +68,19 @@ if [ "$id_postgres_obj" = "" ]; then
     estat=1
 fi
 
+n_OK=`cat ${cwd}/tmp/log3.out | grep "status: T" | wc -l`
+if [ $n_OK -ne 2 ]; then
+   estat=1
+   print_debug "Wrong count of \'T\' status for objects, expected 2, got: ${n_OK}"
+fi
+
+n_UNSET=`cat ${cwd}/tmp/log3.out | grep "status: U" | wc -l`
+if [ $n_UNSET -ne 4 ]; then
+   estat=1
+   print_debug "Wrong count of \'U\' status for objects, expected 4, got: ${n_UNSET}"
+fi
+
+
 # Get id of each type in restore menu
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
