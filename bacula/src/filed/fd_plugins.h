@@ -103,6 +103,13 @@ struct restore_object {
 //TODO probably more specific db types needed
 #define PLUGIN_OBJECT_DATABASE "database" /* For all database plugins */
 
+/* Possible statuses of plugin objects. Based on Job status */
+#define PLUG_OBJ_STATUS_UNSET       'U' /* Status was not set at all by the plugin */
+#define PLUG_OBJ_STATUS_TERMINATED  'T' /* Plugin object is OK */
+#define PLUG_OBJ_STATUS_WARNING     'W' /* Plugin object OK, with some non-fatal warning */
+#define PLUG_OBJ_STATUS_ERROR       'e' /* Non-fatal error */
+#define PLUG_OBJ_STATUS_FATAL       'f' /* Fatal error occured */
+
 struct plugin_object {
    char *path;
    char *plugin_name;
@@ -112,6 +119,8 @@ struct plugin_object {
    char *object_source;
    char *object_uuid;
    uint64_t object_size;
+   int32_t status;
+   uint32_t count;
 };
 
 enum metadata_type {

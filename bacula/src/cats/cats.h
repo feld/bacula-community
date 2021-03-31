@@ -241,17 +241,19 @@ struct ATTR_DBR {
 
 class OBJECT_DBR {
 public:
-   OBJECT_DBR() { 
+   OBJECT_DBR() {
       Path = get_pool_memory(PM_FNAME);
       Filename = get_pool_memory(PM_FNAME);
       PluginName = get_pool_memory(PM_FNAME);
       reset();
    };
-   ~OBJECT_DBR() { 
+
+   ~OBJECT_DBR() {
       free_pool_memory(Path);
       free_pool_memory(Filename);
       free_pool_memory(PluginName);
    };
+
    /* reset memory */
    void reset() {
       JobId = 0;
@@ -261,9 +263,12 @@ public:
       *ObjectCategory = *ObjectType = *ObjectName = *ObjectSource = *ObjectUUID = *ClientName = 0;
       limit = 0;
       order = 0;
+      ObjectStatus = 'U';
+      ObjectCount = 0;
    };
+
    /* Parse OBJECT record from stream */
-   void parse_plugin_object_string(char **obj_str);
+   bool parse_plugin_object_string(char **obj_str);
    /* Helper for creating the 'where' part of jcr's related sql query based on fields from the Object */
    void create_db_filter(JCR *jcr, POOLMEM **where);
 
@@ -278,6 +283,8 @@ public:
    char ObjectSource[MAX_NAME_LENGTH];
    char ObjectUUID[MAX_NAME_LENGTH];
    uint64_t ObjectSize;
+   int32_t ObjectStatus;
+   uint32_t ObjectCount;
 
    /* Fields not stored in db directly */
    char ClientName[MAX_NAME_LENGTH];

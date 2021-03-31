@@ -326,7 +326,7 @@ bail_out:
  *  list nextvol job=xx  - list the next vol to be used by job
  *  list nextvolume job=xx - same as above.
  *  list copies jobid=x,y,z
- *  list objects [type=objecttype job_id=id clientname=n] - list plugin objects
+ *  list objects [type=objecttype job_id=id clientname=n,status=S] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
  *
@@ -709,6 +709,8 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             } else if (strcasecmp(ua->argk[j], NT_("category")) == 0) {
                bstrncpy(obj_r.ObjectCategory, ua->argv[j], sizeof(obj_r.ObjectCategory));
 
+            } else if (strcasecmp(ua->argk[j], NT_("status")) == 0) {
+               obj_r.ObjectStatus = (int32_t)ua->argv[j][0];
             } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0 && ua->argv[j]) {
                obj_r.limit = atoi(ua->argv[j]);
 

@@ -779,7 +779,7 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
 
    Mmsg(cmd,
          "SELECT ObjectId, JobId, Path, Filename, PluginName, ObjectCategory, "
-                 "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize "
+                 "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectStatus, ObjectCount "
          "FROM Object %s", where.c_str());
 
    bdb_lock();
@@ -807,6 +807,8 @@ bool BDB::bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r)
          bstrncpy(obj_r->ObjectSource, row[8], sizeof(obj_r->ObjectSource));
          bstrncpy(obj_r->ObjectUUID, row[9], sizeof(obj_r->ObjectUUID));
          obj_r->ObjectSize = str_to_uint64(row[10]);
+         obj_r->ObjectStatus = row[11] != NULL ? (int)*row[11] : 'U';
+         obj_r->ObjectCount = str_to_uint64(row[12]);
 
          stat = true;
       }

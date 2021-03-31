@@ -641,7 +641,10 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
 
    } else if (Stream == STREAM_PLUGIN_OBJECT) {
       OBJECT_DBR obj_r;
-      obj_r.parse_plugin_object_string(&p);
+      if (!obj_r.parse_plugin_object_string(&p)) {
+         Jmsg0(jcr, M_FATAL, 0, _("Failed to parse plugin object!\n"));
+         return;
+      }
 
       if (jcr->wjcr) {
          obj_r.JobId = jcr->wjcr->JobId;

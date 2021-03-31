@@ -58,6 +58,8 @@ CREATE TABLE Object
    ObjectSource    text     not null,
    ObjectUUID      text     not null,
    ObjectSize      bigint   not null,
+   ObjectStatus	 char(1)	 not null default 'U',
+   ObjectCount     integer  not null default 1,
    primary key (ObjectId)
 );
 

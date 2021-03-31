@@ -31,6 +31,8 @@
 #if HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL 
  
 #include "cats.h" 
+
+static int dbglvl=100;
  
 void append_filter(POOLMEM **buf, char *cond)
 {
@@ -160,89 +162,124 @@ void BDB::print_lock_info(FILE *fp)
    } 
 } 
 
-void OBJECT_DBR::parse_plugin_object_string(char **obj_str)
+/* Parse stream of tags, return next one from the stream (it will be null terminated,
+ * original buffer will be changed) */
+static char *get_next_tag(char **buf)
 {
-   /* TODO: Do some sanity checks on the input format */
-   char *p = *obj_str;
-   int fnl, pnl;
-   char* tmp_path = p;
-   skip_nonspaces(&p);                  /* skip Path */
+   char *p = *buf;
+   char *tmp = p;
+   skip_nonspaces(&p);
    skip_spaces(&p);
-   char *c = strpbrk(tmp_path, " ");
+   char *c = strpbrk(tmp, " ");
    if (c) {
       *c = '\0';
+   } else {
+      Dmsg0(dbglvl, "No tag found!\n");
+      return NULL;
+   }
+   *buf = p;
+
+   Dmsg1(dbglvl, "Found tag: %s\n", tmp);
+   return tmp;
+}
+
+
+bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
+{
+   bool ret = false;
+   int fnl, pnl;
+
+   char *tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
 
-   if (tmp_path[strlen(tmp_path) - 1] == '/') {
-      pm_strcpy(Path, tmp_path);
+   if (tmp[strlen(tmp) - 1] == '/') {
+      pm_strcpy(Path, tmp);
       unbash_spaces(Path);
    } else {
-      split_path_and_filename(tmp_path, &Path, &pnl, &Filename, &fnl);
+      split_path_and_filename(tmp, &Path, &pnl, &Filename, &fnl);
       unbash_spaces(Path);
       unbash_spaces(Filename);
    }
 
-   char *tmp = p;
-   skip_nonspaces(&p);                  /* skip PluginName */
-   skip_spaces(&p);
-   c = strpbrk(tmp, " ");
-   if (c) {
-      *c = '\0';
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
    pm_strcpy(PluginName, tmp);
    unbash_spaces(PluginName);
 
-   tmp = p;
-   skip_nonspaces(&p);                  /* skip ObjectType */
-   skip_spaces(&p);
-   c = strpbrk(tmp, " ");
-   if (c) {
-      *c = '\0';
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
    bstrncpy(ObjectCategory, tmp, sizeof(ObjectCategory));
    unbash_spaces(ObjectCategory);
 
-   tmp = p;
-   skip_nonspaces(&p);                  /* skip ObjectType */
-   skip_spaces(&p);
-   c = strpbrk(tmp, " ");
-   if (c) {
-      *c = '\0';
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
    bstrncpy(ObjectType, tmp, sizeof(ObjectType));
    unbash_spaces(ObjectType);
 
-   tmp = p;
-   skip_nonspaces(&p);                  /* skip ObjectName */
-   skip_spaces(&p);
-   c = strpbrk(tmp, " ");
-   if (c) {
-      *c = '\0';
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
    bstrncpy(ObjectName, tmp, sizeof(ObjectName));
    unbash_spaces(ObjectName);
 
-   tmp = p;
-   skip_nonspaces(&p);                  /* skip ObjectSource */
-   skip_spaces(&p);
-   c = strpbrk(tmp, " ");
-   if (c) {
-      *c = '\0';
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
    bstrncpy(ObjectSource, tmp, sizeof(ObjectSource));
    unbash_spaces(ObjectSource);
 
-   tmp = p;
-   skip_nonspaces(&p);                  /* skip ObjectUuid */
-   skip_spaces(&p);
-   c = strpbrk(tmp, " ");
-   if (c) {
-      *c = '\0';
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      goto bail_out;
    }
    bstrncpy(ObjectUUID, tmp, sizeof(ObjectUUID));
    unbash_spaces(ObjectUUID);
 
-   ObjectSize = str_to_uint64(p);
+   tmp = get_next_tag(obj_str);
+   if (tmp) {
+      ObjectSize = str_to_uint64(tmp);
+   } else if (*obj_str) {
+      /* Object size is the last tag here, we are not expecting to have status in the stream */
+      ObjectSize = str_to_uint64(*obj_str);
+      ret = true;
+      goto bail_out;
+   } else {
+      goto bail_out;
+   }
+
+   /* We should have status string in the end */
+   if (*obj_str) {
+      tmp = get_next_tag(obj_str);
+      if (!tmp) {
+         goto bail_out;
+      }
+      ObjectStatus = (int)*tmp;
+      if (*obj_str) {
+         ObjectCount = str_to_uint64(*obj_str);
+      }
+   } else {
+      goto bail_out;
+   }
+
+   ret = true;
+
+bail_out:
+   if (!ret) {
+      /* Reset parsed fields */
+      reset();
+   }
+
+   return ret;
 }
 
 void OBJECT_DBR::create_db_filter(JCR *jcr, POOLMEM **where)
@@ -310,6 +347,11 @@ void OBJECT_DBR::create_db_filter(JCR *jcr, POOLMEM **where)
          Mmsg(tmp, " Object.ObjectSize=%llu", ObjectSize);
          append_filter(where, tmp.c_str());
       }
+
+      if (ObjectStatus != 0) {
+         Mmsg(tmp, " Object.ObjectStatus='%c'", ObjectStatus);
+         append_filter(where, tmp.c_str());
+      }
    }
 
 }
@@ -344,7 +386,7 @@ void parse_restore_object_string(char **r_obj_str, ROBJECT_DBR *robj_r)
    len = strlen(robj_r->object_name);
    robj_r->object = &robj_r->object_name[len+1];      /* point to object */
    robj_r->object[robj_r->object_len] = 0;            /* add zero for those who attempt printing */
-   Dmsg7(100, "oname=%s stream=%d FT=%d FI=%d JobId=%ld, obj_len=%d\nobj=\"%s\"\n",
+   Dmsg7(dbglvl, "oname=%s stream=%d FT=%d FI=%d JobId=%ld, obj_len=%d\nobj=\"%s\"\n",
       robj_r->object_name, robj_r->Stream, robj_r->FileType, robj_r->FileIndex, robj_r->JobId,
       robj_r->object_len, robj_r->object);
 }

@@ -137,7 +137,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
        "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> |\n"
        "\t\t source=<str> | code=<str> | type=<str> ]\n"
-       "\tobjects [jobid=<jobid> client=<cli> type=<str> | category=<str> | limit=<int> | order=<asc|desc> ]\n"
+       "\tobjects [jobid=<jobid> client=<cli> type=<str> | category=<str> | status=<S> | limit=<int> | order=<asc|desc> ]\n"
       ), false},
 
  { NT_("llist"),      llist_cmd,     _("Full or long list like list command"),

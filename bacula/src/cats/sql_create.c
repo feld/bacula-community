@@ -1210,11 +1210,11 @@ bool BDB::bdb_create_object_record(JCR *jcr, OBJECT_DBR *obj)
    bdb_lock();
    Mmsg(cmd,
          "INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, "
-         "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize) "
-         "VALUES (%lu, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %llu)",
+         "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize, ObjectStatus, ObjectCount) "
+         "VALUES (%lu, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %llu, '%c', %lu)",
          obj->JobId, esc_path, esc_filename, esc_plugin_name, esc_obj_category,
          esc_obj_type, esc_obj_name, esc_obj_source, esc_obj_uuid,
-         obj->ObjectSize);
+         obj->ObjectSize, (char)obj->ObjectStatus, obj->ObjectCount);
 
    obj->ObjectId = sql_insert_autokey_record(cmd, NT_("Object"));
    if (obj->ObjectId == 0) {

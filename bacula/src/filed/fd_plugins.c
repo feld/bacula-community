@@ -696,6 +696,8 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
                ff_pkt->plugin_obj.object_source = sp.plugin_obj.object_source;
                ff_pkt->plugin_obj.object_uuid = sp.plugin_obj.object_uuid;
                ff_pkt->plugin_obj.object_size = sp.plugin_obj.object_size;
+               ff_pkt->plugin_obj.status = sp.plugin_obj.status;
+               ff_pkt->plugin_obj.count = sp.plugin_obj.count;
             } else {
                ff_pkt->restore_obj.object_name = sp.restore_obj.object_name;
                ff_pkt->restore_obj.index = sp.restore_obj.index;     /* restore object index */

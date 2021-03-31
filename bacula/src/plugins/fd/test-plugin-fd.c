@@ -669,6 +669,8 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plugin_obj.object_name = (char *)NT_("test vm");
       sp->plugin_obj.object_source = (char *)NT_("test plugin source");
       sp->plugin_obj.object_uuid = (char *)NT_("1234-abc-testplugin");
+      sp->plugin_obj.status = PLUG_OBJ_STATUS_TERMINATED;
+      sp->plugin_obj.count = 2;
 
       sp->plugin_obj.object_size = obj_uuid++;
       sp->type = FT_PLUGIN_OBJECT;

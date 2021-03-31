@@ -184,13 +184,14 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
    case VERT_LIST:
          Mmsg(cmd,
             "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
-                    "Object.ObjectType, Object.ObjectName, Object.ObjectSource, Object.ObjectUUID, Object.ObjectSize "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectSource, "
+                    "Object.ObjectUUID, Object.ObjectSize, Object.ObjectStatus, Object.ObjectCount "
             "FROM Object %s %s", join.c_str(), where.c_str());
          break;
    case HORZ_LIST:
          Mmsg(cmd,
             "SELECT Object.ObjectId, Object.JobId, Object.ObjectCategory, "
-                    "Object.ObjectType, Object.ObjectName "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectStatus "
             "FROM Object %s %s", join.c_str(), where.c_str());
          break;
    default:
@@ -221,13 +222,14 @@ void BDB::bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *
    case VERT_LIST:
          Mmsg(cmd,
             "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
-                    "Object.ObjectType, Object.ObjectName, Object.ObjectSource, Object.ObjectUUID, Object.ObjectSize "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectSource, Object.ObjectUUID, "
+                    "Object.ObjectSize, Object.ObjectStatus, Object.ObjectCount "
             "FROM Object WHERE ObjectId IN (%s) ORDER BY ObjectId ASC", id_list);
          break;
    case HORZ_LIST:
          Mmsg(cmd,
             "SELECT Object.ObjectId, Object.JobId, Object.ObjectCategory, "
-                    "Object.ObjectType, Object.ObjectName, Object.ObjectUUID "
+                    "Object.ObjectType, Object.ObjectName, Object.ObjectUUID, Object.ObjectStatus "
             "FROM Object WHERE ObjectId IN (%s) ORDER BY ObjectId ASC", id_list);
          break;
    default:

@@ -823,7 +823,10 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          char *buf = rec->data;
          num_plugin_objects++;
 
-         obj_r.parse_plugin_object_string(&buf);
+         if (!obj_r.parse_plugin_object_string(&buf)) {
+            Pmsg0(000, _("Failed to parse plugin object!\n"));
+            break;
+         }
 
          // Need to get new jobId if possible
          mjcr = get_jcr_by_session(rec->VolSessionId, rec->VolSessionTime);
