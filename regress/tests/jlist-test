@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test the .json command
+#
+TestName="jlist-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+start_test
+
+sed -i "s/catalog = all/catalog = all, events/" $conf/bacula-dir.conf
+
+cat <<EOF > $tmp/bconcmds
+label volume=TestVolume001 storage=File1 pool=File drive=0 slot=0
+run job=BackupClient1 level=Full yes
+run job=BackupClient1 level=Full yes
+run job=BackupClient1 level=Full yes
+wait
+messages
+EOF
+
+run_bacula
+
+cat <<EOF > $tmp/bconcmds
+gui on
+.jlist events
+EOF
+
+run_bconsole | grep '^\[' > $tmp/log1.json
+
+cat <<EOF > $tmp/bconcmds
+gui on
+.jlist events limit=1
+EOF
+
+run_bconsole | grep '^\[' > $tmp/log2.json
+
+cat <<EOF > $tmp/bconcmds
+gui on
+.jlist jobs
+EOF
+
+run_bconsole | grep '^\[' > $tmp/log3.json
+
+cat <<EOF > $tmp/bconcmds
+gui on
+.jlist joblog jobid=1
+EOF
+
+run_bconsole | grep '^\[' > $tmp/log4.json
+
+for i in 1 2 3 4; do
+    $bperl -e "check_json('$tmp/log$i.json')"
+done
+
+stop_bacula
+
+end_test
