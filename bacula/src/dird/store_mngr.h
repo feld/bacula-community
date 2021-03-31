@@ -138,7 +138,7 @@ class StorageManager : public SMARTALLOC {
       static bool check_policy(const char *policy) {
          int i = 0;
          while (storage_mngmt_policy[i]) {
-            if (strcmp(policy, storage_mngmt_policy[i]) == 0) {
+            if (strcasecmp(policy, storage_mngmt_policy[i]) == 0) {
                return true;
             }
             i++;
