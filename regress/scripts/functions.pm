@@ -52,7 +52,7 @@ our @EXPORT = qw(update_some_files create_many_files check_multiple_copies
                   check_openfile check_cloud_hash check_bscan add_log_message compare_backup_content
                   check_tls_traces println add_virtual_changer check_events check_events_json
                   create_many_hardlinks check_dot_status parse_fuse_trace generate_random_seek
-                  check_storage_selection
+                  check_storage_selection check_json
 );
 
 
@@ -2551,4 +2551,28 @@ sub check_storage_selection
     exit $err;
 }
 
+# We validate a json string
+sub check_json
+{
+    my ($file) = @_;
+    open(FP, $file) or die "ERROR: Unable to open $file";
+    my $content = join("", <FP>);    
+    close(FP);
+
+    my $test_json;
+    eval 'use JSON qw/decode_json/; $test_json = JSON->new;';
+    if ($@) {
+        print "INFO: JSON validation is disabled ERR=$@\n";
+        exit 1;
+    }
+
+    eval {
+        my $var = $test_json->decode($content);
+    };
+    if ($@) {
+        print "ERROR: Unable to decode json data. ERR=$@\n";
+        exit 1;
+    }
+    exit 0;
+}
 1;
