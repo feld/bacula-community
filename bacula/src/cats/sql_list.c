@@ -66,7 +66,7 @@ void BDB::bdb_list_pool_records(JCR *jcr, POOL_DBR *pdbr,
    bdb_lock();
    bdb_escape_string(jcr, esc, pdbr->Name, strlen(pdbr->Name));
 
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       if (pdbr->Name[0] != 0) {
          Mmsg(cmd, "SELECT PoolId,Name,NumVols,MaxVols,UseOnce,UseCatalog,"
             "AcceptAnyVolume,VolRetention,VolUseDuration,MaxVolJobs,MaxVolBytes,"
@@ -109,7 +109,7 @@ void BDB::bdb_list_pool_records(JCR *jcr, POOL_DBR *pdbr,
 void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
    bdb_lock();
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
          "JobRetention "
            "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_CLIENT, true));
@@ -180,6 +180,7 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
    }
 
    switch (type) {
+   case JSON_LIST:
    case VERT_LIST:
          Mmsg(cmd,
             "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
@@ -216,6 +217,7 @@ void BDB::bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *
    POOL_MEM msg;
 
    switch (type) {
+   case JSON_LIST:
    case VERT_LIST:
          Mmsg(cmd,
             "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
@@ -273,7 +275,7 @@ void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *s
    }
 
    bdb_lock();
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT JobId, RestoreObjectId, ObjectName, "
            "PluginName, ObjectType "
            "FROM RestoreObject JOIN Job USING (JobId) WHERE JobId IN (%s) %s "
@@ -314,7 +316,7 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
    const char *where = get_acl(DB_ACL_POOL, false);
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_POOL)) : "";
 
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       if (mdbr->VolumeName[0] != 0) {
          Mmsg(cmd, "SELECT MediaId,VolumeName,Slot,PoolId,"
             "MediaType,MediaTypeId,FirstWritten,LastWritten,LabelDate,VolJobs,"
@@ -402,7 +404,7 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId,
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
                                                    DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       if (JobId > 0) {                   /* do by JobId */
          Mmsg(cmd, "SELECT JobMediaId,JobId,Media.MediaId,Media.VolumeName,"
             "FirstIndex,LastIndex,StartFile,JobMedia.EndFile,StartBlock,"
@@ -465,7 +467,7 @@ void BDB::bdb_list_filemedia_records(JCR *jcr, uint32_t JobId, uint32_t FileInde
    }
    
    bdb_lock();
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT JobId,FileIndex,Media.MediaId,Media.VolumeName,"
            "BlockAddress,RecordNo,FileOffset "
            "FROM FileMedia,Media WHERE Media.MediaId=FileMedia.MediaId "
@@ -632,7 +634,7 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
                                                    DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
-   if (type == VERT_LIST) {
+   if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT Time,LogText FROM Log %s "
            "WHERE Log.JobId=%s %s ORDER BY LogId ASC",
            join,
@@ -748,6 +750,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    }
 
    switch (type) {
+   case JSON_LIST:
    case VERT_LIST:
       Mmsg(cmd,
            "SELECT JobId,Job,Job.Name,PurgedFiles,Type,Level,"
@@ -1014,7 +1017,7 @@ void BDB::bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
       pm_strcat(filter, " ORDER BY SnapshotId DESC");
    }
 
-   if (type == VERT_LIST || type == ARG_LIST) {
+   if (type == VERT_LIST || type == ARG_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT SnapshotId, Snapshot.Name, CreateDate, Client.Name AS Client, "
            "FileSet.FileSet AS FileSet, JobId, Volume, Device, Type, Retention, Comment "
            "FROM Snapshot JOIN Client USING (ClientId) LEFT JOIN FileSet USING (FileSetId) %s %s", filter, where);

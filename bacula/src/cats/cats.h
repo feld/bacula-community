@@ -665,6 +665,7 @@ enum e_list_type {
    HORZ_LIST,                   /* list */
    VERT_LIST,                   /* llist */
    ARG_LIST,                    /* key1=v1 key2=v2 key3=v3 */
+   JSON_LIST,
    FAILED_JOBS,
    INCOMPLETE_JOBS
 };

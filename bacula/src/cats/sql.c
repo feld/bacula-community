@@ -796,7 +796,10 @@ int list_result(void *vctx, int nb_col, char **row)
       if (type == ARG_LIST) { 
          goto arg_list; 
       } 
- 
+      if (type == JSON_LIST) {
+         goto json_list;
+      }
+
       Dmsg1(800, "list_result starts second loop looking at %d fields\n",  
             mdb->sql_num_fields()); 
  
@@ -882,7 +885,33 @@ arg_list:
    } 
    send(ctx, "\n"); 
    return 0; 
- 
+
+json_list:
+   POOL_MEM tmp, qval, qkey;
+   bool first=true;
+
+   Dmsg1(800, "list_result starts json list at %d fields\n", mdb->sql_num_fields());
+   mdb->sql_field_seek(0);
+
+   send(ctx, "{");
+   for (i = 0; i < mdb->sql_num_fields(); i++) {
+      field = mdb->sql_fetch_field();
+      if (!field) {
+         break;
+      }
+      quote_string(qkey.addr(), field->name);
+      lcase(qkey.c_str());
+      if (!mdb->sql_field_is_numeric(field->type)) {
+         quote_string(qval.addr(), NPRTB(row[i]));
+      } else {
+         pm_strcpy(qval, row[i]);
+      }
+      Mmsg(tmp, "%s%s: %s", first?"":",", qkey.c_str(), qval.c_str());
+      send(ctx, tmp.c_str());
+      first = false;
+   }
+   send(ctx, "}\n");
+   return 0;
 } 
  
 /* 
@@ -899,8 +928,12 @@ list_result(JCR *jcr, BDB *mdb, DB_LIST_HANDLER *send, void *ctx, e_list_type ty
    char buf[2000], ewc[30]; 
  
    Dmsg0(800, "list_result starts\n"); 
-   if (mdb->sql_num_rows() == 0) { 
-      send(ctx, _("No results to list.\n")); 
+   if (mdb->sql_num_rows() == 0) {
+      if (type == JSON_LIST) {
+         send(ctx, "[]\n");
+      } else {
+         send(ctx, _("No results to list.\n"));
+      }
       return mdb->sql_num_rows(); 
    } 
  
@@ -939,7 +972,10 @@ list_result(JCR *jcr, BDB *mdb, DB_LIST_HANDLER *send, void *ctx, e_list_type ty
    if (type == ARG_LIST) { 
       goto arg_list; 
    } 
- 
+   if (type == JSON_LIST) {
+      goto json_list;
+   }
+
    Dmsg1(800, "list_result starts second loop looking at %d fields\n", mdb->sql_num_fields()); 
    list_dashes(mdb, send, ctx); 
    send(ctx, "|"); 
@@ -983,8 +1019,7 @@ list_result(JCR *jcr, BDB *mdb, DB_LIST_HANDLER *send, void *ctx, e_list_type ty
    list_dashes(mdb, send, ctx); 
    return mdb->sql_num_rows(); 
  
-vertical_list: 
- 
+vertical_list:
    Dmsg1(800, "list_result starts vertical list at %d fields\n", mdb->sql_num_fields()); 
    while ((row = mdb->sql_fetch_row()) != NULL) { 
       mdb->sql_field_seek(0); 
@@ -1007,8 +1042,7 @@ vertical_list:
       send(ctx, "\n"); 
    } 
  
-arg_list: 
- 
+arg_list:
    Dmsg1(800, "list_result starts arg list at %d fields\n", mdb->sql_num_fields()); 
    while ((row = mdb->sql_fetch_row()) != NULL) { 
       mdb->sql_field_seek(0); 
@@ -1027,7 +1061,39 @@ arg_list:
       } 
       send(ctx, "\n"); 
    } 
-   return mdb->sql_num_rows(); 
+   return mdb->sql_num_rows();
+
+json_list:
+   Dmsg1(800, "list_result starts json list at %d fields\n", mdb->sql_num_fields());
+   POOL_MEM tmp, qval, qkey;
+   bool rfirst=true;
+   send(ctx, "[");
+   while ((row = mdb->sql_fetch_row()) != NULL) {
+      bool first=true;
+      send(ctx, rfirst?"{" : ",{");
+      rfirst = false;
+
+      mdb->sql_field_seek(0);
+      for (i = 0; i < mdb->sql_num_fields(); i++) {
+         field = mdb->sql_fetch_field();
+         if (!field) {
+            break;
+         }
+         quote_string(qkey.addr(), field->name);
+         lcase(qkey.c_str());
+         if (!mdb->sql_field_is_numeric(field->type)) {
+            quote_string(qval.addr(), NPRTB(row[i]));
+         } else {
+            pm_strcpy(qval, row[i]);
+         }
+         Mmsg(tmp, "%s%s: %s", first?"":",", qkey.c_str(), qval.c_str());
+         send(ctx, tmp.c_str());
+         first = false;
+      }
+      send(ctx, "}");
+   }
+   send(ctx, "]\n");
+   return mdb->sql_num_rows();
 } 
  
 /* 
@@ -1164,7 +1230,6 @@ void TAG_DBR::gen_sql(JCR *jcr, BDB *db,
       aclbits |= DB_ACL_BIT(DB_ACL_JOB);
       aclbits_extra |= DB_ACL_BIT(DB_ACL_JOB);
    }
-
    if (*Name) {
       db->bdb_escape_string(jcr, esc_name, Name, strlen(Name));
    }

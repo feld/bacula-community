@@ -43,6 +43,7 @@ extern int quit_cmd(UAContext *ua, const char *cmd);
 extern int qhelp_cmd(UAContext *ua, const char *cmd);
 extern bool dot_status_cmd(UAContext *ua, const char *cmd);
 extern void bvfs_set_acl(UAContext *ua, Bvfs *bvfs);
+extern bool jlist_cmd(UAContext *ua, const char *cmd);
 
 /* Forward referenced functions */
 static bool admin_cmds(UAContext *ua, const char *cmd);
@@ -110,6 +111,7 @@ static struct cmdstruct commands[] = { /* help */  /* can be used in runscript *
  { NT_(".help"),       dot_help_cmd,             NULL,       false},
  { NT_(".jobs"),       jobscmd,                  NULL,       true},
  { NT_(".estimate"),   dotestimatecmd,           NULL,       false},
+ { NT_(".jlist"),      jlist_cmd,                NULL,       false},
  { NT_(".levels"),     levelscmd,                NULL,       false},
  { NT_(".messages"),   getmsgscmd,               NULL,       false},
  { NT_(".msgs"),       msgscmd,                  NULL,       false},

@@ -335,6 +335,11 @@ bail_out:
  */
 
 /* Do long or full listing */
+bool jlist_cmd(UAContext *ua, const char *cmd)
+{
+   return do_list_cmd(ua, cmd, JSON_LIST);
+}
+
 int llist_cmd(UAContext *ua, const char *cmd)
 {
    return do_list_cmd(ua, cmd, VERT_LIST);
@@ -359,8 +364,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
    POOL_DBR pr;
    MEDIA_DBR mr;
 
-   if (!open_new_client_db(ua))
+   if (!open_new_client_db(ua)) {
       return 1;
+   }
 
    bmemset(&jr, 0, sizeof(jr));
    bmemset(&pr, 0, sizeof(pr));
@@ -407,9 +413,6 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
          } else if (B_ISALPHA(ua->argv[j][0])) {
             jr.JobLevel = ua->argv[j][0]; /* TODO: Check if the code is correct */
          }
-      } else if (strcasecmp(ua->argk[j], NT_("level")) == 0) {
-
-
       } else if (strcasecmp(ua->argk[j], NT_("client")) == 0) {
          if (is_name_valid(ua->argv[j], NULL)) {
             CLIENT_DBR cr;
@@ -435,10 +438,15 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
       /* List JOBID=nn */
       } else if (strcasecmp(ua->argk[i], NT_("jobid")) == 0) {
          if (ua->argv[i]) {
-            jobid = str_to_int64(ua->argv[i]);
-            if (jobid > 0) {
-               jr.JobId = jobid;
-               db_list_job_records(ua->jcr, ua->db, &jr, prtit, ua, llist);
+            /* .jlist joblog jobid=1   should display only one json struct */
+            if (llist == JSON_LIST && i > 1) {
+               /* nop */
+            } else {
+               jobid = str_to_int64(ua->argv[i]);
+               if (jobid > 0) {
+                  jr.JobId = jobid;
+                  db_list_job_records(ua->jcr, ua->db, &jr, prtit, ua, llist);
+               }
             }
          }
 
