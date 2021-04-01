@@ -773,27 +773,6 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
          Mmsg(query, "UPDATE Job SET Type='%c' WHERE JobId=%s",
               (char)JT_JOB_COPY, new_jobid);
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
-
-         /* Copy RestoreObjects */
-         Mmsg(query, "INSERT INTO RestoreObject (ObjectName,PluginName,RestoreObject,"
-              "ObjectLength,ObjectFullLength,ObjectIndex,ObjectType,"
-              "ObjectCompression,FileIndex,JobId) "
-        "SELECT ObjectName,PluginName,RestoreObject,"
-          "ObjectLength,ObjectFullLength,ObjectIndex,ObjectType,"
-          "ObjectCompression,FileIndex,%s FROM RestoreObject WHERE JobId=%s",
-           new_jobid, old_jobid);
-         db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
-
-         /* Copy PluginObjects */
-         Mmsg(query, "INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory,"
-               "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize) "
-               "SELECT %s, Path, Filename, PluginName, ObjectCategory,"
-               "ObjectType, ObjectName, ObjectSource, ObjectUUID, ObjectSize FROM Object WHERE JobId=%s",
-               new_jobid, old_jobid);
-         if (!db_sql_query(wjcr->db, query.c_str(), NULL, NULL)) {
-            Jmsg(jcr, M_WARNING, 0, _("Error copying PluginObject for JobId=%ld: %s"),
-                  old_jobid, db_strerror(jcr->db));
-         }
       }
 
       if (!db_get_job_record(jcr, jcr->db, &jcr->jr)) {
