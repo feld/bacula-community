@@ -460,7 +460,7 @@ bool do_mac(JCR *jcr)
     *  This call returns the sd_auth_key
     */
    Dmsg1(200, "Start job with read (jcr) storage daemon. Jid=%d\n", jcr->JobId);
-   if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), NULL, /*send_bsr*/true)) {
+   if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), NULL, true /* wait */, /*send_bsr*/true)) {
       goto bail_out;
    }
    Dmsg0(150, "Read storage daemon connection OK\n");
@@ -477,7 +477,7 @@ bool do_mac(JCR *jcr)
     * Now start a job with the write Storage daemon sending.
     */
    Dmsg1(200, "Start Job with write (wjcr) storage daemon. Jid=%d\n", jcr->JobId);
-   if (!start_storage_daemon_job(wjcr, NULL, wjcr->store_mngr->get_wstore_list(), /*no_send_bsr*/false)) {
+   if (!start_storage_daemon_job(wjcr, NULL, wjcr->store_mngr->get_wstore_list(), true /* wait */, /*no_send_bsr*/false)) {
       goto bail_out;
    }
    Dmsg0(150, "Write storage daemon connection OK\n");
