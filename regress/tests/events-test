@@ -70,12 +70,43 @@ cat <<END_OF_DATA >$tmp/bconcmds
 status client
 @$out $tmp/log5.out
 list events
+@$out $tmp/log6.out
+llist events type=bweb
+@$out $tmp/log7.out
+llist events source=*Console*
+@$out $tmp/log8.out
+llist events code=DJ0001
 quit
 END_OF_DATA
 
 run_bconsole
 
 stop_bacula
+
+nb_total=`grep "code:" $tmp/log8.out | wc -l`
+nb_found=`grep " DJ0001" $tmp/log8.out | wc -l`
+
+if [ $nb_found != $nb_total ]; then
+    print_debug "ERROR: Found unexpected codes in $tmp/log8.out ($nb_found/$nb_total)"
+    estat=1
+fi
+
+nb_total=`grep "source:" $tmp/log7.out | wc -l`
+nb_found=`grep " \\*Console*" $tmp/log7.out | wc -l`
+
+if [ $nb_found != $nb_total ]; then
+    print_debug "ERROR: Found unexpected source in $tmp/log7.out ($nb_found/$nb_total)"
+    estat=1
+fi
+
+nb_total=`grep "type:" $tmp/log6.out | wc -l`
+nb_found=`grep " bweb" $tmp/log6.out | wc -l`
+
+if [ $nb_found != $nb_total ]; then
+    print_debug "ERROR: Found unexpected type in $tmp/log6.out ($nb_found/$nb_total)"
+    estat=1
+fi
+
 
 grep "User login" $tmp/log2.out > /dev/null
 if [ $? != 0 ]; then
