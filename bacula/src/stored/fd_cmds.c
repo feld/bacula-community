@@ -139,8 +139,15 @@ void run_job(JCR *jcr)
          Jmsg0(jcr, M_FATAL, 0, "Append data not accepted\n");
          goto bail_out;
       }
-      append_data_cmd(jcr);
-      append_end_session(jcr);
+
+      if (!append_data_cmd(jcr)) {
+         Jmsg0(jcr, M_FATAL, 0, "Appending data failed\n");
+         goto bail_out;
+      }
+      if (!append_end_session(jcr)) {
+         Dmsg1(050, "append_end_session() failed for JobId: %d\n", jcr->JobId);
+         goto bail_out;
+      }
    } else if (jcr->is_JobType(JT_MIGRATE) || jcr->is_JobType(JT_COPY)) {
       jcr->session_opened = true;
       /* send "3000 OK data" now to avoid a dead lock, the other side is also
@@ -160,7 +167,10 @@ void run_job(JCR *jcr)
          jcr->file_bsock->signal(BNET_EOD);
          goto bail_out;
       }
-      read_data_cmd(jcr);
+      if (!read_data_cmd(jcr)) {
+         Jmsg0(jcr, M_FATAL, 0, "Reading data failed\n");
+         goto bail_out;
+      }
       jcr->file_bsock->signal(BNET_EOD);
    } else {
       /* Either a Backup or Restore job */
