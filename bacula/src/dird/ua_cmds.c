@@ -135,7 +135,8 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tjobtotals | pools | volume | media <pool=pool-name> | files [type=<deleted|all>] jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot | \n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
-       "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> ]\n"
+       "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> |\n"
+       "\t\t source=<str> | code=<str> | type=<str> ]\n"
        "\tobjects [jobid=<jobid> client=<cli> type=<str> | category=<str> | limit=<int> | order=<asc|desc> ]\n"
       ), false},
 

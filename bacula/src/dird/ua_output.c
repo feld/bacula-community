@@ -840,6 +840,15 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
             } else if (strcasecmp(ua->argk[j], NT_("end")) == 0 && ua->argv[j]) {
                bstrncpy(event.end, ua->argv[j], sizeof(event.end)); /* TODO: check format */
+
+            } else if (strcasecmp(ua->argk[j], NT_("source")) == 0 && ua->argv[j]) {
+               bstrncpy(event.EventsSource, ua->argv[j], sizeof(event.EventsSource)); /* TODO: check format */
+
+            } else if (strcasecmp(ua->argk[j], NT_("daemon")) == 0 && ua->argv[j]) {
+               bstrncpy(event.EventsDaemon, ua->argv[j], sizeof(event.EventsDaemon)); /* TODO: check format */
+
+            } else if (strcasecmp(ua->argk[j], NT_("code")) == 0 && ua->argv[j]) {
+               bstrncpy(event.EventsCode, ua->argv[j], sizeof(event.EventsCode)); /* TODO: check format */
             }
          }
          db_list_events_records(ua->jcr,ua->db, &event, prtit, ua, llist);
@@ -863,6 +872,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                  || strcasecmp(ua->argk[i], NT_("objectid")) == 0
                  || strcasecmp(ua->argk[i], NT_("clientname")) == 0
                  || strcasecmp(ua->argk[i], NT_("jobid")) == 0
+                 || strcasecmp(ua->argk[i], NT_("source")) == 0
+                 || strcasecmp(ua->argk[i], NT_("daemon")) == 0
+                 || strcasecmp(ua->argk[i], NT_("code")) == 0
          ) {
          /* Ignore it */
       } else if (strcasecmp(ua->argk[i], NT_("snapshot")) == 0 ||

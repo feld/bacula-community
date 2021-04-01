@@ -574,6 +574,14 @@ void BDB::bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec,
       pm_strcat(where, tmp2.c_str());
       p_and=true;
    }
+   if (rec->EventsCode[0]) {
+      int len = strlen(rec->EventsCode);
+      tmp.check_size(len*2+1);
+      db_escape_string(jcr, this, tmp.c_str(), rec->EventsCode, len);
+      Mmsg(tmp2, "%s Events.EventsCode = '%s' ", p_and?"AND": "WHERE", tmp.c_str());
+      pm_strcat(where, tmp2.c_str());
+      p_and=true;
+   }
    if (rec->start[0]) {
       int len = strlen(rec->start);
       tmp.check_size(len*2+1);
