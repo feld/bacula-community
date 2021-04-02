@@ -73,8 +73,11 @@ LIBBAC_LOBJS = $(LIBBAC_LOBJS_TMP:.cc=.lo)
 # libbaccfg (config functions)
 #
 LIBBACCFG_SRCS = ini.c parse_conf.c res.c bjson.c
-LIBBACCFG_OBJS = $(LIBBACCFG_SRCS:.c=.o) 
-LIBBACCFG_LOBJS = $(LIBBACCFG_SRCS:.c=.lo) 
+LIBBACCFG_OBJS = $(LIBBACCFG_SRCS:.c=.o)
+LIBBACCFG_LOBJS = $(LIBBACCFG_SRCS:.c=.lo)
+
+# libbacfind
+LIBBACFINDTARGET = ../findlib/libbacfind.la
 
 .SUFFIXES:	.c .cc .o .lo .ch .dvi .pdf .tex .view .w .1
 .PHONY:
@@ -99,6 +102,9 @@ LIBBACCFG_LOBJS = $(LIBBACCFG_SRCS:.c=.lo)
 
 # specific build rules
 
+$(LIBBACFINDTARGET):
+	make -C ../findlib libbacfind.la
+
 #-------------------------------------------------------------------------
 all: Makefile libbac$(DEFAULT_ARCHIVE_TYPE) libbaccfg$(DEFAULT_ARCHIVE_TYPE)
 	@echo "==== Make of lib is good ===="
@@ -109,9 +115,9 @@ libbac.a: $(LIBBAC_OBJS)
 	$(AR) rc  $@ $(LIBBAC_OBJS)
 	$(RANLIB) $@
 
-libbac.la: Makefile $(LIBBAC_LOBJS) 
+libbac.la: Makefile $(LIBBAC_LOBJS)
 	@echo "Making $@ ..."
-	$(LIBTOOL_LINK) $(CXX) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $(LIBBAC_LOBJS) -export-dynamic -rpath $(libdir) -release $(LIBBAC_LT_RELEASE) $(WRAPLIBS) $(CAP_LIBS) $(ZLIBS) $(OPENSSL_LIBS) $(LIBS) $(DLLIBS) 
+	$(LIBTOOL_LINK) $(CXX) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $(LIBBAC_LOBJS) -export-dynamic -rpath $(libdir) -release $(LIBBAC_LT_RELEASE) $(WRAPLIBS) $(CAP_LIBS) $(ZLIBS) $(OPENSSL_LIBS) $(LIBS) $(DLLIBS)
 
 libbaccfg.a: $(LIBBACCFG_OBJS)
 	@echo "Making $@ ..."
@@ -126,7 +132,7 @@ Makefile: $(srcdir)/Makefile.in $(topdir)/config.status
 	cd $(topdir) \
 	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
-bsys_test: Makefile bsys.c unittests.o
+bsys_test: Makefile bsys.c unittests.o libbac.la $(LIBBACFINDTARGET)
 	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) -o bsys_test.o bsys.c
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -L../findlib -o $@ bsys_test.o unittests.o $(DLIB) -lbac -lbacfind -lm $(LIBS) $(OPENSSL_LIBS)
 
@@ -220,7 +226,7 @@ htable_test: Makefile libbac.la htable.c unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ htable.o unittests.o $(DLIB) -lbac -lm $(LIBS) $(OPENSSL_LIBS)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 	$(RMF) htable.o
-	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) htable.c 
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) htable.c
 
 alist_test: Makefile libbac.la alist.c unittests.o
 	$(RMF) alist.o
@@ -271,7 +277,7 @@ sellist_test: Makefile libbac.la sellist.c unittests.o
 	$(RMF) sellist.o
 	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) sellist.c
 
-bcrc32sum: Makefile bcrc32.o	  
+bcrc32sum: Makefile bcrc32.o
 	$(RMF) bcrc32.o
 	$(CXX) -DCRC32_SUM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) bcrc32.c
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ bcrc32.o $(DLIB) -lbac -lm $(LIBS) $(OPENSSL_LIBS)

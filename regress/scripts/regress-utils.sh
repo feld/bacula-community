@@ -352,6 +352,11 @@ dn: cn=root,dc=$db_name,dc=bacula,dc=com
 objectClass: organizationalRole
 cn: root
 description: Directory Manager
+
+# The regress special object
+dn: cn=other/name,dc=$db_name,dc=bacula,dc=com
+objectClass: top
+objectClass: device
 END_OF_DATA
 
 ldapadd -f $tmp/entries.ldif -x -D "cn=root,dc=$db_name,dc=bacula,dc=com" -w rootroot -H ldap://localhost:3890 2>&1 > ${tmp}/ldap.add.log

@@ -969,6 +969,69 @@ char *escape_filename(const char *file_path)
    return escaped_path;
 }
 
+char * escape_filename_pathsep(const char* fname, char *buf, int len)
+{
+   if (fname != NULL && buf != NULL && len > 0) {
+      memset(buf, 0, len);
+      char ch[2]; // we do a simple one char string
+      ch[0] = fname[0];
+      ch[1] = '\0';
+      for (int i = 0; i < (len - 1) && ch[0] != '\0'; i++)
+      {
+         ch[0] = fname[i];
+         switch (ch[0])
+         {
+         case '/':
+            strcat(buf, "%2F");
+            break;
+         default:
+            strcat(buf, ch);
+            break;
+         }
+      }
+   }
+
+   return buf;
+}
+
+char * unescape_filename_pathsep(const char* fname, char *buf, int len)
+{
+   if (fname != NULL && buf != NULL && len > 0) {
+      memset(buf, 0, len);
+      char ch[2]; // we do a simple one char string
+      ch[0] = fname[0];
+      ch[1] = '\0';
+      for (int i = 0; len > 0 && ch[0] != '\0'; i++)
+      {
+         ch[0] = fname[i];
+         switch (ch[0])
+         {
+         case '%':
+            // we always have the next char available because `nul` character is required
+            if (fname[i + 1] == '2'){
+               // so the next char should be available too
+               if (fname[i + 2] == 'F'){
+                  // bingo, got escaped char, proceed
+                  strcat(buf, "/");
+                  i += 2;
+                  len--;
+                  break;
+               }
+            }
+#if __cplusplus >= 201703L
+            [[fallthrough]];
+#endif
+         default:
+            strcat(buf, ch);
+            len--;
+            break;
+         }
+      }
+   }
+
+   return buf;
+}
+
 #if HAVE_BACKTRACE && HAVE_GCC && HAVE_LINUX_OS
 /* if some names are not resolved you can try using : addr2line, like this
  * $ addr2line -e bin/bacula-sd -a 0x43cd11
@@ -1963,6 +2026,39 @@ int main(int argc, char **argv)
    char type[10];
    bstrncpy(type, p, 8);
    ok(strcmp(type, "/@MYSQL") == 0, "bstrncpy()");
+
+   int len = 100;
+   char buf[len];
+   struct testvectdata
+   {
+      const char * fname;
+      const char *result;
+   };
+   testvectdata vector[] = {
+      {"/ - testvect file", "%2F - testvect file"},
+      {"filename/value", "filename%2Fvalue"},
+      {"directory/value/", "directory%2Fvalue%2F"},
+      {"/path///value/", "%2Fpath%2F%2F%2Fvalue%2F"},
+      {"/////", "%2F%2F%2F%2F%2F"},
+      {NULL, NULL},
+   };
+
+   int i = 0;
+   while (vector[i].fname != NULL)
+   {
+      char *retp = escape_filename_pathsep(vector[i].fname, &buf[0], len);
+      ok(retp != NULL, vector[i].fname);
+      ok(retp == &buf[0], "escape checking value return pointer");
+      ok(strcmp(retp, vector[i].result) == 0, "escape checking result vector");
+
+      retp = unescape_filename_pathsep(vector[i].result, &buf[0], len);
+      ok(retp != NULL, vector[i].result);
+      ok(retp == &buf[0], "unescape checking value return pointer");
+      ok(strcmp(retp, vector[i].fname) == 0, "unescape checking result vector");
+
+      i++;
+   }
+
    return report();
 }
 #endif

@@ -63,7 +63,7 @@ void display_bit_array(char *array, int num);
 void display_last(HPKT &hpkt);
 void init_hpkt(HPKT &hpkt);
 void term_hpkt(HPKT &hpkt);
-int display_global_item(HPKT &hpkt); // 
+int display_global_item(HPKT &hpkt); //
 void display_collector_types(HPKT &hpkt);
 
 /* bsys.c */
@@ -117,6 +117,8 @@ long long int strtoll            (const char *ptr, char **endptr, int base);
 void      read_state_file(char *dir, const char *progname, int port);
 int       b_strerror(int errnum, char *buf, size_t bufsiz);
 char     *escape_filename(const char *file_path);
+char     *escape_filename_pathsep(const char *fname, char *buf, int len);
+char     *unescape_filename_pathsep(const char *fname, char *buf, int len);
 int       Zdeflate(char *in, int in_len, char *out, int &out_len);
 int       Zinflate(char *in, int in_len, char *out, int &out_len);
 void      stack_trace();
