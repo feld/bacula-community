@@ -2183,39 +2183,46 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
 
    /* FNAME:$fname$ */
    bsnprintf(cmd.c_str(), cmd.size(), "FNAME:%s\n", rp->ofname);
-   backend.ctx->write_command(ctx, cmd.c_str());
+   backend.ctx->write_command(ctx, cmd);
    DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    /* STAT:... */
-   switch (rp->type){
-      case FT_REG:
-         type = 'F';
-         break;
-      case FT_REGE:
-         type = 'E';
-         break;
-      case FT_DIREND:
-         type = 'D';
-         break;
-      case FT_LNK:
-         type = 'S';
-         break;
-      default:
-         type = 'F';
+   switch (rp->type)
+   {
+   case FT_REGE:
+      type = 'E';
+      break;
+   case FT_DIREND:
+      type = 'D';
+      break;
+   case FT_LNK:
+      type = 'S';
+      break;
+   case FT_LNKSAVED:
+      type = 'L';
+      break;
+   case FT_REG:
+   default:
+      type = 'F';
+      break;
    }
-   bsnprintf(cmd.c_str(), cmd.size(), "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size,
-      rp->statp.st_uid, rp->statp.st_gid, rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
-   backend.ctx->write_command(ctx, cmd.c_str());
+   // bsnprintf(cmd.c_str(), cmd.size(), "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size,
+   //           rp->statp.st_uid, rp->statp.st_gid, rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
+   Mmsg(cmd, "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size, rp->statp.st_uid, rp->statp.st_gid,
+             rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
+   backend.ctx->write_command(ctx, cmd);
    DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    /* TSTAMP:... */
    if (rp->statp.st_atime || rp->statp.st_mtime || rp->statp.st_ctime){
-      bsnprintf(cmd.c_str(), cmd.size(), "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
-      backend.ctx->write_command(ctx, cmd.c_str());
+      // bsnprintf(cmd.c_str(), cmd.size(), "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
+      Mmsg(cmd, "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
+      backend.ctx->write_command(ctx, cmd);
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    }
    /* LSTAT:$link$ */
    if (type == 'S' && rp->olname != NULL){
-      bsnprintf(cmd.c_str(), cmd.size(), "LSTAT:%s\n", rp->olname);
-      backend.ctx->write_command(ctx, cmd.c_str());
+      // bsnprintf(cmd.c_str(), cmd.size(), "LSTAT:%s\n", rp->olname);
+      Mmsg(cmd, "LSTAT:%s\n", rp->olname);
+      backend.ctx->write_command(ctx, cmd);
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
    }
    backend.ctx->signal_eod(ctx);
