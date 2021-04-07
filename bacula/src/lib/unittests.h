@@ -119,10 +119,9 @@ public:
       for (;;) {
          maxlen = this->max_size() - 1;
          va_start(arg_ptr, fmt);
-         bvsnprintf(this->c_str(), maxlen, fmt, arg_ptr);
-         len = strlen(this->c_str());
+         len = bvsnprintf(this->c_str(), maxlen, fmt, arg_ptr);
          va_end(arg_ptr);
-         if (len >= (maxlen - 5)) { // Was truncated, need to resize
+         if (len < 0 || len >= (maxlen - 5)) {
             this->realloc_pm(maxlen + maxlen/2);
             continue;
          }

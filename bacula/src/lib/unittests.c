@@ -244,12 +244,12 @@ int report()
    /* We do not count the extra expected check in the display */
    int nb_ok = nb - err;
    int nb_total = nb;
-   Pmsg0(-1, "==== Report ====\n");
+   Pmsg0(-1, "\n==== Report ====\n");
    /* Do an extra check if the expected variable is set */
    if (expected > 0) {
       is(nb, expected, "Checking expected tests number");
    }
-   Pmsg2(-1, "Result %i/%i OK\n", nb_ok, nb_total);
+   Pmsg3(-1, "Result %i/%i OK%s\n", nb_ok, nb_total, (err > 0) ? "!!!":"");
    return err > 0;
 }
 
