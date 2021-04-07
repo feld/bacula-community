@@ -863,6 +863,7 @@ int main(int argc, char *argv[])
    char msg[MSGLEN];
    bool check_cont, check_nr;
    int pcount, bcount;
+   bsnprintf_test.set_nb_tests(141);
 
 #ifdef FP_OUTPUT
    const char *fp_fmt[] = {
@@ -1075,6 +1076,13 @@ int main(int argc, char *argv[])
    is (strlen(buf1), 9, "Checking the return code against strlen()");
    is (bcount, 10, "Checking the return code of sprintf()");
    is (bcount, pcount, "Checking difference between bsnprintf() and snprintf()");
+
+   log("Testing Mmsg() with bsnprintf count issue");
+   POOLMEM *p = get_memory(10);
+   is (sizeof_pool_memory(p), 10, "check POOLMEM size with get_memory()");
+   Mmsg(p, "This is a format with a number %d", 1);
+   is (32, strlen(p), "check Mmsg overflow");
+   free_pool_memory(p);
    return report();
 }
 #endif /* TEST_PROGRAM */
