@@ -20,24 +20,27 @@
  * Support routines for Unit Tests.
  */
 
-#ifndef _UNITTESTS_H_
-#define _UNITTESTS_H_
+#ifndef UNITTESTS_H_
+#define UNITTESTS_H_
 
 #include "bacula.h"
 
-// Test success if value x is not zero
+/* Test success if value x is not zero */
 #define ok(x, label) _ok(__FILE__, __LINE__, #x, (x), label)
-// Test success if value x is zero
+
+/* Test success if value x is zero */
 #define nok(x, label) _nok(__FILE__, __LINE__, #x, (x), label)
 
-// Test success if value x is a valid path
+/* Test success if value x is a valid path */
 #define stat_ok(x) _stat_ok(__FILE__, __LINE__, (x))
-// Test success if value x is not a valid path
+/* Test success if value x is not a valid path */
 #define stat_nok(x) _stat_nok(__FILE__, __LINE__, (x))
 
+/* Test if a variable has some value */
 #define is(x, y, label) _is(__FILE__, __LINE__, #x, (x), (y), label)
 #define isnt(x, y, label) _isnt(__FILE__, __LINE__, #x, (x), (y), label)
 
+/* Test and return if not correct */
 #define rok(x, label) { bool v=(x); if (!v) { _ok(__FILE__, __LINE__, #x, v, label); return 1; } }
 
 /* TODO: log() ported from BEE it should be updated. */
@@ -54,41 +57,60 @@
 #endif
 
 enum {
-   TEST_VERBOSE = 1,
-   TEST_QUIET   = 2,
-   TEST_END     = 4,
-   TEST_PRINT_LOCAL = 8
+   TEST_VERBOSE = 1,            // Display all messages
+   TEST_QUIET   = 2,            // Display only ERROR messages
+   TEST_END     = 4,            // Not used
+   TEST_PRINT_LOCAL = 8         // Dump all local variables after an error
 };
+
+/* Configure the unittest framework with the TEST_ options */
 void configure_test(uint64_t options);
+
 bool _ok(const char *file, int l, const char *op, int value, const char *label);
 bool _nok(const char *file, int l, const char *op, int value, const char *label);
 bool _is(const char *file, int l, const char *op, const char *str, const char *str2, const char *label);
 bool _isnt(const char *file, int l, const char *op, const char *str, const char *str2, const char *label);
 bool _is(const char *file, int l, const char *op, int64_t nb, int64_t nb2, const char *label);
 bool _isnt(const char *file, int l, const char *op, int64_t nb, int64_t nb2, const char *label);
+
 bool _stat_ok(const char *file, int l, const char *path);
 bool _stat_nok(const char *file, int l, const char *path);
+
+
+/* Print report about the current usage */
 int report();
+
+/* Dummy function used by Bacula signal handler */
 void terminate(int sig);
+
+/* Print header message and configure some Bacula features (lock manager) */
 void prolog(const char *name, bool lmgr=false, bool motd=true);
+
+/* Unconfigure Bacula features (lock manager, poolmemory) */
 void epilog();
+
+/* Get the number of tests done */
 int unittest_get_nb_tests();
 int unittest_get_nb_errors();
+
+/* Set the number of expected tests */
+void unittest_set_nb_tests(int nb);
 
 /* The class based approach for C++ geeks */
 class Unittests
 {
 public:
    Unittests(const char *name, bool lmgr=false, bool motd=true);
-   ~Unittests() { epilog(); };
+   virtual ~Unittests() { epilog(); };
    void configure(uint64_t v) { configure_test(v); };
+   void set_nb_tests(int nb) { unittest_set_nb_tests(nb); };
 };
 
 /* POOL_MEM subclass with convenience methods */
 class bstring : public POOL_MEM {
 public:
 
-	bstring() : POOL_MEM() {};
+   bstring() : POOL_MEM() {};
    bstring(const char *str) : POOL_MEM(str) {};
    bstring(const bstring &fmt, ...): POOL_MEM() {
       va_list   arg_ptr;
@@ -97,9 +119,10 @@ public:
       for (;;) {
          maxlen = this->max_size() - 1;
          va_start(arg_ptr, fmt);
-         len = bvsnprintf(this->c_str(), maxlen, fmt, arg_ptr);
+         bvsnprintf(this->c_str(), maxlen, fmt, arg_ptr);
+         len = strlen(this->c_str());
          va_end(arg_ptr);
-         if (len < 0 || len >= (maxlen-5)) {
+         if (len >= (maxlen - 5)) { // Was truncated, need to resize
             this->realloc_pm(maxlen + maxlen/2);
             continue;
          }
@@ -134,4 +157,4 @@ void fsu_mvfile(const char *src, const char *dst);
 void fsu_cpfile(const char *src, const char *dst);
 void unix_to_win_path(char *path);
 
-#endif /* _UNITTESTS_H_ */
+#endif /* UNITTESTS_H_ */

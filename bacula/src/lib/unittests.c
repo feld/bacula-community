@@ -53,6 +53,7 @@ int main()
 #include "bacula.h"
 #include "unittests.h"
 
+static int expected=-1;
 static int err=0;
 static int nb=0;
 static bool lmgrinit = false;
@@ -64,9 +65,13 @@ Unittests::Unittests(const char *name, bool lmgr/*=false*/, bool motd/*=true*/)
    if (getenv("UNITTEST_PRINT_VAR")) {
       print_var = true;
    }
+   if (getenv("UNITTEST_TEST_QUIET")) {
+      quiet = true;
+   }
    prolog(name, lmgr, motd);
 };
 
+/* Configure the current test with TEST_XXX flags */
 void configure_test(uint64_t options)
 {
    if (options & TEST_QUIET) {
@@ -75,6 +80,12 @@ void configure_test(uint64_t options)
    if (options & TEST_PRINT_LOCAL) {
       print_var = true;
    }
+}
+
+/* Set the number of expected tests */
+void unittest_set_nb_tests(int nb)
+{
+   expected = nb;
 }
 
 /* Get the total number of tests */
@@ -230,8 +241,15 @@ bool _isnt(const char *file, int l, const char *op, int64_t v, int64_t v2, const
  */
 int report()
 {
+   /* We do not count the extra expected check in the display */
+   int nb_ok = nb - err;
+   int nb_total = nb;
    Pmsg0(-1, "==== Report ====\n");
-   Pmsg2(-1, "Result %i/%i OK\n", nb - err, nb);
+   /* Do an extra check if the expected variable is set */
+   if (expected > 0) {
+      is(nb, expected, "Checking expected tests number");
+   }
+   Pmsg2(-1, "Result %i/%i OK\n", nb_ok, nb_total);
    return err > 0;
 }
 
