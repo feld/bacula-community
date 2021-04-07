@@ -400,8 +400,9 @@ int main()
    MYJCR *next_jcr;
    int count;
    MYCLASS *class1;
-   Unittests("dlist_test");
-   
+   Unittests u("dlist_test");
+   u.set_nb_tests(17579);
+
    class1 = new MYCLASS();
 
    class_chain = New(dlist(class1, &class1->link));
