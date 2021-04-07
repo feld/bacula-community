@@ -271,6 +271,7 @@ int main()
    int i;
    bool check_cont;
    bool check_indx;
+   alist_test.set_nb_tests(78);
 
    log("Initialize tests ...");
    fileset = (FILESET *)malloc(sizeof(FILESET));
