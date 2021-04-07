@@ -55,6 +55,10 @@ extern const bool CUSTOMNAMESPACE;
 extern const char *PLUGINAPI;
 extern const char *BACKEND_CMD;
 
+// custom checkFile() callback
+typedef bRC (*checkFile_t)(bpContext *ctx, char *fname);
+extern checkFile_t checkFile;
+
 // The list of restore options saved to the RestoreObject.
 extern struct ini_items plugin_items_dump[];
 
@@ -101,6 +105,7 @@ public:
    bRC pluginIO(bpContext *ctx, struct io_pkt *io);
    bRC createFile(bpContext *ctx, struct restore_pkt *rp);
    bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
+   bRC checkFile(bpContext *ctx, char *fname);
    bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
    bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
    bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp);
@@ -142,7 +147,6 @@ private:
    bool pluginobjectsent;        // set when startBackupFile handled plugin object and endBackupFile has to check for nextfile
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
-   bool accurate_warning;        // for sending accurate mode warning once */
    COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
    POOL_MEM lname;               // current LSTAT data if any

@@ -61,7 +61,7 @@ static bRC startRestoreFile(bpContext *ctx, const char *cmd);
 static bRC endRestoreFile(bpContext *ctx);
 static bRC createFile(bpContext *ctx, struct restore_pkt *rp);
 static bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
-// Not used! static bRC checkFile(bpContext *ctx, char *fname);
+static bRC metaplugincheckFile(bpContext *ctx, char *fname);
 static bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
 static bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
 static bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp);
@@ -88,7 +88,7 @@ static pFuncs pluginFuncs =
    pluginIO,
    createFile,
    setFileAttributes,
-   NULL,
+   metaplugincheckFile,
    handleXACLdata,
    NULL,                        /* No restore file list */
    NULL,                        /* No checkStream */
@@ -165,7 +165,6 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       pluginobjectsent(false),
       readacl(false),
       readxattr(false),
-      accurate_warning(false),
       fname(PM_FNAME),
       lname(PM_FNAME),
       robjbuf(NULL),
@@ -2428,7 +2427,6 @@ bRC METAPLUGIN::metadataRestore(bpContext *ctx, struct meta_pkt *mp)
 
    if (mp->buf != NULL && mp->buf_len > 0){
       /* send command METADATA */
-      // pm_strcpy(cmd, "METADATA_STREAM\n");
       pm_strcpy(cmd, prepare_metadata_type(mp->type));
       backend.ctx->write_command(ctx, cmd.c_str());
       /* send metadata stream data */
@@ -2442,6 +2440,28 @@ bRC METAPLUGIN::metadataRestore(bpContext *ctx, struct meta_pkt *mp)
       if (!backend.ctx->send_ack(ctx)){
          return bRC_Error;
       }
+   }
+
+   return bRC_OK;
+}
+
+/**
+ * @brief Implements default metaplugin checkFile() callback.
+ *    When fname match plugin configured namespace then it return bRC_Seen by default
+ *    or calls custom checkFile() callback defined by backend developer.
+ *
+ * @param ctx for Bacula debug and jobinfo messages
+ * @param fname file name to check
+ * @return bRC bRC_Seen or bRC_OK
+ */
+bRC METAPLUGIN::checkFile(bpContext * ctx, char *fname)
+{
+   if ((!CUSTOMNAMESPACE && isourpluginfname(PLUGINPREFIX, fname)) || (CUSTOMNAMESPACE && isourpluginfname(PLUGINNAMESPACE, fname)))
+   {
+      if (::checkFile != NULL){
+         return ::checkFile(ctx, fname);
+      }
+      return bRC_Seen;
    }
 
    return bRC_OK;
@@ -2664,4 +2684,18 @@ static bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp)
    DMSG2(ctx, D1, "metadataRestore: %d %d\n", mp->total_size, mp->type);
    METAPLUGIN *self = pluginclass(ctx);
    return self->metadataRestore(ctx, mp);
+}
+
+/*
+ * checkFile used for accurate mode backup
+ *
+ * TODO: currently it is not working because a checking is performed against ldap plugin, not msad
+ */
+static bRC metaplugincheckFile(bpContext * ctx, char *fname)
+{
+   ASSERT_CTX;
+
+   DMSG(ctx, D3, "checkFile for: %s\n", fname);
+   METAPLUGIN *self = pluginclass(ctx);
+   return self->checkFile(ctx, fname);
 }

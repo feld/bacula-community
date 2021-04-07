@@ -156,6 +156,31 @@ inline bool isourplugincommand(const char *pluginprefix, const char *command)
    return false;
 }
 
+/**
+ * @brief Checks if fname is a part of pluginprefix namespace
+ *
+ * @param pluginprefix plugin namespace prefix
+ * @param fname file name to check
+ * @return true when it matches
+ * @return false when not
+ */
+inline bool isourpluginfname(const char *pluginprefix, const char *fname)
+{
+   /* check if it is our Plugin fname */
+   if (strncmp(pluginprefix, fname, strlen(pluginprefix)) == 0){
+      return true;
+   }
+   char _fn[strlen(pluginprefix) + 2];
+   _fn[0] = '/';
+   _fn[1] = '\0';
+   strcat(_fn, pluginprefix);
+   if (strncmp(_fn, fname, strlen(_fn)) == 0){
+      return true;
+   }
+
+   return false;
+}
+
 alist * plugutil_str_split_to_alist(const char * str, const char sep = '.');
 
 /* plugin parameters manipulation */

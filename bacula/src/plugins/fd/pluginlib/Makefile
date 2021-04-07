@@ -11,6 +11,7 @@ include ../Makefile.inc
 
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
 LIBBACOBJ = $(LIBDIR)/libbac.la
+LIBBACCFGOBJ = $(LIBDIR)/libbaccfg.la
 
 PLUGINLIBSSRC = pluginlib.cpp pluginlib.h
 PLUGINLIBSOBJ = $(filter %.lo,$(PLUGINLIBSSRC:.cpp=.lo))
@@ -36,6 +37,8 @@ SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTES
 SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo))
 SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
 SMARTPTRTESTOBJ = $(filter %.lo,$(SMARTPTRTEST:.cpp=.lo))
+METAPLUGINTEST = metaplugin_test.cpp $(METAPLUGINSRC)
+METAPLUGINTESTOBJ = $(filter %.lo,$(METAPLUGINTEST:.cpp=.lo)) $(PTCOMMOBJ) $(PLUGINLIBSOBJ) $(METAPLUGINOBJ) $(UNITTESTSOBJ)
 
 TESTMETAPLUGINBACKENDSRC = test_metaplugin_backend.c
 TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
@@ -67,7 +70,10 @@ $(UNITTESTSOBJ):
 $(LIBBACOBJ):
 	$(MAKE) -C $(LIBDIR) libbac.la
 
-test_metaplugin_backend.lo: Makefile $(TESTMETAPLUGINBACKENDSRC)
+$(LIBBACCFGOBJ):
+	$(MAKE) -C $(LIBDIR) libbaccfg.la
+
+test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
 	@echo "Compiling backend $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DLOGDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
@@ -90,6 +96,12 @@ commctx_test: Makefile $(COMMCTXTESTOBJ) $(COMMCTXTEST) $(UNITTESTSOBJ) $(LIBBAC
 iso8601_test: Makefile $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
+
+metaplugin_test: $(METAPLUGINTESTOBJ) $(LIBBACOBJ)
+	@echo "Building $@ ..."
+	$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) $(LIBBACCFGOBJ) $(LIBBACOBJ) $(METAPLUGINTESTOBJ) -o $@
+
+#$(NO_ECHO)
 
 install: all
 	$(MKDIR) $(DESTDIR)$(plugindir)
