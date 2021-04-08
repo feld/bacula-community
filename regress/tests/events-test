@@ -76,6 +76,9 @@ llist events type=bweb
 llist events source=*Console*
 @$out $tmp/log8.out
 llist events code=DJ0001
+@# Sending .jlist output only in log9.out
+@output $tmp/log9.out
+.jlist events
 quit
 END_OF_DATA
 
@@ -173,4 +176,19 @@ if [ $? != 0 ]; then
     print_debug "ERROR: Should find messages from the FD in the catalog in $tmp/log5.out"
     estat=1
 fi
+
+grep -i unixtime $tmp/log9.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find unixtime in json output in $tmp/log9.out"
+    estat=1
+fi
+
+grep "\[{" $tmp/log9.out > $tmp/log-json.out
+$bperl -e "check_json('$tmp/log-json.out')"
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find valid json output in $tmp/log-json.out and $tmp/log9.out"
+    estat=1
+fi
+
+
 end_test
