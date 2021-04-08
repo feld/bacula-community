@@ -15,9 +15,9 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
- */
+*/
 /**
- * @file commctx.h
+ * @file pluginlib.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief Common definitions and utility functions for Inteos plugins.
  * @version 2.1.0

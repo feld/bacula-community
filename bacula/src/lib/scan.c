@@ -51,7 +51,7 @@ char *strip_trailing_junk(char *cmd)
    p = cmd - 1 + strlen(cmd);
    while ((p >= cmd) && (B_ISSPACE(*p) || *p == '\n' || *p == '\r')) {
       *p-- = 0;
-   } 
+   }
    return cmd;
 }
 
