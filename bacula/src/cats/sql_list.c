@@ -606,6 +606,18 @@ void BDB::bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec,
         where.c_str(),
         rec->order ? "DESC" : "ASC",
         str_limit.c_str());
+
+   } else if (type == JSON_LIST) {
+      Mmsg(tmp2, to_unix_timestamp[bdb_get_type_index()], "EventsTime");
+      Mmsg(cmd,
+   "SELECT EventsTime AS Time, %s AS UnixTime, EventsCode AS Code, EventsDaemon AS Daemon, EventsRef AS Ref, EventsType AS Type, EventsSource AS Source, EventsText AS Events "
+     "FROM Events "
+    "%s ORDER BY Events.EventsTime %s %s",
+        tmp2.c_str(),
+        where.c_str(),
+        rec->order ? "DESC" : "ASC",
+        str_limit.c_str());
+
    } else {
       Mmsg(cmd,
    "SELECT EventsTime AS Time, EventsCode AS Code, EventsDaemon AS Daemon, EventsRef AS Ref, EventsType AS Type, EventsSource AS Source, EventsText AS Events "

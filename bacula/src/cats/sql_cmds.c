@@ -1048,6 +1048,15 @@ const char *expired_volumes[] = {
      " %s "
 };
 
+const char *to_unix_timestamp[] = {
+   /* MySQL */
+   "UNIX_TIMESTAMP(%s)",
+   /* PostgreSQL */
+   "EXTRACT(EPOCH FROM %s)",
+   /* SQLite */
+   "strftime('%%s', %s)" 
+};
+
 const char *expires_in[] = {
    /* MySQL */
    "(GREATEST(0, CAST(UNIX_TIMESTAMP(LastWritten) + Media.VolRetention AS SIGNED) - UNIX_TIMESTAMP(NOW())))",

@@ -45,6 +45,7 @@ extern const char CATS_IMP_EXP *create_temp_basefile[];
 extern const char CATS_IMP_EXP *create_temp_new_basefile[];
 extern const char CATS_IMP_EXP *del_MAC;
 extern const char CATS_IMP_EXP *drop_deltabs[];
+extern const char CATS_IMP_EXP *to_unix_timestamp[];
 extern const char CATS_IMP_EXP *expired_volumes[];
 extern const char CATS_IMP_EXP *fill_jobhisto;
 extern const char CATS_IMP_EXP *get_restore_objects;
