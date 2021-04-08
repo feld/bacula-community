@@ -86,7 +86,7 @@ run_bconsole
 
 stop_bacula
 
-nb_total=`grep "code:" $tmp/log8.out | wc -l`
+nb_total=`grep -i "code:" $tmp/log8.out | wc -l`
 nb_found=`grep " DJ0001" $tmp/log8.out | wc -l`
 
 if [ $nb_found != $nb_total ]; then
@@ -94,7 +94,7 @@ if [ $nb_found != $nb_total ]; then
     estat=1
 fi
 
-nb_total=`grep "source:" $tmp/log7.out | wc -l`
+nb_total=`grep -i "source:" $tmp/log7.out | wc -l`
 nb_found=`grep " \\*Console*" $tmp/log7.out | wc -l`
 
 if [ $nb_found != $nb_total ]; then
@@ -102,7 +102,7 @@ if [ $nb_found != $nb_total ]; then
     estat=1
 fi
 
-nb_total=`grep "type:" $tmp/log6.out | wc -l`
+nb_total=`grep -i "type:" $tmp/log6.out | wc -l`
 nb_found=`grep " bweb" $tmp/log6.out | wc -l`
 
 if [ $nb_found != $nb_total ]; then
