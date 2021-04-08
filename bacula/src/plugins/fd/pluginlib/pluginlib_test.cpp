@@ -32,6 +32,13 @@
 bFuncs *bfuncs;
 bInfo *binfo;
 
+struct vectstruct
+{
+   const char *path;
+   bool result;
+   const char *descr;
+};
+
 int main()
 {
    Unittests pluglib_test("pluglib_test");
@@ -97,6 +104,28 @@ int main()
    ok(scan_parameter_str(cmd2, prefix, param), "check scan parameter for char* str match");
    ok(bstrcmp(param.c_str(), fname1) , "check scan parameter for char* str param");
    nok(scan_parameter_str(cmd2, "prefix", param), "check scan parameter for char* str not match");
+
+   const vectstruct testvect1[] = {
+      { "", false, "checking empty" },
+      { "/", false, "checking slash" },
+      { "other", false, "checking other" },
+      { "/tmp", true, "checking local" },
+      { "/tmp/restore", true, "checking local" },
+#ifdef HAVE_WIN32
+      { "c:", true, "checking local win32" },
+      { "d:/", true, "checking local win32" },
+      { "E:/", true, "checking local win32" },
+      { "F:/test", true, "checking local win32" },
+      { "g:/test/restore", true, "checking local win32" },
+#endif
+      { NULL, false, NULL },
+   };
+
+   for (int i = 0; testvect1[i].path != NULL; i++)
+   {
+      bool result = islocalpath(testvect1[i].path);
+      ok(result == testvect1[i].result, testvect1[i].descr);
+   }
 
    return report();
 }

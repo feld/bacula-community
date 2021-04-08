@@ -77,6 +77,14 @@ test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
 	@echo "Compiling backend $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -DLOGDIR=\"$(DESTDIR)$(working_dir)\" -c $<
 
+test_metaplugin_backend_fd: $(TESTMETAPLUGINBACKENDOBJ) test_metaplugin_backend_fd.lo
+	@echo "Building $@ ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) test_metaplugin_backend_fd.lo $(TESTMETAPLUGINBACKENDOBJ) -o $@
+
+test_metaplugin-fd.la: $(PTCOMMOBJ) $(PLUGINLIBSOBJ) $(METAPLUGINOBJ) test_metaplugin-fd.lo
+	@echo "Linking $(@:.la=.so) ..."
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
+
 pluginlib_test: $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@

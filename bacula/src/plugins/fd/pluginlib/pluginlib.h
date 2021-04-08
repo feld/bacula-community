@@ -183,6 +183,25 @@ inline bool isourpluginfname(const char *pluginprefix, const char *fname)
 
 alist * plugutil_str_split_to_alist(const char * str, const char sep = '.');
 
+/**
+ * @brief Verifies if path is local except '/'
+ *
+ * @param path
+ * @return true
+ * @return false
+ */
+inline bool islocalpath(const char *path)
+{
+   bool result = path && strlen(path) > 1;
+   bool spath = path[0] == '/';
+#ifdef HAVE_WIN32
+   bool wpath = isalpha(path[0]) && path[1] == ':' ;   // simple drive letter
+#else
+   bool wpath = false;
+#endif
+   return result && (spath || wpath);
+}
+
 /* plugin parameters manipulation */
 bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const char *value);
 bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const int value);

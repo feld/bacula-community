@@ -40,6 +40,17 @@
 #define PLUGINLIB_METAPLUGIN_H
 
 
+// custom checkFile() callback
+typedef bRC (*checkFile_t)(bpContext *ctx, char *fname);
+
+// metadata handling map
+struct metadataTypeMap
+{
+   const char *command;
+   metadata_type type;
+};
+extern const metadataTypeMap plugin_metadata_map[];
+
 // Plugin Info definitions
 extern const char *PLUGIN_LICENSE;
 extern const char *PLUGIN_AUTHOR;
@@ -48,16 +59,17 @@ extern const char *PLUGIN_VERSION;
 extern const char *PLUGIN_DESCRIPTION;
 
 // Plugin linking time variables
-extern const char *PLUGINPREFIX;
-extern const char *PLUGINNAME;
-extern const char *PLUGINNAMESPACE;
-extern const bool CUSTOMNAMESPACE;
+extern const char *PLUGINPREFIX;       /// is used for prefixing every Job and Debug messages generted by a plugin
+extern const char *PLUGINNAME;         /// should match the backend $pluginname$ used for Handshake procedure
+extern const bool CUSTOMNAMESPACE;     /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
+extern const char *PLUGINNAMESPACE;    /// custom backend plugin namespace used as file name prefix
 extern const char *PLUGINAPI;
 extern const char *BACKEND_CMD;
 
-// custom checkFile() callback
-typedef bRC (*checkFile_t)(bpContext *ctx, char *fname);
-extern checkFile_t checkFile;
+/// defines if metaplugin should handle local filesystem restore with Bacula Core functions
+/// `false` means metaplugin will redirect local restore to backend
+/// `true` means Bacula Core functions will handle local restore
+extern const bool CORELOCALRESTORE;
 
 // The list of restore options saved to the RestoreObject.
 extern struct ini_items plugin_items_dump[];
@@ -65,13 +77,8 @@ extern struct ini_items plugin_items_dump[];
 // the list of valid plugin options
 extern const char *valid_params[];
 
-struct metadataTypeMap
-{
-   const char *command;
-   metadata_type type;
-};
-
-extern const metadataTypeMap plugin_metadata_map[];
+// custom checkFile() callback
+extern checkFile_t checkFile;
 
 /*
  * This is a main plugin API class. It manages a plugin context.

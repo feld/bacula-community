@@ -17,7 +17,7 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
  */
 /**
- * @file metaplugin.h
+ * @file metaplugin.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula metaplugin interface.
  * @version 2.1.0
@@ -2145,10 +2145,14 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
 }
 
 /*
- * The PLUGIN is not using this callback to handle restore.
+ * The PLUGIN is using this callback to handle Core restore.
  */
 bRC METAPLUGIN::startRestoreFile(bpContext *ctx, const char *cmd)
 {
+   if (CORELOCALRESTORE && islocalpath(where)){
+      DMSG0(ctx, DDEBUG, "Forwarding restore to Core\n");
+      return bRC_Core;
+   }
    return bRC_OK;
 }
 
@@ -2594,7 +2598,7 @@ static bRC startRestoreFile(bpContext *ctx, const char *cmd)
 {
    ASSERT_CTX;
 
-   DMSG0(ctx, D1, "startRestoreFile.\n");
+   DMSG1(ctx, D1, "startRestoreFile: %s\n", NPRT(cmd));
    METAPLUGIN *self = pluginclass(ctx);
    return self->startRestoreFile(ctx, cmd);
 }
