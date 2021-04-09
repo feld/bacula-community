@@ -24,17 +24,7 @@ RSYNC_LIBS=@RSYNC_LIBS@
 
 PLUGINLIBOBJ=$(PLUGINLIBDIR)/pluginlib.lo $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo
 
-LDAPSRC = ldap-fd.c ldap-util.c
-MSADSRC = msad-fd.c msad-util.c
-COMMONSRC = ldaputils.c ldap-mod-util.c parseconfig.c utils.c keylist.c ldaplist.c
-LDAPTESTSRC = ldaptest.c
-LDAPOBJ = $(LDAPSRC:.c=.lo) $(PLUGINLIBOBJ)
-MSADOBJ = $(MSADSRC:.c=.lo) $(PLUGINLIBOBJ)
 COMMONOBJ = $(COMMONSRC:.c=.lo)
-LDAPTESTOBJ = $(LDAPTESTSRC:.c=.lo)
-
-# TODO: check with configure
-LDAP_LIBS = -lldap -llber
 
 SWIFTSRC = swift-fd.c swift-fd.h
 TESTSWIFTSRC = test_swift_backend.c
@@ -407,24 +397,11 @@ ndmp_idx_dump: ndmp_idx_dump.c
 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I../..  $(DINCLUDE) $(CFLAGS) ndmp_idx_dump.c
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ ndmp_idx_dump.lo $(DLIB) -lbac -lm $(LIBS) $(OPENSSL_LIBS) -L../../lib
 
-ldap: ldap-fd.la
-
-ldap-fd.la: Makefile $(LDAPOBJ) $(COMMONOBJ)
-	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(LDAPOBJ) $(COMMONOBJ) -o $@ -rpath $(plugindir) -module \
-		-export-dynamic -avoid-version $(LDAP_LIBS)
-
-ldaptest: $(LDAPTESTOBJ) Makefile
-	@echo "Building ldaptest ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) $(LDAP_LDFLAGS) $(LDAP_LIBS) ldaptest.lo -o $@
-
-msad: msad-fd.la
-
-msad-fd.la: Makefile $(MSADOBJ) $(COMMONOBJ)
-	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(MSADOBJ) $(COMMONOBJ) -o $@ -rpath $(plugindir) -module \
-		-export-dynamic -avoid-version $(LDAP_LIBS)
+install-ldaptest:
+	$(MAKE) -C ldap install-ldaptest
 
 install-ldap:
-	$(MAKE) -C ldap install-ldap 
+	$(MAKE) -C ldap install-ldap
 
 install-msad:
 	$(MAKE) -C ldap install-msad
