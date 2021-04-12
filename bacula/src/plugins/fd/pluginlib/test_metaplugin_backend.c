@@ -258,6 +258,7 @@ void perform_backup()
    }
 
    // next file
+   // this file we will restore using Bacula Core functionality, so it is crucial
    write_plugin('I', "TEST6");
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/etc/issue\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
@@ -694,6 +695,8 @@ void perform_restore(){
    int len;
    int fsize;
    bool loopgo = true;
+   bool restore_skip_create = false;
+   bool restore_with_core = false;
 
    if (regress_error_restore_stderr) {
       // test some stderror handling
@@ -729,16 +732,29 @@ void perform_restore(){
       }
       /* check if FNAME then follow file parameters */
       if (strncmp(buf, "FNAME:", 6) == 0) {
+         restore_with_core = strstr(buf, "/_restore_with_core/") != NULL && strstr(buf, "/etc/issue") != NULL;
+         restore_skip_create = strstr(buf, "/_restore_skip_create/") != NULL;
+
          /* we read here a file parameters */
          while (read_plugin(buf) > 0);
-         /* signal OK */
-#if 1
+
+         if (restore_skip_create){
+            // simple skipall
+            write_plugin('I', "TEST5R - create file skipped.");
+            write_plugin('C', "SKIP\n");
+            continue;
+         }
+
+         if (restore_with_core){
+            // signal Core
+            write_plugin('I', "TEST5R - handle file with Core.");
+            write_plugin('C', "CORE\n");
+            continue;
+         }
+
+         // signal OK
          write_plugin('I', "TEST5R - create file ok.");
          write_plugin('C', "OK\n");
-#else
-         write_plugin('I', "TEST5R - create file skipped.");
-         write_plugin('C', "SKIP\n");
-#endif
          continue;
       }
 
@@ -747,6 +763,8 @@ void perform_restore(){
          // handle metadata
          read_plugin_data_stream();
          /* signal OK */
+         LOG("#> METADATA_STREAM data saved.");
+         write_plugin('I', "TEST5R - metadata saved.");
          write_plugin('C', "OK\n");
          continue;
       }
