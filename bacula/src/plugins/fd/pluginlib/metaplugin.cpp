@@ -2149,10 +2149,6 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
  */
 bRC METAPLUGIN::startRestoreFile(bpContext *ctx, const char *cmd)
 {
-   if (CORELOCALRESTORE && islocalpath(where)){
-      DMSG0(ctx, DDEBUG, "Forwarding restore to Core\n");
-      return bRC_Core;
-   }
    return bRC_OK;
 }
 
@@ -2184,71 +2180,75 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
    POOL_MEM cmd(PM_FNAME);
    char type;
 
-   /* FNAME:$fname$ */
-   bsnprintf(cmd.c_str(), cmd.size(), "FNAME:%s\n", rp->ofname);
-   backend.ctx->write_command(ctx, cmd);
-   DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
-   /* STAT:... */
-   switch (rp->type)
-   {
-   case FT_REGE:
-      type = 'E';
-      break;
-   case FT_DIREND:
-      type = 'D';
-      break;
-   case FT_LNK:
-      type = 'S';
-      break;
-   case FT_LNKSAVED:
-      type = 'L';
-      break;
-   case FT_REG:
-   default:
-      type = 'F';
-      break;
-   }
-   // bsnprintf(cmd.c_str(), cmd.size(), "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size,
-   //           rp->statp.st_uid, rp->statp.st_gid, rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
-   Mmsg(cmd, "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size, rp->statp.st_uid, rp->statp.st_gid,
-             rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
-   backend.ctx->write_command(ctx, cmd);
-   DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
-   /* TSTAMP:... */
-   if (rp->statp.st_atime || rp->statp.st_mtime || rp->statp.st_ctime){
-      // bsnprintf(cmd.c_str(), cmd.size(), "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
-      Mmsg(cmd, "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
-      backend.ctx->write_command(ctx, cmd);
-      DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
-   }
-   /* LSTAT:$link$ */
-   if (type == 'S' && rp->olname != NULL){
-      // bsnprintf(cmd.c_str(), cmd.size(), "LSTAT:%s\n", rp->olname);
-      Mmsg(cmd, "LSTAT:%s\n", rp->olname);
-      backend.ctx->write_command(ctx, cmd);
-      DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
-   }
-   backend.ctx->signal_eod(ctx);
-
-   /* check if backend accepted the file */
-   if (backend.ctx->read_command(ctx, cmd) > 0){
-      DMSG(ctx, DINFO, "createFile:resp: %s\n", cmd.c_str());
-      if (strcmp(cmd.c_str(), "OK") == 0){
-         rp->create_status = CF_EXTRACT;
-      } else
-      if (strcmp(cmd.c_str(), "SKIP") == 0){
-         rp->create_status = CF_SKIP;
-      } else {
-         DMSG(ctx, DERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
-         JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to create file, got: %s\n", cmd.c_str());
-         rp->create_status = CF_ERROR;
-         return bRC_Error;
-      }
+   if (CORELOCALRESTORE && islocalpath(where)){
+      DMSG0(ctx, DDEBUG, "createFile:Forwarding restore to Core\n");
+      rp->create_status = CF_CORE;
    } else {
-      if (backend.ctx->is_error()){
-         /* raise up error from backend */
-         rp->create_status = CF_ERROR;
-         return bRC_Error;
+      /* FNAME:$fname$ */
+      Mmsg(cmd, "FNAME:%s\n", rp->ofname);
+      backend.ctx->write_command(ctx, cmd);
+      DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
+      /* STAT:... */
+      switch (rp->type)
+      {
+      case FT_REGE:
+         type = 'E';
+         break;
+      case FT_DIREND:
+         type = 'D';
+         break;
+      case FT_LNK:
+         type = 'S';
+         break;
+      case FT_LNKSAVED:
+         type = 'L';
+         break;
+      case FT_REG:
+      default:
+         type = 'F';
+         break;
+      }
+      Mmsg(cmd, "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size, rp->statp.st_uid, rp->statp.st_gid,
+               rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
+      backend.ctx->write_command(ctx, cmd);
+      DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
+      /* TSTAMP:... */
+      if (rp->statp.st_atime || rp->statp.st_mtime || rp->statp.st_ctime){
+         Mmsg(cmd, "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
+         backend.ctx->write_command(ctx, cmd);
+         DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
+      }
+      /* LSTAT:$link$ */
+      if (type == 'S' && rp->olname != NULL){
+         Mmsg(cmd, "LSTAT:%s\n", rp->olname);
+         backend.ctx->write_command(ctx, cmd);
+         DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
+      }
+      backend.ctx->signal_eod(ctx);
+
+      /* check if backend accepted the file */
+      if (backend.ctx->read_command(ctx, cmd) > 0){
+         DMSG(ctx, DINFO, "createFile:resp: %s\n", cmd.c_str());
+         if (strcmp(cmd.c_str(), "OK") == 0){
+            rp->create_status = CF_EXTRACT;
+         } else
+         if (strcmp(cmd.c_str(), "SKIP") == 0){
+            rp->create_status = CF_SKIP;
+         } else
+         if (strcmp(cmd.c_str(), "CORE") == 0){
+            rp->create_status = CF_CORE;
+         } else {
+            DMSG(ctx, DERROR, "Wrong backend response to create file, got: %s\n", cmd.c_str());
+            JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to create file, got: %s\n", cmd.c_str());
+            rp->create_status = CF_ERROR;
+            return bRC_Error;
+         }
+      } else {
+         if (backend.ctx->is_error()){
+            /* raise up error from backend */
+            rp->create_status = CF_ERROR;
+            return bRC_Error;
+         }
       }
    }
 
