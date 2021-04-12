@@ -116,12 +116,28 @@ static bDirAuthenticationRegister testregister1 =
    .nsTTL = 0,
 };
 
-struct test_api : public SMARTALLOC {
+struct test_api : public SMARTALLOC
+{
+#if __cplusplus >= 201103L
    POOL_MEM username{PM_NAME};
    POOL_MEM password{PM_NAME};
    POOL_MEM challenge{PM_NAME};
    POOL_MEM challenge_str{PM_NAME};
    int mode{0};
+#else
+   POOL_MEM username;
+   POOL_MEM password;
+   POOL_MEM challenge;
+   POOL_MEM challenge_str;
+   int mode;
+   test_api() :
+      username(PM_NAME),
+      password(PM_NAME),
+      challenge(PM_NAME),
+      challenge_str(PM_NAME),
+      mode(0)
+   {}
+#endif
 };
 
 bRC loadPlugin(bDirInfo *lbinfo, bDirFuncs *lbfuncs, pDirInfo **pinfo, pDirFuncs **pfuncs)
@@ -153,7 +169,7 @@ static bRC newPlugin(bpContext *ctx)
 static bRC freePlugin(bpContext *ctx)
 {
    DMSG0(ctx, DINFO, "freePlugin\n");
-   if (ctx->pContext){
+   if (ctx->pContext) {
       test_api *self = (test_api *)ctx->pContext;
       delete self;
    }
@@ -232,14 +248,12 @@ static bRC handlePluginEvent(bpContext *ctx, bDirEvent *event, void *value)
       switch (self->mode)
       {
       case 0:
-         if (!bstrcmp(self->username.c_str(), "root") || !bstrcmp(self->password.c_str(), "root"))
-         {
+         if (!bstrcmp(self->username.c_str(), "root") || !bstrcmp(self->password.c_str(), "root")) {
             return bRC_Error;
          }
          break;
       case 1:
-         if (!bstrcmp(self->username.c_str(), "bacula") || !bstrcmp(self->password.c_str(), self->challenge.c_str()))
-         {
+         if (!bstrcmp(self->username.c_str(), "bacula") || !bstrcmp(self->password.c_str(), self->challenge.c_str())) {
             return bRC_Error;
          }
          break;
@@ -263,15 +277,16 @@ static bRC getAuthenticationData(bpContext *ctx, const char *param, void **data)
 
    DMSG1(ctx, DINFO, "registering with: %s\n", NPRT(param));
    sscanf(param, PLUGIN_NAME ":%d", &self->mode);
-   switch (self->mode){
-      case 1:
-         DMSG0(ctx, DINFO, "testregister1\n");
-         *padata = &testregister1;
-         break;
-      default:
-         DMSG0(ctx, DINFO, "testregister0\n");
-         *padata = &testregister0;
-         break;
+   switch (self->mode)
+   {
+   case 1:
+      DMSG0(ctx, DINFO, "testregister1\n");
+      *padata = &testregister1;
+      break;
+   default:
+      DMSG0(ctx, DINFO, "testregister0\n");
+      *padata = &testregister0;
+      break;
    }
 
    return bRC_OK;
