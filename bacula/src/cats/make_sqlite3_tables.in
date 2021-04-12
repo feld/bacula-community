@@ -546,7 +546,7 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('I', 'Incomplete Job',25);
 
 -- Initialize Version		 
-INSERT INTO Version (VersionId) VALUES (1023);
+INSERT INTO Version (VersionId) VALUES (1024);
 
 PRAGMA default_cache_size = 100000;
 PRAGMA synchronous = NORMAL;

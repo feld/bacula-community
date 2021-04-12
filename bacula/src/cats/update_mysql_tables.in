@@ -523,4 +523,21 @@ END-OF-DATA
     fi
 fi
 
+if [ "$DBVERSION" -eq 1023 ] ; then
+    if mysql $* -f  <<END-OF-DATA
+USE ${db_name};
+ALTER TABLE Object ADD ObjectStatus BINARY(1) DEFAULT 'U';
+ALTER TABLE Object ADD ObjectCount  INTEGER UNSIGNED DEFAULT 1;
+create index object_status_idx on Object  (ObjectStatus);
+UPDATE Version SET VersionId=1024;
+END-OF-DATA
+    then
+        echo "Update of Bacula MySQL tables 1023 to 1024 succeeded."
+        getVersion
+    else
+        echo "Update of Bacula MySQL tables 1023 to 1024 failed."
+        exit 1
+    fi
+fi
+
 exit 0

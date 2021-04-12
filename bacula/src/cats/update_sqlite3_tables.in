@@ -490,3 +490,21 @@ END-OF-DATA
 	exit 1
     fi
 fi
+
+if [ "$DBVERSION" -eq 1023 ] ; then
+    if sqlite3 -f - -d ${db_name} $* <<END-OF-DATA
+begin;
+ALTER TABLE Object ADD COLUMN ObjectStatus char(1) default 'U';
+ALTER TABLE Object ADD COLUMN ObjectCount integer default 1;
+create index object_status_idx on Object  (ObjectStatus);
+UPDATE Version SET VersionId=1024;
+commit;
+END-OF-DATA
+    then
+	echo "Update of Bacula SQLite3 tables 1023 to 1024 succeeded."
+	DBVERSION=1023
+    else
+	echo "Update of Bacula SQLite3 tables 1023 to 1024 failed."
+	exit 1
+    fi
+fi

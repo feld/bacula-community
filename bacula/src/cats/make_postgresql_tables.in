@@ -68,6 +68,7 @@ create index object_category_idx on Object (ObjectCategory);
 create index object_type_idx on Object  (ObjectType);
 create index object_name_idx on Object  (ObjectName);
 create index object_source_idx on Object  (ObjectSource);
+create index object_status_idx on Object  (ObjectStatus);
 
 CREATE TABLE Events
 (
@@ -553,7 +554,7 @@ CREATE UNIQUE INDEX snapshot_idx ON Snapshot (Device text_pattern_ops,
 					      Volume text_pattern_ops,
 					      Name text_pattern_ops);
 
-INSERT INTO Version (VersionId) VALUES (1023);
+INSERT INTO Version (VersionId) VALUES (1024);
 
 -- Make sure we have appropriate permissions
 

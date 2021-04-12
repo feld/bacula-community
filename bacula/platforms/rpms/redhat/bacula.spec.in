@@ -1135,7 +1135,7 @@ if mysql 2>/dev/null bacula -e 'select * from Version;' ; then
       echo "Creating bacula tables..."
       %{script_dir}/make_mysql_tables
 
-  elif [ "$DB_VER" -ge "12" -a "$DB_VER" -lt "1015" ]; then
+  elif [ "$DB_VER" -ge "12" -a "$DB_VER" -lt "1024" ]; then
       echo "This release requires an upgrade to your bacula database."
       echo "Backing up your current database..."
       mysqldump -f --opt bacula | bzip2 > %{working_dir}/bacula_backup.sql.bz2
@@ -1189,7 +1189,7 @@ if echo 'select * from Version;' | su - postgres -c 'psql bacula' 2>/dev/null; t
       echo "Granting privileges for PostgreSQL user bacula..."
       su - postgres -c %{script_dir}/grant_postgresql_privileges
 
-  elif [ "$DB_VER" -ge "12" -a "$DB_VER" -lt "1015" ]; then
+  elif [ "$DB_VER" -ge "12" -a "$DB_VER" -lt "1024" ]; then
       echo "This release requires an upgrade to your bacula database."
       echo "Backing up your current database..."
       su - postgres -c 'pg_dump bacula' | bzip2 > %{working_dir}/bacula_backup.sql.bz2

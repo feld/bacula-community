@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Shell script to update MySQL
+#
+echo " "
+echo "This script will update a Bacula MySQL database from version 1023 to 1024"
+echo " "
+bindir=@MYSQL_BINDIR@
+PATH="$bindir:$PATH"
+db_name=${db_name:-@db_name@}
+
+mysql $* -D ${db_name} -e "select VersionId from Version\G" >/tmp/$$
+DBVERSION=`sed -n -e 's/^VersionId: \(.*\)$/\1/p' /tmp/$$`
+if [ $DBVERSION != 1023 ] ; then
+   echo " "
+   echo "The existing database is version $DBVERSION !!"
+   echo "This script can only update an existing version 1023 database to version 1024."
+   echo "Error. Cannot upgrade this database."
+   echo " "
+   exit 1
+fi
+
+if mysql $* -f  <<END-OF-DATA
+USE ${db_name};
+ALTER TABLE Object ADD ObjectStatus BINARY(1) DEFAULT 'U';
+ALTER TABLE Object ADD ObjectCount  INTEGER UNSIGNED DEFAULT 1;
+create index object_status_idx on Object  (ObjectStatus);
+UPDATE Version SET VersionId=1024;
+END-OF-DATA
+then
+   echo "Update of Bacula MySQL tables 1023 to 1024 succeeded."
+   getVersion
+else
+   echo "Update of Bacula MySQL tables 1023 to 1024 failed."
+   exit 1
+fi
+
+exit 0
