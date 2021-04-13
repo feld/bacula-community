@@ -238,6 +238,26 @@ END_OF_DATA
 
 run_bconsole
 
+# restore with metadata skip
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Restore
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/rlog5.out
+setdebug level=500 client=$CLIENT trace=1
+restore fileset=$FilesetBackup5 where=${cwd}/tmp/_restore_skip_metadata/ select all storage=File done
+yes
+wait
+messages
+llist job=RestoreFiles
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
 # and finally test listing mode
 TEST=1
 for ppath in / containers containers/bucket1 containers/bucket2
@@ -372,10 +392,19 @@ RET=$(grep "jobstatus:" ${cwd}/tmp/rlog4.out | tail -1 | awk '{print $2}')
 REND=$(grep -w -c "TESTEND" ${cwd}/tmp/rlog4.out)
 diff ${cwd}/tmp/_restore_with_core/*/bucket/*/etc/issue /etc/issue > /dev/null 2>&1
 RDIFF=$?
-if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ] || [ $RDIFF -ne 0 ]
+if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ] || [ "$RDIFF" -ne 0 ]
 then
-   echo "rlog4" "$RET" "$REND"
+   echo "rlog4" "$RET" "$REND" "$RDIFF"
    rstat=4
+fi
+
+RET=$(grep "jobstatus:" ${cwd}/tmp/rlog5.out | tail -1 | awk '{print $2}')
+REND=$(grep -w -c "TESTEND" ${cwd}/tmp/rlog5.out)
+RSKIP=$(grep -c "metadata select skip restore" ${cwd}/tmp/rlog5.out)
+if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ] || [ "$RSKIP" -ne 1 ]
+then
+   echo "rlog5" "$RET" "$REND" "$RSKIP"
+   rstat=5
 fi
 
 end_test

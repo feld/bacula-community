@@ -697,6 +697,7 @@ void perform_restore(){
    bool loopgo = true;
    bool restore_skip_create = false;
    bool restore_with_core = false;
+   bool restore_skip_metadata = false;
 
    if (regress_error_restore_stderr) {
       // test some stderror handling
@@ -734,6 +735,7 @@ void perform_restore(){
       if (strncmp(buf, "FNAME:", 6) == 0) {
          restore_with_core = strstr(buf, "/_restore_with_core/") != NULL && strstr(buf, "/etc/issue") != NULL;
          restore_skip_create = strstr(buf, "/_restore_skip_create/") != NULL;
+         restore_skip_metadata = strstr(buf, "/_restore_skip_metadata/") != NULL;
 
          /* we read here a file parameters */
          while (read_plugin(buf) > 0);
@@ -764,6 +766,13 @@ void perform_restore(){
          read_plugin_data_stream();
          /* signal OK */
          LOG("#> METADATA_STREAM data saved.");
+
+         if (restore_skip_metadata){
+            write_plugin('I', "TEST5R - metadata select skip restore.");
+            write_plugin('C', "SKIP\n");
+            continue;
+         }
+
          write_plugin('I', "TEST5R - metadata saved.");
          write_plugin('C', "OK\n");
          continue;
