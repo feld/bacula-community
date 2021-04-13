@@ -154,6 +154,7 @@ private:
    bool pluginobjectsent;        // set when startBackupFile handled plugin object and endBackupFile has to check for nextfile
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
+   bool skipextract;             // got SKIP response from backend, so we should artificially skip it for backend
    COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
    POOL_MEM lname;               // current LSTAT data if any

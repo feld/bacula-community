@@ -165,6 +165,7 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       pluginobjectsent(false),
       readacl(false),
       readxattr(false),
+      skipextract(false),
       fname(PM_FNAME),
       lname(PM_FNAME),
       robjbuf(NULL),
@@ -2180,6 +2181,7 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
    POOL_MEM cmd(PM_FNAME);
    char type;
 
+   skipextract = false;
    if (CORELOCALRESTORE && islocalpath(where)){
       DMSG0(ctx, DDEBUG, "createFile:Forwarding restore to Core\n");
       rp->create_status = CF_CORE;
@@ -2234,6 +2236,7 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
          } else
          if (strcmp(cmd.c_str(), "SKIP") == 0){
             rp->create_status = CF_SKIP;
+            skipextract = true;
          } else
          if (strcmp(cmd.c_str(), "CORE") == 0){
             rp->create_status = CF_CORE;
@@ -2296,33 +2299,40 @@ void METAPLUGIN::setup_backend_command(bpContext *ctx, POOL_MEM &exepath)
  */
 bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
 {
-   switch (xacl->func){
-      case BACL_BACKUP:
-         if (readacl){
-            DMSG0(ctx, DINFO, "bacl_backup\n");
-            xacl->count = acldatalen;
-            xacl->content = acldata.c_str();
-            readacl= false;
-         } else {
-            xacl->count = 0;
+   switch (xacl->func)
+   {
+   case BACL_BACKUP:
+      if (readacl){
+         DMSG0(ctx, DINFO, "bacl_backup\n");
+         xacl->count = acldatalen;
+         xacl->content = acldata.c_str();
+         readacl= false;
+      } else {
+         xacl->count = 0;
+      }
+      break;
+   case BACL_RESTORE:
+      DMSG0(ctx, DINFO, "bacl_restore\n");
+         if (!skipextract){
+            return perform_write_acl(ctx, xacl);
          }
          break;
-      case BACL_RESTORE:
-         DMSG0(ctx, DINFO, "bacl_restore\n");
-         return perform_write_acl(ctx, xacl);
-      case BXATTR_BACKUP:
-         if (readxattr){
-            DMSG0(ctx, DINFO, "bxattr_backup\n");
-            xacl->count = xattrdatalen;
-            xacl->content = xattrdata.c_str();
-            readxattr= false;
-         } else {
-            xacl->count = 0;
-         }
-         break;
-      case BXATTR_RESTORE:
-         DMSG0(ctx, DINFO, "bxattr_restore\n");
+   case BXATTR_BACKUP:
+      if (readxattr){
+         DMSG0(ctx, DINFO, "bxattr_backup\n");
+         xacl->count = xattrdatalen;
+         xacl->content = xattrdata.c_str();
+         readxattr= false;
+      } else {
+         xacl->count = 0;
+      }
+      break;
+   case BXATTR_RESTORE:
+      DMSG0(ctx, DINFO, "bxattr_restore\n");
+      if (!skipextract){
          return perform_write_xattr(ctx, xacl);
+      }
+      break;
    }
 
    return bRC_OK;
@@ -2427,25 +2437,45 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
  */
 bRC METAPLUGIN::metadataRestore(bpContext *ctx, struct meta_pkt *mp)
 {
-   POOL_MEM cmd(PM_FNAME);
+   if (!skipextract){
+      POOL_MEM cmd(PM_FNAME);
 
-   if (mp->buf != NULL && mp->buf_len > 0){
-      /* send command METADATA */
-      pm_strcpy(cmd, prepare_metadata_type(mp->type));
-      backend.ctx->write_command(ctx, cmd.c_str());
-      /* send metadata stream data */
-      DMSG1(ctx, DINFO, "writeMetadata: %i\n", mp->buf_len);
-      int rc = backend.ctx->write_data(ctx, (char*)mp->buf, mp->buf_len);
-      if (rc < 0){
-         /* got some error */
-         return bRC_Error;
-      }
-      /* signal end of metadata stream to restore and get ack */
-      if (!backend.ctx->send_ack(ctx)){
-         return bRC_Error;
+      if (mp->buf != NULL && mp->buf_len > 0){
+         /* send command METADATA */
+         pm_strcpy(cmd, prepare_metadata_type(mp->type));
+         backend.ctx->write_command(ctx, cmd.c_str());
+         /* send metadata stream data */
+         DMSG1(ctx, DINFO, "writeMetadata: %i\n", mp->buf_len);
+         int rc = backend.ctx->write_data(ctx, (char*)mp->buf, mp->buf_len);
+         if (rc < 0){
+            /* got some error */
+            return bRC_Error;
+         }
+
+         // signal end of metadata stream to restore and get ack
+         backend.ctx->signal_eod(ctx);
+
+         // check if backend accepted the file
+         if (backend.ctx->read_command(ctx, cmd) > 0) {
+            DMSG(ctx, DINFO, "metadataRestore:resp: %s\n", cmd.c_str());
+            if (bstrcmp(cmd.c_str(), "SKIP")) {
+               // SKIP!
+               skipextract = true;
+               return bRC_Skip;
+            }
+            if (!bstrcmp(cmd.c_str(), "OK")) {
+               DMSG(ctx, DERROR, "Wrong backend response to metadataRestore, got: %s\n", cmd.c_str());
+               JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to metadataRestore, got: %s\n", cmd.c_str());
+               return bRC_Error;
+            }
+         } else {
+            if (backend.ctx->is_error()) {
+               // raise up error from backend
+               return bRC_Error;
+            }
+         }
       }
    }
-
    return bRC_OK;
 }
 

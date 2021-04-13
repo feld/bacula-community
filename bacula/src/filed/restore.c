@@ -896,6 +896,7 @@ void do_restore(JCR *jcr)
       case STREAM_XACL_HURD_DEFAULT:
       case STREAM_XACL_HURD_ACCESS:
       case STREAM_XACL_PLUGIN_ACL:
+         // here we can simply skip this stream if rctx.extract is false, right?
       case STREAM_XACL_GPFS_ACL_DEFAULT:
       case STREAM_XACL_GPFS_ACL_ACCESS:
          /*
@@ -929,6 +930,7 @@ void do_restore(JCR *jcr)
          break;
 
       case STREAM_XACL_PLUGIN_XATTR:
+         // here we can simply skip this stream if rctx.extract is false, right?
       case STREAM_XACL_HURD_XATTR:
       case STREAM_XACL_IRIX_XATTR:
       case STREAM_XACL_TRU64_XATTR:
@@ -1031,6 +1033,7 @@ void do_restore(JCR *jcr)
       case STREAM_PLUGIN_META_BLOB:
       case STREAM_PLUGIN_META_CATALOG:
          {
+            // here we can simply skip this stream if rctx.extract is false, right?
             if (!jcr->plugin) {
                Dmsg0(10, "No plugin related to metadata packet found, metadata restore failed!\n");
                goto get_out;
@@ -1050,11 +1053,19 @@ void do_restore(JCR *jcr)
             }
 
             int rc = plug_func(jcr->plugin)->metadataRestore(jcr->plugin_ctx, &mp);
-            if (rc != bRC_OK) {
+            switch (rc)
+            {
+            case bRC_Skip:
+               Dmsg0(200, "metadata:rctx.extract = false\n");
+               rctx.extract = false;
+               bclose(&rctx.bfd);
+               break;
+            case bRC_OK:
+               break;
+            default:
                Jmsg(jcr, M_ERROR, 0, _("Plugin metadataRestore call failed, err: %d\n"), rc);
                goto get_out;
             }
-
             break;
          }
 

@@ -791,7 +791,7 @@ bool PTCOMM::send_ack(bpContext *ctx)
 
    // check if backend response with OK
    if (bstrcmp(buf.c_str(), "OK")){
-      // great ACk confirmed
+      // great ACK confirmed
       return true;
    }
 

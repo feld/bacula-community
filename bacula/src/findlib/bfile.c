@@ -152,10 +152,6 @@ const char *stream_to_ascii(int stream)
          return _("Restore Object");
       case STREAM_PLUGIN_OBJECT:
          return _("Plugin Object");
-      case STREAM_PLUGIN_META_BLOB:
-         return _("Plugin metadata (binary)");
-      case STREAM_PLUGIN_META_CATALOG:
-         return _("Plugin metadata (catalog)");
       case STREAM_XACL_AIX_TEXT:
          return _("AIX ACL attribs");
       case STREAM_XACL_DARWIN_ACCESS:
@@ -216,6 +212,10 @@ const char *stream_to_ascii(int stream)
          return _("Linux Extended attribs");
       case STREAM_XACL_NETBSD_XATTR:
          return _("NetBSD Extended attribs");
+      case STREAM_PLUGIN_META_BLOB:
+         return _("Plugin Metadata Blob");
+      case STREAM_PLUGIN_META_CATALOG:
+         return _("Plugin Metadata Catalog");
       default:
          sprintf(buf, "%d", stream);
          return (const char *)buf;
