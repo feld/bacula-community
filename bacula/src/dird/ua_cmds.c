@@ -131,7 +131,7 @@ static struct cmdstruct commands[] = {                                      /* C
 
  { NT_("label"),      label_cmd,     _("Label a tape"), NT_("storage=<storage> volume=<vol> pool=<pool> slot=<slot> drive=<nb> barcodes [yes]"), false},
  { NT_("list"),       list_cmd,      _("List objects from catalog"),
-   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name>] [job=<name>] [tag=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [limit=<n>] [order=<asc|desc>]|\n"
+   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name>] [job=<name>] [tag=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [days=<n>] [hours=<n>] [limit=<n>] [order=<asc|desc>]|\n"
        "\tjobtotals | pools | volume | media <pool=pool-name> | files [type=<deleted|all>] jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot | \n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"

@@ -760,6 +760,12 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
       append_filter(&where, tmp);
    }
 
+   if (jr->FromDate[0]) {
+      bdb_escape_string(jcr, esc, jr->FromDate, strlen(jr->FromDate));
+      Mmsg(tmp, " Job.StartTime >= '%s' ", esc);
+      append_filter(&where, tmp);
+   }
+
    where_tmp = get_acls(DB_ACL_BIT(DB_ACL_CLIENT)  |
                         DB_ACL_BIT(DB_ACL_JOB)     |
                         DB_ACL_BIT(DB_ACL_FILESET),

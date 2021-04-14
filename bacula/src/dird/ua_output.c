@@ -355,6 +355,27 @@ int list_cmd(UAContext *ua, const char *cmd)
    }
 }
 
+/* Simple helper to setup date used for filtering records.
+ * Value can be passed as a days or hours count */
+static bool setup_start_date(const char *val, bool days, char *dest, uint32_t dest_len)
+{
+   time_t stime;
+   struct tm tm;
+   int hours_count;
+
+   if (!is_an_integer(val)) {
+      return false;
+   }
+
+   /* Do we have hours or days count */
+   hours_count = days ? 24 : 1;
+   stime = time(NULL) - atoi(val) * hours_count * 60*60;
+   (void)localtime_r(&stime, &tm);
+   strftime(dest, dest_len, "%Y-%m-%d %H:%M:%S", &tm);
+
+   return true;
+}
+
 static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 {
    POOLMEM *VolumeName;
@@ -421,6 +442,16 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             if(get_client_dbr(ua, &cr, JT_BACKUP_RESTORE)) {
                jr.ClientId = cr.ClientId;
             }
+         }
+      } else if (strcasecmp(ua->argk[j], NT_("days")) == 0 && ua->argv[j]) {
+         if (!setup_start_date(ua->argv[j], true, jr.FromDate, sizeof(jr.FromDate))) {
+            ua->error_msg(_("Expected integer passed as a days count, got: %s\n"), ua->argv[j]);
+            return 1;
+         }
+      } else if (strcasecmp(ua->argk[j], NT_("hours")) == 0 && ua->argv[j]) {
+         if (!setup_start_date(ua->argv[j], false, jr.FromDate, sizeof(jr.FromDate))) {
+            ua->error_msg(_("Expected integer passed as a hours count, got: %s\n"), ua->argv[j]);
+            return 1;
          }
       }
    }
@@ -818,8 +849,6 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
       } else if (strcasecmp(ua->argk[i], NT_("events")) == 0) {
          EVENTS_DBR event;
-         time_t stime;
-         struct tm tm;
 
          for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], NT_("type")) == 0 && ua->argv[j]) {
@@ -833,10 +862,15 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                event.order = bstrcasecmp(ua->argv[j], "DESC") == 0;
 
             } else if (strcasecmp(ua->argk[j], NT_("days")) == 0 && ua->argv[j]) {
-               stime = time(NULL) - atoi(ua->argv[j]) * 24*60*60;
-               (void)localtime_r(&stime, &tm);
-               strftime(event.start, sizeof(event.start), "%Y-%m-%d %H:%M:%S", &tm);
-
+               if (!setup_start_date(ua->argv[j], true, event.start, sizeof(event.start))) {
+                  ua->error_msg(_("Expected integer passed as a days count, got: %s\n"), ua->argv[j]);
+                  return 1;
+               }
+            } else if (strcasecmp(ua->argk[j], NT_("hours")) == 0 && ua->argv[j]) {
+               if (!setup_start_date(ua->argv[j], false, event.start, sizeof(event.start))) {
+                  ua->error_msg(_("Expected integer passed as a hours count, got: %s\n"), ua->argv[j]);
+                  return 1;
+               }
             } else if (strcasecmp(ua->argk[j], NT_("start")) == 0 && ua->argv[j]) {
                bstrncpy(event.start, ua->argv[j], sizeof(event.start)); /* TODO: check format */
 
@@ -860,6 +894,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
       } else if (strcasecmp(ua->argk[i], NT_("limit")) == 0
                  || strcasecmp(ua->argk[i], NT_("days")) == 0
+                 || strcasecmp(ua->argk[i], NT_("hours")) == 0
                  || strcasecmp(ua->argk[i], NT_("joberrors")) == 0
                  || strcasecmp(ua->argk[i], NT_("order")) == 0
                  || strcasecmp(ua->argk[i], NT_("jobstatus")) == 0

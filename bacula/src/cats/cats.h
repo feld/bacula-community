@@ -168,6 +168,8 @@ struct JOB_DBR {
    faddr_t rec_addr;
    int32_t FileIndex;                 /* added during Verify */
 
+   char FromDate[MAX_TIME_LENGTH];    /* Used for filtering job records ('days' and 'hours' in list cmd) */
+
    int     CorrNbJob;                 /* used by dbd_get_job_statistics() */
    int     CorrJobBytes;              /* used by dbd_get_job_statistics() */
    int     CorrJobFiles;              /* used by dbd_get_job_statistics() */
