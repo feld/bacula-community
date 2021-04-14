@@ -1381,9 +1381,10 @@ void
 t_msg(const char *file, int line, int64_t level, const char *fmt,...)
 {
     char      buf[5000];
-    int       len;
+    int       len = 0;
     va_list   arg_ptr;
     int       details = TRUE;
+    utime_t   mtime;
 
     level = level & ~DT_ALL;    /* level should be tag free */
 
@@ -1395,14 +1396,17 @@ t_msg(const char *file, int line, int64_t level, const char *fmt,...)
     if (level <= debug_level) {
        open_trace_file();
 
+       if (dbg_timestamp) {
+          mtime = time(NULL);
+          bstrftimes(buf+len, sizeof(buf)-len, mtime);
+          len = strlen(buf);
+          buf[len++] = ' ';
+       }
+
 #ifdef FULL_LOCATION
        if (details) {
-          len = bsnprintf(buf, sizeof(buf), "%s: %s:%d ", my_name, get_basename(file), line);
-       } else {
-          len = 0;
+          len += bsnprintf(buf+len, sizeof(buf)-len, "%s: %s:%d ", my_name, get_basename(file), line);
        }
-#else
-       len = 0;
 #endif
        va_start(arg_ptr, fmt);
        bvsnprintf(buf+len, sizeof(buf)-len, (char *)fmt, arg_ptr);
