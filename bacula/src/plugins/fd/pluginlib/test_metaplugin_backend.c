@@ -258,7 +258,7 @@ void perform_backup()
    }
 
    // next file
-   // this file we will restore using Bacula Core functionality, so it is crucial
+   // this files we will restore using Bacula Core functionality, so it is crucial
    write_plugin('I', "TEST6");
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/etc/issue\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
@@ -269,6 +269,22 @@ void perform_backup()
    signal_eod();
    write_plugin('C', "DATA\n");
    write_plugin('I', "TEST6Data");
+
+   write_plugin('I', "TEST6A");
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/fileforcore\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:F 27 200 200 100640 1\n");
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   signal_eod();
+   write_plugin('C', "DATA\n");
+   write_plugin('I', "TEST6AData");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   signal_eod();
+   write_plugin('I', "TEST6Axattr");
+   write_plugin('C', "XATTR\n");
+   write_plugin('D', "bacula.custom.data=Inteos\nsystem.custom.data=Bacula\n");
+   signal_eod();
 
    // next file
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vm2.iso\n", PLUGINPREFIX, mypid);
@@ -419,7 +435,6 @@ void perform_backup()
    write_plugin('D', "/* here comes another file line    */");
    signal_eod();
 
-#if 0
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/directory.with.xattrs/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
@@ -433,9 +448,7 @@ void perform_backup()
    write_plugin('C', "XATTR\n");
    write_plugin('D', "bacula.custom.data=Inteos\nsystem.custom.data=Bacula\n");
    signal_eod();
-#endif
 
-#if 1
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/acl.dir/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
@@ -446,7 +459,6 @@ void perform_backup()
    write_plugin('C', "ACL\n");
    write_plugin('D', "user::rwx\ngroup::r-x\nother::r-x\n");
    signal_eod();
-#endif
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
@@ -733,7 +745,7 @@ void perform_restore(){
       }
       /* check if FNAME then follow file parameters */
       if (strncmp(buf, "FNAME:", 6) == 0) {
-         restore_with_core = strstr(buf, "/_restore_with_core/") != NULL && strstr(buf, "/etc/issue") != NULL;
+         restore_with_core = strstr(buf, "/_restore_with_core/") != NULL && (strstr(buf, "/etc/issue") != NULL || strstr(buf, "/fileforcore") != NULL);
          restore_skip_create = strstr(buf, "/_restore_skip_create/") != NULL;
          restore_skip_metadata = strstr(buf, "/_restore_skip_metadata/") != NULL;
 
