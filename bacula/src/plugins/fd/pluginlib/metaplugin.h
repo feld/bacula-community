@@ -155,6 +155,7 @@ private:
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
    bool skipextract;             // got SKIP response from backend, so we should artificially skip it for backend
+   int32_t last_type;            // contains the last restore file type
    COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
    POOL_MEM lname;               // current LSTAT data if any
@@ -195,9 +196,9 @@ private:
    bRC perform_read_fstatdata(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_acl(bpContext *ctx);
-   bRC perform_write_acl(bpContext *ctx, struct xacl_pkt * xacl);
+   bRC perform_write_acl(bpContext *ctx, const xacl_pkt * xacl);
    bRC perform_read_xattr(bpContext *ctx);
-   bRC perform_write_xattr(bpContext *ctx, struct xacl_pkt * xacl);
+   bRC perform_write_xattr(bpContext *ctx, const xacl_pkt * xacl);
    bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
    bRC perform_file_index_query(bpContext *ctx);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);

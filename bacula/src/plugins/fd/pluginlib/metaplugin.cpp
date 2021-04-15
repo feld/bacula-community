@@ -166,6 +166,7 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       readacl(false),
       readxattr(false),
       skipextract(false),
+      last_type(0),
       fname(PM_FNAME),
       lname(PM_FNAME),
       robjbuf(NULL),
@@ -1408,6 +1409,27 @@ bRC METAPLUGIN::perform_write_end(bpContext *ctx, struct io_pkt *io)
       }
    }
 
+   if (last_type == FT_DIREND) {
+      struct xacl_pkt xacl;
+
+      if (acldatalen > 0) {
+         xacl.count = acldatalen;
+         xacl.content = acldata.c_str();
+         bRC status = perform_write_acl(ctx, &xacl);
+         if (status != bRC_OK){
+            return status;
+         }
+      }
+      if (xattrdatalen > 0) {
+         xacl.count = xattrdatalen;
+         xacl.content = xattrdata.c_str();
+         bRC status = perform_write_xattr(ctx, &xacl);
+         if (status != bRC_OK){
+            return status;
+         }
+      }
+   }
+
    return bRC_OK;
 }
 
@@ -1566,24 +1588,22 @@ const char * METAPLUGIN::prepare_metadata_type(metadata_type type)
  *    bRC_OK - when ACL data was restored successfully
  *    bRC_Error - on any error during acl data restore
  */
-bRC METAPLUGIN::perform_write_acl(bpContext* ctx, xacl_pkt* xacl)
+bRC METAPLUGIN::perform_write_acl(bpContext* ctx, const xacl_pkt* xacl)
 {
-   int rc;
-   POOL_MEM cmd(PM_FNAME);
-
-   if (xacl->count > 0){
+   if (xacl->count > 0) {
+      POOL_MEM cmd(PM_FNAME);
       /* send command ACL */
       pm_strcpy(cmd, "ACL\n");
       backend.ctx->write_command(ctx, cmd.c_str());
       /* send acls data */
       DMSG1(ctx, DINFO, "writeACL: %i\n", xacl->count);
-      rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
-      if (rc < 0){
+      int rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
+      if (rc < 0) {
          /* got some error */
          return bRC_Error;
       }
       /* signal end of acls data to restore and get ack */
-      if (!backend.ctx->send_ack(ctx)){
+      if (!backend.ctx->send_ack(ctx)) {
          return bRC_Error;
       }
    }
@@ -1605,23 +1625,22 @@ bRC METAPLUGIN::perform_write_acl(bpContext* ctx, xacl_pkt* xacl)
  *    bRC_OK - when XATTR data was restored successfully
  *    bRC_Error - on any error during acl data restore
  */
-bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, xacl_pkt* xacl)
+bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, const xacl_pkt* xacl)
 {
-   POOL_MEM cmd(PM_FNAME);
-
-   if (xacl->count > 0){
+   if (xacl->count > 0) {
+      POOL_MEM cmd(PM_FNAME);
       /* send command XATTR */
       pm_strcpy(cmd, "XATTR\n");
       backend.ctx->write_command(ctx, cmd.c_str());
       /* send xattrs data */
       DMSG1(ctx, DINFO, "writeXATTR: %i\n", xacl->count);
       int rc = backend.ctx->write_data(ctx, xacl->content, xacl->count);
-      if (rc < 0){
+      if (rc < 0) {
          /* got some error */
          return bRC_Error;
       }
       /* signal end of xattrs data to restore and get ack */
-      if (!backend.ctx->send_ack(ctx)){
+      if (!backend.ctx->send_ack(ctx)) {
          return bRC_Error;
       }
    }
@@ -2123,20 +2142,16 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
    }
 
    // check for next file only when no previous error
-   if (!openerror)
-   {
-      if (estimate || pluginobjectsent)
-      {
+   if (!openerror) {
+      if (estimate || pluginobjectsent) {
          pluginobjectsent = false;
-         if (perform_read_metadata(ctx) != bRC_OK)
-         {
+         if (perform_read_metadata(ctx) != bRC_OK) {
             /* signal error */
             return bRC_Error;
          }
       }
 
-      if (nextfile)
-      {
+      if (nextfile) {
          DMSG1(ctx, DINFO, "nextfile %s backup!\n", fname.c_str());
          return bRC_More;
       }
@@ -2182,7 +2197,9 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
    char type;
 
    skipextract = false;
-   if (CORELOCALRESTORE && islocalpath(where)){
+   acldatalen = 0;
+   xattrdatalen = 0;
+   if (CORELOCALRESTORE && islocalpath(where)) {
       DMSG0(ctx, DDEBUG, "createFile:Forwarding restore to Core\n");
       rp->create_status = CF_CORE;
    } else {
@@ -2210,8 +2227,10 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
          type = 'F';
          break;
       }
-      Mmsg(cmd, "STAT:%c %lld %d %d %06o %d %d\n", type, rp->statp.st_size, rp->statp.st_uid, rp->statp.st_gid,
-               rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
+      last_type = rp->type;
+      Mmsg(cmd, "STAT:%c %lld %d %d %06o %d %d\n",
+           type, rp->statp.st_size, rp->statp.st_uid, rp->statp.st_gid,
+           rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
       backend.ctx->write_command(ctx, cmd);
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
       /* TSTAMP:... */
@@ -2302,7 +2321,7 @@ bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
    switch (xacl->func)
    {
    case BACL_BACKUP:
-      if (readacl){
+      if (readacl) {
          DMSG0(ctx, DINFO, "bacl_backup\n");
          xacl->count = acldatalen;
          xacl->content = acldata.c_str();
@@ -2312,9 +2331,15 @@ bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
       }
       break;
    case BACL_RESTORE:
-      DMSG0(ctx, DINFO, "bacl_restore\n");
-         if (!skipextract){
-            return perform_write_acl(ctx, xacl);
+      DMSG1(ctx, DINFO, "bacl_restore: %d\n", last_type);
+         if (!skipextract) {
+            if (last_type != FT_DIREND) {
+               return perform_write_acl(ctx, xacl);
+            } else {
+               DMSG0(ctx, DDEBUG, "delay ACL stream restore\n");
+               acldatalen = xacl->count;
+               pm_memcpy(acldata, xacl->content, acldatalen);
+            }
          }
          break;
    case BXATTR_BACKUP:
@@ -2328,9 +2353,15 @@ bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
       }
       break;
    case BXATTR_RESTORE:
-      DMSG0(ctx, DINFO, "bxattr_restore\n");
-      if (!skipextract){
-         return perform_write_xattr(ctx, xacl);
+      DMSG1(ctx, DINFO, "bxattr_restore: %d\n", last_type);
+      if (!skipextract) {
+         if (last_type != FT_DIREND) {
+            return perform_write_xattr(ctx, xacl);
+         } else {
+            DMSG0(ctx, DDEBUG, "delay XATTR stream restore\n");
+            xattrdatalen = xacl->count;
+            pm_memcpy(xattrdata, xacl->content, xattrdatalen);
+         }
       }
       break;
    }
