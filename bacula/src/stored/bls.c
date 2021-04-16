@@ -47,6 +47,7 @@ static DEV_RECORD *rec;
 static JCR *jcr;
 static SESSION_LABEL sessrec;
 static uint32_t num_files = 0;
+static uint32_t retry_count = 10;
 static ATTR *attr;
 static CONFIG *config;
 
@@ -82,6 +83,7 @@ PROG_COPYRIGHT
 "     -j                 list jobs\n"
 "     -k                 list blocks\n"
 "  (no j or k option)    list saved files\n"
+"     -n                 number of times user is aked to provide correct volume\n"
 "     -L                 dump label\n"
 "     -p                 proceed inspite of errors\n"
 "     -V                 specify Volume names (separated by |)\n"
@@ -119,7 +121,7 @@ int main (int argc, char *argv[])
 
    ff = init_find_files();
 
-   while ((ch = getopt(argc, argv, "b:c:d:e:i:jkLpvV:?EDF:")) != -1) {
+   while ((ch = getopt(argc, argv, "b:c:d:e:i:n:jkLpvV:?EDF:")) != -1) {
       switch (ch) {
       case 'b':
          bsrName = optarg;
@@ -193,6 +195,9 @@ int main (int argc, char *argv[])
          list_blocks = true;
          break;
 
+      case 'n':
+         retry_count = atoi(optarg);
+         break;
       case 'L':
          dump_label = true;
          break;
@@ -253,7 +258,7 @@ int main (int argc, char *argv[])
       if (bsrName) {
          bsr = parse_bsr(NULL, bsrName);
       }
-      jcr = setup_jcr("bls", argv[i], bsr, VolumeName, SD_READ);
+      jcr = setup_jcr("bls", argv[i], bsr, VolumeName, SD_READ, false/*read dedup data*/, retry_count);
       if (!jcr) {
          exit(1);
       }

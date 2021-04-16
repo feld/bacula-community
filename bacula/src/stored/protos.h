@@ -27,7 +27,7 @@ uint32_t new_VolSessionId();
 
 /* From acquire.c */
 DCR     *acquire_device_for_append(DCR *dcr);
-bool     acquire_device_for_read(DCR *dcr);
+bool     acquire_device_for_read(DCR *dcr, uint32_t retry_count=10);
 bool     release_device(DCR *dcr);
 bool     clean_device(DCR *dcr);
 DCR     *new_dcr(JCR *jcr, DCR *dcr, DEVICE *dev, bool writing=true);
@@ -139,7 +139,7 @@ bool is_pool_size_reached(DCR *dcr, bool quiet);
 void    setup_me();
 void    print_ls_output(const char *fname, const char *link, int type, struct stat *statp);
 JCR    *setup_jcr(const char *name, char *dev_name, BSR *bsr,
-                  const char *VolumeName, bool writing, bool read_dedup_data=true);
+                  const char *VolumeName, bool writing, bool read_dedup_data=true, uint32_t retry_count=10);
 void    display_tape_error_status(JCR *jcr, DEVICE *dev);
 
 

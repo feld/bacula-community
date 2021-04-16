@@ -34,7 +34,7 @@
 
 /* Forward referenced functions */
 static DCR *setup_to_access_device(JCR *jcr, char *dev_name,
-   const char *VolumeName, bool writing, bool read_dedup_data);
+   const char *VolumeName, bool writing, bool read_dedup_data, uint32_t retry_count=10);
 static DEVRES *find_device_res(char *device_name, bool writing);
 static void my_free_jcr(JCR *jcr);
 
@@ -88,7 +88,7 @@ void setup_me()
  *  tools (e.g. bls, bextract, bscan, ...)
  */
 JCR *setup_jcr(const char *name, char *dev_name, BSR *bsr,
-               const char *VolumeName, bool writing, bool read_dedup_data)
+               const char *VolumeName, bool writing, bool read_dedup_data, uint32_t retry_count)
 {
    DCR *dcr;
    JCR *jcr = new_jcr(sizeof(JCR), my_free_jcr);
@@ -114,7 +114,7 @@ JCR *setup_jcr(const char *name, char *dev_name, BSR *bsr,
    init_autochangers();
    create_volume_lists();
 
-   dcr = setup_to_access_device(jcr, dev_name, VolumeName, writing, read_dedup_data);
+   dcr = setup_to_access_device(jcr, dev_name, VolumeName, writing, read_dedup_data, retry_count);
    if (!dcr) {
       return NULL;
    }
@@ -132,7 +132,7 @@ JCR *setup_jcr(const char *name, char *dev_name, BSR *bsr,
  *     the caller will do it.
  */
 static DCR *setup_to_access_device(JCR *jcr, char *dev_name,
-              const char *VolumeName, bool writing, bool read_dedup_data)
+              const char *VolumeName, bool writing, bool read_dedup_data, uint32_t retry_count)
 {
    DEVICE *dev;
    char *p;
@@ -190,7 +190,7 @@ static DCR *setup_to_access_device(JCR *jcr, char *dev_name,
 
    if (!writing) {                      /* read only access? */
       Dmsg0(100, "Acquire device for read\n");
-      if (!acquire_device_for_read(dcr)) {
+      if (!acquire_device_for_read(dcr, retry_count)) {
          return NULL;
       }
       jcr->read_dcr = dcr;

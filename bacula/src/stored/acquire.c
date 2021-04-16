@@ -39,7 +39,7 @@ static void set_dcr_from_vol(DCR *dcr, VOL_LIST *vol);
  *  Returns: false if failed for any reason
  *           true  if successful
  */
-bool acquire_device_for_read(DCR *dcr)
+bool acquire_device_for_read(DCR *dcr, uint32_t retry_count)
 {
    DEVICE *dev;
    JCR *jcr = dcr->jcr;
@@ -49,7 +49,7 @@ bool acquire_device_for_read(DCR *dcr)
    bool try_autochanger = true;
    int i;
    int vol_label_status;
-   int retry = 0;
+   uint32_t retry = 0;
 
    Enter(rdbglvl);
    dev = dcr->dev;
@@ -207,7 +207,7 @@ bool acquire_device_for_read(DCR *dcr)
 
    for ( ;; ) {
       /* If not polling limit retries */
-      if (!dev->poll && retry++ > 10) {
+      if (!dev->poll && retry++ >= retry_count) {
          break;
       }
       dev->clear_labeled();              /* force reread of label */

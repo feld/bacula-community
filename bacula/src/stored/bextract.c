@@ -252,7 +252,7 @@ static void do_extract(char *devname)
 
    enable_backup_privileges(NULL, 1);
 
-   jcr = setup_jcr("bextract", devname, bsr, VolumeName, SD_READ, true/*read dedup data*/);
+   jcr = setup_jcr("bextract", devname, bsr, VolumeName, SD_READ, true/*read dedup data*/, 10/*retry count*/);
    if (!jcr) {
       exit(1);
    }
