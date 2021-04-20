@@ -1626,7 +1626,7 @@ int scan_storage_cmd(UAContext *ua, const char *cmd,
     */
    mr->Enabled = 1;
 
-   if (allfrompool && !has_vol) { /* We need a list of volumes */
+   if ((allpools || allfrompool) && !has_vol) { /* We need a list of volumes */
 
       /* We don't take all pools and we don't have a volume in argument,
        * so we need to choose a pool 
