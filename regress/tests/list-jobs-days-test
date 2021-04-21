@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test 'list jobs' command with hours and days count as a filtering parameter
+# Tests for #7488
+#
+TestName="list-jobs-days-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+setdebug tags=sql level=50 dir trace=1
+@$out $tmp/log2.out
+list jobs days=4
+@$out $tmp/log3.out
+list jobs hours=25
+@$out $tmp/log3.out
+list jobs hours=63
+quit
+END_OF_DATA
+
+run_bacula
+
+date_days=`date +"%Y-%m-%d" -d "-4 days"`
+date_hours=`date +"%Y-%m-%d" -d "-25 hours"`
+date_hours2=`date +"%Y-%m-%d" -d "-63 hours"`
+
+
+n=`grep ${date_days} $working/$HOSTNAME-dir.trace | wc -l`
+if [ $n -eq 0 ]; then
+    print_debug "ERROR: Should find at least one debug message related to date: ${date_days}"
+    rstat=1
+fi
+
+n=`grep ${date_hours} $working/$HOSTNAME-dir.trace | wc -l`
+if [ $n -eq 0 ]; then
+    print_debug "ERROR: Should find at least one debug message related to date: ${date_hours}"
+    rstat=1
+fi
+
+n=`grep ${date_hours2} $working/$HOSTNAME-dir.trace | wc -l`
+if [ $n -eq 0 ]; then
+    print_debug "ERROR: Should find at least one debug message related to date: ${date_hours2}"
+    rstat=1
+fi
+
+stop_bacula
+
+end_test
