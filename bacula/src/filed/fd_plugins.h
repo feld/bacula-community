@@ -553,7 +553,7 @@ typedef enum {
 
 #define FD_PLUGIN_MAGIC  "*FDPluginData*"
 
-#define FD_PLUGIN_INTERFACE_VERSION  ( 21 )
+#define FD_PLUGIN_INTERFACE_VERSION  ( 22 )
 
 typedef struct s_pluginInfo {
    uint32_t size;
