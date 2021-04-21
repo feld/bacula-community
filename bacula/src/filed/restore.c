@@ -873,6 +873,14 @@ void do_restore(JCR *jcr)
          }
          break;
 
+      case STREAM_XACL_PLUGIN_ACL:
+         if (!rctx.bfd.cmd_plugin) {
+            Dmsg0(400, "skipping plugin acl stream\n");
+            break;
+         }
+#if __cplusplus >= 201703L
+         [[fallthrough]];
+#endif
       case STREAM_UNIX_ACCESS_ACL:
       case STREAM_UNIX_DEFAULT_ACL:
       case STREAM_XACL_AIX_TEXT:
@@ -895,10 +903,9 @@ void do_restore(JCR *jcr)
       case STREAM_XACL_FREEBSD_NFS4:
       case STREAM_XACL_HURD_DEFAULT:
       case STREAM_XACL_HURD_ACCESS:
-      case STREAM_XACL_PLUGIN_ACL:
-         // here we can simply skip this stream if rctx.extract is false, right?
       case STREAM_XACL_GPFS_ACL_DEFAULT:
       case STREAM_XACL_GPFS_ACL_ACCESS:
+         // TODO: handle plugin objects different, even they share posix file types
          /*
           * Do not restore ACLs when
           * a) The current file is not extracted
@@ -930,7 +937,13 @@ void do_restore(JCR *jcr)
          break;
 
       case STREAM_XACL_PLUGIN_XATTR:
-         // here we can simply skip this stream if rctx.extract is false, right?
+         if (!rctx.bfd.cmd_plugin) {
+            Dmsg0(400, "skipping plugin xattr stream\n");
+            break;
+         }
+#if __cplusplus >= 201703L
+         [[fallthrough]];
+#endif
       case STREAM_XACL_HURD_XATTR:
       case STREAM_XACL_IRIX_XATTR:
       case STREAM_XACL_TRU64_XATTR:
@@ -1032,13 +1045,16 @@ void do_restore(JCR *jcr)
 
       case STREAM_PLUGIN_META_BLOB:
       case STREAM_PLUGIN_META_CATALOG:
+         if (!rctx.bfd.cmd_plugin) {
+            Dmsg0(400, "skipping plugin metadata stream\n");
+            break;
+         }
+         // here we can simply skip this stream if rctx.extract is false, right?
+         if (!jcr->plugin) {
+            Jmsg(jcr, M_ERROR, 0, _("No plugin related to metadata packet found, metadata restore failed!\n"));
+            goto get_out;
+         }
          {
-            // here we can simply skip this stream if rctx.extract is false, right?
-            if (!jcr->plugin) {
-               Dmsg0(10, "No plugin related to metadata packet found, metadata restore failed!\n");
-               goto get_out;
-            }
-
             /* Deserialize and translate data obtained from volume into plugin's metadata packet */
             meta_pkt mp(bmsg->rbuf);
             Dmsg1(400, "[metadata plugin packet] total_size: %d\n", mp.total_size);
@@ -1066,8 +1082,8 @@ void do_restore(JCR *jcr)
                Jmsg(jcr, M_ERROR, 0, _("Plugin metadataRestore call failed, err: %d\n"), rc);
                goto get_out;
             }
-            break;
          }
+         break;
 
       default:
          if (!close_previous_stream(rctx)) {
