@@ -407,19 +407,20 @@ typedef enum {
   bVarVssObject             = 11,
   bVarVssDllHandle          = 12,
   bVarWorkingDir            = 13,
-  bVarWhere                 = 14,
-  bVarRegexWhere            = 15,
-  bVarExePath               = 16,
-  bVarVersion               = 17,
-  bVarDistName              = 18,
-  bVarPrevJobName           = 19,
-  bVarPrefixLinks           = 20,
-  bVarInteractiveSession    = 21,
-  bVarFileIndex             = 22,
-  bVarReplace               = 23,
-  bVarMaxDedupBlockSize     = 24,
-  bVarMinDedupBlockSize     = 25,
-  bVarIsCanceled            = 26
+  bVarPluginDir             = 14,
+  bVarWhere                 = 15,
+  bVarRegexWhere            = 16,
+  bVarExePath               = 17,
+  bVarVersion               = 18,
+  bVarDistName              = 19,
+  bVarPrevJobName           = 20,
+  bVarPrefixLinks           = 21,
+  bVarInteractiveSession    = 22,
+  bVarFileIndex             = 23,
+  bVarReplace               = 24,
+  bVarMaxDedupBlockSize     = 25,
+  bVarMinDedupBlockSize     = 26,
+  bVarIsCanceled            = 27
 } bVariable;
 
 /* Events that are passed to plugin */

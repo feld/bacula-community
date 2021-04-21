@@ -1943,6 +1943,9 @@ static bRC baculaGetValue(bpContext *ctx, bVariable var, void *value)
    case bVarWorkingDir:
       *(void **)value = me->working_directory;
       break;
+   case bVarPluginDir:
+      *(void **)value = me->plugin_directory;
+      break;
    case bVarExePath:
       *(char **)value = exepath;
       break;
@@ -2053,6 +2056,7 @@ static bRC baculaGetValue(bpContext *ctx, bVariable var, void *value)
       break;
    case bVarFDName:             /* get warning with g++ if we missed one */
    case bVarWorkingDir:
+   case bVarPluginDir:
    case bVarExePath:
    case bVarVersion:
    case bVarDistName:
