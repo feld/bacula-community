@@ -265,7 +265,7 @@ public:
       *ObjectCategory = *ObjectType = *ObjectName = *ObjectSource = *ObjectUUID = *ClientName = 0;
       limit = 0;
       order = 0;
-      ObjectStatus = 'U';
+      ObjectStatus = 0;
       ObjectCount = 0;
    };
 
