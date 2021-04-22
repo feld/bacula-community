@@ -49,7 +49,7 @@ run_bconsole
 
 cat <<EOF >${cwd}/tmp/bconcmds
 @$out ${cwd}/tmp/log2.out
-list objects
+llist objects
 quit
 EOF
 
