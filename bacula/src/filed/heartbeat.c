@@ -30,8 +30,6 @@
 
 #define WAIT_INTERVAL 5
 
-extern "C" void *sd_heartbeat_thread(void *arg);
-extern "C" void *dir_heartbeat_thread(void *arg);
 extern bool no_signals;
 
 int handle_command(JCR *jcr, BSOCK *sd);
@@ -41,7 +39,7 @@ int handle_command(JCR *jcr, BSOCK *sd);
  * Send heartbeats to the Director every HB_TIME
  *   seconds.
  */
-extern "C" void *sd_heartbeat_thread(void *arg)
+static void *sd_heartbeat_thread(void *arg)
 {
    int32_t n;
    int32_t m;
@@ -158,8 +156,10 @@ void stop_heartbeat_monitor(JCR *jcr)
    }
 
    if (jcr->hb_status == 1) {               /* Mark as started */
-      jcr->hb_bsock->set_timed_out();       /* set timed_out to terminate read */
-      jcr->hb_bsock->set_terminated();      /* set to terminate read */
+      if (jcr->hb_bsock) {
+         jcr->hb_bsock->set_timed_out();       /* set timed_out to terminate read */
+         jcr->hb_bsock->set_terminated();      /* set to terminate read */
+      }
 
       if (jcr->hb_dir_bsock) {
          jcr->hb_dir_bsock->set_timed_out();     /* set timed_out to terminate read */
@@ -183,7 +183,7 @@ void stop_heartbeat_monitor(JCR *jcr)
  *   is no SD monitoring needed -- e.g. restore and verify Vol
  *   both do their own read() on the SD socket.
  */
-extern "C" void *dir_heartbeat_thread(void *arg)
+static void *dir_heartbeat_thread(void *arg)
 {
    JCR *jcr = (JCR *)arg;
    BSOCK *dir;
@@ -194,7 +194,7 @@ extern "C" void *dir_heartbeat_thread(void *arg)
    /* Get our own local copy */
    dir = dup_bsock(jcr->dir_bsock);
 
-   jcr->hb_bsock = dir;
+   jcr->hb_dir_bsock = dir;
    jcr->hb_status = 1;          // Mark as started
    dir->suppress_error_messages(true);
 
@@ -212,7 +212,6 @@ extern "C" void *dir_heartbeat_thread(void *arg)
       bmicrosleep(30, 0);
    }
    dir->close();
-   jcr->hb_bsock = NULL;
    jcr->hb_status = -1;         // Mark as stopped
    return NULL;
 }
