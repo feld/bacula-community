@@ -71,6 +71,6 @@ check_for_zombie_jobs storage=File
 
 stop_bacula
 check_two_logs
-$rscripts/diff.pl -s $cwd/build -d $tmp/bacula-restores3/$cwd/build
+$rscripts/diff.pl -s $cwd/build -d $tmp/bacula-restores/$cwd/build
 
 end_test
