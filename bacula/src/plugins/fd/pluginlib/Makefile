@@ -23,7 +23,7 @@ PTCOMMSRC = ptcomm.cpp ptcomm.h
 PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
 COMMCTXSRC = commctx.h
 SMARTALISTSRC = smartalist.h
-SMARTPTRSRC = smartalist.h
+SMARTPTRSRC = smartptr.h
 METAPLUGINSRC = metaplugin.cpp metaplugin.h
 METAPLUGINOBJ = $(filter %.lo,$(METAPLUGIN:.cpp=.lo))
 
@@ -121,7 +121,7 @@ libtool-clean:
 
 clean: libtool-clean
 	@rm -f main *.so *.o
-	@rm -f $(COMMONPLUGINTESTS)
+	@rm -f $(COMMONPLUGINTESTS) test_metaplugin_backend_fd
 
 distclean: clean
 

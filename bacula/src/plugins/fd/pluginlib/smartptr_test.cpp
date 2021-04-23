@@ -20,10 +20,10 @@
  * @file smartptr_test.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief Common definitions and utility functions for Inteos plugins - unittest.
- * @version 1.1.0
- * @date 2020-12-23
+ * @version 1.2.0
+ * @date 2021-04-23
  *
- * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #include "pluginlib.h"
@@ -34,11 +34,12 @@ bFuncs *bfuncs;
 bInfo *binfo;
 
 static int referencenumber = 0;
+static int referencenumber2 = 0;
 
 struct testclass
 {
-   testclass() { referencenumber++; };
-   ~testclass() { referencenumber--; };
+   testclass() { referencenumber++; }
+   ~testclass() { referencenumber--; }
 };
 
 int main()
@@ -47,9 +48,30 @@ int main()
 
    // Pmsg0(0, "Initialize tests ...\n");
 
+   referencenumber = 0;    // ensure it is zero
+   {
+      smart_ptr<testclass> ptr;
+      ok(ptr.get() == NULL, "check default constructor");
+      ok(referencenumber == 0, "check refnr");
+   }
+
+   referencenumber = 0;    // ensure it is zero
    {
       smart_ptr<testclass> ptr(new testclass);
       ok(referencenumber == 1, "check smart allocation");
+   }
+
+   ok(referencenumber == 0, "check smart free");
+
+   referencenumber = 0;    // ensure it is zero
+   referencenumber2 = 0;   // ensure it is zero
+   {
+      smart_ptr<testclass> ptr(new testclass);
+      ok(referencenumber == 1, "check first allocation");
+      testclass * other = new testclass;
+      ok(referencenumber == 2, "check other allocation");
+      ptr = other;
+      ok(referencenumber == 1, "check assign operator");
    }
 
    ok(referencenumber == 0, "check smart free");
