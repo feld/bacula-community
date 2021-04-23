@@ -170,6 +170,14 @@ bool do_mac_init(JCR *jcr)
       return false;
    }
 
+   /* Check for bug #7552 - to be sure that user is doing the right thing */
+   if (prev_job->JobType != JT_BACKUP ||
+       prev_job->JobType != JT_JOB_COPY ||
+       prev_job->JobType != JT_MIGRATED_JOB) {
+      Jmsg(jcr, M_FATAL, 0, _("Unexpected type ('%c') of job to copy:\"%s\".\n"),
+           prev_job->JobType, jcr->previous_jr.Name);
+      return false;
+   }
 
    /* Create a write jcr */
    wjcr = jcr->wjcr = new_jcr(sizeof(JCR), dird_free_jcr);
