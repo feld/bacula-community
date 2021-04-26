@@ -857,6 +857,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0 && ua->argv[j]) {
                event.limit = atoi(ua->argv[j]);
 
+            } else if (strcasecmp(ua->argk[j], NT_("offset")) == 0 && ua->argv[j]) {
+               event.offset = atoi(ua->argv[j]);
+
             } else if (strcasecmp(ua->argk[j], NT_("order")) == 0 && ua->argv[j]) {
                /* Other order are tested before */
                event.order = bstrcasecmp(ua->argv[j], "DESC") == 0;
@@ -912,6 +915,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                  || strcasecmp(ua->argk[i], NT_("source")) == 0
                  || strcasecmp(ua->argk[i], NT_("daemon")) == 0
                  || strcasecmp(ua->argk[i], NT_("code")) == 0
+                 || strcasecmp(ua->argk[i], NT_("offset")) == 0
          ) {
          /* Ignore it */
       } else if (strcasecmp(ua->argk[i], NT_("snapshot")) == 0 ||

@@ -550,7 +550,7 @@ void BDB::bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec,
 
    bdb_lock();
    if (rec->limit > 0) {
-      Mmsg(str_limit, " LIMIT %d", rec->limit);
+      Mmsg(str_limit, " LIMIT %d OFFSET %d", rec->limit, rec->offset);
    }
    if (rec->EventsType[0]) {
       int len = strlen(rec->EventsType);

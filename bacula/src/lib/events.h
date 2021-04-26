@@ -24,7 +24,7 @@
 /* Events record -- same format as database */
 class EVENTS_DBR: public SMARTALLOC {
 public:
-   EVENTS_DBR(): EventsId(0), EventsTime(0), EventsRef(0), EventsText(NULL), limit(100), order(0)
+   EVENTS_DBR(): EventsId(0), EventsTime(0), EventsRef(0), EventsText(NULL), limit(100), order(0), offset(0)
       {
          *EventsDaemon = *EventsType = *EventsSource = *EventsCode = *start = *end = 0;
       };
@@ -47,6 +47,7 @@ public:
    /* Extra stuff not in DB */
    int limit;                   /* limit the records to display */
    int order;                   /* ASC/DESC 0/1 */
+   int offset;                  /* offset with limit */
    char start[MAX_TIME_LENGTH]; /* Search between start and end */
    char end[MAX_TIME_LENGTH];
 };
