@@ -79,6 +79,12 @@ llist events code=DJ0001
 @# Sending .jlist output only in log9.out
 @output $tmp/log9.out
 .jlist events
+@$out $tmp/log10.out
+llist events limit=1
+@$out $tmp/log11.out
+llist events limit=1 offset=1
+@$out $tmp/log12.out
+llist events limit=2
 quit
 END_OF_DATA
 
@@ -187,6 +193,38 @@ grep "\[{" $tmp/log9.out > $tmp/log-json.out
 $bperl -e "check_json('$tmp/log-json.out')"
 if [ $? != 0 ]; then
     print_debug "ERROR: Should find valid json output in $tmp/log-json.out and $tmp/log9.out"
+    estat=1
+fi
+
+nb=`grep -i events: $tmp/log10.out | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Need to find only one event in $tmp/log10.out"
+    estat=1
+fi
+
+nb=`grep -i events: $tmp/log11.out | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Need to find only one event in $tmp/log11.out"
+    estat=1
+fi
+
+nb=`grep -i events: $tmp/log12.out | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Need to find only one event in $tmp/log12.out"
+    estat=1
+fi
+
+a=`grep -i events: $tmp/log10.out`
+grep "$a" $tmp/log12.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Need the event $a in $tmp/log12.out"
+    estat=1
+fi
+
+a=`grep -i events: $tmp/log9.out`
+grep "$a" $tmp/log12.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Need the event $a in $tmp/log12.out"
     estat=1
 fi
 
