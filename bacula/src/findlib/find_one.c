@@ -537,6 +537,10 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
       if (ff_pkt->null_output_device || (sizeleft == 0
               && MODE_RALL == (MODE_RALL & ff_pkt->statp.st_mode))) {
          ff_pkt->type = FT_REGE;
+         if (ff_pkt->stat_update) {
+            /* No need do the metadata update for empty files, perform usual backup */
+            ff_pkt->stat_update = 0;
+         }
       } else {
          ff_pkt->type = FT_REG;
       }

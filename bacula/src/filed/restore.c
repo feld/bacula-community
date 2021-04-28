@@ -525,6 +525,7 @@ void do_restore(JCR *jcr)
       switch (rctx.stream) {
       case STREAM_UNIX_ATTRIBUTES:
       case STREAM_UNIX_ATTRIBUTES_EX:
+      case STREAM_UNIX_ATTRIBUTE_UPDATE:
          /* if any previous stream open, close it */
          if (!close_previous_stream(rctx)) {
             goto get_out;

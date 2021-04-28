@@ -104,6 +104,7 @@
 #define STREAM_PLUGIN_OBJECT                   34    /* Plugin object */
 #define STREAM_PLUGIN_META_BLOB                35    /* Plugin metadata (blob) for file being backed up */
 #define STREAM_PLUGIN_META_CATALOG             36    /* Plugin metadata (to be stored in catalog) for file being backed up */
+#define STREAM_UNIX_ATTRIBUTE_UPDATE           37    /* File's updated metadata */
 
 #define STREAM_ADATA_BLOCK_HEADER             200    /* Adata block header */
 #define STREAM_ADATA_RECORD_HEADER            201    /* Adata record header */

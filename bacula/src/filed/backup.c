@@ -523,14 +523,12 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       goto bail_out;
    }
 
-   /** Meta data only for restore object */
-   if (IS_FT_OBJECT(ff_pkt->type)) {
+   if (IS_FT_OBJECT(ff_pkt->type) || /* Meta data only for restore object */
+       ff_pkt->type == FT_DELETED || /* Meta data only for deleted files */
+       bctx.ff_pkt->stat_update) {   /* Only metadata changed for file */
       goto good_rtn;
    }
-   /** Meta data only for deleted files */
-   if (ff_pkt->type == FT_DELETED) {
-      goto good_rtn;
-   }
+
    /** Set up the encryption context and send the session data to the SD */
    if (has_file_data && jcr->crypto.pki_encrypt) {
       if (!crypto_session_send(jcr, sd)) {
@@ -1047,6 +1045,8 @@ bool encode_and_send_attributes(bctx_t &bctx)
       attr_stream = STREAM_RESTORE_OBJECT;
    } else if (ff_pkt->type == FT_PLUGIN_OBJECT) {
       attr_stream = STREAM_PLUGIN_OBJECT;
+   } else if (ff_pkt->stat_update) {
+      attr_stream = STREAM_UNIX_ATTRIBUTE_UPDATE;
    } else {
       attribsEx = attribsExBuf;
       attr_stream = encode_attribsEx(jcr, attribsEx, ff_pkt);
@@ -1201,7 +1201,9 @@ bool encode_and_send_attributes(bctx_t &bctx)
    case FT_REG:
       stat = sd->fsend("%ld %d %s%c%s%c%c%s%c%d%c", jcr->JobFiles,
                ff_pkt->type, ff_pkt->fname, 0, attribs, 0, 0, attribsEx, 0,
-               ff_pkt->delta_seq, 0);
+               /*TODO we may want to increment the delta_seq number intead of hardcode it to 1,
+                * when at some point we start to generate delta sequences also for regular files */
+               ff_pkt->stat_update ? 1 : ff_pkt->delta_seq, 0);
       break;
    default:
       stat = sd->fsend("%ld %d %s%c%s%c%c%s%c%u%c", jcr->JobFiles,

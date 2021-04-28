@@ -736,6 +736,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
    switch (rec->maskedStream) {
    case STREAM_UNIX_ATTRIBUTES:
    case STREAM_UNIX_ATTRIBUTES_EX:
+   case STREAM_UNIX_ATTRIBUTE_UPDATE:
       if (!unpack_attributes_record(bjcr, rec->Stream, rec->data, rec->data_len, attr)) {
          Emsg0(M_ERROR_TERM, 0, _("Cannot continue.\n"));
       }

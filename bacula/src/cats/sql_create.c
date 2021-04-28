@@ -1037,6 +1037,7 @@ bool BDB::bdb_create_attributes_record(JCR *jcr, ATTR_DBR *ar)
     * Make sure we have an acceptable attributes record.
     */
    if (!(ar->Stream == STREAM_UNIX_ATTRIBUTES ||
+         ar->Stream == STREAM_UNIX_ATTRIBUTE_UPDATE ||
          ar->Stream == STREAM_UNIX_ATTRIBUTES_EX)) {
       Mmsg1(&errmsg, _("Attempt to put non-attributes into catalog. Stream=%d\n"),
          ar->Stream);

@@ -445,6 +445,7 @@ bool send_attrs_to_dir(JCR *jcr, DEV_RECORD *rec)
        rec->maskedStream == STREAM_RESTORE_OBJECT     ||
        rec->maskedStream == STREAM_PLUGIN_OBJECT ||
        rec->maskedStream == STREAM_PLUGIN_META_CATALOG ||
+       rec->maskedStream == STREAM_UNIX_ATTRIBUTE_UPDATE  ||
        crypto_digest_stream_type(rec->maskedStream) != CRYPTO_DIGEST_NONE) {
       if (!jcr->no_attributes) {
          BSOCK *dir = jcr->dir_bsock;

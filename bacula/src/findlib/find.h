@@ -168,6 +168,7 @@ struct FF_PKT {
    POOLMEM *ignoredir_fname;          /* used to ignore directories */
    char *digest;                      /* set to file digest when the file is a hardlink */
    struct stat statp;                 /* stat packet */
+   bool stat_update;                  /* Only file's metada needds to be updated */
    uint32_t digest_len;               /* set to the digest len when the file is a hardlink*/
    int32_t digest_stream;             /* set to digest type when the file is hardlink */
    int32_t FileIndex;                 /* FileIndex of this file */

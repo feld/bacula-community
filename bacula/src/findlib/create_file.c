@@ -160,7 +160,8 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
        *  we may blow away a FIFO that is being used to read the
        *  restore data, or we may blow away a partition definition.
        */
-      if (exists && attr->type != FT_RAW && attr->type != FT_FIFO) {
+      if (exists && attr->type != FT_RAW && attr->type != FT_FIFO
+            && attr->stream != STREAM_UNIX_ATTRIBUTE_UPDATE) {
          /* Get rid of old copy */
          Dmsg1(400, "unlink %s\n", attr->ofname);
          if (unlink(attr->ofname) == -1) {
@@ -212,6 +213,7 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
       case FT_REG:
          Dmsg1(100, "Create=%s\n", attr->ofname);
          flags =  O_WRONLY | O_CREAT | O_BINARY | O_EXCL;
+
          if (IS_CTG(attr->statp.st_mode)) {
             flags |= O_CTG;              /* set contiguous bit if needed */
          }
@@ -221,6 +223,11 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
          }
 
          set_fattrs(bfd, &attr->statp);
+         if (attr->stream == STREAM_UNIX_ATTRIBUTE_UPDATE) {
+            /* File is created and has valid contents, we want only to update it's metadata */
+            return CF_CREATED;
+         }
+
          if ((bopen(bfd, attr->ofname, flags, S_IRUSR | S_IWUSR)) < 0) {
             berrno be;
             be.set_errno(bfd->berrno);

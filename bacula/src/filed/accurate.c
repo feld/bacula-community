@@ -319,6 +319,108 @@ bail_out:
 
 }
 
+/* Helper method to calculate actual file's checksum and compare it with the old one.
+ * Return statuses:
+ * 0 - checksum did not change
+ * 1 - checksum changed
+ * -1 - error
+ */
+static int check_checksum_diff(JCR *jcr, FF_PKT *ff_pkt, CurFile *elt)
+{
+   int ret = 0;
+   int digest_stream = STREAM_NONE;
+   DIGEST *digest = NULL;
+   char *fname;
+
+   if (S_ISDIR(ff_pkt->statp.st_mode)) {
+      fname = ff_pkt->link;
+   } else {
+      fname = ff_pkt->fname;
+   }
+
+   /*
+    * The remainder of the function is all about getting the checksum.
+    * First we initialise, then we read files, other streams and Finder Info.
+    */
+   if (ff_pkt->type != FT_LNKSAVED &&
+         (S_ISREG(ff_pkt->statp.st_mode) &&
+          ff_pkt->flags & (FO_MD5|FO_SHA1|FO_SHA256|FO_SHA512)))
+   {
+
+      if (!*elt->chksum && !jcr->rerunning) {
+         Jmsg(jcr, M_WARNING, 0, _("Cannot verify checksum for %s\n"),
+               ff_pkt->fname);
+         ret = -1;
+         goto bail_out;
+      }
+
+      /*
+       * Create our digest context. If this fails, the digest will be set
+       * to NULL and not used.
+       */
+      if (ff_pkt->flags & FO_MD5) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_MD5); /* TODO: With FIPS, MD5 is disabled */
+         digest_stream = STREAM_MD5_DIGEST;
+
+      } else if (ff_pkt->flags & FO_SHA1) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA1);
+         digest_stream = STREAM_SHA1_DIGEST;
+
+      } else if (ff_pkt->flags & FO_SHA256) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA256);
+         digest_stream = STREAM_SHA256_DIGEST;
+
+      } else if (ff_pkt->flags & FO_SHA512) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA512);
+         digest_stream = STREAM_SHA512_DIGEST;
+      }
+
+      /* Did digest initialization fail? */
+      if (digest_stream != STREAM_NONE && digest == NULL) {
+         Jmsg(jcr, M_WARNING, 0, _("%s digest initialization failed\n"),
+               stream_to_ascii(digest_stream));
+      }
+
+      /* compute MD5 or SHA1 hash */
+      if (digest) {
+         char md[CRYPTO_DIGEST_MAX_SIZE];
+         uint32_t size;
+
+         size = sizeof(md);
+
+         if (digest_file(jcr, ff_pkt, digest) != 0) {
+            jcr->JobErrors++;
+
+         } else if (crypto_digest_finalize(digest, (uint8_t *)md, &size)) {
+            char *digest_buf;
+            const char *digest_name;
+
+            digest_buf = (char *)malloc(BASE64_SIZE(size));
+            digest_name = crypto_digest_name(digest);
+
+            bin_to_base64(digest_buf, BASE64_SIZE(size), md, size, true);
+
+            if (strcmp(digest_buf, elt->chksum)) {
+               Dmsg4(dbglvl,"%s      %s chksum  diff. Cat: %s File: %s\n",
+                     fname,
+                     digest_name,
+                     elt->chksum,
+                     digest_buf);
+               ret = 1;
+            }
+            free(digest_buf);
+         }
+      }
+   }
+
+bail_out:
+   if (digest) {
+      crypto_digest_free(digest);
+   }
+
+   return ret;
+}
+
 /*
  * This function is called for each file seen in fileset.
  * We check in file_list hash if fname have been backuped
@@ -330,15 +432,14 @@ bail_out:
  */
 bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
 {
-   int digest_stream = STREAM_NONE;
-   DIGEST *digest = NULL;
-
    struct stat statc;
    int32_t LinkFIc;
    bool stat = false;
    char *opts;
    char *fname;
+   bool only_changed = false, checksum = false;
    CurFile elt;
+   int ret;
 
    ff_pkt->delta_seq = 0;
    ff_pkt->accurate_found = false;
@@ -481,93 +582,66 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
          stat = true;
          break;
       /* TODO: cleanup and factorise this function with verify.c */
-      case '5':                /* compare MD5 */
-      case '1':                /* compare SHA1 */
-      case '2':                /* compare SHA256 */
-      case '3':                /* compare SHA512 */
-        /*
-          * The remainder of the function is all about getting the checksum.
-          * First we initialise, then we read files, other streams and Finder Info.
-          */
-         if (!stat && ff_pkt->type != FT_LNKSAVED &&
-             (S_ISREG(ff_pkt->statp.st_mode) &&
-              ff_pkt->flags & (FO_MD5|FO_SHA1|FO_SHA256|FO_SHA512)))
-         {
-
-            if (!*elt.chksum && !jcr->rerunning) {
-               Jmsg(jcr, M_WARNING, 0, _("Cannot verify checksum for %s\n"),
-                    ff_pkt->fname);
-               stat = true;
-               break;
-            }
-
-            /*
-             * Create our digest context. If this fails, the digest will be set
-             * to NULL and not used.
-             */
-            if (ff_pkt->flags & FO_MD5) {
-               digest = crypto_digest_new(jcr, CRYPTO_DIGEST_MD5); /* TODO: With FIPS, MD5 is disabled */
-               digest_stream = STREAM_MD5_DIGEST;
-
-            } else if (ff_pkt->flags & FO_SHA1) {
-               digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA1);
-               digest_stream = STREAM_SHA1_DIGEST;
-
-            } else if (ff_pkt->flags & FO_SHA256) {
-               digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA256);
-               digest_stream = STREAM_SHA256_DIGEST;
-
-            } else if (ff_pkt->flags & FO_SHA512) {
-               digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA512);
-               digest_stream = STREAM_SHA512_DIGEST;
-            }
-
-            /* Did digest initialization fail? */
-            if (digest_stream != STREAM_NONE && digest == NULL) {
-               Jmsg(jcr, M_WARNING, 0, _("%s digest initialization failed\n"),
-                    stream_to_ascii(digest_stream));
-            }
-
-            /* compute MD5 or SHA1 hash */
-            if (digest) {
-               char md[CRYPTO_DIGEST_MAX_SIZE];
-               uint32_t size;
-
-               size = sizeof(md);
-
-               if (digest_file(jcr, ff_pkt, digest) != 0) {
-                  jcr->JobErrors++;
-
-               } else if (crypto_digest_finalize(digest, (uint8_t *)md, &size)) {
-                  char *digest_buf;
-                  const char *digest_name;
-
-                  digest_buf = (char *)malloc(BASE64_SIZE(size));
-                  digest_name = crypto_digest_name(digest);
-
-                  bin_to_base64(digest_buf, BASE64_SIZE(size), md, size, true);
-
-                  if (strcmp(digest_buf, elt.chksum)) {
-                     Dmsg4(dbglvl,"%s      %s chksum  diff. Cat: %s File: %s\n",
-                           fname,
-                           digest_name,
-                           elt.chksum,
-                           digest_buf);
-                     stat = true;
-                  }
-
-                  free(digest_buf);
-               }
-               crypto_digest_free(digest);
-            }
-         }
-
-         break;
       case ':':
       case 'J':
       case 'C':
       default:
          break;
+      }
+   }
+
+   /* Go through opts once again, this time check only for checksum-related opts */
+   for (char *p=opts; *p; p++) {
+      switch (*p) {
+      case '5':                /* compare MD5 */
+      case '1':                /* compare SHA1 */
+      case '2':                /* compare SHA256 */
+      case '3':                /* compare SHA512 */
+         if (ff_pkt->type != FT_LNKSAVED &&
+               (S_ISREG(ff_pkt->statp.st_mode) &&
+                ff_pkt->flags & (FO_MD5|FO_SHA1|FO_SHA256|FO_SHA512))) {
+            checksum = true;
+         }
+         break;
+      case 'o':
+         only_changed  = true;
+         break;
+      default:
+         break;
+      }
+   }
+
+   /* Check if user specified any of the checksum accurate opts */
+   if (checksum) {
+      if (only_changed) {
+         /* User wants to calculate checksum only for the files with changed metadata */
+         if (stat) {
+            /* Any of metadata member specified in accurate options has changed so we need to calculate
+             * and compare file's checksum and decide if we want to backup file or only metadata based on
+             * checksum comparison with the 'old' file*/
+            ret = check_checksum_diff(jcr, ff_pkt, &elt);
+            if (ret == 1) {
+               // checksum has changed, backup file normally
+               stat = true;
+            } else if (ret == -1){
+               stat = false;
+               goto bail_out;
+            } else {
+               /* Checksum hasn't changed, we can backup only meta */
+               ff_pkt->stat_update = true;
+            }
+         }
+      } else if (!only_changed && !stat) {
+         /* User did not specified the 'calculate checksum only when metadata change' option,
+          * and we know that specified metadata did not change at that point so we need to calculate it
+          * and base our backup decision on the result of comparing it with the one we had before */
+         ret = check_checksum_diff(jcr, ff_pkt, &elt);
+         if (ret == 1) {
+            stat = true;
+         } else if (ret == -1){
+            stat = false;
+            goto bail_out;
+         }
       }
    }
 

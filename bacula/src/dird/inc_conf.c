@@ -277,7 +277,7 @@ static void scan_include_options(LEX *lc, int keyword, char *opts, int optlen)
       break;
    case INC_KW_BASEJOB:
    case INC_KW_ACCURATE:
-      fs_options = "ipnugsamMcdA5123:JC"; /* From filed/accurate.c accurate_check_file() */
+      fs_options = "oipnugsamMcdA5123:JC"; /* From filed/accurate.c accurate_check_file() */
       break;
    default:
       break;

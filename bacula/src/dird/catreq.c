@@ -581,7 +581,9 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
    Dmsg5(400, "UpdCat VolSessId=%d VolSessT=%d FI=%d Strm=%d reclen=%d\n",
       VolSessionId, VolSessionTime, FileIndex, Stream, reclen);
 
-   if (Stream == STREAM_UNIX_ATTRIBUTES || Stream == STREAM_UNIX_ATTRIBUTES_EX) {
+   if (Stream == STREAM_UNIX_ATTRIBUTES ||
+       Stream == STREAM_UNIX_ATTRIBUTES_EX ||
+       Stream == STREAM_UNIX_ATTRIBUTE_UPDATE) {
       if (jcr->cached_attribute) {
          Dmsg2(400, "Cached attr. Stream=%d fname=%s\n", ar->Stream, ar->fname);
          if (!db_create_attributes_record(jcr, jcr->db, ar)) {

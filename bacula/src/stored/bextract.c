@@ -410,6 +410,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
    switch (rec->maskedStream) {
    case STREAM_UNIX_ATTRIBUTES:
    case STREAM_UNIX_ATTRIBUTES_EX:
+   case STREAM_UNIX_ATTRIBUTE_UPDATE:
 
       /* If extracting, it was from previous stream, so
        * close the output file.
