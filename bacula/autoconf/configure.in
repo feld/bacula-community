@@ -3860,6 +3860,7 @@ AC_CONFIG_FILES([
    src/findlib/Makefile \
    src/tools/Makefile \
    src/plugins/fd/Makefile.inc \
+   src/plugins/fd/Makefile \
    src/plugins/sd/Makefile \
    src/plugins/dir/Makefile.inc \
    po/Makefile.in \
