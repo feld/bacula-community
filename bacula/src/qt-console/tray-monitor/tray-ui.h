@@ -323,8 +323,8 @@ private slots:
 
     void cb_about() {
        QMessageBox::about(this, "Bacula Tray Monitor", "Bacula Tray Monitor\n"
-                          "For more information, see: www.baculasystems.com\n"
-                          "Copyright (C) 1999-2016, Bacula Systems(R) SA.\n"
+                          "For more information, see: www.bacula.org\n"
+                          "Copyright (C) 1999-2021, Kern Sibbald.\n"
                           "All rights reserved.");
     }
     RESMON *get_director() {
