@@ -29,6 +29,8 @@ start_test
 #              Pool Default uses Storage=File
 #              Pool Full    uses Storage=DiskChanger
 
+rm -f $cwd/build/inc1
+
 # Write out bconsole commands
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
@@ -58,6 +60,7 @@ wait
 @#
 @# Now do another backup, but level Incremental
 @#
+@exec "sh -c 'date > ${cwd}/build/inc1'"
 run job=$JobName level=Incremental yes
 wait
 messages
