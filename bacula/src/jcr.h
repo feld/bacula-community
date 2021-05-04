@@ -107,6 +107,7 @@ enum {
 
 #define job_canceled(jcr) \
   (jcr->JobStatus == JS_Canceled || \
+   jcr->JobStatus == JS_Incomplete || \
    jcr->JobStatus == JS_ErrorTerminated || \
    jcr->JobStatus == JS_FatalError \
   )
