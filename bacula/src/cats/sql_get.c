@@ -1535,10 +1535,19 @@ static uint32_t btemp_cur = 1;
  * If you specify jr->StartTime, it will be used to limit the search
  * in the time. (usually now)
  *
+ * In some case multiple job can satisfy the requirement (two jobs ran exactly
+ * at the same time or mutiple copy jobs), and the function take the first one.
+ * But when specified, like in the command ".bvfs_get_jobids jobid=XXX" we must
+ * verify that XXX match the requirement and return it if it exists, not any
+ * other "interchangeable jobs". That's what the from_jobid is for. If not sure,
+ * set 0
+ *
  * TODO: look and merge from ua_restore.c
  */
 bool BDB::bdb_get_accurate_jobids(JCR *jcr,
-                            JOB_DBR *jr, db_list_ctx *jobids)
+                                  JOB_DBR *jr,
+                                  uint32_t from_jobid,
+                                  db_list_ctx *jobids)
 {
    bool ret=false;
    char clientid[50], jobid[50], filesetid[50];
@@ -1552,15 +1561,15 @@ bool BDB::bdb_get_accurate_jobids(JCR *jcr,
    bstrutime(date, sizeof(date),  StartTime + 1);
    jobids->reset();
 
-   /* If we are comming from bconsole, we must ensure that we
+   /* If we are coming from bconsole, we must ensure that we
     * have a unique name.
     */
-   if (jcr->JobId == 0) {
+   if (from_jobid == 0) {
       P(btemp_mutex);
       bsnprintf(jobid, sizeof(jobid), "0%u", btemp_cur++);
       V(btemp_mutex);
    } else {
-      edit_uint64(jcr->JobId, jobid);
+      edit_uint64(from_jobid, jobid);
       Mmsg(aux, " AND JobId = %s ", jobid);
    }
 

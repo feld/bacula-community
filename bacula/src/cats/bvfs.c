@@ -994,7 +994,7 @@ bool Bvfs::get_delta(FileId_t fileid)
       jr.StartTime = jr2.StartTime;
 
       /* Get accurate jobid list */
-      if (!db->bdb_get_accurate_jobids(jcr, &jr, &lst)) {
+      if (!db->bdb_get_accurate_jobids(jcr, &jr, jid, &lst)) {
          Dmsg1(0, "Unable to get Accurate list for jobid %d\n", jid);
          goto bail_out;
       }
@@ -1778,7 +1778,7 @@ void Bvfs::insert_missing_delta(char *output_table, int64_t *res)
    jr.StartTime = jr2.StartTime;
 
    /* Get accurate jobid list */
-   db->bdb_get_accurate_jobids(jcr, &jr, &lst);
+   db->bdb_get_accurate_jobids(jcr, &jr, jr.JobId, &lst);
 
    Dmsg2(dbglevel_sql, "JobId list for %lld is %s\n", res[0], lst.list);
 

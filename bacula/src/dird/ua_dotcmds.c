@@ -1394,6 +1394,7 @@ bail_out:
 static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd)
 {
    JOB_DBR jr;
+   uint32_t jobid_hint = 0; /* if specified with a jobid=XXX */
    memset(&jr, 0, sizeof(JOB_DBR));
 
    db_list_ctx jobids, tempids;
@@ -1419,7 +1420,7 @@ static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd)
 
    if ((pos = find_arg_with_value(ua, "jobid")) >= 0) {
       jr.JobId = str_to_int64(ua->argv[pos]);
-
+      jobid_hint = jr.JobId;
    /* Guess JobId from Job name, take the last successful jobid */
    } else if ((pos = find_arg_with_value(ua, "job")) >= 0) {
       JOB *job;
@@ -1516,7 +1517,7 @@ static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd)
    /* Foreach different FileSet, we build a restore jobid list */
    for (int i=0; i < ids.num_ids; i++) {
       jr.FileSetId = ids.DBId[i];
-      if (!db_get_accurate_jobids(ua->jcr, ua->db, &jr, &tempids)) {
+      if (!db_get_accurate_jobids_from_jobid(ua->jcr, ua->db, &jr, jobid_hint, &tempids)) {
          return true;
       }
       jobids.add(tempids);

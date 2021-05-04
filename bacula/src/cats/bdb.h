@@ -244,7 +244,7 @@ public:
             int opts,
             DB_RESULT_HANDLER *result_handler, void *ctx);
    bool bdb_get_base_jobid(JCR *jcr, JOB_DBR *jr, JobId_t *jobid);
-   bool bdb_get_accurate_jobids(JCR *jcr, JOB_DBR *jr, db_list_ctx *jobids);
+   bool bdb_get_accurate_jobids(JCR *jcr, JOB_DBR *jr, uint32_t from_jobid, db_list_ctx *jobids);
    bool bdb_get_used_base_jobids(JCR *jcr, POOLMEM *jobids, db_list_ctx *result);
    bool bdb_get_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
    bool bdb_get_plugin_object_record(JCR *jcr, OBJECT_DBR *obj_r);

@@ -240,7 +240,9 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
 #define db_get_base_jobid(jcr, mdb, jr, jobid) \
            mdb->bdb_get_base_jobid(jcr, jr, jobid)
 #define db_get_accurate_jobids(jcr, mdb, jr, jobids) \
-           mdb->bdb_get_accurate_jobids(jcr, jr, jobids)
+           mdb->bdb_get_accurate_jobids(jcr, jr, 0, jobids)
+#define db_get_accurate_jobids_from_jobid(jcr, mdb, jr, jobid_hint, jobids) \
+           mdb->bdb_get_accurate_jobids(jcr, jr, jobid_hint, jobids)
 #define db_get_used_base_jobids(jcr, mdb, jobids, result) \
            mdb->bdb_get_used_base_jobids(jcr, jobids, result)
 #define db_get_restoreobject_record(jcr, mdb, rr) \
