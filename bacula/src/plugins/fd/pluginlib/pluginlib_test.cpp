@@ -42,44 +42,90 @@ struct vectstruct
 int main()
 {
    Unittests pluglib_test("pluglib_test");
-   alist * list;
    char * s;
 
    // Pmsg0(0, "Initialize tests ...\n");
 
-   list = plugutil_str_split_to_alist("123456789");
-   ok(list != NULL, "default split");
-   ok(list->size() == 1, "expect single strings");
-   foreach_alist(s, list){
-      ok(strlen(s) == 9, "check element length");
-   }
-   delete list;
+   {
+      alist * list;
 
-   list = plugutil_str_split_to_alist("123.456");
-   ok(list != NULL, "split: 123.456");
-   ok(list->size() == 2, "expect two strings");
-   foreach_alist(s, list){
-      ok(strlen(s) == 3, "check element length");
-   }
-   delete list;
+      list = plugutil_str_split_to_alist("123456789");
+      ok(list != NULL, "default split");
+      ok(list->size() == 1, "expect single strings");
+      foreach_alist(s, list){
+         ok(strlen(s) == 9, "check element length");
+      }
+      delete list;
 
-   list = plugutil_str_split_to_alist("12345.56789.abcde");
-   ok(list != NULL, "split: 12345.56789.abcde");
-   ok(list->size() == 3, "expect three strings");
-   foreach_alist(s, list){
-      ok(strlen(s) == 5, "check element length");
-   }
-   delete list;
+      list = plugutil_str_split_to_alist("123.456");
+      ok(list != NULL, "split: 123.456");
+      ok(list->size() == 2, "expect two strings");
+      foreach_alist(s, list){
+         ok(strlen(s) == 3, "check element length");
+      }
+      delete list;
 
-   list = plugutil_str_split_to_alist("1.bacula..Eric.Kern");
-   ok(list != NULL, "split: 1.bacula..Eric.Kern");
-   ok(list->size() == 5, "expect three strings");
-   ok(strcmp((char*)list->first(), "1") == 0, "check element 1");
-   ok(strcmp((char*)list->next(), "bacula") == 0, "check element bacula");
-   ok(strlen((char*)list->next()) == 0, "check empty element");
-   ok(strcmp((char*)list->next(), "Eric") == 0, "check element Eric");
-   ok(strcmp((char*)list->next(), "Kern") == 0, "check element Kern");
-   delete list;
+      list = plugutil_str_split_to_alist("12345.56789.abcde");
+      ok(list != NULL, "split: 12345.56789.abcde");
+      ok(list->size() == 3, "expect three strings");
+      foreach_alist(s, list){
+         ok(strlen(s) == 5, "check element length");
+      }
+      delete list;
+
+      list = plugutil_str_split_to_alist("1.bacula..Eric.Kern");
+      ok(list != NULL, "split: 1.bacula..Eric.Kern");
+      ok(list->size() == 5, "expect three strings");
+      ok(strcmp((char*)list->first(), "1") == 0, "check element 1");
+      ok(strcmp((char*)list->next(), "bacula") == 0, "check element bacula");
+      ok(strlen((char*)list->next()) == 0, "check empty element");
+      ok(strcmp((char*)list->next(), "Eric") == 0, "check element Eric");
+      ok(strcmp((char*)list->next(), "Kern") == 0, "check element Kern");
+      delete list;
+   }
+
+   {
+      alist list;
+
+      plugutil_str_split_to_alist(list, "123456789");
+      ok(list.size() > 0, "default split");
+      ok(list.size() == 1, "expect single strings");
+      foreach_alist(s, &list){
+         ok(strlen(s) == 9, "check element length");
+      }
+   }
+   {
+      alist list;
+
+      plugutil_str_split_to_alist(list, "123.456");
+      ok(list.size() > 0, "split: 123.45");
+      ok(list.size() == 2, "expect two strings");
+      foreach_alist(s, &list){
+         ok(strlen(s) == 3, "check element length");
+      }
+   }
+   {
+      alist list;
+
+      plugutil_str_split_to_alist(list, "12345.56789.abcde");
+      ok(list.size() > 0, "split: 12345.56789.abcde");
+      ok(list.size() == 3, "expect three strings");
+      foreach_alist(s, &list){
+         ok(strlen(s) == 5, "check element length");
+      }
+   }
+   {
+      alist list;
+
+      plugutil_str_split_to_alist(list, "1.bacula..Eric.Kern");
+      ok(list.size() > 0, "split: 1.bacula..Eric.Kern");
+      ok(list.size() == 5, "expect three strings");
+      ok(strcmp((char*)list.first(), "1") == 0, "check element 1");
+      ok(strcmp((char*)list.next(), "bacula") == 0, "check element bacula");
+      ok(strlen((char*)list.next()) == 0, "check empty element");
+      ok(strcmp((char*)list.next(), "Eric") == 0, "check element Eric");
+      ok(strcmp((char*)list.next(), "Kern") == 0, "check element Kern");
+   }
 
    POOL_MEM cmd1(PM_NAME);
    POOL_MEM param(PM_NAME);

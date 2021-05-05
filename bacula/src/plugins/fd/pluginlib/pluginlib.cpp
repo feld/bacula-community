@@ -17,11 +17,11 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
  */
 /**
- * @file commctx.h
+ * @file pluginlib.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief Common definitions and utility functions for Inteos plugins.
- * @version 2.1.0
- * @date 2021-02-10
+ * @version 2.2.0
+ * @date 2021-04-26
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
@@ -263,49 +263,66 @@ bRC pluglib_mkpath(bpContext* ctx, char* path, bool isfatal)
 }
 
 /**
- * @brief
+ * @brief It splits a string `str` into a separate substrings split on `sep` character.
  *
- * @param str
- * @param sep
- * @return alist*
+ * @param str a string to split
+ * @param sep split separator character
+ * @return alist* newly allocated list of splitted substrings
  */
 alist * plugutil_str_split_to_alist(const char * str, const char sep)
 {
-   POOL_MEM buf(PM_NAME);
-   const char * p;
-   const char * q;
-   const char * s;
-   alist * list;
-
-   if (str == NULL || strlen(str) == 0){
-      return NULL;
-   }
-
-   list = New(alist(5, true));
-   p = str;
-
-   do {
-      // search for separator char - sep
-      q = strchr(p, sep);
-      if (q == NULL){
-         // copy whole string from p to buf
-         pm_strcpy(buf, p);
-      } else {
-         // copy string from p up to q
-         pm_memcpy(buf, p, q - p + 1);
-         buf.c_str()[q - p] = '\0';
-         p = q + 1;     // next element
-      }
-      // in buf we have splitted string part
-      s = bstrdup(buf.c_str());
-      list->append((void*)s);
-   } while (q != NULL);
-
+   alist * list = New(alist(5, true));
+   plugutil_str_split_to_alist(*list, str, sep);
    return list;
 }
 
+/**
+ * @brief It splits a string `str` into a separate substrings split on `sep` character.
+ *
+ * @param list a list used to populate split results
+ * @param str a string to split
+ * @param sep split separator character
+ */
+void plugutil_str_split_to_alist(alist  *list, const char * str, const char sep)
+{
+   plugutil_str_split_to_alist(*list, str, sep);
+}
+
+/**
+ * @brief It splits a string `str` into a separate substrings split on `sep` character.
+ *
+ * @param list a list used to populate split results
+ * @param str a string to split
+ * @param sep split separator character
+ */
+void plugutil_str_split_to_alist(alist &list, const char * str, const char sep)
+{
+   if (str != NULL && strlen(str) > 0) {
+      POOL_MEM buf(PM_NAME);
+      const char * p = str;
+      const char * q;
+
+      do {
+         // search for separator char - sep
+         q = strchr(p, sep);
+         if (q == NULL){
+            // copy whole string from p to buf
+            pm_strcpy(buf, p);
+         } else {
+            // copy string from p up to q
+            pm_memcpy(buf, p, q - p + 1);
+            buf.c_str()[q - p] = '\0';
+            p = q + 1;     // next element
+         }
+         // in buf we have splitted string part
+         const char * s = bstrdup(buf.c_str());
+         list.append((void*)s);
+      } while (q != NULL);
+   }
+}
+
 /*
- * Render a xe tool parameter for string value.
+ * Render an external tool parameter for string value.
  *
  * in:
  *    bpContext - for Bacula debug and jobinfo messages
@@ -332,7 +349,7 @@ bool render_param(POOLMEM **param, const char *pname, const char *fmt, const cha
 }
 
 /*
- * Render a xe tool parameter for integer value.
+ * Render an external tool parameter for string value.
  *
  * in:
  *    bpContext - for Bacula debug and jobinfo messages

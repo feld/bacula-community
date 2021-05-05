@@ -20,8 +20,8 @@
  * @file pluginlib.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief Common definitions and utility functions for Inteos plugins.
- * @version 2.1.0
- * @date 2021-02-10
+ * @version 2.2.0
+ * @date 2021-04-26
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
@@ -181,6 +181,8 @@ inline bool isourpluginfname(const char *pluginprefix, const char *fname)
    return false;
 }
 
+void plugutil_str_split_to_alist(alist &list, const char * str, const char sep = '.');
+void plugutil_str_split_to_alist(alist * list, const char * str, const char sep = '.');
 alist * plugutil_str_split_to_alist(const char * str, const char sep = '.');
 
 /**
