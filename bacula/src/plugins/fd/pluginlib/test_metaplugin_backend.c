@@ -194,6 +194,29 @@ void write_plugin(const char cmd, const char *str)
 }
 
 /**
+ * @brief Sends/writes the binary data to plugin with assembling the raw packet.
+ *
+ * @param cmd the packet type to sent
+ * @param str the text to write
+ */
+void write_plugin_bin(const char *str, int len = 0)
+{
+   const char * out;
+
+   if (str) {
+      out = str;
+   } else {
+      out = "";
+   }
+
+   printf("D%06d\n", len);
+   int status = fwrite(out, len, 1, stdout);
+   fflush(stdout);
+   snprintf(buflog, BUFLEN, "<< D%06d:%d:<bindata>", len ,status);
+   LOG(buflog);
+}
+
+/**
  * @brief Sends the EOD packet to plugin.
  */
 void signal_eod(){
@@ -398,7 +421,6 @@ void perform_backup()
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vmsnap.iso\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
-   // write_plugin('C', "STAT:S 1048576 0 0 0120777 1\n");
    write_plugin('C', "STAT:S 1048576 0 0 100640 1\n");
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    snprintf(buf, BIGBUFLEN, "LSTAT:bucket/%d/vm1.iso/1508502750.495885/69312986/10485760/\n", mypid);
@@ -411,6 +433,26 @@ void perform_backup()
    write_plugin('D', "/* here comes another file line    */");
    write_plugin('D', "/* here comes another file line    */");
    write_plugin('D', "/* here comes another file line    */");
+   signal_eod();
+
+   const int bigfileblock = 100000;
+   const int bigfilesize = bigfileblock * 5;
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/bigfile.raw\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   snprintf(buf, BIGBUFLEN, "STAT:F %d 0 0 100640 1\n", bigfilesize);
+   write_plugin('C', buf);
+   write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+   signal_eod();
+   write_plugin('I', "TEST17 - big file block");
+   write_plugin('C', "DATA\n");
+   {
+      char *bigfileblock_ptr = (char*)malloc(bigfileblock);
+      memset(bigfileblock_ptr, 0xA1, bigfileblock);
+      for (int s = bigfilesize; s > 0; s -= bigfileblock) {
+         write_plugin_bin(bigfileblock_ptr, bigfileblock);
+      }
+      free(bigfileblock_ptr);
+   }
    signal_eod();
 
    if (regress_error_backup_abort)
