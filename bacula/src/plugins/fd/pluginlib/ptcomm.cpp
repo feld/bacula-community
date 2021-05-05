@@ -387,8 +387,8 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
          continue;
 
       default:
-         DMSG1(ctx, DERROR, "Protocol error. Unknown packet: %c got: %c\n", header.status);
-         JMSG1(ctx, M_FATAL, "Protocol error. Unknown packet: %c got: %c\n", header.status);
+         DMSG1(ctx, DERROR, "Protocol error. Unknown packet: %c\n", header.status);
+         JMSG1(ctx, M_FATAL, "Protocol error. Unknown packet: %c\n", header.status);
          return -1;
       }
    }
@@ -582,10 +582,11 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
       JMSG0(ctx, M_FATAL, "Problem rendering packet header for command.\n");
       return -1;
    }
-   // header->length[6] = '\n';
+   header->length[6] = '\n';
 
+   char hlendata[17];
    char bindata[17];
-   DMSG3(ctx, DDEBUG, "SENT: %c %s %s\n", header->status, header->length, asciidump(buf, len, bindata, sizeof(bindata)));
+   DMSG2(ctx, DDEBUG, "SENT: %s %s\n", asciidump((char*)header, sizeof(PTHEADER), hlendata, sizeof(hlendata)), asciidump(buf, len, bindata, sizeof(bindata)));
 
 #ifdef NEED_REVIEW
    status = sendbackend_data(ctx, (char*)header, len + sizeof(PTHEADER));
