@@ -173,5 +173,32 @@ int main()
       ok(result == testvect1[i].result, testvect1[i].descr);
    }
 
+   struct strvectstruct
+   {
+      const char *input;
+      const char *output;
+      const int msglen;
+      const int len;
+      const char *descr;
+   };
+   const strvectstruct testvect2[] = {
+      { "TEST1****", "TEST1\n\0", 5, 7, "TEST1" },
+      { "TEST2\n****", "TEST2\n\0", 6, 7, "TEST2" },
+      { "TEST3\n\0****", "TEST3\n\0", 7, 7, "TEST3" },
+      { "TEST4\0****", "TEST4\n\0", 6, 7, "TEST4" },
+      { "TEST5\0\n****", "TEST5\n\0", 7, 7, "TEST5" },
+      { "****", "\n\0", 0, 2, "Test empty" },
+      { NULL, NULL, 0, 0, NULL },
+   };
+
+   POOL_MEM ebuf(PM_NAME);
+   for (int i = 0; testvect2[i].input != NULL; i++)
+   {
+      pm_memcpy(ebuf, testvect2[i].input, strlen(testvect2[i].input));
+      scan_and_terminate_str(ebuf, testvect2[i].msglen);
+      ok(memcmp(ebuf.c_str(), testvect2[i].output, testvect2[i].len) == 0, testvect2[i].descr);
+   }
+   // scan_and_terminate_str
+
    return report();
 }

@@ -633,3 +633,15 @@ bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param)
 
    return false;
 }
+
+// ensure error message is terminated with newline and terminated with standard c-string nul
+void scan_and_terminate_str(POOL_MEM &buf, int msglen)
+{
+   if (msglen >= 0){
+      // we will consume at most two chars more
+      buf.check_size(msglen + 2);
+      bool check = msglen > 0 ? buf.c_str()[msglen - 1] != '\n' : true;
+      buf.c_str()[msglen] = check * '\n';
+      buf.c_str()[msglen + 1] = '\0';
+   }
+}

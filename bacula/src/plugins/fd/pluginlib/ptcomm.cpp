@@ -353,10 +353,8 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
          return -1;
       }
 
-      // ensure error message is terminated with newline and
-      // terminated with standard c-string nul
-      errmsg.c_str()[msglen] = errmsg.c_str()[msglen - 1] != '\n' ? '\n' : '\0';
-      errmsg.c_str()[msglen + 1] = '\0';
+      // ensure error message is terminated with newline and terminated with standard c-string nul
+      scan_and_terminate_str(errmsg, msglen);
 
       switch (header.status)
       {
