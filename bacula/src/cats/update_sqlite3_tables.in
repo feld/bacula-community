@@ -5,8 +5,8 @@
 #
 # Shell script to update SQLite3 tables from Bacula
 #
-OLDVERSION=1022
-NEWVERSION=1023
+OLDVERSION=1023
+NEWVERSION=1024
 
 echo " "
 echo "This script will update a Bacula SQLite3 database from version 12-14,$OLDVERSION to $NEWVERSION"

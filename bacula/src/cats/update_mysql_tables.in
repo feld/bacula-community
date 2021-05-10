@@ -6,8 +6,8 @@
 # Shell script to update MySQL tables from Bacula Enterprise version from 4.0.x to 12.6.x
 #
 
-OLDVERSION=1022
-NEWVERSION=1023
+OLDVERSION=1023
+NEWVERSION=1024
 
 echo " "
 echo "This script will update a Bacula MySQL database"

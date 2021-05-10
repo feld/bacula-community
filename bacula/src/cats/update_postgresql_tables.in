@@ -4,8 +4,8 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 
-OLDVERSION=1022
-NEWVERSION=1023
+OLDVERSION=1023
+NEWVERSION=1024
 
 echo " "
 echo "This script will update a Bacula PostgreSQL database"
