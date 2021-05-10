@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for the 'o' accurate backup option to backup only file's metadata
+# if file contets did not change.
+#
+
+TestName="accurate-only-meta-test"
+JobName=backup
+. scripts/functions
+$rscripts/cleanup
+
+copy_test_confs
+cp -f $rscripts/bacula-dir.conf.accurate $conf/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+
+rm -f ${cwd}/build/testfile
+
+cat <<END_OF_DATA >>${conf}/bacula-dir.conf
+FileSet {
+ Name = FS_META_TEST
+ Include {
+    Options {
+      Signature = MD5
+      Verify = mc
+      #Accurate = mpin5o
+      Accurate = c5o
+    }
+    File=<${cwd}/tmp/file-list
+ }
+}
+END_OF_DATA
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "FS_META_TEST" , "Job", "backup")'
+
+echo "${cwd}/build" >${cwd}/tmp/file-list
+# Add one more file
+echo "testfile" >> ${cwd}/build/testfile
+
+start_test
+
+# Run normal backup
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out /dev/null
+messages
+label volume=TestVolume001 storage=File pool=Default
+messages
+@$out ${cwd}/tmp/log1.out
+run job=$JobName yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+# Sleep for a few seconds, touch all files to change each file's metadata
+sleep 3
+files_count=`find ${cwd}/build -type f | wc -l`
+find ${cwd}/build -type f -exec touch {} + > /dev/null
+# Change some properties of testfile
+chmod 740 ${cwd}/build/testfile
+perm_after=`stat -c %a ${cwd}/build/testfile`
+
+# Run backup for the second time, this time we expect that only metadata part for each file will be
+# backed up, so we expect the backup size to be much smaller than the first one.
+# Do the restore after that and check if metadata is updated (meaning if second backup overwritten files's metadata)
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+run job=$JobName yes
+wait
+messages
+@$out ${cwd}/tmp/log3.out
+restore select all done yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+# Check if number of second backup files equals to files touched
+backup_files=`cat ${cwd}/tmp/log2.out | grep 'FD Files Written:' | tr -s ' ' | cut -d ':' -f 2 | sed s/,//`
+if [ ${backup_files} -ne ${files_count} ]; then
+   estat=1
+   print_debug "Wrong number of files backed up: ${backup_files}, expected: ${files_count}"
+fi
+
+# Check if testfile's restored permission are correctly changed
+perm_restored=`stat -c %a ${cwd}/tmp/bacula-restores/${cwd}/build/testfile`
+if [ ${perm_after} -ne ${perm_restored} ]; then
+   estat=1
+   print_debug "Wrong permissions restored: ${perm_restored}, expected: ${perm_after}"
+fi
+
+# Make sure that second backup was only some KB so that only metadata is transferred
+bytes_written_kb=`cat tmp/log2.out | grep 'SD Bytes Written' | grep '(.* KB)' | wc -l`
+if [ ${bytes_written_kb} -ne 1 ]; then
+   estat=1
+   print_debug "SD Bytes Written not expressed in KB as expected!"
+fi
+
+$rscripts/diff.pl -s $cwd/build -d $tmp/bacula-restores/$cwd/build
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Found difference after restore"
+    rstat=1
+fi
+
+# Cleanup
+rm ${cwd}/build/testfile
+
+stop_bacula
+end_test
