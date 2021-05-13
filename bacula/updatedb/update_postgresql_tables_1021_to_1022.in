@@ -5,7 +5,7 @@
 #
 #
 echo " "
-echo "This script will update a Bacula PostgreSQL database from version 1020 to 1021"
+echo "This script will update a Bacula PostgreSQL database from version 1021 to 1022"
 echo " "
 
 bindir=@POSTGRESQL_BINDIR@
