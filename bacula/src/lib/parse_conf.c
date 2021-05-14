@@ -1630,6 +1630,10 @@ bool CONFIG::parse_config()
                      Dmsg1(800, "calling handler for %s\n", items[i].name);
                      /* Call item handler */
                      items[i].handler(lc, &items[i], i, pass);
+                     if (lc->last_result != 0) {
+                        /* Error during parsing, message has already been printed, now we have to bail out */
+                        goto bail_out;
+                     }
                      i = -1;
                      break;
                   }

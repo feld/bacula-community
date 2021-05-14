@@ -113,6 +113,9 @@ typedef struct s_lex_context {
    uint64_t pint64_val2;
    void (*scan_error)(const char *file, int line, struct s_lex_context *lc, const char *msg, ...);
    int err_type;                      /* message level for scan_error (M_..) */
+   /* TODO change the config scanning helpers to be non-void, add handling of it's return value */
+   int last_result;                      /* Result of last scanning. Error code is set whenerver any of the
+                                         'scan_err' macros is called. */
    void *caller_ctx;                  /* caller private data */
    BPIPE *bpipe;                      /* set if we are piping */
 } LEX;

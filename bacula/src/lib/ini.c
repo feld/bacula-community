@@ -112,6 +112,8 @@ static void s_err(const char *file, int line, LEX *lc, const char *msg, ...)
               "            : Line %d, col %d of file %s\n%s\n"),
             buf, lc->line_no, lc->col_no, lc->fname, lc->line);
    }
+
+   lc->last_result = -1;
 }
 
 /* Reset free items */

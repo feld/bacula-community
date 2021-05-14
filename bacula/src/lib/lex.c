@@ -104,6 +104,8 @@ static void s_err(const char *file, int line, LEX *lc, const char *msg, ...)
    } else {
       e_msg(file, line, lc->err_type, 0, _("Config error: %s\n"), buf);
    }
+
+   lc->last_result = -1;
 }
 
 void lex_set_default_error_handler(LEX *lf)
