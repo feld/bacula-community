@@ -19,6 +19,9 @@
 
 #include "bacula.h"
 #include "dird.h"
+#include "lib/lockmgr.h"
+
+static const int dbglvl = 200;
 
 storage::storage() {
    list = New(alist(10, not_owned_by_alist));
@@ -66,7 +69,7 @@ void storage::set(STORE *storage, const char *source) {
       return;
    }
 
-   P(mutex);
+   lock_guard lg(mutex);
 
    reset();
 
@@ -78,8 +81,6 @@ void storage::set(STORE *storage, const char *source) {
    } else {
       pm_strcpy(this->source, source);
    }
-
-   V(mutex);
 }
 
 /* Set storage override. Remove all previous storage */
@@ -88,8 +89,7 @@ void storage::set(alist *storage, const char *source) {
       return;
    }
 
-   P(mutex);
-
+   lock_guard lg(mutex);
    reset();
 
    STORE *s;
@@ -103,8 +103,6 @@ void storage::set(alist *storage, const char *source) {
    } else {
       pm_strcpy(this->source, source);
    }
-
-   V(mutex);
 }
 
 void storage::reset() {
@@ -122,27 +120,26 @@ bool storage::set_current_storage(STORE *storage) {
       return false;
    }
 
-   P(mutex);
+   lock_guard lg(mutex);
 
    STORE *s;
    foreach_alist(s, list) {
       if (s == storage) {
          store = storage;
-         V(mutex);
          return true;
       }
    }
 
-   V(mutex);
    return false;
 }
 
 bool storage::inc_rstores(JCR *jcr) {
+   lock_guard lg(mutex);
+
    if (list->empty()) {
       return true;
    }
 
-   P(mutex);
    int num = store->getNumConcurrentJobs();
    int numread = store->getNumConcurrentReadJobs();
    int maxread = store->MaxConcurrentReadJobs;
@@ -154,39 +151,43 @@ bool storage::inc_rstores(JCR *jcr) {
    {
       numread = store->incNumConcurrentReadJobs(1);
       num = store->incNumConcurrentJobs(1);
-      Dmsg1(200, "Inc rncj=%d\n", num);
-      V(mutex);
+      Dmsg1(dbglvl, "Inc rncj=%d\n", num);
       return true;
    }
-   V(mutex);
+
    return false;
 }
 
 bool storage::inc_wstores(JCR *jcr) {
    STORE *store;
    bool ret;
+   lock_guard lg(mutex);
+
    if (list->empty()) {
       return true;
    }
 
-   P(mutex);
-
    /* Create a temp copy of wstore list */
-   alist tmp_list(10, not_owned_by_alist);
+   alist *tmp_list = New(alist(10, not_owned_by_alist));
+   if (!tmp_list) {
+      Dmsg1(dbglvl, "Failed to allocate tmp list for jobid: %d\n", jcr->JobId);
+      return false;
+   }
+
    foreach_alist(store, list) {
-      tmp_list.append(store);
+      tmp_list->append(store);
    }
 
    /* Reset write list */
    list->destroy();
    list->init(10, not_owned_by_alist);
 
-   foreach_alist(store, &tmp_list) {
-      Dmsg1(200, "Wstore=%s\n", store->name());
+   foreach_alist(store, tmp_list) {
+      Dmsg1(dbglvl, "Wstore=%s\n", store->name());
       int num = store->getNumConcurrentJobs();
       if (num < store->MaxConcurrentJobs) {
          num = store->incNumConcurrentJobs(1);
-         Dmsg1(200, "Inc wncj=%d\n", num);
+         Dmsg1(dbglvl, "Inc wncj=%d\n", num);
          list->append(store);
       }
    }
@@ -198,7 +199,15 @@ bool storage::inc_wstores(JCR *jcr) {
       ret = false;
    }
 
-   V(mutex);
+   if (!ret) {
+      /* We don't want to return empty list in case of fail, it should not be changed at this point */
+      delete list;
+      list = tmp_list;
+   } else {
+      /* tmp list not needed anymore since only the devices that were reserved are returned in the list */
+      delete tmp_list;
+   }
+
    return ret;
 }
 
@@ -211,21 +220,21 @@ bool storage::inc_stores(JCR *jcr) {
 }
 
 void storage::dec_stores() {
+   lock_guard lg(mutex);
+
    if (list->empty()) {
       return;
    }
 
-   P(mutex);
    STORE *store;
    foreach_alist(store, list) {
       int num = store->incNumConcurrentJobs(-1);
-      Dmsg1(200, "Dec wncj=%d\n", num);
+      Dmsg1(dbglvl, "Dec wncj=%d\n", num);
    }
-   V(mutex);
 }
 
 const char *storage::print_list() {
-   P(mutex);
+   lock_guard lg(mutex);
 
    *list_str = 0;
    STORE *store;
@@ -241,7 +250,6 @@ const char *storage::print_list() {
       pm_strcat(tmp.addr(), store->name());
    }
 
-   V(mutex);
    return quote_string(list_str, tmp.addr());
 }
 
