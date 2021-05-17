@@ -602,7 +602,7 @@ RES_ITEM job_items[] = {
    {"Level",     store_level,   ITEM(res_job.JobLevel),    0, 0, 0},
    {"Messages",  store_res,     ITEM(res_job.messages),  R_MSGS, ITEM_REQUIRED, 0},
    {"Storage",   store_alist_res, ITEM(res_job.storage),  R_STORAGE, 0, 0},
-   {"StoragePolicy",   store_storage_mngr, ITEM(res_job.storage_policy),  0, 0, 0},
+   {"StorageGroupPolicy",   store_storage_mngr, ITEM(res_job.storage_policy),  0, 0, 0},
    {"Pool",      store_res,     ITEM(res_job.pool),      R_POOL, ITEM_REQUIRED, 0},
    {"NextPool",  store_res,     ITEM(res_job.next_pool), R_POOL, 0, 0},
    {"FullBackupPool",  store_res, ITEM(res_job.full_pool),   R_POOL, 0, 0},

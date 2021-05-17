@@ -42,6 +42,7 @@ class STORE;
  */
 static char const *storage_mngmt_policy[] = {
    "LeastUsed",
+   "ListedOrder",
    NULL
 };
 
@@ -124,15 +125,17 @@ class StorageManager : public SMARTALLOC {
    protected:
       storage rstore;   /* Read storage */
       storage wstore;   /* Write storage */
+      const char *policy;
 
    public:
       virtual void apply_policy(bool write_store) = 0;
 
       virtual ~StorageManager() {
          reset_rwstorage();
+         free(policy);
       };
 
-      StorageManager();
+      StorageManager(const char *policy);
 
       /* Helper to validate if policy user wants to use is a valid one */
       static bool check_policy(const char *policy) {
@@ -194,6 +197,10 @@ class StorageManager : public SMARTALLOC {
 
       /************ GENERIC STORAGE HELPERS ************/
       void reset_rwstorage();
+
+      const char *get_policy_name() {
+         return policy;
+      }
 };
 
 /*
@@ -203,7 +210,7 @@ class LeastUsedStore : public StorageManager {
    public:
       void apply_policy(bool write_store);
 
-   LeastUsedStore() {
+   LeastUsedStore() : StorageManager("LeastUsed") {
    }
 
    ~LeastUsedStore() {
@@ -213,7 +220,7 @@ class LeastUsedStore : public StorageManager {
 /*
  * Default policy for the storage group. It uses first available storage from the list.
  */
-class SimpleStoreMngr : public StorageManager {
+class ListedOrderStore : public StorageManager {
    private:
 
    public:
@@ -221,10 +228,10 @@ class SimpleStoreMngr : public StorageManager {
          /* Do nothing for now */
       }
 
-   SimpleStoreMngr() {
+   ListedOrderStore(): StorageManager("ListedOrder")  {
    }
 
-   ~SimpleStoreMngr() {
+   ~ListedOrderStore() {
    }
 };
 

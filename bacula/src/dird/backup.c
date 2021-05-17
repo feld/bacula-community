@@ -542,8 +542,7 @@ bool do_backup(JCR *jcr)
    if (wstore_group) {
       /* Apply policy for the write storage list */
       jcr->store_mngr->apply_policy(true);
-      Jmsg(jcr, M_INFO, 0, _("Possible storage choices: %s\n"),
-            jcr->store_mngr->print_wlist());
+      Dmsg1(100, "Possible storage choices: %s\n", jcr->store_mngr->print_wlist());
       iter_no = 2;
    }
 
@@ -558,10 +557,10 @@ bool do_backup(JCR *jcr)
    for (int iter=0; iter<iter_no; iter++) {
       if (wstore_group) {
          if (iter == 0) {
-            Jmsg(jcr, M_INFO, 0, _("Trying to start job on any storage from the list without "
-                     "waiting for busy devices first.\n"));
+            Dmsg0(100, "Trying to start job on any storage from the list without "
+                     "waiting for busy devices first.\n");
          } else {
-            Jmsg(jcr, M_INFO, 0, _("All devices are currently busy, need to wait at each try of storage reservation.\n"));
+            Dmsg0(100, "All devices are currently busy, need to wait at each try of storage reservation.\n");
          }
       }
 
@@ -576,12 +575,10 @@ bool do_backup(JCR *jcr)
           * Start conversation with Storage daemon
           */
          if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-            Jmsg(jcr, M_INFO, 0, _("Failed connect to the storage: %s\n"),
-                  jcr->store_mngr->get_wstore()->name());
+            Dmsg1(100, "Failed connect to the storage: %s\n", jcr->store_mngr->get_wstore()->name());
             continue;
          } else {
-            Jmsg(jcr, M_INFO, 0, _("Connected to the storage: %s\n"),
-                  jcr->store_mngr->get_wstore()->name());
+            Dmsg1(100, "Connected to the storage: %s\n", jcr->store_mngr->get_wstore()->name());
          }
 
          alist wlist;
@@ -595,12 +592,11 @@ bool do_backup(JCR *jcr)
           * because we have only 2 iterations (so 'iter' variable is either 0 or 1)
           */
          if (!start_storage_daemon_job(jcr, NULL, &wlist, wstore_group ? (bool)iter : true)) {
-            Jmsg(jcr, M_INFO, 0, _("Failed to start job on the storage: %s\n"),
-                  jcr->store_mngr->get_wstore()->name());
+            Dmsg1(100, "Failed to start job on the storage: %s\n", jcr->store_mngr->get_wstore()->name());
             continue;
          } else {
-            Jmsg(jcr, M_INFO, 0, _("Started job on storage: %s\n"),
-                  jcr->store_mngr->get_wstore()->name());
+            Jmsg(jcr, M_INFO, 0, _("Selected storage: %s, StorageGroupPolicy: \"%s\"\n"),
+                  jcr->store_mngr->get_wstore()->name(), jcr->store_mngr->get_policy_name());
             sd_job_started = true;
             break;
          }

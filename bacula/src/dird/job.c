@@ -1629,9 +1629,11 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    if (job->storage_policy) {
       if (strcmp(job->storage_policy, "LeastUsed") == 0) {
          jcr->store_mngr = New(LeastUsedStore());
+      } else if (strcmp(job->storage_policy, "ListedOrder") == 0) {
+         jcr->store_mngr = New(ListedOrderStore());
       }
    } else {
-      jcr->store_mngr = New(SimpleStoreMngr());
+      jcr->store_mngr = New(ListedOrderStore());
    }
 
    set_jcr_default_store(jcr, job);

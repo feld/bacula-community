@@ -299,7 +299,8 @@ void LeastUsedStore::apply_policy(bool write_store) {
 }
 
 
-StorageManager::StorageManager() {
+StorageManager::StorageManager(const char *policy) {
+   this->policy = bstrdup(policy);
    rstore.set_rw(false);
    wstore.set_rw(true);
 };
