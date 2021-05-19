@@ -61,12 +61,6 @@ END_OF_DATA
 
 run_bacula
 
-n=`cat ${cwd}/tmp/log1.out | grep "Possible storage choices: \"File3, File2, File1\"" | wc -l`
-if [ $n -ne 1 ]; then
-   estat=1
-   print_debug "Did not found list of possible storages in job lob"
-fi
-
 # File3 should be skipped since it's not reachable, File2 should be used instead
 n_file2=`cat ${cwd}/tmp/log1.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File2\"" | wc -l`
 if [ $n_file2 -ne 1 ]; then

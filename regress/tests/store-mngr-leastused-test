@@ -27,7 +27,7 @@ Job {
   Type = Backup
   JobDefs = "DefaultJob"
   Storage = File1, File2
-  StoragePolicy = LeastUsed
+  Storage Group Policy = LeastUsed
   Pool = Default
   Maximum Concurrent Jobs = 10
 }
