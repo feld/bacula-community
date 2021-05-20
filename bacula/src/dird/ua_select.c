@@ -1159,10 +1159,12 @@ bool get_storage_resource(UAContext *ua, USTORE *ustore, bool use_default, bool 
                ua->error_msg(_("JobId %s is not running.\n"), edit_int64(jobid, ed1));
                goto bail_out;
             }
-            STORE *wstore = jcr->store_mngr->get_wstore();
-            if (wstore) {
-               bstrncpy(store_name, wstore->name(), sizeof(store_name));
-               pm_strcpy(ustore->store_source, _("Command line (jobid parameter)"));
+            if (jcr->store_mngr) {
+               STORE *wstore = jcr->store_mngr->get_wstore();
+               if (wstore) {
+                  bstrncpy(store_name, wstore->name(), sizeof(store_name));
+                  pm_strcpy(ustore->store_source, _("Command line (jobid parameter)"));
+               }
             }
             free_jcr(jcr);
 
@@ -1176,10 +1178,12 @@ bool get_storage_resource(UAContext *ua, USTORE *ustore, bool use_default, bool 
                ua->error_msg(_("Job \"%s\" is not running.\n"), ua->argv[i]);
                goto bail_out;
             }
-            STORE *wstore = jcr->store_mngr->get_wstore();
-            if (wstore) {
-               bstrncpy(store_name, wstore->name(), sizeof(store_name));
-               pm_strcpy(ustore->store_source, _("Command line (job/jobname parameter)"));
+            if (jcr->store_mngr) {
+               STORE *wstore = jcr->store_mngr->get_wstore();
+               if (wstore) {
+                  bstrncpy(store_name, wstore->name(), sizeof(store_name));
+                  pm_strcpy(ustore->store_source, _("Command line (job/jobname parameter)"));
+               }
             }
             free_jcr(jcr);
 
@@ -1189,10 +1193,12 @@ bool get_storage_resource(UAContext *ua, USTORE *ustore, bool use_default, bool 
                goto bail_out;
             }
             if ((jcr=get_jcr_by_full_name(ua->argv[i]))) {
-               STORE *wstore = jcr->store_mngr->get_wstore();
-               if (wstore) {
-                  bstrncpy(store_name, wstore->name(), sizeof(store_name));
-                  pm_strcpy(ustore->store_source, _("Command line (ujobid parameter)"));
+               if (jcr->store_mngr) {
+                  STORE *wstore = jcr->store_mngr->get_wstore();
+                  if (wstore) {
+                     bstrncpy(store_name, wstore->name(), sizeof(store_name));
+                     pm_strcpy(ustore->store_source, _("Command line (ujobid parameter)"));
+                  }
                }
                free_jcr(jcr);
             }
