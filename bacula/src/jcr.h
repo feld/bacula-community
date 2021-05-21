@@ -339,7 +339,9 @@ public:
    JOB *job;                          /* Job resource */
    JOB *verify_job;                   /* Job resource of verify previous job */
    alist *plugin_config;              /* List of ConfigFile needed for restore */
-   StorageManager *store_mngr;
+   StorageManager *store_mngr;        /* Storage manager object */
+   POOLMEM *write_dev;                /* Write device (set by start_storage_dameon_job() */
+   POOLMEM *read_dev;                 /* Read device (set by start_storage_dameon_job() */
    CLIENT *client;                    /* Client resource */
    POOL *pool;                        /* Pool resource = write for migration */
    POOL *next_pool;                   /* Next pool override */

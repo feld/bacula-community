@@ -1544,6 +1544,8 @@ void dird_free_jcr(JCR *jcr)
    free_and_null_pool_memory(jcr->rpool_source);
    free_and_null_pool_memory(jcr->next_vol_list);
    free_and_null_pool_memory(jcr->component_fname);
+   free_and_null_pool_memory(jcr->read_dev);
+   free_and_null_pool_memory(jcr->write_dev);
 
    jcr->job_end_push.destroy();
 
@@ -1649,6 +1651,12 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    }
    if (!jcr->catalog_source) {
       jcr->catalog_source = get_pool_memory(PM_MESSAGE);
+   }
+   if (!jcr->write_dev) {
+      jcr->write_dev = get_pool_memory(PM_MESSAGE);
+   }
+   if (!jcr->read_dev) {
+      jcr->read_dev = get_pool_memory(PM_MESSAGE);
    }
 
    jcr->JobPriority = job->Priority;

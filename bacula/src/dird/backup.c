@@ -526,14 +526,6 @@ bool do_backup(JCR *jcr)
             jcr->JobFiles, jcr->VolSessionId, jcr->VolSessionTime);
    }
 
-   /*
-    * Open a message channel connection with the Storage
-    * daemon. This is to let him know that our client
-    * will be contacting him for a backup  session.
-    *
-    */
-   Dmsg0(110, "Open connection with storage daemon\n");
-   jcr->setJobStatus(JS_WaitSD);
 
    if (jcr->store_mngr->get_wstore_list()->size() != 1) {
       wstore_group = true;
@@ -542,7 +534,7 @@ bool do_backup(JCR *jcr)
    if (wstore_group) {
       /* Apply policy for the write storage list */
       jcr->store_mngr->apply_policy(true);
-      Dmsg1(100, "Possible storage choices: %s\n", jcr->store_mngr->print_wlist());
+      Jmsg(jcr, M_INFO, 0, _("Possible storage choices: %s\n"), jcr->store_mngr->print_wlist());
       iter_no = 2;
    }
 
@@ -571,6 +563,7 @@ bool do_backup(JCR *jcr)
             jcr->store_bsock->close();
          }
 
+         jcr->setJobStatus(JS_WaitSD);
          /*
           * Start conversation with Storage daemon
           */
@@ -595,8 +588,8 @@ bool do_backup(JCR *jcr)
             Dmsg1(100, "Failed to start job on the storage: %s\n", jcr->store_mngr->get_wstore()->name());
             continue;
          } else {
-            Jmsg(jcr, M_INFO, 0, _("Selected storage: %s, StorageGroupPolicy: \"%s\"\n"),
-                  jcr->store_mngr->get_wstore()->name(), jcr->store_mngr->get_policy_name());
+            Jmsg(jcr, M_INFO, 0, _("Selected storage: %s, device: %s, StorageGroupPolicy: \"%s\"\n"),
+                  jcr->store_mngr->get_wstore()->name(), jcr->write_dev, jcr->store_mngr->get_policy_name());
             sd_job_started = true;
             break;
          }

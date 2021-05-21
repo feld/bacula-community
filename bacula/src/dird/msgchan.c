@@ -312,13 +312,12 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
       sd->signal(BNET_EOD);              /* end of Storages */
       if (bget_dirmsg(sd) > 0) {
          Dmsg1(100, "<stored: %s", sd->msg);
-         /* ****FIXME**** save actual device name */
          ok = sscanf(sd->msg, OK_device, device_name.c_str()) == 1;
       } else {
          ok = false;
       }
       if (ok) {
-         Jmsg(jcr, M_INFO, 0, _("Using Device \"%s\" to read.\n"), device_name.c_str());
+         pm_strcpy(jcr->read_dev, device_name.c_str());
       }
    }
 
@@ -351,26 +350,23 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
       sd->signal(BNET_EOD);              /* end of Storages */
       if (bget_dirmsg(sd) > 0) {
          Dmsg1(100, "<stored: %s", sd->msg);
-         /* ****FIXME**** save actual device name */
          ok = sscanf(sd->msg, OK_device, device_name.c_str()) == 1;
       } else {
          ok = false;
       }
       if (ok) {
-         Jmsg(jcr, M_INFO, 0, _("Using Device \"%s\" to write.\n"), device_name.c_str());
+         pm_strcpy(jcr->write_dev, device_name.c_str());
       }
    }
    if (!ok) {
       POOL_MEM err_msg;
       if (sd->msg[0]) {
          pm_strcpy(err_msg, sd->msg); /* save message */
-         Jmsg(jcr, M_INFO, 0, _("\n"
-              "     Storage daemon didn't accept Device \"%s\" because:\n     %s"),
-              device_name.c_str(), err_msg.c_str()/* sd->msg */);
+         Jmsg(jcr, M_INFO, 0, _("Storage daemon \"%s\" didn't accept Device \"%s\" because: %s"),
+              store_name.c_str(), device_name.c_str(), err_msg.c_str()/* sd->msg */);
       } else {
-         Jmsg(jcr, M_INFO, 0, _("\n"
-              "     Storage daemon didn't accept Device \"%s\" command.\n"),
-              device_name.c_str());
+         Jmsg(jcr, M_INFO, 0, _("Storage daemon \"%s\" didn't accept Device \"%s\" command.\n"),
+              store_name.c_str(), device_name.c_str());
       }
    }
    return ok;
