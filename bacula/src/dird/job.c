@@ -36,6 +36,8 @@ static bool job_check_maxruntime(JCR *jcr);
 static bool job_check_maxrunschedtime(JCR *jcr);
 static void set_jcr_default_store(JCR *jcr, JOB *job);
 
+static const int dbglvl_store_mngr = 200;
+
 /* Imported subroutines and variables */
 extern void term_scheduler();
 extern void term_ua_server();
@@ -1579,10 +1581,35 @@ void get_job_storage(USTORE *store, JOB *job, RUN *run)
    }
 }
 
-static void set_jcr_default_store(JCR *jcr, JOB *job) {
+/* Init storage manager with specified storage group policy */
+static void init_store_manager(JCR *jcr, const char *policy)
+{
+   if (policy) {
+      if (strcmp(policy, "LeastUsed") == 0) {
+         Dmsg1(dbglvl_store_mngr, "Setting LeastUsed storage group policy for JobId: %d\n", jcr->JobId);
+         jcr->store_mngr = New(LeastUsedStore());
+      } else if (strcmp(policy, "ListedOrder") == 0) {
+         Dmsg1(dbglvl_store_mngr, "Setting ListedOrder storage group policy for JobId: %d\n", jcr->JobId);
+         jcr->store_mngr = New(ListedOrderStore());
+      }
+   } else {
+      Dmsg1(dbglvl_store_mngr, "Setting ListedOrder storage group policy for JobId: %d\n", jcr->JobId);
+      jcr->store_mngr = New(ListedOrderStore());
+   }
+}
+
+static void set_jcr_default_store(JCR *jcr, JOB *job)
+{
+   const char *store_policy = job->storage_policy ? job->storage_policy : job->pool->storage_policy;
+
+   init_store_manager(jcr, store_policy);
+
+   /* Use storage definition from proper resource */
    if (job->storage) {
+      Dmsg1(dbglvl_store_mngr, "Using Storage definition from the Job resource for JobId: %d\n", jcr->JobId);
       copy_rwstorage(jcr, job->storage, _("Job resource"));
    } else {
+      Dmsg1(dbglvl_store_mngr, "Using Storage definition from the Pool resource for JobId: %d\n", jcr->JobId);
       copy_rwstorage(jcr, job->pool->storage, _("Pool resource"));
    }
 }
@@ -1625,16 +1652,6 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    }
 
    jcr->JobPriority = job->Priority;
-
-   if (job->storage_policy) {
-      if (strcmp(job->storage_policy, "LeastUsed") == 0) {
-         jcr->store_mngr = New(LeastUsedStore());
-      } else if (strcmp(job->storage_policy, "ListedOrder") == 0) {
-         jcr->store_mngr = New(ListedOrderStore());
-      }
-   } else {
-      jcr->store_mngr = New(ListedOrderStore());
-   }
 
    set_jcr_default_store(jcr, job);
 
