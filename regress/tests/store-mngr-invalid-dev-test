@@ -14,13 +14,25 @@ scripts/copy-confs
 
 # Add simple job with store group
 cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Pool {
+  Name = StorePool
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365 days         # one year
+  Maximum Volume Bytes = 50G          # Limit Volume size to something reasonable
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+  Storage = File1, File2
+  Storage Group Policy = Listed Order
+}
+
 Job {
   Name = "StoreGroupJob"
   Type = Backup
-  JobDefs = "DefaultJob"
-  Storage = File1, File2
-  Storage Group Policy = Listed Order
-  Pool = Default
+  Messages = Standard
+  Client = VBox-fd
+  FileSet = "Full Set"
+  Pool = StorePool
   Maximum Concurrent Jobs = 10
 }
 END_OF_DATA
@@ -36,7 +48,7 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
 @$out  ${cwd}/tmp/log1.out
-label volume=TestVolume002 storage=File2 pool=Default slot=1 drive=0
+label volume=TestVolume002 storage=File2 pool=StorePool slot=1 drive=0
 run job=StoreGroupJob level=Full yes
 run job=StoreGroupJob level=Full yes
 run job=StoreGroupJob level=Full yes
