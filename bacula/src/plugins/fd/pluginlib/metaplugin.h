@@ -91,12 +91,17 @@ public:
    enum MODE
    {
       NONE = 0,
-      BACKUP_FULL,
-      BACKUP_INCR,
-      BACKUP_DIFF,
-      Estimate,
-      Listing,
-      QueryParams,
+      Backup_Full,
+      BACKUP_FULL = Backup_Full,
+      Backup_Incr,
+      BACKUP_INCR = Backup_Incr,
+      Backup_Diff,
+      BACKUP_DIFF = Backup_Diff,
+      Estimate_Full,
+      Estimate_Incr,
+      Estimate_Diff,
+      // Listing,
+      // QueryParams,
       RESTORE,
    };
 
@@ -128,9 +133,9 @@ public:
 private:
    enum LISTING
    {
-      ListingNone,
-      ListingMode,
-      ListingQueryParams,
+      None,
+      Listing,
+      Query,
    };
 
    // TODO: define a variable which will signal job cancel
@@ -184,6 +189,7 @@ private:
    bRC send_startbackup(bpContext *ctx);
    bRC send_startestimate(bpContext *ctx);
    bRC send_startlisting(bpContext *ctx);
+   bRC send_startquery(bpContext *ctx);
    bRC send_startrestore(bpContext *ctx);
    bRC send_endjob(bpContext *ctx);
    bRC prepare_backend(bpContext *ctx, char type, char *command);

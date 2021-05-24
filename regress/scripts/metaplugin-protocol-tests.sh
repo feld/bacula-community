@@ -281,6 +281,41 @@ TEST=$((TEST+1))
 
 done
 
+# test query mode
+TEST=1
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Query
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/qlog${TEST}.out
+setdebug level=500 client=$CLIENT trace=1
+.query client=$CLIENT plugin="$Plugin" parameter="m_id"
+messages
+@output
+quit
+END_OF_DATA
+run_bconsole
+TEST=$((TEST+1))
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Query
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/qlog${TEST}.out
+setdebug level=500 client=$CLIENT trace=1
+.query client=$CLIENT plugin="invalid" parameter="invalid"
+messages
+@output
+quit
+END_OF_DATA
+run_bconsole
+TEST=$((TEST+1))
+
 stop_bacula
 
 RET=$(grep "jobstatus:" ${cwd}/tmp/log1.out | awk '{print $2}')
@@ -405,6 +440,20 @@ if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ] || [ "$RSKIP" -ne 1 ]
 then
    echo "rlog5" "$RET" "$REND" "$RSKIP"
    rstat=5
+fi
+
+RET=$(grep -c "m_id=test" ${cwd}/tmp/qlog1.out)
+if [ "$RET" -ne 3 ]
+then
+   echo "qlog1" "$RET"
+   estat=2
+fi
+
+RET=$(grep -c "invalid=test" ${cwd}/tmp/qlog2.out)
+if [ "$RET" -gt 0 ]
+then
+   echo "qlog2" "$RET"
+   estat=3
 fi
 
 end_test

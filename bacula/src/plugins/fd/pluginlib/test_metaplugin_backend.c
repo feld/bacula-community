@@ -702,10 +702,29 @@ void perform_listing(char *listing){
    signal_eod();
 }
 
-void perform_restore(){
+/*
+ * The query param procedure
+ *    return 3 simple parameters
+ */
+void perform_queryparam(char *query)
+{
+   /* Query Loop (5) */
+   snprintf(buf, BIGBUFLEN, "%s=test1\n", query);
+   write_plugin('C', buf);
+   snprintf(buf, BIGBUFLEN, "%s=test2\n", query);
+   write_plugin('C', buf);
+   snprintf(buf, BIGBUFLEN, "%s=test3\n", query);
+   write_plugin('C', buf);
 
-   int len;
-   int fsize;
+   /* this is the end of all data */
+   signal_eod();
+}
+
+/*
+ * The main and universal restore procedure
+ */
+void perform_restore()
+{
    bool loopgo = true;
    bool restore_skip_create = false;
    bool restore_with_core = false;
@@ -792,7 +811,7 @@ void perform_restore(){
 
       /* check if DATA command, so read the data packets */
       if (strcmp(buf, "DATA\n") == 0){
-         len = read_plugin(buf);
+         int len = read_plugin(buf);
          if (len == 0){
             /* empty file to restore */
             LOG("#> Empty file.");
@@ -801,7 +820,7 @@ void perform_restore(){
             LOG("#> file data saved.");
          }
          loopgo = true;
-         fsize = len;
+         int fsize = len;
          while (loopgo){
             len = read_plugin(buf);
             fsize += len;
@@ -833,6 +852,7 @@ int main(int argc, char** argv) {
 
    int len;
    char *listing;
+   char *query;
 
    buf = (char*)malloc(BIGBUFLEN);
    if (buf == NULL){
@@ -844,6 +864,10 @@ int main(int argc, char** argv) {
    }
    listing = (char*)malloc(BUFLEN);
    if (listing == NULL){
+      exit(255);
+   }
+   query = (char*)malloc(BUFLEN);
+   if (query == NULL){
       exit(255);
    }
 
@@ -929,6 +953,10 @@ int main(int argc, char** argv) {
          strcpy(listing, buf);
          continue;
       }
+      if (sscanf(buf, "query=%s\n", buf) == 1){
+         strcpy(query, buf);
+         continue;
+      }
    }
    write_plugin('I', "TEST3");
    if (!regress_error_plugin_params){
@@ -958,6 +986,9 @@ int main(int argc, char** argv) {
    } else
    if (strcmp(buf, "ListingStart\n") == 0){
       perform_listing(listing);
+   } else
+   if (strcmp(buf, "QueryStart\n") == 0){
+      perform_queryparam(query);
    } else
    if (strcmp(buf, "RestoreStart\n") == 0){
       perform_restore();

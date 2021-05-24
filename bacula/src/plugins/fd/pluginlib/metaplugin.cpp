@@ -157,7 +157,7 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       replace(0),
       robjsent(false),
       estimate(false),
-      listing(ListingNone),
+      listing(None),
       nodata(false),
       nextfile(false),
       openerror(false),
@@ -382,7 +382,7 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
       if (strcasecmp(parser.argk[i], "listing") == 0){
          /* found, so check the value if provided */
          if (parser.argv[i]){
-            listing = ListingMode;
+            listing = Listing;
             DMSG0(ctx, DINFO, "listing procedure param found\n");
          }
       }
@@ -390,7 +390,7 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
       if (strcasecmp(parser.argk[i], "query") == 0){
          /* found, so check the value if provided */
          if (parser.argv[i]){
-            listing = ListingQueryParams;
+            listing = Query;
             DMSG0(ctx, DINFO, "query procedure param found\n");
          }
       }
@@ -928,6 +928,21 @@ bRC METAPLUGIN::send_startlisting(bpContext *ctx)
 }
 
 /*
+ * Send "QueryStart" protocol command.
+ *    more info at PLUGIN::send_startjob
+ *
+ * in:
+ *    bpContext - for Bacula debug and jobinfo messages
+ * out:
+ *    bRC_OK - when send command was successful
+ *    bRC_Error - on any error
+ */
+bRC METAPLUGIN::send_startquery(bpContext *ctx)
+{
+   return send_startjob(ctx, "QueryStart\n");
+}
+
+/*
  * Send "RestoreStart" protocol command.
  *    more info at METAPLUGIN::send_startjob
  *
@@ -1041,8 +1056,7 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
    }
 
    // check for prohibitted command duplication
-   if (type != BACKEND_JOB_INFO_RESTORE && backend.check_command(command))
-   {
+   if (type != BACKEND_JOB_INFO_RESTORE && backend.check_command(command)) {
       // already exist, report
       DMSG1(ctx, DERROR, "Plugin command=%s already defined, cannot proceed.\n", command);
       JMSG1(ctx, M_FATAL, "Plugin command already defined: \"%s\" Cannot proceed. You should correct FileSet configuration.\n", command);
@@ -1062,58 +1076,80 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
    }
    /* handshake (1) */
    DMSG0(ctx, DINFO, "Backend handshake...\n");
-   if (!backend.ctx->handshake(ctx, PLUGINNAME, PLUGINAPI))
-   {
+   if (!backend.ctx->handshake(ctx, PLUGINNAME, PLUGINAPI)) {
       backend.ctx->terminate(ctx);
       return bRC_Error;
    }
    /* Job Info (2) */
    DMSG0(ctx, DINFO, "Job Info (2) ...\n");
-   if (send_jobinfo(ctx, type) != bRC_OK){
+   if (send_jobinfo(ctx, type) != bRC_OK) {
       backend.ctx->terminate(ctx);
       return bRC_Error;
    }
    /* Plugin Params (3) */
    DMSG0(ctx, DINFO, "Plugin Params (3) ...\n");
-   if (send_parameters(ctx, command) != bRC_OK){
+   if (send_parameters(ctx, command) != bRC_OK) {
       backend.ctx->terminate(ctx);
       return bRC_Error;
    }
-   switch (type){
-      case BACKEND_JOB_INFO_BACKUP:
-         /* Start Backup (4) */
-         DMSG0(ctx, DINFO, "Start Backup (4) ...\n");
-         if (send_startbackup(ctx) != bRC_OK){
-            backend.ctx->terminate(ctx);
-            return bRC_Error;
-         }
-         break;
-      case BACKEND_JOB_INFO_ESTIMATE:
-         /* Start Estimate or Listing (4) */
-         if (listing != ListingNone){
-            DMSG0(ctx, DINFO, "Start Listing (4) ...\n");
-            if (send_startlisting(ctx) != bRC_OK){
-               backend.ctx->terminate(ctx);
-               return bRC_Error;
-            }
-         } else {
-            DMSG0(ctx, DINFO, "Start Estimate (4) ...\n");
-            if (send_startestimate(ctx) != bRC_OK){
-               backend.ctx->terminate(ctx);
-               return bRC_Error;
-            }
-         }
-         break;
-      case BACKEND_JOB_INFO_RESTORE:
-         /* Start Restore (4) */
-         DMSG0(ctx, DINFO, "Start Restore (4) ...\n");
-         if (send_startrestore(ctx) != bRC_OK){
-            backend.ctx->terminate(ctx);
-            return bRC_Error;
-         }
-         break;
-      default:
+   switch (type)
+   {
+   case BACKEND_JOB_INFO_BACKUP:
+      /* Start Backup (4) */
+      DMSG0(ctx, DINFO, "Start Backup (4) ...\n");
+      if (send_startbackup(ctx) != bRC_OK){
+         backend.ctx->terminate(ctx);
          return bRC_Error;
+      }
+      break;
+   case BACKEND_JOB_INFO_ESTIMATE:
+      {
+         /* Start Estimate or Listing/Query (4) */
+         bRC rc = bRC_Error;
+         switch (listing)
+         {
+         case Listing:
+            DMSG0(ctx, DINFO, "Start Listing (4) ...\n");
+            rc = send_startlisting(ctx);
+            break;
+         case Query:
+            DMSG0(ctx, DINFO, "Start Query Params (4) ...\n");
+            rc = send_startquery(ctx);
+            break;
+         default:
+            DMSG0(ctx, DINFO, "Start Estimate (4) ...\n");
+            rc = send_startestimate(ctx);
+            break;
+         }
+         if (rc != bRC_OK) {
+            backend.ctx->terminate(ctx);
+            return bRC_Error;
+         }
+      }
+         // if (listing != ListingNone){
+         //    DMSG0(ctx, DINFO, "Start Listing (4) ...\n");
+         //    if (send_startlisting(ctx) != bRC_OK){
+         //       backend.ctx->terminate(ctx);
+         //       return bRC_Error;
+         //    }
+         // } else {
+         //    DMSG0(ctx, DINFO, "Start Estimate (4) ...\n");
+         //    if (send_startestimate(ctx) != bRC_OK){
+         //       backend.ctx->terminate(ctx);
+         //       return bRC_Error;
+         //    }
+         // }
+      break;
+   case BACKEND_JOB_INFO_RESTORE:
+      /* Start Restore (4) */
+      DMSG0(ctx, DINFO, "Start Restore (4) ...\n");
+      if (send_startrestore(ctx) != bRC_OK) {
+         backend.ctx->terminate(ctx);
+         return bRC_Error;
+      }
+      break;
+   default:
+      return bRC_Error;
    }
    DMSG0(ctx, DINFO, "Prepare backend done.\n");
    return bRC_OK;
@@ -2383,8 +2419,14 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
 
    DMSG0(ctx, D1, "METAPLUGIN::queryParameter\n");
 
-   if (listing == ListingNone){
-      listing = ListingQueryParams;
+   // check if it is our Plugin command
+   if (!isourplugincommand(PLUGINPREFIX, qp->command) != 0){
+      // it is not our plugin prefix
+      return bRC_OK;
+   }
+
+   if (listing == None) {
+      listing = Query;
       Mmsg(cmd, "%s query=%s", qp->command, qp->parameter);
       if (prepare_backend(ctx, BACKEND_JOB_INFO_ESTIMATE, cmd.c_str()) == bRC_Error){
          return bRC_Error;
@@ -2404,6 +2446,7 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
       DMSG0(ctx, D1, "METAPLUGIN::queryParameter: got EOD\n");
       backend.ctx->signal_term(ctx);
       backend.ctx->terminate(ctx);
+      qp->result = NULL;
       ret = bRC_OK;
    } else {
       /*
@@ -2736,7 +2779,7 @@ static bRC queryParameter(bpContext *ctx, struct query_pkt *qp)
 {
    ASSERT_CTX;
 
-   DMSG2(ctx, D1, "queryParameter: %s:%s\n", qp->command, qp->parameter);
+   DMSG2(ctx, D1, "queryParameter: cmd:%s param:%s\n", qp->command, qp->parameter);
    METAPLUGIN *self = pluginclass(ctx);
    return self->queryParameter(ctx, qp);
 }
