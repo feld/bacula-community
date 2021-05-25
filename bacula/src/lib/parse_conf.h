@@ -379,6 +379,10 @@ void store_defs(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_label(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_coll_type(LEX *lc, RES_ITEM *item, int index, int pass);
 
+
+/* Director daemon's specific routines */
+void store_storage_mngr(LEX *lc, RES_ITEM *item, int index, int pass);
+
 /* ***FIXME*** eliminate these globals */
 extern int32_t r_first;
 extern int32_t r_last;

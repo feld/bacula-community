@@ -1376,6 +1376,7 @@ static bool check_resources(bool apply_jobdefs)
                 * Handle strings and directory strings
                 */
                if (job_items[i].handler == store_str ||
+                   job_items[i].handler == store_storage_mngr ||
                    job_items[i].handler == store_dir) {
                   def_svalue = (char **)((char *)(job->jobdefs) + offset);
                   Dmsg5(400, "Job \"%s\", field \"%s\" def_svalue=%s item %d offset=%u\n",

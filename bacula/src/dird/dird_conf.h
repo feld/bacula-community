@@ -784,9 +784,6 @@ public:
 #define GetFileSetResWithName(x) ((FILESET *)GetResWithName(R_FILESET, (x)))
 #define GetCatalogResWithName(x) ((CAT *)GetResWithName(R_CATALOG, (x)))
 
-/* Director daemon's specific */
-void store_storage_mngr(LEX *lc, RES_ITEM *item, int index, int pass);
-
 /* Imported subroutines */
 void store_jobtype(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_level(LEX *lc, RES_ITEM *item, int index, int pass);

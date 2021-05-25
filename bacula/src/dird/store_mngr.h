@@ -29,22 +29,6 @@
 /* Forward delcaration */
 class STORE;
 
-/* Not so many policies for now...
- * Some ideas for next ones:
- *    - Round robin
- *    - Most free space
- *    - Least CPU usage
- *    - Least network usage
- *    - A lot more
- *
- * Some protocol/interface changes will be needed to query all of the storages from
- * the list about it's current status, depending of policy used.
- */
-static char const *storage_mngmt_policy[] = {
-   "LeastUsed",
-   "ListedOrder",
-   NULL
-};
 
 /*
  * Helper class to make managing each storage type (write/read) easier.
@@ -142,17 +126,6 @@ class StorageManager : public SMARTALLOC {
 
       StorageManager(const char *policy);
 
-      /* Helper to validate if policy user wants to use is a valid one */
-      static bool check_policy(const char *policy) {
-         int i = 0;
-         while (storage_mngmt_policy[i]) {
-            if (strcasecmp(policy, storage_mngmt_policy[i]) == 0) {
-               return true;
-            }
-            i++;
-         }
-         return false;
-      }
 
       /************ READ STORAGE HELPERS ************/
       STORE *get_rstore();

@@ -228,6 +228,7 @@ int display_global_item(HPKT &hpkt)
       display_res(hpkt);
    } else if (hpkt.ritem->handler == store_str ||
               hpkt.ritem->handler == store_name ||
+              hpkt.ritem->handler == store_storage_mngr ||
               hpkt.ritem->handler == store_password ||
               hpkt.ritem->handler == store_strname ||
               hpkt.ritem->handler == store_dir) {

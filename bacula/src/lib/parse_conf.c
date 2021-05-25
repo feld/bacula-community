@@ -1003,6 +1003,56 @@ void store_coll_type(LEX *lc, RES_ITEM *item, int index, int pass)
    set_bit(index, res_all.hdr.item_present);
 }
 
+/* Not so many policies for now...
+ * Some ideas for next ones:
+ *    - Most free space
+ *    - Least CPU usage
+ *    - Least network usage
+ *    - ...
+ *
+ * Some protocol/interface changes will be needed to query all of the storages from
+ * the list about it's current status, depending of policy used.
+ */
+static char const *storage_mngmt_policy[] = {
+   "LeastUsed",
+   "ListedOrder",
+   NULL
+};
+
+/* Helper to validate if policy user wants to use is a valid one */
+static bool check_policy(const char *policy) {
+   int i = 0;
+   while (storage_mngmt_policy[i]) {
+      if (strcasecmp(policy, storage_mngmt_policy[i]) == 0) {
+         return true;
+      }
+      i++;
+   }
+   return false;
+}
+
+/* Store a storage group policy */
+void store_storage_mngr(LEX *lc, RES_ITEM *item, int index, int pass)
+{
+   lex_get_token(lc, T_STRING);
+   if (pass == 1) {
+      if (*(item->value)) {
+         scan_err5(lc, _("Attempt to redefine \"%s\" from \"%s\" to \"%s\" referenced on line %d : %s\n"),
+            item->name, *(item->value), lc->str, lc->line_no, lc->line);
+         return;
+      }
+
+      if (!check_policy(lc->str)) {
+         scan_err0(lc, _("Invalid storage policy!\n"));
+         return;
+      }
+
+
+      *(item->value) = bstrdup(lc->str);
+   }
+   scan_to_eol(lc);
+   set_bit(index, res_all.hdr.item_present);
+}
 
 /*
  *

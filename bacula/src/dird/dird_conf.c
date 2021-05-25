@@ -134,28 +134,6 @@ BSOCK *CLIENT::getBSOCK(int timeout)
    return globals->socket->get(timeout);
 }
 
-/* Store a storage group policy */
-void store_storage_mngr(LEX *lc, RES_ITEM *item, int index, int pass)
-{
-   lex_get_token(lc, T_STRING);
-   if (pass == 1) {
-      if (*(item->value)) {
-         scan_err5(lc, _("Attempt to redefine \"%s\" from \"%s\" to \"%s\" referenced on line %d : %s\n"),
-            item->name, *(item->value), lc->str, lc->line_no, lc->line);
-         return;
-      }
-
-      if (!StorageManager::check_policy(lc->str)) {
-         scan_err0(lc, _("Invalid storage policy!\n"));
-         return;
-      }
-
-      *(item->value) = bstrdup(lc->str);
-   }
-   scan_to_eol(lc);
-   set_bit(index, res_all.hdr.item_present);
-}
-
 bool CLIENT::getBSOCK_state(POOLMEM *&buf)
 {
    P(globals_mutex);
