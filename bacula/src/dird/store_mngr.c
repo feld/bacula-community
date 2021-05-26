@@ -151,7 +151,7 @@ bool storage::inc_rstores(JCR *jcr) {
    {
       numread = store->incNumConcurrentReadJobs(1);
       num = store->incNumConcurrentJobs(1);
-      Dmsg1(dbglvl, "Inc rncj=%d\n", num);
+      Dmsg2(dbglvl, "Store: %s Inc rncj=%d\n", store->name(), num);
       return true;
    }
 
@@ -187,7 +187,7 @@ bool storage::inc_wstores(JCR *jcr) {
       int num = store->getNumConcurrentJobs();
       if (num < store->MaxConcurrentJobs) {
          num = store->incNumConcurrentJobs(1);
-         Dmsg1(dbglvl, "Inc wncj=%d\n", num);
+         Dmsg2(dbglvl, "Store: %s Inc wncj=%d\n", store->name(), num);
          list->append(store);
       }
    }
@@ -226,10 +226,18 @@ void storage::dec_stores() {
       return;
    }
 
-   STORE *store;
-   foreach_alist(store, list) {
-      int num = store->incNumConcurrentJobs(-1);
-      Dmsg1(dbglvl, "Dec wncj=%d\n", num);
+   if (unused_stores_decremented) {
+      /* Only currently used storage needs to be decrased, rest of it was decremented before */
+         int num = store->incNumConcurrentJobs(-1);
+         Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
+         unused_stores_decremented = false;
+   } else {
+      /* We need to decrement all storages in the list */
+      STORE *tmp_store;
+      foreach_alist(tmp_store, list) {
+         int num = tmp_store->incNumConcurrentJobs(-1);
+         Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", tmp_store->name(), num);
+      }
    }
 }
 
@@ -253,6 +261,29 @@ const char *storage::print_list() {
    return quote_string(list_str, tmp.addr());
 }
 
+void storage::dec_unused_stores() {
+   lock_guard lg(mutex);
+   STORE *tmp_store;
+
+   foreach_alist(tmp_store, list) {
+      if (store == tmp_store) {
+         /* We don't want to decrement this one since it's the one that will be used */
+         continue;
+      } else {
+         int num = tmp_store->incNumConcurrentJobs(-1);
+         Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
+      }
+   }
+
+   unused_stores_decremented = true;
+}
+
+void storage::dec_curr_store() {
+   lock_guard lg(mutex);
+
+   int num = store->incNumConcurrentJobs(-1);
+   Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
+}
 
 void LeastUsedStore::apply_policy(bool write_store) {
    alist *store = write_store ? wstore.get_list() : rstore.get_list();
@@ -378,15 +409,26 @@ bool StorageManager::inc_read_stores(JCR *jcr) {
    return rstore.inc_stores(jcr);
 }
 
+/* Decrement job counter for all of the storages in the list */
 void StorageManager::dec_read_stores() {
    return rstore.dec_stores();
 }
 
+/* Increment job counter for all of the storages in the list */
 bool StorageManager::inc_write_stores(JCR *jcr) {
    return wstore.inc_stores(jcr);
-
 }
 
 void StorageManager::dec_write_stores() {
-   return wstore.dec_stores();
+   wstore.dec_stores();
+}
+
+/* Decrement job counter for currently used write storage */
+void StorageManager::dec_curr_wstore() {
+   wstore.dec_curr_store();
+}
+
+/* Decrement job counters for write storages which won't be used */
+void StorageManager::dec_unused_wstores() {
+   wstore.dec_unused_stores();
 }

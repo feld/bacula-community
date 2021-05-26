@@ -59,6 +59,7 @@ class storage {
       POOLMEM *source;       /* Where the storage came from */
       POOLMEM *list_str;     /* List of storage names in the list */
       pthread_mutex_t mutex; /* Mutex for accessing items */
+      bool unused_stores_decremented; /* Set if only currently used storage has NumConcurrentJobs incremented */
 
       /* Only when we are a read storage - increment concurrent read counters for all storages on the list */
       bool inc_rstores(JCR *jcr);
@@ -107,6 +108,10 @@ class storage {
       /* Decrement concurrent read/write counters for all storages on the list */
       void dec_stores();
 
+      void dec_unused_stores();
+
+      void dec_curr_store();
+
       /* Print all elements of the list (sample result of print_list() -> "File1, File2, File3" */
       const char *print_list();
 };
@@ -123,9 +128,9 @@ class storage {
 class StorageManager : public SMARTALLOC {
 
    protected:
-      storage rstore;   /* Read storage */
-      storage wstore;   /* Write storage */
-      const char *policy;
+      storage rstore;               /* Read storage */
+      storage wstore;               /* Write storage */
+      const char *policy;           /* Storage Group Policy used */
 
    public:
       virtual void apply_policy(bool write_store) = 0;
@@ -194,6 +199,10 @@ class StorageManager : public SMARTALLOC {
       bool inc_write_stores(JCR *jcr);
 
       void dec_write_stores();
+
+      void dec_curr_wstore();
+
+      void dec_unused_wstores();
 
       /************ GENERIC STORAGE HELPERS ************/
       void reset_rwstorage();

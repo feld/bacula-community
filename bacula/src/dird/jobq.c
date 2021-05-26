@@ -805,6 +805,9 @@ static bool acquire_resources(JCR *jcr)
       }
    }
 
+   /* Temporarily increase job counter for all storages in the list.
+    * When the job is actually started, all of the storages which are not being used should be released
+    * to not block any subsequent jobs (@see StorageManager's 'release_unused_wstores()' method) */
    if (!jcr->store_mngr->inc_write_stores(jcr)) {
       if (jcr->store_mngr->get_rstore()) {
          jcr->store_mngr->dec_read_stores();

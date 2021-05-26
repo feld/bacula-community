@@ -603,6 +603,9 @@ bool do_backup(JCR *jcr)
       }
 
       if(sd_job_started) {
+         /* We can decrement not-used SDs since job was started against first available storage from the list */
+         jcr->store_mngr->dec_unused_wstores();
+
          /* Now break from the outer loop as well */
          break;
       }
