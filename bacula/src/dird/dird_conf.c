@@ -759,7 +759,7 @@ static RES_ITEM pool_items[] = {
    {"MigrationLowBytes", store_size64,  ITEM(res_pool.MigrationLowBytes), 0, 0, 0},
    {"NextPool",      store_res,       ITEM(res_pool.NextPool), R_POOL, 0, 0},
    {"Storage",       store_alist_res, ITEM(res_pool.storage),  R_STORAGE, 0, 0},
-   {"StorageGroupPolicy",   store_storage_mngr, ITEM(res_job.storage_policy),  0, 0, 0},
+   {"StorageGroupPolicy",   store_storage_mngr, ITEM(res_pool.storage_policy),  0, 0, 0},
    {"AutoPrune",     store_bool,      ITEM(res_pool.AutoPrune), 0, ITEM_DEFAULT, true},
    {"Recycle",       store_bool,      ITEM(res_pool.Recycle),   0, ITEM_DEFAULT, true},
    {"RecyclePool",   store_res,       ITEM(res_pool.RecyclePool), R_POOL, 0, 0},
