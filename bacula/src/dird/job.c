@@ -1602,17 +1602,31 @@ static void init_store_manager(JCR *jcr, const char *policy)
 
 static void set_jcr_default_store(JCR *jcr, JOB *job)
 {
-   const char *store_policy = job->storage_policy ? job->storage_policy : job->pool->storage_policy;
+   /* Check if storage policy is defined in:
+    *    1. Pool resource
+    *    2. Job Resource
+    *    3. JobDefs resource used by job
+    * If no policy defined, used the default one.
+    */
+   const char *store_policy = StorageManager::get_default_policy();
+
+   if (job->pool->storage_policy) {
+      Dmsg1(dbglvl_store_mngr, "Using Storage Group Policy from the Pool resource for JobId: %d\n", jcr->JobId);
+      store_policy = job->pool->storage_policy;
+   } else if (job->storage_policy) {
+      Dmsg1(dbglvl_store_mngr, "Using Storage Group Policy from the Job resource for JobId: %d\n", jcr->JobId);
+      store_policy = job->storage_policy;
+   }
 
    init_store_manager(jcr, store_policy);
 
    /* Use storage definition from proper resource */
-   if (job->storage) {
-      Dmsg1(dbglvl_store_mngr, "Using Storage definition from the Job resource for JobId: %d\n", jcr->JobId);
-      copy_rwstorage(jcr, job->storage, _("Job resource"));
-   } else {
+   if (job->pool->storage) {
       Dmsg1(dbglvl_store_mngr, "Using Storage definition from the Pool resource for JobId: %d\n", jcr->JobId);
       copy_rwstorage(jcr, job->pool->storage, _("Pool resource"));
+   } else {
+      Dmsg1(dbglvl_store_mngr, "Using Storage definition from the Job resource for JobId: %d\n", jcr->JobId);
+      copy_rwstorage(jcr, job->storage, _("Job resource"));
    }
 }
 

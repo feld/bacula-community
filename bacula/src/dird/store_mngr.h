@@ -126,6 +126,9 @@ class StorageManager : public SMARTALLOC {
 
       StorageManager(const char *policy);
 
+      static const char *get_default_policy() {
+         return "ListedOrder";
+      }
 
       /************ READ STORAGE HELPERS ************/
       STORE *get_rstore();
