@@ -734,7 +734,9 @@ void do_restore(JCR *jcr)
          if (rctx.extract && (rctx.prev_stream == rctx.stream
                          || rctx.prev_stream == STREAM_UNIX_ATTRIBUTES
                          || rctx.prev_stream == STREAM_UNIX_ATTRIBUTES_EX
-                         || rctx.prev_stream == STREAM_ENCRYPTED_SESSION_DATA)) {
+                         || rctx.prev_stream == STREAM_ENCRYPTED_SESSION_DATA
+                                                || rctx.prev_stream == STREAM_PLUGIN_META_CATALOG
+                                                || rctx.prev_stream == STREAM_PLUGIN_META_BLOB)) {
             rctx.flags = 0;
 
             if (rctx.full_stream & STREAM_BIT_DEDUPLICATION_DATA){
