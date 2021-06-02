@@ -533,8 +533,12 @@ bool do_backup(JCR *jcr)
 
    if (wstore_group) {
       /* Apply policy for the write storage list */
-      jcr->store_mngr->apply_policy(true);
-      Jmsg(jcr, M_INFO, 0, _("Possible storage choices: %s\n"), jcr->store_mngr->print_wlist());
+      jcr->store_mngr->apply_write_policy();
+      Dmsg2(100, "Configured storages: %s, source: %s\n",
+           jcr->store_mngr->print_origin_wlist(), jcr->store_mngr->get_wsource());
+      Dmsg2(100, "Possible storage choices after applying \"%s\" policy: %s\n",
+            jcr->store_mngr->get_policy_name(),
+            jcr->store_mngr->print_possible_wlist());
       iter_no = 2;
    }
 
@@ -588,14 +592,18 @@ bool do_backup(JCR *jcr)
             Dmsg1(100, "Failed to start job on the storage: %s\n", jcr->store_mngr->get_wstore()->name());
             continue;
          } else {
-            Jmsg(jcr, M_INFO, 0, _("Selected storage: %s, device: %s, StorageGroupPolicy: \"%s\"\n"),
-                  jcr->store_mngr->get_wstore()->name(), jcr->write_dev, jcr->store_mngr->get_policy_name());
             sd_job_started = true;
             break;
          }
       }
 
       if(sd_job_started) {
+         int group_size = jcr->store_mngr->get_origin_wstore_list()->size();
+         Jmsg(jcr, M_INFO, 0,
+              "Storage \"%s\" was selected out of group of %d available storages. "
+              "StorageGroupPolicy used: \"%s\"",
+              jcr->store_mngr->get_wstore()->name(), group_size,
+              jcr->store_mngr->get_policy_name());
          /* We can decrement not-used SDs since job was started against first available storage from the list */
          jcr->store_mngr->dec_unused_wstores();
 

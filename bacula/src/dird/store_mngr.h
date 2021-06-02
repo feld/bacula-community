@@ -39,6 +39,7 @@ class storage {
     private:
       bool write;            /* Write or read storage */
       STORE *store;          /* Selected storage to be used */
+      alist *origin_list;    /* Configured Storage (raw list without any policy applied) */
       alist *list;           /* Storage possibilities */
       POOLMEM *source;       /* Where the storage came from */
       POOLMEM *list_str;     /* List of storage names in the list */
@@ -50,6 +51,9 @@ class storage {
 
       /* Only when we are a write storage - increment concurrent write counters for all storages on the list */
       bool inc_wstores(JCR *jcr);
+
+      const char *print_list(alist *list);
+
    public:
       storage();
 
@@ -63,8 +67,13 @@ class storage {
          return store;
       }
 
-      /* Get list of all possible storages */
+      /* Get list of all possible storages.
+       * This metod can possibly return list with less storages than the original group.
+       * It's because some of it's elements can ba unavailable at that time (e.g. reached maxConcJobs limit). */
       alist *get_list();
+
+      /* Get original list of all storages as assigned by the set() method. */
+      alist *get_origin_list();
 
       /* Get source of the storage (pool, job, commandline, unknown, ...) */
       const char *get_source() const;
@@ -97,7 +106,8 @@ class storage {
       void dec_curr_store();
 
       /* Print all elements of the list (sample result of print_list() -> "File1, File2, File3" */
-      const char *print_list();
+      const char *print_origin_list();
+      const char *print_possible_list();
 };
 
 
@@ -115,9 +125,11 @@ class StorageManager : public SMARTALLOC {
       storage rstore;               /* Read storage */
       storage wstore;               /* Write storage */
       const char *policy;           /* Storage Group Policy used */
+      virtual void apply_policy(bool write_store) = 0;
 
    public:
-      virtual void apply_policy(bool write_store) = 0;
+      virtual void apply_write_policy() = 0;
+      virtual void apply_read_policy() = 0;
 
       virtual ~StorageManager() {
          reset_rwstorage();
@@ -135,6 +147,8 @@ class StorageManager : public SMARTALLOC {
 
       alist *get_rstore_list();
 
+      alist *get_origin_rstore_list();
+
       const char *get_rsource() const;
 
       const char *get_rmedia_type() const;
@@ -149,7 +163,8 @@ class StorageManager : public SMARTALLOC {
 
       void dec_read_stores();
 
-      const char *print_rlist();
+      const char *print_possible_rlist();
+      const char *print_origin_rlist();
 
       /************ WRITE STORAGE HELPERS ************/
       STORE *get_wstore() {
@@ -157,6 +172,8 @@ class StorageManager : public SMARTALLOC {
       }
 
       alist *get_wstore_list();
+
+      alist *get_origin_wstore_list();
 
       const char *get_wsource() const;
 
@@ -170,7 +187,8 @@ class StorageManager : public SMARTALLOC {
 
       void reset_wstorage();
 
-      const char *print_wlist();
+      const char *print_possible_wlist();
+      const char *print_origin_wlist();
 
       bool inc_write_stores(JCR *jcr);
 
@@ -192,8 +210,11 @@ class StorageManager : public SMARTALLOC {
  * Least used policy chooses storage from the list which has the least concurrent jobs number.
  */
 class LeastUsedStore : public StorageManager {
-   public:
+   private:
       void apply_policy(bool write_store);
+   public:
+      void apply_write_policy();
+      void apply_read_policy();
 
    LeastUsedStore() : StorageManager("LeastUsed") {
    }
@@ -207,10 +228,15 @@ class LeastUsedStore : public StorageManager {
  */
 class ListedOrderStore : public StorageManager {
    private:
-
-   public:
       void apply_policy(bool write_store) {
          /* Do nothing for now */
+      }
+   public:
+      void apply_write_policy() {
+         return apply_policy(true);
+      }
+      void apply_read_policy() {
+         return apply_policy(false);
       }
 
    ListedOrderStore(): StorageManager("ListedOrder")  {

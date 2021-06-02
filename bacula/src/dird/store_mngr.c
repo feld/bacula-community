@@ -25,6 +25,7 @@ static const int dbglvl = 200;
 
 storage::storage() {
    list = New(alist(10, not_owned_by_alist));
+   origin_list = New(alist(10, not_owned_by_alist));
    source = get_pool_memory(PM_MESSAGE);
    list_str = get_pool_memory(PM_MESSAGE);
    *source = 0;
@@ -37,6 +38,10 @@ storage::~storage() {
    if (list) {
       delete list;
       list = NULL;
+   }
+   if (origin_list) {
+      delete origin_list;
+      origin_list = NULL;
    }
    if (source) {
       free_and_null_pool_memory(source);
@@ -54,6 +59,10 @@ void storage::set_rw(bool write) {
 
 alist *storage::get_list() {
    return list;
+}
+
+alist *storage::get_origin_list() {
+   return origin_list;
 }
 
 const char *storage::get_source() const {
@@ -74,6 +83,7 @@ void storage::set(STORE *storage, const char *source) {
    reset();
 
    list->append(storage);
+   origin_list->append(storage);
 
    store = storage;
    if (!source) {
@@ -95,6 +105,7 @@ void storage::set(alist *storage, const char *source) {
    STORE *s;
    foreach_alist(s, storage) {
       list->append(s);
+      origin_list->append(s);
    }
 
    store = (STORE *)list->first();
@@ -107,8 +118,12 @@ void storage::set(alist *storage, const char *source) {
 
 void storage::reset() {
    store = NULL;
+
    while (list->size()) {
       list->remove(0);
+   }
+   while (origin_list->size()) {
+      origin_list->remove(0);
    }
    *source = 0;
    *list_str = 0;
@@ -241,7 +256,7 @@ void storage::dec_stores() {
    }
 }
 
-const char *storage::print_list() {
+const char *storage::print_list(alist *list) {
    lock_guard lg(mutex);
 
    *list_str = 0;
@@ -259,6 +274,14 @@ const char *storage::print_list() {
    }
 
    return quote_string(list_str, tmp.addr());
+}
+
+const char *storage::print_origin_list() {
+   return print_list(origin_list);
+}
+
+const char *storage::print_possible_list() {
+   return print_list(list);
 }
 
 void storage::dec_unused_stores() {
@@ -329,6 +352,13 @@ void LeastUsedStore::apply_policy(bool write_store) {
    }
 }
 
+void LeastUsedStore::apply_write_policy() {
+   return apply_policy(true);
+}
+
+void LeastUsedStore::apply_read_policy() {
+   return apply_policy(false);
+}
 
 StorageManager::StorageManager(const char *policy) {
    this->policy = bstrdup(policy);
@@ -344,6 +374,10 @@ alist *StorageManager::get_rstore_list() {
    return rstore.get_list();
 }
 
+alist *StorageManager::get_origin_rstore_list() {
+   return rstore.get_origin_list();
+}
+
 const char *StorageManager::get_rsource() const {
    return rstore.get_source();
 }
@@ -354,6 +388,10 @@ const char *StorageManager::get_rmedia_type() const {
 
 alist *StorageManager::get_wstore_list() {
    return wstore.get_list();
+}
+
+alist *StorageManager::get_origin_wstore_list() {
+   return wstore.get_origin_list();
 }
 
 const char *StorageManager::get_wsource() const {
@@ -376,8 +414,12 @@ void StorageManager::reset_rstorage() {
    rstore.reset();
 }
 
-const char *StorageManager::print_rlist() {
-   return rstore.print_list();
+const char *StorageManager::print_possible_rlist() {
+   return rstore.print_possible_list();
+}
+
+const char *StorageManager::print_origin_rlist() {
+   return rstore.print_origin_list();
 }
 
 bool StorageManager::set_current_wstorage(STORE *storage) {
@@ -396,8 +438,12 @@ void StorageManager::reset_wstorage() {
    wstore.reset();
 }
 
-const char *StorageManager::print_wlist() {
-   return wstore.print_list();
+const char *StorageManager::print_possible_wlist() {
+   return wstore.print_possible_list();
+}
+
+const char *StorageManager::print_origin_wlist() {
+   return wstore.print_origin_list();
 }
 
 void StorageManager::reset_rwstorage() {
