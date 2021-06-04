@@ -54,6 +54,7 @@ ADD_TEST(misc:copy-sqlquery-duplicate-test "@regressdir@/tests/copy-sqlquery-dup
 ADD_TEST(misc:fdcallsdir-test "@regressdir@/tests/fdcallsdir-test")
 ADD_TEST(misc:fdcallsdir-sched-test "@regressdir@/tests/fdcallsdir-sched-test")
 ADD_TEST(misc:console-delete-object-test "@regressdir@/tests/console-delete-object-test")
+ADD_TEST(misc:delete-running-job-test "@regressdir@/tests/delete-running-job-test")
 ADD_TEST(misc:jlist-test "@regressdir@/tests/jlist-test")
 ADD_TEST(misc:json-test "@regressdir@/tests/json-test")
 ADD_TEST(misc:reload-client-address-test "@regressdir@/tests/reload-client-address-test")
