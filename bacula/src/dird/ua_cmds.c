@@ -2181,10 +2181,24 @@ static void delete_job(UAContext *ua)
 static void do_job_delete(UAContext *ua, JobId_t JobId)
 {
    char ed1[50];
-
    edit_int64(JobId, ed1);
-   purge_jobs_from_catalog(ua, ed1);
-   ua->send_msg(_("JobId=%s and associated records deleted from the catalog.\n"), ed1);
+   bool skip_job = false;
+
+   JCR *jcr;
+   foreach_jcr(jcr) {
+      if (jcr->JobId == JobId) {
+         skip_job = true;
+         break;
+      }
+   }
+   endeach_jcr(jcr);
+
+   if (skip_job) {
+      ua->send_msg(_("Skipping JobId=%s, job is still running!\n"), ed1);
+   } else {
+      purge_jobs_from_catalog(ua, ed1);
+      ua->send_msg(_("JobId=%s and associated records deleted from the catalog.\n"), ed1);
+   }
 }
 
 
