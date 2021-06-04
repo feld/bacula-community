@@ -598,12 +598,15 @@ bool do_backup(JCR *jcr)
       }
 
       if(sd_job_started) {
+         /* No need to print msg when there is only 1 storage defined in the original group */
          int group_size = jcr->store_mngr->get_origin_wstore_list()->size();
-         Jmsg(jcr, M_INFO, 0,
-              "Storage \"%s\" was selected out of group of %d available storages. "
-              "StorageGroupPolicy used: \"%s\"",
-              jcr->store_mngr->get_wstore()->name(), group_size,
-              jcr->store_mngr->get_policy_name());
+         if (group_size > 1) {
+            Jmsg(jcr, M_INFO, 0,
+                  "Storage \"%s\" was selected out of group of %d available storages. "
+                  "StorageGroupPolicy \"%s\" used\n",
+                  jcr->store_mngr->get_wstore()->name(), group_size,
+                  jcr->store_mngr->get_policy_name());
+         }
          /* We can decrement not-used SDs since job was started against first available storage from the list */
          jcr->store_mngr->dec_unused_wstores();
 
