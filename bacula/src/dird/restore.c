@@ -642,6 +642,7 @@ bool do_restore_init(JCR *jcr)
 void restore_cleanup(JCR *jcr, int TermCode)
 {
    POOL_MEM where;
+   CLIENT_DBR cr;
    char creplace;
    const char *replace = NULL;
    char sdt[MAX_TIME_LENGTH], edt[MAX_TIME_LENGTH];
@@ -654,6 +655,13 @@ void restore_cleanup(JCR *jcr, int TermCode)
 
    Dmsg0(20, "In restore_cleanup\n");
    update_job_end(jcr, TermCode);
+
+   memset(&cr, 0, sizeof(cr));
+   bstrncpy(cr.Name, jcr->client->name(), sizeof(cr.Name));
+   if (!db_get_client_record(jcr, jcr->db, &cr)) {
+      Jmsg(jcr, M_WARNING, 0, _("Error getting Client record for Job report: ERR=%s"),
+         db_strerror(jcr->db));
+   }
 
    if (jcr->component_fd) {
       fclose(jcr->component_fd);
@@ -733,7 +741,7 @@ void restore_cleanup(JCR *jcr, int TermCode)
 "  Build OS:               %s %s %s\n"
 "  JobId:                  %d\n"
 "  Job:                    %s\n"
-"  Restore Client:         %s\n"
+"  Restore Client:         \"%s\" %s\n"
 "  Where:                  %s\n"
 "  Replace:                %s\n"
 "  Start time:             %s\n"
@@ -751,7 +759,7 @@ void restore_cleanup(JCR *jcr, int TermCode)
         HOST_OS, DISTNAME, DISTVER,
         jcr->jr.JobId,
         jcr->jr.Job,
-        jcr->client->name(),
+        jcr->client->name(), cr.Uname,
         where.c_str(),
         replace,
         sdt,
