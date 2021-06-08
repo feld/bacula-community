@@ -37,10 +37,12 @@ struct s_collt {
 };
 
 struct RES_ITEM;                   /* Declare forward referenced structure */
-struct RES_ITEM1;
+struct RES_ITEM1;                  /* Declare forward referenced structure */
 struct RES_ITEM2;                  /* Declare forward referenced structure */
 class RES;                         /* Declare forward referenced structure */
 struct HPKT;                       /* Declare forward referenced structure */
+struct STATUS_PKT;                 /* Declare forward referenced structure */
+
 typedef void (RES_HANDLER)(HPKT &hpkt);
 typedef void (MSG_RES_HANDLER)(LEX *lc, RES_ITEM *item, int index, int pass);
 /* The INC_RES handler has an extra argument */
@@ -334,6 +336,7 @@ RES *GetNextRes(RES_HEAD **rhead, int rcode, RES *res);
 void b_LockRes(const char *file, int line);
 void b_UnlockRes(const char *file, int line);
 void dump_resource(int type, RES *res, void sendmsg(void *sock, const char *fmt, ...), void *sock);
+void dump_resource(int type, RES *ares, void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp);
 void dump_each_resource(int type, void sendmsg(void *sock, const char *fmt, ...), void *sock);
 void free_resource(RES *res, int type);
 bool init_resource(CONFIG *config, uint32_t type, void *res, int size);

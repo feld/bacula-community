@@ -28,6 +28,7 @@
 #include "bacula.h"
 #include "parse_conf.h"
 #include "jcr.h"
+#include "status.h"
 #include <time.h>
 
 #define SPOOLFNAME   "%s/%s.collector.%s.spool"
@@ -543,6 +544,45 @@ void dump_collector_resource(COLLECTOR &res_collector, void sendit(void *sock, c
          sendit(sock, _("            metric=%s\n"), metric);
       };
    }
+};
+
+/* common to SD/FD */
+void dump_collector_resource(COLLECTOR &res_collector, void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp)
+{
+   char *metric;
+   OutputWriter ow(sp->api_opts);
+   char *p;
+
+   ow.start_group("Statistics:");
+   ow.get_output(OT_START_OBJ,
+                 OT_STRING, "name", res_collector.hdr.name,
+                 OT_INT,    "type", res_collector.type,
+                 OT_INT32,  "interval", res_collector.interval,
+                 OT_STRING, "prefix", res_collector.prefix,
+                 OT_END);
+   switch (res_collector.type){
+      case COLLECTOR_BACKEND_CSV:
+         ow.get_output(OT_STRING, "file", res_collector.file,
+                       OT_END);
+         break;
+      case COLLECTOR_BACKEND_Graphite:
+         ow.get_output(OT_STRING, "host", res_collector.host ? res_collector.host : "localhost",
+                       OT_STRING, "port", res_collector.port,
+                       OT_END);
+         break;
+   }
+   if (res_collector.metrics){
+      foreach_alist(metric, res_collector.metrics){
+         ow.get_output(OT_STRING, "metric", metric,
+                       OT_END);
+      };
+   }
+
+   ow.get_output(OT_END_OBJ,
+                 OT_END);
+   p = ow.end_group();
+
+   sendit(p, strlen(p), sp);
 };
 
 /*

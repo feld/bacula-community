@@ -28,6 +28,8 @@
 #ifndef __BCOLLECTOR_H_
 #define __BCOLLECTOR_H_
 
+struct STATUS_PKT; /* Forward declaration */
+
 /* Supported backend types */
 enum {
     COLLECTOR_BACKEND_Undef = 0,
@@ -79,6 +81,7 @@ void stop_collector_thread(COLLECTOR *collector);
 void start_updcollector_thread(UPDATE_COLLECTOR_INIT_t &initdata);
 void stop_updcollector_thread();
 void dump_collector_resource(COLLECTOR &res_collector, void sendit(void *sock, const char *fmt, ...), void *sock);
+void dump_collector_resource(COLLECTOR &res_collector, void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp);
 void free_collector_resource(COLLECTOR &res_collector);
 int render_updcollector_status(POOL_MEM &buf);
 void api_render_updcollector_status(OutputWriter &ow);

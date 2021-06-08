@@ -34,6 +34,7 @@ extern bool GetWindowsVersionString(char *buf, int maxsiz);
 static void  list_running_jobs(STATUS_PKT *sp);
 static void  list_status_header(STATUS_PKT *sp);
 static void  list_collectors_status(STATUS_PKT *sp, char *collname);
+static void  show_config(STATUS_PKT *sp);
 static void  api_collectors_status(STATUS_PKT *sp, char *collname);
 
 /* Static variables */
@@ -563,6 +564,9 @@ int qstatus_cmd(JCR *jcr)
    } else if (strcasecmp(cmd, "statistics") == 0) {
        sp.api = MAX(sp.api, 1);
        list_collectors_status(&sp, collname);
+   } else if (strcasecmp(cmd, "resources") == 0) {
+       sp.api = MAX(sp.api, 1);
+       show_config(&sp);
    } else {
       pm_strcpy(&jcr->errmsg, dir->msg);
       Jmsg1(jcr, M_FATAL, 0, _("Bad .status command: %s\n"), jcr->errmsg);
@@ -575,6 +579,15 @@ int qstatus_cmd(JCR *jcr)
    dir->signal(BNET_EOD);
    free_memory(cmd);
    return 1;
+}
+
+static void show_config(STATUS_PKT *sp)
+{
+   LockRes();
+   CLIENT *client = (CLIENT *)GetNextRes(R_CLIENT, NULL);
+   UnlockRes();
+
+   dump_resource(R_CLIENT, (RES *)client, sendit, sp);
 }
 
 static void list_collectors_status(STATUS_PKT *sp, char *collname)

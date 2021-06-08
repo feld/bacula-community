@@ -100,10 +100,13 @@ bool dot_status_cmd(UAContext *ua, const char *cmd)
       }
    } else if (strcasecmp(ua->argk[1], "client") == 0) {
       client = get_client_resource(ua, JT_BACKUP_RESTORE);
-      if (client) {
-         Dmsg2(200, "Client=%s arg=%s\n", client->name(), NPRT(ua->argk[2]));
-         do_client_status(ua, client, ua->argk[2]);
+      if (!client) {
+         ua->send_msg("1900 Bad 'status client' command, invalid client specified.\n");
+         return false;
       }
+
+      Dmsg2(200, "Client=%s arg=%s\n", client->name(), NPRT(ua->argk[2]));
+      do_client_status(ua, client, ua->argk[2]);
    } else if (strcasecmp(ua->argk[1], "storage") == 0) {
       if (!get_storage_resource(ua, &ustore, false /*no default*/, true/*unique*/)) {
          ua->send_msg("1900 Bad .status command, wrong argument.\n");
@@ -649,7 +652,10 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
    Dmsg0(20, _("Connected to file daemon\n"));
    fd = ua->jcr->file_bsock;
    if (cmd) {
-      if (strcasecmp(cmd, "collector") == 0 && (i = find_arg_with_value(ua, "collector")) > 0){
+      if (strcasecmp(cmd, "resources") == 0) {
+         Mmsg(buf, ".status resources api=%d api_opts=%s", ua->api, ua->api_opts);
+         fd->fsend(buf.c_str());
+      } else if (strcasecmp(cmd, "collector") == 0 && (i = find_arg_with_value(ua, "collector")) > 0){
          Mmsg(buf, "%s", ua->argv[i]);
          bash_spaces(buf.c_str());
          fd->fsend(".status %s=%s api=%d api_opts=%s", cmd, buf.c_str(), ua->api, ua->api_opts);

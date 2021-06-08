@@ -138,17 +138,13 @@ void output_status(STATUS_PKT *sp)
    }
 }
 
-static void list_resources(STATUS_PKT *sp)
+static void show_config(STATUS_PKT *sp)
 {
-#ifdef when_working
-   POOL_MEM msg(PM_MESSAGE);
-   int len;
+   LockRes();
+   STORES *store = (STORES *)GetNextRes(R_STORAGE, NULL);
+   UnlockRes();
 
-   len = Mmsg(msg, _("\nSD Resources:\n"));
-   if (!sp->api) sendit(msg, len, sp);
-   dump_resource(R_DEVICE, resources[R_DEVICE-r_first], sp);
-   if (!sp->api) sendit("====\n\n", 6, sp);
-#endif
+   dump_resource(R_STORAGE, (RES *)store, sendit, sp);
 }
 
 #ifdef xxxx
@@ -1189,7 +1185,7 @@ bool qstatus_cmd(JCR *jcr)
        list_terminated_jobs(&sp); /* defined in lib/status.h */
    } else if (strcasecmp(cmd, "resources") == 0) {
        sp.api = api;
-       list_resources(&sp);
+       show_config(&sp);
    /* ***BEEF*** */
    } else if (strcasecmp(cmd, "dedupengine") == 0 ||
               strcasecmp(cmd, "dedupengineandzerostats") == 0) {

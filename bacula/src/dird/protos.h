@@ -262,6 +262,7 @@ void free_rx(RESTORE_CTX *rx);
 /* ua_server.c */
 void bsendmsg(void *ua_ctx, const char *fmt, ...);
 void berrormsg(void *ua_ctx, const char *fmt, ...);
+void bmsg(UAContext *ua, const char *fmt, va_list arg_ptr);
 void bwarningmsg(void *ua_ctx, const char *fmt, ...);
 void binfomsg(void *ua_ctx, const char *fmt, ...);
 UAContext *new_ua_context(JCR *jcr);

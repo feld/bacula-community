@@ -41,6 +41,7 @@
 
 #include "bacula.h"
 #include "filed.h"
+#include "lib/status.h"
 
 /* Define the first and last resource ID record
  * types. Note, these should be unique for each
@@ -278,14 +279,70 @@ void store_digest_type(LEX *lc, RES_ITEM *item, int index, int pass)
    set_bit(index, res_all.hdr.item_present);
 }
 
-/* Dump contents of resource */
+/* Dump Client/FileDaemon resource */
+static void dump_client_resource(CLIENT *client, void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp)
+{
+   OutputWriter ow(sp->api_opts);
+   POOL_MEM tmp;
+   char *p;
+
+   ow.start_group("resource");
+
+   ow.get_output(OT_START_OBJ,
+                 OT_STRING,   "Name", client->hdr.name,
+                 OT_STRING,   "WorkingDirectory", client->working_directory,
+                 OT_STRING,   "PidDirectory", client->pid_directory,
+                 OT_STRING,   "SubsysDirectory", client->subsys_directory,
+                 OT_STRING,   "ScriptsDirectory", client->scripts_directory,
+                 OT_STRING,   "PluginDirectory", client->plugin_directory,
+#if BEEF
+                 OT_BOOL,     "FIPSRequire", client->require_fips,
+#endif
+                 OT_INT64,    "HeartbeatInterval", client->heartbeat_interval,
+                 OT_INT32,    "MaximumConcurrentJobs", client->MaxConcurrentJobs,
+                 OT_INT,      "FDPort", get_first_port_host_order(client->FDaddrs),
+                 OT_STRING,   "FDAddress", get_first_address(client->FDaddrs, tmp.c_str(), PM_MESSAGE),
+                 OT_INT64,    "SDConnectTimeout", client->SDConnectTimeout,
+                 OT_INT32,    "MaximumNetworkBufferSize", client->max_network_buffer_size,
+                 OT_INT64,    "MaximumBandwidthPerJob", client->max_bandwidth_per_job,
+                 OT_BOOL,     "CommCommpression", client->comm_compression,
+                 OT_ALIST_STR, "DisableCommand", client->disable_cmds,
+                 OT_BOOL,      "TLSEnable", client->tls_enable,
+                 OT_BOOL,      "TLSPSKEnable", client->tls_psk_enable,
+                 OT_BOOL,      "TLSRequire", client->tls_require,
+                 OT_BOOL,      "TLSAuthenticate", client->tls_authenticate,
+#ifdef DATA_ENCRYTION
+                 OT_BOOL, "PKISignatures", client->pki_sign,
+                 OT_BOOL, "PKIEncrytption", client->pki_encrypt,
+#endif
+                 OT_END_OBJ,
+                 OT_END);
+
+   p = ow.end_group("resource");
+   sendit(p, strlen(p), sp);
+}
+
+/* In order to link with libbaccfg
+ * Empty method is here just be able to link with libbaccfg (see overload in @parse_conf.h).
+ * FileDaemon should use overloaded one, see methodb below.
+ * TODO this should be removed as soon as Director's dump_resource() is updated to work
+ * with STATUS_PKT.
+ * */
 void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt, ...), void *sock)
 {
+   /**** NOT USED ****/
+}
+
+/* Dump contents of a resource. */
+void dump_resource(int type, RES *ares, void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp)
+{
    URES *res = (URES *)ares;
-   int recurse = 1;
+   int recurse = 1, len;
+   POOL_MEM msg(PM_MESSAGE);
 
    if (res == NULL) {
-      sendit(sock, "No record for %d %s\n", type, res_to_str(type));
+      len = Mmsg (msg, "No record for %d %s\n", type, res_to_str(type));
+      sendit(msg.c_str(), len, sp);
       return;
    }
    if (type < 0) {                    /* no recursion */
@@ -294,40 +351,51 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
    }
    switch (type) {
    case R_CONSOLE:
-      sendit(sock, "Console: name=%s password=%s\n", ares->name,
+      len = Mmsg(msg, "Console: name=%s password=%s\n", ares->name,
              res->res_cons.dirinfo.password);
+      sendit(msg.c_str(), len, sp);
       break;
    case R_DIRECTOR:
-      sendit(sock, "Director: name=%s password=%s\n", ares->name,
+      len = Mmsg(msg, "Director: name=%s password=%s\n", ares->name,
               res->res_dir.dirinfo.password);
+      sendit(msg.c_str(), len, sp);
       break;
    case R_CLIENT:
-      sendit(sock, "Client: name=%s FDport=%d\n", ares->name,
-              get_first_port_host_order(res->res_client.FDaddrs));
-      break;
+      {
+         CLIENT *client = (CLIENT *)ares;
+         dump_client_resource(client, sendit, sp);
+         break;
+      }
    case R_MSGS:
-      sendit(sock, "Messages: name=%s\n", res->res_msgs.hdr.name);
-      if (res->res_msgs.mail_cmd)
-         sendit(sock, "      mailcmd=%s\n", res->res_msgs.mail_cmd);
-      if (res->res_msgs.operator_cmd)
-         sendit(sock, "      opcmd=%s\n", res->res_msgs.operator_cmd);
+      len = Mmsg(msg, "Messages: name=%s\n", res->res_msgs.hdr.name);
+      sendit(msg.c_str(), len, sp);
+      if (res->res_msgs.mail_cmd) {
+         len = Mmsg(msg, "      mailcmd=%s\n", res->res_msgs.mail_cmd);
+         sendit(msg.c_str(), len, sp);
+      }
+      if (res->res_msgs.operator_cmd) {
+         len = Mmsg(msg, "      opcmd=%s\n", res->res_msgs.operator_cmd);
+         sendit(msg.c_str(), len, sp);
+      }
       break;
    case R_COLLECTOR:
-      dump_collector_resource(res->res_collector, sendit, sock);
+      dump_collector_resource(res->res_collector, sendit, sp);
       break;
    case R_SCHEDULE:
       if (res->res_sched.run) {
          int i;
          RUNRES *run = res->res_sched.run;
          char buf[1000], num[30];
-         sendit(sock, _("Schedule: Name=%s Enabled=%d\n"), 
-            res->res_sched.hdr.name, res->res_sched.is_enabled());
+         len = Mmsg(msg, "Schedule: Name=%s Enabled=%d\n", 
+                    res->res_sched.hdr.name, res->res_sched.is_enabled());
+         sendit(msg.c_str(), len, sp);
          if (!run) {
             break;
          }
 next_run:
          if (run->MaxConnectTime) {
-            sendit(sock, _("      MaxConnectTime=%u\n"), run->MaxConnectTime);
+            len = Mmsg(msg, "      MaxConnectTime=%u\n", run->MaxConnectTime);
+            sendit(msg.c_str(), len, sp);
          }
          bstrncpy(buf, _("      hour="), sizeof(buf));
          for (i=0; i<24; i++) {
@@ -337,7 +405,7 @@ next_run:
             }
          }
          bstrncat(buf, "\n", sizeof(buf));
-         sendit(sock, buf);
+         sendit(buf, strlen(buf), sp);
          bstrncpy(buf, _("      mday="), sizeof(buf));
          for (i=0; i<32; i++) {
             if (bit_is_set(i, run->mday)) {
@@ -346,7 +414,7 @@ next_run:
             }
          }
          bstrncat(buf, "\n", sizeof(buf));
-         sendit(sock, buf);
+         sendit(buf, strlen(buf), sp);
          bstrncpy(buf, _("      month="), sizeof(buf));
          for (i=0; i<12; i++) {
             if (bit_is_set(i, run->month)) {
@@ -355,7 +423,7 @@ next_run:
             }
          }
          bstrncat(buf, "\n", sizeof(buf));
-         sendit(sock, buf);
+         sendit(buf, strlen(buf), sp);
          bstrncpy(buf, _("      wday="), sizeof(buf));
          for (i=0; i<7; i++) {
             if (bit_is_set(i, run->wday)) {
@@ -364,7 +432,7 @@ next_run:
             }
          }
          bstrncat(buf, "\n", sizeof(buf));
-         sendit(sock, buf);
+         sendit(buf, strlen(buf), sp);
          bstrncpy(buf, _("      wom="), sizeof(buf));
          for (i=0; i<6; i++) {
             if (bit_is_set(i, run->wom)) {
@@ -373,7 +441,7 @@ next_run:
             }
          }
          bstrncat(buf, "\n", sizeof(buf));
-         sendit(sock, buf);
+         sendit(buf, strlen(buf), sp);
          bstrncpy(buf, _("      woy="), sizeof(buf));
          for (i=0; i<54; i++) {
             if (bit_is_set(i, run->woy)) {
@@ -382,24 +450,27 @@ next_run:
             }
          }
          bstrncat(buf, "\n", sizeof(buf));
-         sendit(sock, buf);
-         sendit(sock, _("      mins=%d\n"), run->minute);
+         sendit(buf, strlen(buf), sp);
+         len = Mmsg(msg, "      mins=%d\n", run->minute);
+         sendit(msg.c_str(), len, sp);
          /* If another Run record is chained in, go print it */
          if (run->next) {
             run = run->next;
             goto next_run;
          }
       } else {
-         sendit(sock, _("Schedule: name=%s\n"), res->res_sched.hdr.name);
+         len = Mmsg(msg, "Schedule: name=%s\n", res->res_sched.hdr.name);
+         sendit(msg.c_str(), len, sp);
       }
       break;
 
    default:
-      sendit(sock, "Unknown resource type %d\n", type);
+      len = Mmsg(msg, "Unknown resource type %d\n", type);
+      sendit(msg.c_str(), len, sp);
    }
    ares = GetNextRes(type, ares);
    if (recurse && ares) {
-      dump_resource(type, ares, sendit, sock);
+      dump_resource(type, ares, sendit, sp);
    }
 }
 

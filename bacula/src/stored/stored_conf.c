@@ -24,6 +24,7 @@
 
 #include "bacula.h"
 #include "stored.h"
+#include "lib/status.h"
 
 /* First and last resource ids */
 int32_t r_first = R_FIRST;
@@ -47,6 +48,7 @@ int32_t res_all_size = sizeof(res_all);
 #define dedup_check_storage_resource(a) true
 #endif
 
+static int const dbglvl = 200;
 
 /* Definition of records permitted within each
  * resource with the routine to process the record
@@ -556,75 +558,128 @@ void store_transfer_priority(LEX *lc, RES_ITEM *item, int index, int pass)
    set_bit(index, res_all.hdr.item_present);
 }
 
+static void dump_store_resource(STORES *store,
+      void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp)
+{
+   OutputWriter ow(sp->api_opts);
+   POOL_MEM tmp;
+   char *p;
+
+   ow.start_group("resource");
+
+   ow.get_output(OT_START_OBJ,
+                 OT_STRING,   "Name", store->hdr.name,
+                 OT_STRING,   "Description", store->hdr.desc,
+                 OT_STRING,   "WorkingDirectory", store->working_directory,
+                 OT_STRING,   "PidDirectory", store->pid_directory,
+                 OT_STRING,   "SubsysDirectory", store->subsys_directory,
+                 OT_STRING,   "PluginDirectory", store->plugin_directory,
+                 OT_STRING,   "ScriptsDirectory", store->scripts_directory,
+#if BEEF
+                 OT_BOOL,     "FIPSRequire", store->require_fips,
+                 OT_STRING,   "SsdDirectory", store->ssd_directory,
+#endif
+                 OT_INT,      "SDPort", get_first_port_host_order(store->sdaddrs),
+                 OT_STRING,   "SDAddress", get_first_address(store->sdaddrs, tmp.c_str(), PM_MESSAGE),
+                 OT_INT64,    "HeartbeatInterval", store->heartbeat_interval,
+                 OT_INT32,    "MaximumConcurrentJobs", store->max_concurrent_jobs,
+                 OT_INT64,    "ClientConnectTimeout", store->ClientConnectTimeout,
+                 OT_BOOL,     "TLSEnable", store->tls_enable,
+                 OT_BOOL,     "TLSPSKEnable", store->tls_psk_enable,
+                 OT_BOOL,     "TLSRequire", store->tls_require,
+                 OT_BOOL,     "TLSAuthenticate", store->tls_authenticate,
+                 OT_BOOL,     "TLSVerifyPeer", store->tls_verify_peer,
+                 OT_INT64,    "ClientConnectWait", store->client_wait,
+                 OT_STRING,   "VerId", store->verid,
+                 OT_BOOL,     "CommCommpression", store->comm_compression,
+#ifdef SD_DEDUP_SUPPORT
+                 OT_STRING,   "DedupDirectory", store->dedup_dir,
+                 OT_STRING,   "DedupIndexDirectory", store->dedup_index_dir,
+                 OT_BOOL,     "DedupCheckHash", store->dedup_check_hash,
+                 OT_INT64,    "DedupScrupMaximumBandwidth", store->dedup_scrub_max_bandwidth,
+                 OT_INT64,    "MaximumContainerSize", store->max_container_size,
+#endif
+                 OT_END_OBJ,
+                 OT_END);
+
+   p = ow.end_group("resource");
+   sendit(p, strlen(p), sp);
+}
+
+/* In order to link with libbaccfg
+ * Empty method is here just be able to link with libbaccfg (see overload in @parse_conf.h).
+ * FileDaemon should use overloaded one, see methodb below.
+ * TODO this should be removed as soon as Director's dump_resource() is updated to work
+ * with STATUS_PKT.
+ * */
+void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt, ...), void *sock)
+{
+   /**** NOT USED ****/
+}
+
 /* Dump contents of resource */
-void dump_resource(int type, RES *rres, void sendit(void *sock, const char *fmt, ...), void *sock)
+void dump_resource(int type, RES *rres, void sendit(const char *msg, int len, STATUS_PKT *sp), STATUS_PKT *sp)
 {
    URES *res = (URES *)rres;
    char buf[1000];
-   int recurse = 1;
-   IPADDR *p;
+   int recurse = 1, len;
+   POOL_MEM msg(PM_MESSAGE);
+
    if (res == NULL) {
-      sendit(sock, _("Warning: no \"%s\" resource (%d) defined.\n"), res_to_str(type), type);
+      len = Mmsg(msg, _("Warning: no \"%s\" resource (%d) defined.\n"), res_to_str(type), type);
+      sendit(msg.c_str(), len, sp);
       return;
    }
-   sendit(sock, _("dump_resource type=%d\n"), type);
+
+   Dmsg1(dbglvl, "dump_resource type=%d\n", type);
+
    if (type < 0) {                    /* no recursion */
       type = - type;
       recurse = 0;
    }
+
    switch (type) {
    case R_DIRECTOR:
-      sendit(sock, "Director: name=%s\n", res->res_dir.hdr.name);
+      len = Mmsg(msg, "Director: name=%s\n", res->res_dir.hdr.name);
+      sendit(msg.c_str(), len, sp);
       break;
    case R_STORAGE:
-      sendit(sock, "Storage: name=%s SDaddr=%s SDport=%d SDDport=%d HB=%s\n",
-             res->res_store.hdr.name,
-             NPRT(get_first_address(res->res_store.sdaddrs, buf, sizeof(buf))),
-             get_first_port_host_order(res->res_store.sdaddrs),
-             get_first_port_host_order(res->res_store.sddaddrs),
-             edit_utime(res->res_store.heartbeat_interval, buf, sizeof(buf)));
-      if (res->res_store.sdaddrs) {
-         foreach_dlist(p, res->res_store.sdaddrs) {
-            sendit(sock, "        SDaddr=%s SDport=%d\n",
-                   p->get_address(buf, sizeof(buf)), p->get_port_host_order());
-         }
+      {
+         STORES *store = (STORES *)rres;
+         dump_store_resource(store, sendit, sp);
+         break;
       }
-      if (res->res_store.sddaddrs) {
-         foreach_dlist(p, res->res_store.sddaddrs) {
-            sendit(sock, "        SDDaddr=%s SDDport=%d\n",
-                   p->get_address(buf, sizeof(buf)), p->get_port_host_order());
-         }
-      }
-      if (res->res_store.dedup_dir){
-         sendit(sock, "        Dedup Directory: %s\n", res->res_store.dedup_dir );
-      }
-      if (res->res_store.dedup_index_dir){
-         sendit(sock, "        Dedup Index Directory: %s\n", res->res_store.dedup_index_dir );
-      }
-      break;
    case R_DEVICE:
-      sendit(sock, "Device: name=%s MediaType=%s Device=%s LabelType=%d\n",
+      len = Mmsg(msg, "Device: name=%s MediaType=%s Device=%s LabelType=%d\n",
          res->res_dev.hdr.name,
          res->res_dev.media_type, res->res_dev.device_name,
          res->res_dev.label_type);
-      sendit(sock, "        rew_wait=%lld min_bs=%d max_bs=%d chgr_wait=%lld\n",
+      sendit(msg.c_str(), len, sp);
+      len = Mmsg(msg, "        rew_wait=%lld min_bs=%d max_bs=%d chgr_wait=%lld\n",
          res->res_dev.max_rewind_wait, res->res_dev.min_block_size,
          res->res_dev.max_block_size, res->res_dev.max_changer_wait);
-      sendit(sock, "        max_jobs=%d max_files=%lld max_size=%lld\n",
+      sendit(msg.c_str(), len, sp);
+      len = Mmsg(msg, "        max_jobs=%d max_files=%lld max_size=%lld\n",
          res->res_dev.max_volume_jobs, res->res_dev.max_volume_files,
          res->res_dev.max_volume_size);
-      sendit(sock, "        min_block_size=%lld max_block_size=%lld\n",
+      len = Mmsg(msg, "        min_block_size=%lld max_block_size=%lld\n",
          res->res_dev.min_block_size, res->res_dev.max_block_size);
-      sendit(sock, "        max_file_size=%lld capacity=%lld\n",
+      sendit(msg.c_str(), len, sp);
+      len = Mmsg(msg, "        max_file_size=%lld capacity=%lld\n",
          res->res_dev.max_file_size, res->res_dev.volume_capacity);
-      sendit(sock, "        spool_directory=%s\n", NPRT(res->res_dev.spool_directory));
-      sendit(sock, "        max_spool_size=%lld max_job_spool_size=%lld\n",
+      sendit(msg.c_str(), len, sp);
+      len = Mmsg(msg, "        spool_directory=%s\n", NPRT(res->res_dev.spool_directory));
+      sendit(msg.c_str(), len, sp);
+      len = Mmsg(msg, "        max_spool_size=%lld max_job_spool_size=%lld\n",
          res->res_dev.max_spool_size, res->res_dev.max_job_spool_size);
+      sendit(msg.c_str(), len, sp);
       if (res->res_dev.worm_command) {
-         sendit(sock, "         worm command=%s\n", res->res_dev.worm_command);
+         len = Mmsg(msg, "         worm command=%s\n", res->res_dev.worm_command);
+         sendit(msg.c_str(), len, sp);
       }
       if (res->res_dev.changer_res) {
-         sendit(sock, "         changer=%p\n", res->res_dev.changer_res);
+         len = Mmsg(msg, "         changer=%p\n", res->res_dev.changer_res);
+         sendit(msg.c_str(), len, sp);
       }
       bstrncpy(buf, "        ", sizeof(buf));
       if (res->res_dev.cap_bits & CAP_EOF) {
@@ -673,13 +728,14 @@ void dump_resource(int type, RES *rres, void sendit(void *sock, const char *fmt,
          bstrncat(buf, "CAP_OFFLINEUNMOUNT ", sizeof(buf));
       }
       bstrncat(buf, "\n", sizeof(buf));
-      sendit(sock, buf);  /* Send caps string */
+      sendit(buf, strlen(buf), sp);  /* Send caps string */
       if (res->res_dev.cloud) {
-         sendit(sock, "   --->Cloud: name=%s\n", res->res_dev.cloud->hdr.name);
+         len = Mmsg(msg, "   --->Cloud: name=%s\n", res->res_dev.cloud->hdr.name);
+         sendit(msg.c_str(), len, sp);
       }
       break;
    case R_CLOUD:
-      sendit(sock, "Cloud: name=%s Driver=%d\n"
+      len = Mmsg(msg, "Cloud: name=%s Driver=%d\n"
          "      HostName=%s\n"
          "      BucketName=%s\n"
          "      AccessKey=%s SecretKey=%s\n"
@@ -691,39 +747,49 @@ void dump_resource(int type, RES *rres, void sendit(void *sock, const char *fmt,
          res->res_cloud.access_key, res->res_cloud.secret_key,
          res->res_cloud.region,
          res->res_cloud.protocol, res->res_cloud.uri_style);
+      sendit(msg.c_str(), len, sp);
       break;
    case R_DEDUP:
-      sendit(sock, "Dedup: name=%s Driver=%d\n"
+      len = Mmsg(msg, "Dedup: name=%s Driver=%d\n"
          "      DedupDirectory=%s\n",
          res->res_dedup.hdr.name, res->res_dedup.driver_type,
          res->res_dedup.dedup_dir);
+      sendit(msg.c_str(), len, sp);
       break;
    case R_AUTOCHANGER:
       DEVRES *dev;
-      sendit(sock, "Changer: name=%s Changer_devname=%s\n      Changer_cmd=%s\n",
+      len = Mmsg(msg, "Changer: name=%s Changer_devname=%s\n      Changer_cmd=%s\n",
          res->res_changer.hdr.name,
          res->res_changer.changer_name, res->res_changer.changer_command);
+      sendit(msg.c_str(), len, sp);
       foreach_alist(dev, res->res_changer.device) {
-         sendit(sock, "   --->Device: name=%s\n", dev->hdr.name);
+         len = Mmsg(msg, "   --->Device: name=%s\n", dev->hdr.name);
+         sendit(msg.c_str(), len, sp);
       }
       break;
    case R_MSGS:
-      sendit(sock, "Messages: name=%s\n", res->res_msgs.hdr.name);
-      if (res->res_msgs.mail_cmd)
-         sendit(sock, "      mailcmd=%s\n", res->res_msgs.mail_cmd);
-      if (res->res_msgs.operator_cmd)
-         sendit(sock, "      opcmd=%s\n", res->res_msgs.operator_cmd);
+      len = Mmsg(msg, "Messages: name=%s\n", res->res_msgs.hdr.name);
+      sendit(msg.c_str(), len, sp);
+      if (res->res_msgs.mail_cmd) {
+         len = Mmsg(msg, "      mailcmd=%s\n", res->res_msgs.mail_cmd);
+         sendit(msg.c_str(), len, sp);
+      }
+      if (res->res_msgs.operator_cmd) {
+         len = Mmsg(msg, "      opcmd=%s\n", res->res_msgs.operator_cmd);
+         sendit(msg.c_str(), len, sp);
+      }
       break;
    case R_COLLECTOR:
-      dump_collector_resource(res->res_collector, sendit, sock);
+      dump_collector_resource(res->res_collector, sendit, sp);
       break;
    default:
-      sendit(sock, _("Warning: unknown resource type %d\n"), type);
+      len = Mmsg(msg, _("Warning: unknown resource type %d\n"), type);
+      sendit(msg.c_str(), len, sp);
       break;
    }
    rres = GetNextRes(type, rres);
    if (recurse && rres)
-      dump_resource(type, rres, sendit, sock);
+      dump_resource(type, rres, sendit, sp);
 }
 
 /*
