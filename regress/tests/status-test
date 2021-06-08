@@ -40,11 +40,15 @@ status storage
 status dir
 .api 2
 @$out $tmp/log4.out
-.status client running
+.status client resources
 @$out $tmp/log5.out
-.status storage running
+.status client running
 @$out $tmp/log6.out
+.status storage running
+@$out $tmp/log7.out
 .status dir running
+@$out $tmp/log8.out
+.status storage resources
 quit
 END_OF_DATA
 
@@ -57,9 +61,45 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
+grep "Running Jobs:" $tmp/log1.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Running Jobs' in $tmp/log1.out"
+    estat=1
+fi
+
+grep "Terminated Jobs:" $tmp/log1.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Terminated Jobs' in $tmp/log1.out"
+    estat=1
+fi
+
 grep "Director connected" $tmp/log2.out > /dev/null
 if [ $? -ne 0 ]; then
     print_debug "ERROR: should find director connection in $tmp/log2.out"
+    estat=1
+fi
+
+grep "Device status:" $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Device status' in $tmp/log2.out"
+    estat=1
+fi
+
+grep "Jobs waiting to reserve a drive:" $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Jobs waiting to reserve a drive' in $tmp/log2.out"
+    estat=1
+fi
+
+grep "Device File:" $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Device File' in $tmp/log2.out"
+    estat=1
+fi
+
+grep "Used Volume status:" $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Used Volume status' in $tmp/log2.out"
     estat=1
 fi
 
@@ -69,15 +109,88 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
-grep "DirectorConnected" $tmp/log4.out > /dev/null
+grep "Scheduled Jobs:" $tmp/log3.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find director connection in $tmp/log4.out"
+    print_debug "ERROR: should find 'Scheduled Jobs' in $tmp/log3.out"
     estat=1
 fi
+
+grep "Running Jobs:" $tmp/log3.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Running Jobs' in $tmp/log3.out"
+    estat=1
+fi
+
+grep "Name=" $tmp/log4.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Name' in $tmp/log4.out"
+    estat=1
+fi
+
+grep "FDPort=" $tmp/log4.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'FDPort' in $tmp/log4.out"
+    estat=1
+fi
+
+grep "WorkingDirectory=" $tmp/log4.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'WorkingDirectory =' in $tmp/log4.out"
+    estat=1
+fi
+
 
 grep "DirectorConnected" $tmp/log5.out > /dev/null
 if [ $? -ne 0 ]; then
     print_debug "ERROR: should find director connection in $tmp/log5.out"
+    estat=1
+fi
+
+grep "Automatically selected Client:" $tmp/log5.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Automatically selected Client' in $tmp/log5.out"
+    estat=1
+fi
+
+grep "DirectorConnected_epoch" $tmp/log5.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'DirectorConnected_epoch' in $tmp/log5.out"
+    estat=1
+fi
+
+grep "DirectorConnected" $tmp/log6.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find director connection in $tmp/log6.out"
+    estat=1
+fi
+
+grep "Automatically selected Storage:" $tmp/log6.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'Automatically selected Storage' in $tmp/log6.out"
+    estat=1
+fi
+
+grep "No Jobs running" $tmp/log7.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'No Jobs running' in $tmp/log7.out"
+    estat=1
+fi
+
+grep "SDPort=" $tmp/log8.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'SDPort' in $tmp/log8.out"
+    estat=1
+fi
+
+grep "MaximumConcurrentJobs" $tmp/log8.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'MaximumConcurrentJobsSDPort' in $tmp/log8.out"
+    estat=1
+fi
+
+grep "DedupDirectory" $tmp/log8.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'DedupDirectory' in $tmp/log8.out"
     estat=1
 fi
 
