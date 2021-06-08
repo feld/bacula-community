@@ -239,6 +239,7 @@ bool             is_an_integer           (const char *n);
 #define EXTRA_VALID_RESOURCE_CHAR_GLOB  EXTRA_VALID_RESOURCE_CHAR "[]*?"
 bool             is_name_valid           (const char *name, POOLMEM **msg);
 bool             is_name_valid           (const char *name, POOLMEM **msg, const char *accept);
+char             *get_next_tag(char **buf);
 
 /* jcr.c (most definitions are in src/jcr.h) */
 void     init_last_jobs_list();

@@ -505,7 +505,7 @@ bool is_name_valid(const char *name, POOLMEM **msg)
  * Check if Bacula Resoure Name is valid
  */
 /*
- * Check if the Volume/resource name has legal characters
+ * Check if the Volume name has legal characters
  * If ua is non-NULL send the message
  */
 bool is_name_valid(const char *name, POOLMEM **msg, const char *accept)
@@ -539,7 +539,7 @@ bool is_name_valid(const char *name, POOLMEM **msg, const char *accept)
    }
    if (len == 0) {
       if (msg) {
-         Mmsg(msg,  _("Name must be at least one character long.\n"));
+         Mmsg(msg,  _("Volume name must be at least one character long.\n"));
       }
       return false;
    }
@@ -578,24 +578,142 @@ char *add_commas(char *val, char *buf)
    return buf;
 }
 
+/* Parse stream of tags, return next one from the stream (it will be null terminated,
+ * original buffer will be changed) */
+char *get_next_tag(char **buf)
+{
+   char *tmp = NULL;
+
+   if (**buf != '\0') {
+      char *p = *buf;
+      tmp = p;
+      p = strchr(*buf, ' ');
+      if (p != NULL){
+         *p++ = '\0';
+         *buf = p;
+      } else {
+         *buf += strlen(tmp);
+      }
+      Dmsg1(900, "Found tag: %s\n", tmp);
+   } else {
+      Dmsg0(900, "No tag found!\n");
+   }
+
+   return tmp;
+}
+
+// #define TEST_PROGRAM
+
 #ifdef TEST_PROGRAM
+#include "unittests.h"
+
 void d_msg(const char*, int, int, const char*, ...)
 {}
-int main(int argc, char *argv[])
-{
-   char *str[] = {"3", "3n", "3 hours", "3.5 day", "3 week", "3 m", "3 q", "3 years"};
-   utime_t val;
-   char buf[100];
-   char outval[100];
 
-   for (int i=0; i<8; i++) {
-      strcpy(buf, str[i]);
-      if (!duration_to_utime(buf, &val)) {
-         printf("Error return from duration_to_utime for in=%s\n", str[i]);
-         continue;
+// this is a test vector
+// /@kubernetes/ kubernetes:^Ans=plugintest^Adebug^Averify_ssl=0 Container PVCs Kubernetes^APersistent^AVolume^AClaim   5368709120 U 5
+char __po_log1[] = {
+  0x2f, 0x40, 0x6b, 0x75, 0x62, 0x65, 0x72, 0x6e, 0x65, 0x74, 0x65, 0x73,
+  0x2f, 0x20, 0x6b, 0x75, 0x62, 0x65, 0x72, 0x6e, 0x65, 0x74, 0x65, 0x73,
+  0x3a, 0x01, 0x6e, 0x73, 0x3d, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x74,
+  0x65, 0x73, 0x74, 0x01, 0x64, 0x65, 0x62, 0x75, 0x67, 0x01, 0x76, 0x65,
+  0x72, 0x69, 0x66, 0x79, 0x5f, 0x73, 0x73, 0x6c, 0x3d, 0x30, 0x20, 0x43,
+  0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x20, 0x50, 0x56, 0x43,
+  0x73, 0x20, 0x4b, 0x75, 0x62, 0x65, 0x72, 0x6e, 0x65, 0x74, 0x65, 0x73,
+  0x01, 0x50, 0x65, 0x72, 0x73, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x74, 0x01,
+  0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x01, 0x43, 0x6c, 0x61, 0x69, 0x6d,
+  0x20, 0x20, 0x20, 0x35, 0x33, 0x36, 0x38, 0x37, 0x30, 0x39, 0x31, 0x32,
+  0x30, 0x20, 0x55, 0x20, 0x35, 0x00
+};
+unsigned int __po_log1_len = sizeof(__po_log1);
+int __po_log1_nr = 10;
+
+// ASD  123
+char __po_log2[] = {0x41, 0x53, 0x44, 0x20, 0x20, 0x31, 0x32, 0x33, 0x00, 0x00};
+unsigned int __po_log2_len = sizeof(__po_log2);
+
+struct _edit_utime_vect
+{
+   const char *in;
+   const utime_t val;
+   const char *outval;
+};
+
+_edit_utime_vect __testvect1[] =
+{
+   { "3", 3, "3 secs"},
+   { "3n", 180, "3 mins "},
+   { "3 hours", 10800, "3 hours "},
+   { "3.5 day", 302400, "3 days 12 hours "},
+   { "3 week", 1814400, "21 days "},
+   { "3 m", 7776000, "3 months "},
+   { "3 q", 23587200, "9 months 3 days "},
+   { "3 years", 94608000, "3 years "},
+   { "23587201", 23587201, "9 months 3 days 1 sec"},
+   { NULL, 0, NULL},
+};
+
+int main()
+{
+   Unittests unittest("text_edit_tests");
+
+   {
+      utime_t val;
+      char buf[100];
+      char outval[100];
+
+      for (int i=0; __testvect1[i].in != NULL; i++) {
+         strcpy(buf, __testvect1[i].in);
+         POOL_MEM label;
+         Mmsg(label, "duration_to_utime %s", __testvect1[i].in);
+         bool status = duration_to_utime(buf, &val);
+         ok(status, label.c_str());
+         if (status){
+            edit_utime(val, outval, sizeof(outval));
+            ok(val == __testvect1[i].val, "checking val");
+            ok(strcmp(outval, __testvect1[i].outval) == 0, "checking outval");
+         }
+         // printf("outval='%s'\n", outval);
       }
-      edit_utime(val, outval);
-      printf("in=%s val=%" lld " outval=%s\n", str[i], val, outval);
    }
+
+   {
+      char *testvect = __po_log2;
+      char **obj_str = &testvect;
+
+      char *fname = get_next_tag(obj_str);
+      ok(fname != NULL, "checking first tag");
+      ok(strcmp(fname, "ASD") == 0, "checking first tag value");
+
+      char *empty = get_next_tag(obj_str);
+      ok(empty != NULL, "checking empty tag");
+      ok(strlen(empty) == 0, "checking empty value tag");
+
+      char *last = get_next_tag(obj_str);
+      ok(last != NULL, "checking last tag");
+      ok(strcmp(last, "123") == 0, "checking last tag value");
+      ok(obj_str != NULL, "checking obj_str");
+      ok(*obj_str != NULL, "checking obj_str ptr");
+      ok(**obj_str == 0, "checking obj_str char");
+
+      char *afterlast = get_next_tag(obj_str);
+      ok(afterlast == NULL, "checking no tags");
+   }
+
+   {
+      char *testvect = __po_log1;
+      char **obj_str = &testvect;
+
+      for (int a = 0; a < __po_log1_nr; a++){
+         char *tag = get_next_tag(obj_str);
+         POOL_MEM label;
+         Mmsg(label, "checking tag %d", a);
+         ok(tag != NULL, label.c_str());
+      }
+      ok(get_next_tag(obj_str) == NULL, "checking the last");
+   }
+
+   return report();
 }
+
 #endif

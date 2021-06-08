@@ -125,7 +125,7 @@ libbaccats.a: $(LIBBACCATS_OBJS)
 	$(RANLIB) $@
 
 libbacsql.la: Makefile $(LIBBACSQL_LOBJS)
-	@echo "Making $@ ..."	  
+	@echo "Making $@ ..."
 	$(LIBTOOL_LINK) $(CXX) $(DEFS) $(DEBUG) $(LDFLAGS) -o $@ $(LIBBACSQL_LOBJS) -export-dynamic -rpath $(libdir) -release $(LIBBACSQL_LT_RELEASE) $(DB_LIBS)
 
 libbaccats.la: Makefile cats_null.lo
@@ -294,7 +294,7 @@ uninstall: @LIBTOOL_UNINSTALL_TARGET@ @INCLUDE_UNINSTALL_TARGET@
 # and it also includes system headers.
 # `semi'-automatic since dependencies are generated at distribution time.
 
-depend: 
+depend:
 	@$(MV) Makefile Makefile.bak
 	@$(SED) "/^# DO NOT DELETE:/,$$ d" Makefile.bak > Makefile
 	@$(ECHO) "# DO NOT DELETE: nice dependency list follows" >> Makefile

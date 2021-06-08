@@ -172,6 +172,14 @@ base64_test: Makefile libbac.la base64.c unittests.o
 	$(RMF) base64.o
 	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) base64.c
 
+edit_test: Makefile libbac.la edit.c unittests.o
+	$(RMF) edit.o
+	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) edit.c
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ edit.o unittests.o $(DLIB) -lbac -lm $(LIBS) $(OPENSSL_LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+	$(RMF) edit.o
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) edit.c
+
 flist_test: Makefile libbac.la flist.c unittests.o
 	$(RMF) flist.o
 	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) flist.c
@@ -260,7 +268,6 @@ crc32_test: Makefile libbac.la org_lib_crc32.c unittests.o
 	$(RMF) org_lib_crc32.o
 	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) org_lib_crc32.c
 
-
 bee_crc32_test: Makefile libbac.la bee_lib_crc32.c unittests.o
 	$(RMF) bee_lib_crc32.o
 	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) bee_lib_crc32.c
@@ -318,7 +325,7 @@ sha1_test: Makefile libbac.la sha1.c unittests.o
 
 bsnprintf_test: Makefile libbac.la bsnprintf.c unittests.o
 	$(RMF) bsnprintf.o
-	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) -Wno-format-truncation bsnprintf.c 
+	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) -Wno-format-truncation bsnprintf.c
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ bsnprintf.o unittests.o $(DLIB) -lbac -lm $(LIBS) $(OPENSSL_LIBS)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 	$(RMF) bsnprintf.o
