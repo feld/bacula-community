@@ -96,6 +96,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    STORE *store;
    utime_t heart_beat;
    STORE *wstore = jcr->store_mngr->get_wstore();
+   POOL_MEM buf;
 
    if (is_bsock_open(sd)) {
       return true;                    /* already connected */
@@ -112,7 +113,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    }
 
    if (!store) {
-      Dmsg0(100, "No storage resource found in jcr!\n");
+      Dmsg1(100, "No storage resource found in jcr for JobId: %d!\n", jcr->JobId);
       return false;
    }
 
@@ -128,7 +129,9 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    Dmsg2(100, "Connect to Storage daemon %s:%d\n", store->address,
       store->SDport);
    sd->set_source_address(director->DIRsrc_addr);
-   if (!sd->connect(jcr, retry_interval, max_retry_time, heart_beat, _("Storage daemon"),
+   //TODO is translating needed/useful here?
+   Mmsg(buf, _("Storage Daemon: %s"), store->name());
+   if (!sd->connect(jcr, retry_interval, max_retry_time, heart_beat, buf.c_str(),
          store->address, NULL, store->SDport, verbose)) {
 
       if (!jcr->store_bsock) {  /* The bsock was locally created, so we free it here */
