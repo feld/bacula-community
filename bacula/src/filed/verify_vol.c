@@ -400,8 +400,9 @@ void do_verify_volume(JCR *jcr)
          break;
 
          /*
-          * Restore stream object is counted, but not restored here
+          * Restore object and plugin object stream are counted, but not restored here
           */
+      case STREAM_PLUGIN_OBJECT:
       case STREAM_RESTORE_OBJECT:
          jcr->lock();
          jcr->JobFiles++;
