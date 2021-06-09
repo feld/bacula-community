@@ -488,12 +488,10 @@ install-backint: backint hdbbackint
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) backint $(DESTDIR)$(sbindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) hdbbackint $(DESTDIR)$(sbindir)
 
-install-test-plugin: all test-plugins rot13 test-bpipe-fd.la
+install-test-plugin: all test-plugins test-bpipe-fd.la
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-plugin-fd.la $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/test-plugin-fd.la
-	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) rot13-fd.la $(DESTDIR)$(plugindir)
-	$(RMF) $(DESTDIR)$(plugindir)/rot13-fd.la
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-deltaseq-fd.la $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/test-deltaseq-fd.la
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test-handlexacl-plugin-fd.la $(DESTDIR)$(plugindir)
