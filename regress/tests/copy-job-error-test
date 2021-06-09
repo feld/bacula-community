@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# TODO fill desc
+#
+TestName="copy-job-error-test"
+JobName=CopyJobSave
+. scripts/functions
+
+
+scripts/cleanup
+scripts/copy-migration-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
+sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
+change_jobname NightlySave $JobName
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SD Connect Timeout", "1", "Director")'
+
+start_test
+
+# Write out bconsole commands
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File volume=FileVolume001 Pool=Default
+run job=$JobName yes
+wait
+list jobs
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+pkill bacula-sd
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+run job=copy-job yes
+wait
+list jobs
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+grep "Copying Error" $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find Migration Error in $tmp/log2.out"
+    estat=1
+fi
+
+stop_bacula
+
+end_test
