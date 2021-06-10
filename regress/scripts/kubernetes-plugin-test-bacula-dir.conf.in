@@ -300,7 +300,7 @@ Messages {
   operatorcommand = "@sbindir@/bsmtp -h localhost -f \"\(Bacula regression\) %r\" -s \"Regression: Intervention needed for %j\" %r"
 # MailOnError = @job_email@ = all, !terminate
 # operator = @job_email@ = mount
-  console = all, !skipped, !terminate
+  console = all
 
   append = "@working_dir@/log" = all, !skipped
   catalog = all, !skipped

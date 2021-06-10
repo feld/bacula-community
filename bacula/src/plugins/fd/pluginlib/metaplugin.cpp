@@ -2018,7 +2018,8 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       metadatas.reset();
       metadatas_list.destroy();
 
-      while (backend.ctx->read_command(ctx, cmd) > 0){
+      while (backend.ctx->read_command(ctx, cmd) > 0)
+      {
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
          // int nrscan = sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d", &type, &size, &uid, &gid, &perms, &nlinks);
          nfi = -1;

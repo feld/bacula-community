@@ -384,6 +384,48 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
          JMSG(ctx, M_INFO, "%s", errmsg.c_str());
          continue;
 
+      case 'S':
+         // handle saved message
+         DMSG(ctx, DDEBUG, "%s", errmsg.c_str());
+         JMSG(ctx, M_SAVED, "%s", errmsg.c_str());
+         continue;
+
+      case 'N':
+         // handle not-saved message
+         DMSG(ctx, DDEBUG, "%s", errmsg.c_str());
+         JMSG(ctx, M_NOTSAVED, "%s", errmsg.c_str());
+         continue;
+
+      case 'R':
+         // handle restored message
+         DMSG(ctx, DINFO, "%s", errmsg.c_str());
+         JMSG(ctx, M_RESTORED, "%s", errmsg.c_str());
+         continue;
+
+      case 'P':
+         // handle skipped message
+         DMSG(ctx, DINFO, "%s", errmsg.c_str());
+         JMSG(ctx, M_SKIPPED, "%s", errmsg.c_str());
+         continue;
+
+      case 'O':
+         // handle operator message (now it is only M_MOUNT)
+         DMSG(ctx, DINFO, "%s", errmsg.c_str());
+         JMSG(ctx, M_MOUNT, "%s", errmsg.c_str());
+         continue;
+
+      case 'V':
+         // handle event message
+         DMSG(ctx, DINFO, "%s", errmsg.c_str());
+         JMSG(ctx, M_EVENTS, "%s", errmsg.c_str());
+         continue;
+
+      case 'Q':
+         // handle event message
+         DMSG(ctx, DERROR, "%s", errmsg.c_str());
+         JMSG(ctx, M_ERROR, "%s", errmsg.c_str());
+         continue;
+
       default:
          DMSG1(ctx, DERROR, "Protocol error. Unknown packet: %c\n", header.status);
          JMSG1(ctx, M_FATAL, "Protocol error. Unknown packet: %c\n", header.status);

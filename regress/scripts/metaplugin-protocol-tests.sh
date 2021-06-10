@@ -23,7 +23,7 @@
 #  . scripts/metaplugin-protocol-tests.sh
 #
 
-if [ "x$JobBackup1" = "x" ] || [ "x$JobBackup2" = "x" ] || [ "x$JobBackup3" = "x" ] || [ "x$JobBackup4" = "x" ] || [ "x$FilesetBackup1" = "x" ]
+if [ "x$JobBackup1" = "x" ] || [ "x$JobBackup2" = "x" ] || [ "x$JobBackup3" = "x" ] || [ "x$JobBackup4" = "x" ] || [ "x$JobBackup5" = "x" ] || [ "x$JobBackup6" = "x" ] || [ "x$FilesetBackup1" = "x" ]
 then
    echo "You have to setup required variables!"
    exit 2
@@ -134,6 +134,27 @@ wait
 status client=$CLIENT
 messages
 llist job=$JobBackup5
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
+# now backup standard error information
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Backup with error
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log8.out
+status client=$CLIENT
+setdebug level=500 client=$CLIENT trace=1
+run job=$JobBackup6 yes
+wait
+status client=$CLIENT
+messages
+llist job=$JobBackup6
 @output
 quit
 END_OF_DATA
@@ -376,6 +397,25 @@ if [ "x$RET" != "xT" ] || [ "$META" -ne 1 ] || [ "$BEND" -ne 1 ]
 then
    echo "log7" "$RET" "$META" "$BEND"
    bstat=$((bstat+32))
+fi
+
+RET=$(grep "jobstatus:" ${cwd}/tmp/log8.out | awk '{print $2}')
+META=$(grep -c "TEST14 - backup metadata" ${cwd}/tmp/log7.out)
+BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log7.out)
+if [ "x$RET" != "xT" ] || [ "$META" -ne 1 ] || [ "$BEND" -ne 1 ]
+then
+   echo "log8" "$RET" "$META" "$BEND"
+   bstat=$((bstat+64))
+fi
+
+MINFO=$(grep -c M_INFO ${cwd}/tmp/log8.out)
+MWARNING=$(grep -c M_WARNING ${cwd}/tmp/log8.out)
+MSAVED=$(grep -c M_SAVED ${cwd}/tmp/log8.out)
+MNOTSAVED=$(grep -c M_NOTSAVED ${cwd}/tmp/log8.out)
+if [ "$MINFO" -ne 1 ] || [ "$MWARNING" -ne 1 ] || [ "$MNOTSAVED" -ne 1 ]
+then
+   echo "log8msg" "$MINFO" "$MWARNING" "$MNOTSAVED"
+   bstat=$((bstat+128))
 fi
 
 EFILE1=$(grep -c vm1.iso ${cwd}/tmp/log3.out)

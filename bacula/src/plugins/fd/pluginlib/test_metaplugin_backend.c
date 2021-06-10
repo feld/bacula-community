@@ -391,11 +391,6 @@ void perform_backup()
       write_plugin('I', "TEST8-Error-Start");
       /* here comes a file data contents */
       write_plugin('E', "TEST8-Error: Standard IO Error goes Here");
-      // write_plugin('C', "DATA\n");
-      // write_plugin('D', "/* here comes a file data contents */");
-      // write_plugin('D', "/* here comes another file line    */");
-      // write_plugin('D', "/* here comes another file line    */");
-      // write_plugin('D', "/* here comes another file line    */");
       write_plugin('I', "TEST8-Error-End");
       // signal_eod();
    }
@@ -654,6 +649,19 @@ void perform_backup()
       write_plugin('I', "TEST PluginObject Last - END");
    }
 
+   write_plugin('I', "M_INFO test message\n");
+   write_plugin('W', "M_WARNING test message\n");
+   write_plugin('S', "M_SAVED test message\n");
+   write_plugin('N', "M_NOTSAVED test message\n");
+   write_plugin('R', "M_RESTORED test message\n");
+   write_plugin('P', "M_SKIPPED test message\n");
+   write_plugin('O', "M_OPER?MOUNT test message\n");
+   write_plugin('V', "M_EVENTS test message\n");
+   if (regress_standard_error_backup)
+   {
+      write_plugin('Q', "M_ERROR test message\n");
+   }
+
    /* this is the end of all data */
    signal_eod();
 }
@@ -686,7 +694,6 @@ void perform_estimate(){
    write_plugin('C', "STAT:E 0 300 300 0100640 1\n");
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    signal_eod();
-   // write_plugin('I', "TEST5B");
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vmsnap.iso\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
@@ -695,21 +702,18 @@ void perform_estimate(){
    snprintf(buf, BIGBUFLEN, "LSTAT:/bucket/%d/vm1.iso\n", mypid);
    write_plugin('C', buf);
    signal_eod();
-   // write_plugin('I', "TEST5B");
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/\n", PLUGINPREFIX, mypid);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    signal_eod();
-   // write_plugin('I', "TEST5 - dir");
 
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/\n", PLUGINPREFIX);
    write_plugin('C', buf);
    write_plugin('C', "STAT:D 1024 100 100 040755 1\n");
    write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
    signal_eod();
-   // write_plugin('I', "TEST5 - another dir");
 
    /* this is the end of all data */
    signal_eod();
