@@ -10,6 +10,8 @@ FilesetBackup1="TestPluginK8SSetProtocol1"
 JobBackup2="PluginK8STestProtocol2"
 JobBackup3="PluginK8STestProtocol3"
 JobBackup4="PluginK8STestProtocol4"
+JobBackup5="PluginK8STestProtocol5"
+JobBackup6="PluginK8STestProtocol6"
 Plugin="kubernetes:"
 
 . scripts/functions

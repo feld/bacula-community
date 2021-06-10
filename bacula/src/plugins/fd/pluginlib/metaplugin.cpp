@@ -776,6 +776,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       "regress_backup_other_file",
       "regress_error_backup_abort",
       "regress_metadata_support",
+      "regress_standard_error_backup",
       NULL,
    };
 #endif
@@ -1126,19 +1127,6 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
             return bRC_Error;
          }
       }
-         // if (listing != ListingNone){
-         //    DMSG0(ctx, DINFO, "Start Listing (4) ...\n");
-         //    if (send_startlisting(ctx) != bRC_OK){
-         //       backend.ctx->terminate(ctx);
-         //       return bRC_Error;
-         //    }
-         // } else {
-         //    DMSG0(ctx, DINFO, "Start Estimate (4) ...\n");
-         //    if (send_startestimate(ctx) != bRC_OK){
-         //       backend.ctx->terminate(ctx);
-         //       return bRC_Error;
-         //    }
-         // }
       break;
    case BACKEND_JOB_INFO_RESTORE:
       /* Start Restore (4) */
@@ -1338,7 +1326,7 @@ bRC METAPLUGIN::perform_read_data(bpContext *ctx, struct io_pkt *io)
    rc = backend.ctx->read_data_fixed(ctx, io->buf, io->count);
    if (rc < 0){
       io->status = rc;
-      io->io_errno = rc;
+      io->io_errno = EIO;
       return bRC_Error;
    }
    io->status = rc;
@@ -1829,6 +1817,12 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
             }
             DMSG1(ctx, DDEBUG, "size: %llu\n", plugin_obj_size);
             sp->plugin_obj.object_size = plugin_obj_size;
+            continue;
+         }
+         if (scan_parameter_str(cmd, "PLUGINOBJ_COUNT:", param)){
+            uint32_t count = str_to_int64(param.c_str());
+            DMSG1(ctx, DDEBUG, "count: %lu\n", count);
+            sp->plugin_obj.count = count;
             continue;
          }
          /* error in protocol */

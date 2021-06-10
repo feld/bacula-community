@@ -59,6 +59,7 @@ bool regress_error_listing_stderr = false;
 bool regress_error_restore_stderr = false;
 bool regress_backup_other_file = false;
 bool regress_metadata_support = false;
+bool regress_standard_error_backup = false;
 
 
 #define BUFLEN             4096
@@ -379,6 +380,26 @@ void perform_backup()
    write_plugin('C', "DATA\n");
    write_plugin('I', "TEST8Data");
 
+   if (regress_standard_error_backup)
+   {
+      // next file
+      snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/standard-error-file\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "STAT:F 1048576 200 200 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      signal_eod();
+      write_plugin('I', "TEST8-Error-Start");
+      /* here comes a file data contents */
+      write_plugin('E', "TEST8-Error: Standard IO Error goes Here");
+      // write_plugin('C', "DATA\n");
+      // write_plugin('D', "/* here comes a file data contents */");
+      // write_plugin('D', "/* here comes another file line    */");
+      // write_plugin('D', "/* here comes another file line    */");
+      // write_plugin('D', "/* here comes another file line    */");
+      write_plugin('I', "TEST8-Error-End");
+      // signal_eod();
+   }
+
    if (regress_backup_plugin_objects)
    {
       // test Plugin Objects interface
@@ -434,6 +455,26 @@ void perform_backup()
    write_plugin('D', "/* here comes another file line    */");
    write_plugin('D', "/* here comes another file line    */");
    signal_eod();
+
+   if (regress_standard_error_backup)
+   {
+      // next file
+      snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/standard-error-file2\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "STAT:F 1048576 200 200 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      signal_eod();
+      write_plugin('I', "TEST8-Error-Start");
+      /* here comes a file data contents */
+      write_plugin('C', "DATA\n");
+      write_plugin('D', "/* here comes a file data contents */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('D', "/* here comes another file line    */");
+      write_plugin('E', "TEST8-Error: Standard IO Error goes Here");
+      write_plugin('I', "TEST8-Error-End");
+      // signal_eod();
+   }
 
    const int bigfileblock = 100000;
    const int bigfilesize = bigfileblock * 5;
@@ -947,6 +988,7 @@ int main(int argc, char** argv) {
       // "regress_error_restore_stderr",
       // "regress_backup_plugin_objects",
       // "regress_error_backup_abort",
+      // "regress_standard_error_backup",
       if (strcmp(buf, "regress_error_plugin_params=1\n") == 0){
          regress_error_plugin_params = true;
          continue;
@@ -989,6 +1031,10 @@ int main(int argc, char** argv) {
       }
       if (strcmp(buf, "regress_metadata_support=1\n") == 0){
          regress_metadata_support = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_standard_error_backup=1\n") == 0){
+         regress_standard_error_backup = true;
          continue;
       }
       if (sscanf(buf, "listing=%s\n", buf) == 1){

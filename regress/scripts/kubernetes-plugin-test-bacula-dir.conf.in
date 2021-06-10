@@ -95,6 +95,34 @@ FileSet {
   }
 }
 
+Job {
+  Name = "PluginK8STestProtocol5"
+  JobDefs = "BackupJob"
+  FileSet="TestPluginK8SSetProtocol5"
+}
+
+FileSet {
+  Name = "TestPluginK8SSetProtocol5"
+  Include {
+    Options { signature=MD5 }
+    Plugin = "kubernetes: regress_metadata_support"
+  }
+}
+
+Job {
+  Name = "PluginK8STestProtocol6"
+  JobDefs = "BackupJob"
+  FileSet="TestPluginK8SSetProtocol6"
+}
+
+FileSet {
+  Name = "TestPluginK8SSetProtocol6"
+  Include {
+    Options { signature=MD5 }
+    Plugin = "kubernetes: regress_standard_error_backup"
+  }
+}
+
 FileSet {
   Name = "TestPluginKubernetesSet"
   Include { Options { signature=SHA1 }
