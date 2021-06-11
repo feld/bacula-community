@@ -180,7 +180,8 @@ METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
       acldata(PM_MESSAGE),
       xattrdatalen(0),
       xattrdata(PM_MESSAGE),
-      metadatas_list(10, true)
+      metadatas_list(10, true),
+      prevjobname(NULL)
 {
    /* TODO: we have a ctx variable stored internally, decide if we use it
     * for every method or rip it off as not required in our code */
@@ -730,6 +731,16 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
          return bRC_Error;
       }
    }
+
+   if (CUSTOMPREVJOBNAME && prevjobname){
+      Mmsg(cmd, "PrevJobName=%s\n", prevjobname);
+      rc = backend.ctx->write_command(ctx, cmd);
+      if (rc < 0){
+         /* error */
+         return bRC_Error;
+      }
+   }
+
    backend.ctx->signal_eod(ctx);
 
    if (!backend.ctx->read_ack(ctx)){
@@ -1163,11 +1174,15 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    bRC status;
    POOL_MEM tmp;
 
-   switch (event->eventType) {
+   switch (event->eventType)
+   {
    case bEventJobStart:
       DMSG(ctx, D3, "bEventJobStart value=%s\n", NPRT((char *)value));
       getBaculaVar(bVarJobId, (void *)&JobId);
       getBaculaVar(bVarJobName, (void *)&JobName);
+      if (CUSTOMPREVJOBNAME){
+         getBaculaVar(bVarPrevJobName, (void *)&prevjobname);
+      }
       break;
 
    case bEventJobEnd:

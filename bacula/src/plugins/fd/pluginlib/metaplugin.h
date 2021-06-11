@@ -62,6 +62,7 @@ extern const char *PLUGIN_DESCRIPTION;
 extern const char *PLUGINPREFIX;       /// is used for prefixing every Job and Debug messages generted by a plugin
 extern const char *PLUGINNAME;         /// should match the backend $pluginname$ used for Handshake procedure
 extern const bool CUSTOMNAMESPACE;     /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
+extern const bool CUSTOMPREVJOBNAME;   /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
 extern const char *PLUGINNAMESPACE;    /// custom backend plugin namespace used as file name prefix
 extern const char *PLUGINAPI;
 extern const char *BACKEND_CMD;
@@ -179,6 +180,7 @@ private:
    ConfigFile ini;               // Restore ini file handler
    alist metadatas_list;         //
    plugin_metadata metadatas;    //
+   const char *prevjobname;      // this is a bVarPrevJobName parameter if requested
 
    bRC parse_plugin_command(bpContext *ctx, const char *command, alist *params);
    bRC parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop);
