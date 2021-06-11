@@ -243,13 +243,19 @@ void storage::dec_stores() {
 
    if (unused_stores_decremented) {
       /* Only currently used storage needs to be decrased, rest of it was decremented before */
-         int num = store->incNumConcurrentJobs(-1);
-         Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
-         unused_stores_decremented = false;
+      if(!write) {
+         store->incNumConcurrentReadJobs(-1);
+      }
+      int num = store->incNumConcurrentJobs(-1);
+      Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
+      unused_stores_decremented = false;
    } else {
       /* We need to decrement all storages in the list */
       STORE *tmp_store;
       foreach_alist(tmp_store, list) {
+         if(!write) {
+            tmp_store->incNumConcurrentReadJobs(-1);
+         }
          int num = tmp_store->incNumConcurrentJobs(-1);
          Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", tmp_store->name(), num);
       }
