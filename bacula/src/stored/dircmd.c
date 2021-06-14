@@ -307,14 +307,14 @@ static bool die_cmd(JCR *jcr)
  */
 static bool client_cmd(JCR *jcr)
 {
-   int client_port;                 /* client port */
    int enable_ssl;                 /* enable ssl */
    BSOCK *dir = jcr->dir_bsock;
    BSOCK *cl = new_bsock();        /* client bsock */
+   POOL_MEM buf;
 
    Dmsg1(100, "ClientCmd: %s", dir->msg);
    jcr->sd_calls_client = true;
-   if (sscanf(dir->msg, "client address=%127s port=%d ssl=%d", jcr->client_addr, &client_port,
+   if (sscanf(dir->msg, "client address=%127s port=%d ssl=%d", jcr->client_addr, &jcr->client_port,
               &enable_ssl) != 3) {
       /* destroy() OK because cl is local */
       cl->destroy();
@@ -324,20 +324,21 @@ static bool client_cmd(JCR *jcr)
       goto bail_out;
    }
 
-   Dmsg3(110, "Connect to client: %s:%d ssl=%d\n", jcr->client_addr, client_port,
+   Dmsg3(110, "Connect to client: %s:%d ssl=%d\n", jcr->client_addr, jcr->client_port,
          enable_ssl);
    /* Open command communications with Client */
    /* Try to connect for 1 hour at 10 second intervals */
    if (!cl->connect(jcr, 10, (int)me->ClientConnectTimeout, me->heartbeat_interval,
-                _("Client daemon"), jcr->client_addr, NULL, client_port, 1)) {
+                _("Client daemon"), jcr->client_addr, NULL, jcr->client_port, 1)) {
       /* destroy() OK because cl is local */
       cl->destroy();
       Jmsg(jcr, M_FATAL, 0, _("[SF0102] Failed to connect to Client daemon: %s:%d\n"),
-          jcr->client_addr, client_port);
+          jcr->client_addr, jcr->client_port);
       Dmsg2(100, "Failed to connect to Client daemon: %s:%d\n",
-          jcr->client_addr, client_port);
+          jcr->client_addr, jcr->client_port);
       goto bail_out;
    }
+
    Dmsg0(110, "SD connection OK to Client.\n");
 
    jcr->file_bsock = cl;
@@ -420,6 +421,15 @@ static bool storage_cmd(JCR *jcr)
 
    if (!send_hello_and_authenticate_sd(jcr, Job)) {
       goto bail_out;
+   }
+
+   if (jcr->JobId > 0) {
+      POOL_MEM buf;
+      /* Print connection info only for real jobs */
+      build_connecting_info_log(_("Storage"), "",
+            jcr->stored_addr, stored_port,
+            sd->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
    }
 
    /*

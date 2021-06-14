@@ -2676,7 +2676,7 @@ static int storage_cmd(JCR *jcr)
 {
    int stored_port = 0;            /* storage daemon port */
    int enable_ssl;                 /* enable ssl to sd */
-   POOL_MEM sd_auth_key(PM_MESSAGE);
+   POOL_MEM sd_auth_key(PM_MESSAGE), buf;
    BSOCK *dir = jcr->dir_bsock;
    BSOCK *sd;
 
@@ -2787,6 +2787,16 @@ static int storage_cmd(JCR *jcr)
          goto bail_out;
       }
    }
+
+   if (jcr->JobId > 0 && !jcr->sd_calls_client) {
+      /* Print connection info only for real jobs.
+       * We don't have storage name here, log connection info w/o it anyway */
+      build_connecting_info_log(_("Storage"), "",
+            jcr->stored_addr, stored_port,
+            jcr->store_bsock->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+   }
+
    memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
    Dmsg0(110, "Authenticated with SD.\n");
 

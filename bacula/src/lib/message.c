@@ -2102,3 +2102,15 @@ void free_daemon_message_queue()
    free(daemon_msg_queue);
    V(daemon_msg_queue_mutex);
 }
+
+char *build_connecting_info_log(const char *daemon, const char *name, const char *addr, int port, bool tls, POOLMEM *&buf)
+{
+   if (*name) {
+      Mmsg(buf, conn_info_w_name, daemon, name, addr, port,
+            tls ? _("with TLS") : _("without encryption"));
+   } else {
+      Mmsg(buf, conn_info_wo_name, daemon, addr, port,
+            tls ? _("with TLS") : _("without encryption"));
+   }
+   return buf;
+}

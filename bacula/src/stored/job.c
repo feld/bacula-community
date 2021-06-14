@@ -204,6 +204,17 @@ bool run_cmd(JCR *jcr)
       } else {
          jcr->authenticated = true;
       }
+
+      if (jcr->JobId > 0) {
+         POOL_MEM buf;
+         /* Print connection info only for real jobs.
+          * We don't have client name here, log connection info w/o it anyway */
+         build_connecting_info_log(_("Client"), "",
+               jcr->client_addr, jcr->client_port,
+               jcr->file_bsock->tls ? true : false, buf.addr());
+         Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+      }
+
    } else if (!jcr->sd_client) {
       /* We wait to receive connection from Client */
       gettimeofday(&tv, &tz);

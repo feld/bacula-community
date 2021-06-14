@@ -99,7 +99,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
 
    if (!is_bsock_open(jcr->file_bsock)) {
       char name[MAX_NAME_LENGTH + 100];
-      POOL_MEM buf;
+      POOL_MEM buf, tmp;
 
       bstrncpy(name, _("Client: "), sizeof(name));
       bstrncat(name, jcr->client->name(), sizeof(name));
@@ -155,6 +155,17 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
       jcr->setJobStatus(JS_ErrorTerminated);
       Dmsg0(10, "Authentication error with FD.\n");
       return 0;
+   }
+
+   if (jcr->JobId > 0) {
+      /* Print connection info only for real jobs */
+      POOL_MEM buf, tmp;
+      CLIENT *client = jcr->client;
+
+      build_connecting_info_log(_("Client"), client->name(),
+            get_client_address(jcr, client, tmp.addr()), client->FDport,
+            fd->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
    }
 
    /*

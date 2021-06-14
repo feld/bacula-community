@@ -129,7 +129,6 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    Dmsg2(100, "Connect to Storage daemon %s:%d\n", store->address,
       store->SDport);
    sd->set_source_address(director->DIRsrc_addr);
-   //TODO is translating needed/useful here?
    Mmsg(buf, _("Storage Daemon \"%s\""), store->name());
    if (!sd->connect(jcr, retry_interval, max_retry_time, heart_beat, buf.c_str(),
          store->address, NULL, store->SDport, verbose)) {
@@ -150,6 +149,15 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
       sd->close();
       return false;
    }
+
+   if (jcr->JobId > 0) {
+      /* Print connection info only for real jobs */
+      build_connecting_info_log(_("Storage"), store->name(),
+            get_storage_address(jcr->client, store), store->SDport,
+            sd->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+   }
+
    return true;
 }
 

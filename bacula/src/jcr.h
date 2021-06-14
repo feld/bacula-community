@@ -499,6 +499,7 @@ public:
    POOLMEM *fileset_md5;              /* MD5 for FileSet */
    char stored_addr[MAX_NAME_LENGTH]; /* storage daemon address */
    char client_addr[MAX_NAME_LENGTH]; /* client daemon address */
+   int client_port;                   /* client port */
    VOL_LIST *VolList;                 /* list to read, freed at the end of the job */
    int32_t NumWriteVolumes;           /* number of volumes written */
    int32_t NumReadVolumes;            /* total number of volumes to read */

@@ -177,6 +177,9 @@ struct MQUEUE_ITEM {
 #define    DT_ASX        (1<<16)                /* used by Alain for personal debugging */
 #define    DT_ALL        (0x7FFF0000)           /* all (up to debug_level 65635, 15 flags available) */
 
+const char conn_info_w_name[] = "Connected to %s \"%s\" at %s:%d %s\n";
+const char conn_info_wo_name[] = "Connected to %s at %s:%d %s\n";
+
 const char *debug_get_tag(uint32_t pos, const char **desc);
 bool debug_find_tag(const char *tagname, bool add, int64_t *current_level);
 bool debug_parse_tags(const char *options, int64_t *current_level);
@@ -193,6 +196,7 @@ const char *get_basename(const char *pathname);
 bool is_message_type_set(JCR *jcr, int type);
 void set_trace_for_tools(FILE *new_trace_fd); // called by Bacula's tools only
 void update_trace_file_location(bool safe);
+char *build_connecting_info_log(const char *daemon, const char *name, const char *addr, int port, bool tls, POOLMEM *&buf);
 
 class BDB;                                              /* define forward reference */
 typedef bool (*sql_insert_log)(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg);
