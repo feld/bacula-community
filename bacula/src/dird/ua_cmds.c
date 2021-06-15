@@ -1597,11 +1597,13 @@ class tag_mngt: public TAG_DBR
 public:
    int         action;          /* 1: create, 2: delete, 3: list, 0: nothing */
    int         target;          /* 1: client, 2: job, 3: volume */
+   const char *extra_chars;     /* Extra characters allowed */
 
    tag_mngt() {
       zero();
       action = 0;
       target = 0;
+      extra_chars = "#._-:";
    };
 
    int scan_command(UAContext *ua) {
@@ -1652,10 +1654,10 @@ public:
             JobId = str_to_uint64(ua->argv[i]);
             target = 2;
 
-         } else if (strcasecmp(ua->argk[i], NT_("name")) == 0 && is_name_valid(ua->argv[i], NULL, "#")) {
+         } else if (strcasecmp(ua->argk[i], NT_("name")) == 0 && is_name_valid(ua->argv[i], NULL, extra_chars)) {
             bstrncpy(Name, ua->argv[i], sizeof(Name));
 
-         } else if (strcasecmp(ua->argk[i], NT_("tag")) == 0 && is_name_valid(ua->argv[i], NULL, "#")) {
+         } else if (strcasecmp(ua->argk[i], NT_("tag")) == 0 && is_name_valid(ua->argv[i], NULL, extra_chars)) {
             bstrncpy(Name, ua->argv[i], sizeof(Name));
 
          } else if (strcasecmp(ua->argk[i], NT_("add")) == 0) {
@@ -1761,7 +1763,7 @@ int tag_cmd(UAContext *ua, const char *cmd)
          if (!get_cmd(ua, _("Enter the Tag value: "), false)) {
             return false;
          }
-         if (strlen(ua->cmd) > sizeof(t.Name)-1 || !is_name_valid(ua->cmd, NULL, "#")) {
+         if (strlen(ua->cmd) > sizeof(t.Name)-1 || !is_name_valid(ua->cmd, NULL, t.extra_chars)) {
             ua->error_msg(_("Invalid tag\n"));
             return false;
          }
