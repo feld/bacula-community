@@ -984,6 +984,9 @@ char * escape_filename_pathsep(const char* fname, char *buf, int len)
          case '/':
             strcat(buf, "%2F");
             break;
+         case '%':
+            strcat(buf, "%%");
+            break;
          default:
             strcat(buf, ch);
             break;
@@ -1008,15 +1011,21 @@ char * unescape_filename_pathsep(const char* fname, char *buf, int len)
          {
          case '%':
             // we always have the next char available because `nul` character is required
-            if (fname[i + 1] == '2'){
+            if (fname[i + 1] == '2') {
                // so the next char should be available too
-               if (fname[i + 2] == 'F'){
+               if (fname[i + 2] == 'F') {
                   // bingo, got escaped char, proceed
                   strcat(buf, "/");
                   i += 2;
                   len--;
                   break;
                }
+            } else
+            if (fname[i + 1] == '%') {
+               strcat(buf, "%");
+               i++;
+               len--;
+               break;
             }
 #if __cplusplus >= 201703L
             [[fallthrough]];
@@ -1952,6 +1961,7 @@ void *th2(void *a)
 int main(int argc, char **argv)
 {
    Unittests u("bsys", true);
+#if 0
    job pthread_list[10000];
    int j = (argc >= 2) ? atoi(argv[1]) : 1;
    int maxfd = (argc == 3) ? atoi(argv[2]) : 0;
@@ -2026,7 +2036,7 @@ int main(int argc, char **argv)
    char type[10];
    bstrncpy(type, p, 8);
    ok(strcmp(type, "/@MYSQL") == 0, "bstrncpy()");
-
+#endif
    int len = 100;
    char buf[len];
    struct testvectdata
@@ -2040,6 +2050,13 @@ int main(int argc, char **argv)
       {"directory/value/", "directory%2Fvalue%2F"},
       {"/path///value/", "%2Fpath%2F%2F%2Fvalue%2F"},
       {"/////", "%2F%2F%2F%2F%2F"},
+      {"%test", "%%test"},
+      {"test%test", "test%%test"},
+      {"test%", "test%%"},
+      {"%2Full", "%%2Full"},
+      {"test%2Full", "test%%2Full"},
+      {"test%2F", "test%%2F"},
+      {"test%%", "test%%%%"},
       {NULL, NULL},
    };
 
