@@ -225,12 +225,16 @@ bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
 
    tmp = get_next_tag(obj_str);
    if (tmp) {
-      ObjectSize = str_to_uint64(tmp);
+      uint64_t val = str_to_uint64(tmp);
+      ObjectSize = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
+
    } else if (*obj_str) {
       /* Object size is the last tag here, we are not expecting to have status in the stream */
-      ObjectSize = str_to_uint64(*obj_str);
+      uint64_t val = str_to_uint64(*obj_str);
+      ObjectSize = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
       ret = true;
       goto bail_out;
+
    } else {
       goto bail_out;
    }
