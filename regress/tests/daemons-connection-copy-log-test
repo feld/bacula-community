@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for verification if proper message is being logged depending on TLS usage for the daemons
+# during copy jobs
+#
+TestName="daemons-connection-copy-log-test"
+JobName=CopyJobSave
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-migration-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
+sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
+change_jobname NightlySave $JobName
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File volume=FileVolume001 Pool=Default
+label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
+label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
+run job=$JobName yes
+wait
+messages
+@$out ${cwd}/tmp/log2.out
+run job=copy-job yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+check_connection_tls_logs $tmp/log2.out 1 2 0 0 0
+tmp_estat=$((tmp_estat+estat))
+
+# Disable TLS for DIR <-> SD
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "TlsPskEnable", "no", "Director")'
+# Disable TLS for DIR <-> FD
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "Director")'
+# Disable TLS for FD <-> SD
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "FileDaemon")'
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log3.out
+run job=copy-job $run_spooldata yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+check_connection_tls_logs $tmp/log3.out 0 2 0 0 0
+tmp_estat=$((tmp_estat+estat))
+
+estat=$tmp_estat
+end_test

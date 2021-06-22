@@ -1,0 +1,172 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for verification if proper message is being logged depending on TLS usage for the daemons
+# during verify jobs
+#
+TestName="daemons-connection-verify-log-test"
+JobName=VerifyCatalog
+. scripts/functions
+
+cwd=`pwd`
+scripts/cleanup
+scripts/copy-test-confs
+
+# Make backup a bit faster
+echo "${cwd}/build/manpages" >${cwd}/tmp/file-list
+
+change_jobname NightlySave $JobName
+start_test
+
+cat <<END_OF_DATA >tmp/bconcmds
+@output /dev/null
+messages
+@$out tmp/log1.out
+label storage=File volume=TestVolume001
+run level=full job=$JobName yes
+wait
+messages
+@$out tmp/log2.out
+run job=VerifyVolume level=Data yes
+wait
+messages
+@$out tmp/log3.out
+run job=VerifyVolume level=VolumeToCatalog yes
+wait
+messages
+@$out tmp/log4.out
+run job=VerifyVolume level=DiskToCatalog yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during 'Data' verify
+check_connection_tls_logs $tmp/log2.out 1 1 1 0 1
+
+# Check if expected messages were logged for each daemon during 'VolumeToCatalog' verify
+check_connection_tls_logs $tmp/log3.out 1 1 1 0 1
+
+# Check if expected messages were logged for each daemon during 'DiskToCatalog' verify
+check_connection_tls_logs $tmp/log4.out 1 0 1 0 0
+
+tmp_estat=$((tmp_estat+estat))
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SD Calls Client", "yes", "Client")'
+
+cat <<END_OF_DATA >tmp/bconcmds
+@$out tmp/log5.out
+run job=VerifyVolume level=Data yes
+wait
+messages
+@$out tmp/log6.out
+run job=VerifyVolume level=VolumeToCatalog yes
+wait
+messages
+@$out tmp/log7.out
+run job=VerifyVolume level=DiskToCatalog yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during 'Data' verify
+check_connection_tls_logs $tmp/log5.out 1 1 1 1 0
+
+# Check if expected messages were logged for each daemon during 'VolumeToCatalog' verify
+check_connection_tls_logs $tmp/log6.out 1 1 1 1 0
+
+# Check if expected messages were logged for each daemon during 'DiskToCatalog' verify
+check_connection_tls_logs $tmp/log7.out 1 0 1 0 0
+
+tmp_estat=$((tmp_estat+estat))
+
+############# CHECK NON-ENCRYPTED CONNECTION LOGS #################
+
+# Disable TLS for DIR <-> SD
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "TlsPskEnable", "no", "Director")'
+# Disable TLS for DIR <-> FD
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "Director")'
+# Disable TLS for FD <-> SD
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "FileDaemon")'
+
+# Disable SD Calls Client for the first run
+sed -i 's/SD Calls Client/#SD Calls Client/g' $conf/bacula-dir.conf
+##########################
+
+cat <<END_OF_DATA >tmp/bconcmds
+@$out tmp/log8.out
+run job=VerifyVolume level=Data yes
+wait
+messages
+@$out tmp/log9.out
+run job=VerifyVolume level=VolumeToCatalog yes
+wait
+messages
+@$out tmp/log10.out
+run job=VerifyVolume level=DiskToCatalog yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during 'Data' verify
+check_connection_tls_logs $tmp/log8.out 0 1 1 0 1
+
+# Check if expected messages were logged for each daemon during 'VolumeToCatalog' verify
+check_connection_tls_logs $tmp/log9.out 0 1 1 0 1
+
+# Check if expected messages were logged for each daemon during 'DiskToCatalog' verify
+check_connection_tls_logs $tmp/log10.out 0 0 1 0 0
+
+tmp_estat=$((tmp_estat+estat))
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SD Calls Client", "yes", "Client")'
+
+cat <<END_OF_DATA >tmp/bconcmds
+@$out tmp/log11.out
+run job=VerifyVolume level=Data yes
+wait
+messages
+@$out tmp/log12.out
+run job=VerifyVolume level=VolumeToCatalog yes
+wait
+messages
+@$out tmp/log13.out
+run job=VerifyVolume level=DiskToCatalog yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during 'Data' verify
+check_connection_tls_logs $tmp/log11.out 0 1 1 1 0
+
+# Check if expected messages were logged for each daemon during 'VolumeToCatalog' verify
+check_connection_tls_logs $tmp/log12.out 0 1 1 1 0
+
+# Check if expected messages were logged for each daemon during 'DiskToCatalog' verify
+check_connection_tls_logs $tmp/log13.out 0 0 1 0 0
+
+tmp_estat=$((tmp_estat+estat))
+
+estat=$tmp_estat
+end_test

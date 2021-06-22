@@ -1,0 +1,144 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for verification if proper message is being logged depending on TLS usage for the daemons
+# during normal backup and restore
+#
+TestName="daemons-connection-log-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+change_jobname BackupClient1 $JobName
+start_test
+
+################ CHECK ENCRYPTED CONNECTION LOGS #######
+# Run backup job with default settings (TLS on)
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+@$out $tmp/log2.out
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log3.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during backup
+check_connection_tls_logs $tmp/log2.out 1 1 1 0 1
+
+# Check if expected messages were logged for each daemon during restore
+check_connection_tls_logs $tmp/log3.out 1 1 1 0 1
+
+# Enable SD Calls Client and check logs once more (FD<->SD logs should not be observed now)
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SD Calls Client", "yes", "Client")'
+
+# Run backup job with default settings (TLS on), this time with SD Calls Client
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log4.out
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log5.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+tmp_estat=$((tmp_estat+estat))
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during backup
+check_connection_tls_logs $tmp/log4.out 1 1 1 1 0
+
+# Check if expected messages were logged for each daemon during restore
+check_connection_tls_logs $tmp/log5.out 1 1 1 1 0
+
+############# CHECK NON-ENCRYPTED CONNECTION LOGS #################
+
+# Disable TLS for DIR <-> SD
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "TlsPskEnable", "no", "Director")'
+# Disable TLS for DIR <-> FD
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "Director")'
+# Disable TLS for FD <-> SD
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "FileDaemon")'
+
+# Disable SD Calls Client for the first run
+sed -i 's/SD Calls Client/#SD Calls Client/g' $conf/bacula-dir.conf
+
+# Run job once more, this time with TLS turned off
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log6.out
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log7.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+tmp_estat=$((tmp_estat+estat))
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during backup
+check_connection_tls_logs $tmp/log6.out 0 1 1 0 1
+
+# Check if expected messages were logged for each daemon during restore
+check_connection_tls_logs $tmp/log7.out 0 1 1 0 1
+
+#########################
+# Enable SD Calls Client and check logs once more
+sed -i 's/#SD Calls Client/SD Calls Client/g' $conf/bacula-dir.conf
+
+# Run job once more, this time with TLS turned off
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log8.out
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log9.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+tmp_estat=$((tmp_estat+estat))
+run_bacula
+
+stop_bacula
+
+# Check if expected messages were logged for each daemon during backup
+check_connection_tls_logs $tmp/log8.out 0 1 1 1 0
+
+# Check if expected messages were logged for each daemon during restore
+check_connection_tls_logs $tmp/log9.out 0 1 1 1 0
+
+end_test

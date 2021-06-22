@@ -261,6 +261,50 @@ EOF
    reset_test
 }
 
+# Helper to check if all expected connection logs occured
+# arg1: logfile to check
+# arg2: with or without tls expected
+# arg3: expected DIR->SD log lines
+# arg4: expected DIR->FD log lines
+# arg5: expected FD->SD log lines
+# arg6: expected SD->FD log lines
+check_connection_tls_logs()
+{
+   tls_str="with TLS"
+   if [ $2 -eq 0 ]; then
+      tls_str="without encryption"
+   fi
+
+   n=`cat $1 | grep ".*\-dir .* Connected to Storage .* ${tls_str}" | wc -l`
+   if [ $n -ne $3 ]; then
+      estat=1
+      print_debug "Wrong log lines regarding Director Connecting Storage ${tls_str}: ${n} in restore log, expected $3"
+      print_debug "see: $1"
+   fi
+
+
+   n=`cat $1 | grep ".*\-dir .* Connected to Client .* ${tls_str}" | wc -l`
+   if [ $n -ne $4 ]; then
+      estat=1
+      print_debug "Wrong log lines regarding Director Connecting Client ${tls_str}: ${n} in restore log, expected $4"
+      print_debug "see: $1"
+   fi
+
+   n=`cat $1 | grep ".*\-sd .* Connected to Client .* ${tls_str}" | wc -l`
+   if [ $n -ne $5 ]; then
+      estat=1
+      print_debug "Wrong log lines regarding Storage Connecting Client ${tls_str}: ${n} in restore log, expected $5"
+      print_debug "see: $1"
+   fi
+
+   n=`cat $1 | grep ".*\-fd .* Connected to Storage .* ${tls_str}" | wc -l`
+   if [ $n -ne $6 ]; then
+      estat=1
+      print_debug "Wrong log lines regarding Client Connecting Storage ${tls_str}: ${n} in restore log, expected $6"
+      print_debug "see: $1"
+   fi
+}
+
 set_debugsettings()
 {
    if [ -f $log_setdebug ]; then rm $log_setdebug; fi
