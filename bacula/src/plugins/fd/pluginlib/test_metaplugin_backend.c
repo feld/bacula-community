@@ -34,11 +34,20 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
 
 
 #ifndef LOGDIR
 #define LOGDIR "/tmp"
 #endif
+
+#define EXIT_BACKEND_NOMEMORY                255
+#define EXIT_BACKEND_LOGFILE_ERROR           1
+#define EXIT_BACKEND_HEADER_TOOSHORT         2
+#define EXIT_BACKEND_MESSAGE_TOOLONG         3
+#define EXIT_BACKEND_DATA_COMMAND_REQ        4
+#define EXIT_BACKEND_SIGNAL_HANDLER_ERROR    5
+#define EXIT_BACKEND_CANCEL                  6
 
 extern const char *PLUGINPREFIX;
 extern const char *PLUGINNAME;
@@ -60,6 +69,7 @@ bool regress_error_restore_stderr = false;
 bool regress_backup_other_file = false;
 bool regress_metadata_support = false;
 bool regress_standard_error_backup = false;
+bool regress_cancel_backup = false;
 
 
 #define BUFLEN             4096
@@ -108,7 +118,7 @@ int read_plugin(char * buf)
    if (len < 8){
       LOG("#> Err: header too short");
       close(logfd);
-      exit(2);
+      exit(EXIT_BACKEND_HEADER_TOOSHORT);
    }
    if (header[0] == 'F'){
       LOG(">> EOD >>");
@@ -117,13 +127,13 @@ int read_plugin(char * buf)
    if (header[0] == 'T'){
       LOG(">> TERM >>");
       close(logfd);
-      exit(0);
+      exit(EXIT_SUCCESS);
    }
    size = atoi(header+1);
    if (size > BIGBUFLEN){
       LOG("#> Err: message too long");
       close(logfd);
-      exit(3);
+      exit(EXIT_BACKEND_MESSAGE_TOOLONG);
    }
 
    if (header[0] == 'C'){
@@ -235,6 +245,14 @@ void signal_term(){
    LOG("<< TERM <<");
 }
 
+static bool jobcancelled = false;
+
+static void catch_function(int signo)
+{
+   LOG("#CANCELLED#");
+   jobcancelled = true;
+}
+
 /**
  * @brief Perform test backup.
  */
@@ -254,6 +272,13 @@ void perform_backup()
    snprintf(fileindex_link, 256, "%s/bucket/%d/vm1.iso", PLUGINPREFIX, mypid);
 
    // Backup Loop
+   if (regress_error_backup_no_files) {
+      write_plugin('E', "No files found for pattern container1/otherobject\n");
+      signal_eod();
+      return;
+   }
+
+   // first file
    snprintf(buf, BIGBUFLEN, "FNAME:%s\n", fileindex_link);           // we use it here
    write_plugin('C', buf);
    write_plugin('C', "STAT:F 1048576 100 100 100640 2\n");           // this will be the first file hardlinked
@@ -275,10 +300,13 @@ void perform_backup()
    write_plugin('I', "TEST5Acl");
    signal_eod();
 
-   if (regress_error_backup_no_files) {
-      write_plugin('E', "No files found for pattern container1/otherobject\n");
-      signal_eod();
-      return;
+   if (regress_cancel_backup)
+   {
+      LOG("#Cancel wait started...");
+      while (!jobcancelled)
+         sleep(1);
+      LOG("#Cancel event received, EXIT");
+      exit(EXIT_BACKEND_CANCEL);
    }
 
    // next file
@@ -666,6 +694,9 @@ void perform_backup()
    signal_eod();
 }
 
+/**
+ * @brief Perform test estimate
+ */
 void perform_estimate(){
    /* Estimate Loop (5) */
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/vm1.iso\n", PLUGINPREFIX, mypid);
@@ -924,7 +955,7 @@ void perform_restore()
          write_plugin('C', "OK\n");
       } else {
          write_plugin('E', "Error DATA command required.");
-         exit (1);
+         exit(EXIT_BACKEND_DATA_COMMAND_REQ);
       }
    }
 
@@ -943,26 +974,26 @@ int main(int argc, char** argv) {
 
    buf = (char*)malloc(BIGBUFLEN);
    if (buf == NULL){
-      exit(255);
+      exit(EXIT_BACKEND_NOMEMORY);
    }
    buflog = (char*)malloc(BUFLEN);
    if (buflog == NULL){
-      exit(255);
+      exit(EXIT_BACKEND_NOMEMORY);
    }
    listing = (char*)malloc(BUFLEN);
    if (listing == NULL){
-      exit(255);
+      exit(EXIT_BACKEND_NOMEMORY);
    }
    query = (char*)malloc(BUFLEN);
    if (query == NULL){
-      exit(255);
+      exit(EXIT_BACKEND_NOMEMORY);
    }
 
    mypid = getpid();
    snprintf(buf, 4096, "%s/%s_backend_%d.log", LOGDIR, PLUGINNAME, mypid);
    logfd = open(buf, O_CREAT|O_TRUNC|O_WRONLY, 0640);
    if (logfd < 0){
-      exit (1);
+      exit(EXIT_BACKEND_LOGFILE_ERROR);
    }
    //sleep(30);
 
@@ -993,52 +1024,62 @@ int main(int argc, char** argv) {
       // "regress_backup_plugin_objects",
       // "regress_error_backup_abort",
       // "regress_standard_error_backup",
-      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0){
+      // "regress_cancel_backup",
+
+      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0) {
          regress_error_plugin_params = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_start_job=1\n") == 0){
+      if (strcmp(buf, "regress_error_start_job=1\n") == 0) {
          regress_error_start_job = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0){
+      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0) {
          regress_error_backup_no_files = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0){
+      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0) {
          regress_error_backup_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0){
+      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0) {
          regress_error_estimate_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0){
+      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0) {
          regress_error_listing_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0){
+      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0) {
          regress_error_restore_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0){
+      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0) {
          regress_backup_plugin_objects = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0){
+      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0) {
          regress_error_backup_abort = true;
          continue;
       }
-      if (strcmp(buf, "regress_backup_other_file=1\n") == 0){
+      if (strcmp(buf, "regress_backup_other_file=1\n") == 0) {
          regress_backup_other_file = true;
          continue;
       }
-      if (strcmp(buf, "regress_metadata_support=1\n") == 0){
+      if (strcmp(buf, "regress_metadata_support=1\n") == 0) {
          regress_metadata_support = true;
          continue;
       }
-      if (strcmp(buf, "regress_standard_error_backup=1\n") == 0){
+      if (strcmp(buf, "regress_standard_error_backup=1\n") == 0) {
          regress_standard_error_backup = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_cancel_backup=1\n") == 0) {
+         regress_cancel_backup = true;
+         if (signal(SIGUSR1, catch_function) == SIG_ERR){
+            LOG("Cannot setup signal handler!");
+            exit(EXIT_BACKEND_SIGNAL_HANDLER_ERROR);
+         }
          continue;
       }
       if (sscanf(buf, "listing=%s\n", buf) == 1){

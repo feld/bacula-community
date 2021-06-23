@@ -27,6 +27,7 @@
  */
 
 #include "metaplugin.h"
+#include "smartlock.h"
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/select.h>
@@ -112,6 +113,15 @@ static pInfo pluginInfo = {
    PLUGIN_DESCRIPTION,
 };
 
+#define _STR(x) __STR(x)
+#define __STR(x) #x
+
+#ifdef VERSIONGIT
+   #define VERSIONGIT_STR  _STR(VERSIONGIT)
+#else
+   #define VERSIONGIT_STR  "/unknown"
+#endif
+
 /*
  * Plugin called here when it is first loaded
  */
@@ -120,7 +130,7 @@ bRC DLL_IMP_EXP loadPlugin(bInfo *lbinfo, bFuncs *lbfuncs, pInfo ** pinfo, pFunc
    bfuncs = lbfuncs;               /* set Bacula function pointers */
    binfo = lbinfo;
 
-   Dmsg3(DINFO, "%s Plugin version %s %s (c) 2020 by Inteos\n", PLUGINNAME, PLUGIN_VERSION, PLUGIN_DATE);
+   Dmsg4(DINFO, "%s Plugin version %s%s %s (c) 2021 by Inteos\n", PLUGINNAME, PLUGIN_VERSION, VERSIONGIT_STR, PLUGIN_DATE);
 
    *pinfo = &pluginInfo;           /* return pointer to our info */
    *pfuncs = &pluginFuncs;         /* return pointer to our functions */
@@ -139,68 +149,6 @@ bRC DLL_IMP_EXP unloadPlugin()
 #ifdef __cplusplus
 }
 #endif
-
-/*
- * Main PLUGIN class constructor.
- */
-METAPLUGIN::METAPLUGIN(bpContext *bpctx) :
-      backend_cmd(PM_FNAME),
-      ctx(NULL),
-      backend_available(false),
-      backend_error(PM_MESSAGE),
-      mode(NONE),
-      JobId(0),
-      JobName(NULL),
-      since(0),
-      where(NULL),
-      regexwhere(NULL),
-      replace(0),
-      robjsent(false),
-      estimate(false),
-      listing(None),
-      nodata(false),
-      nextfile(false),
-      openerror(false),
-      pluginobject(false),
-      pluginobjectsent(false),
-      readacl(false),
-      readxattr(false),
-      skipextract(false),
-      last_type(0),
-      fname(PM_FNAME),
-      lname(PM_FNAME),
-      robjbuf(NULL),
-      plugin_obj_cat(PM_FNAME),
-      plugin_obj_type(PM_FNAME),
-      plugin_obj_name(PM_FNAME),
-      plugin_obj_src(PM_FNAME),
-      plugin_obj_uuid(PM_FNAME),
-      plugin_obj_size(PM_FNAME),
-      acldatalen(0),
-      acldata(PM_MESSAGE),
-      xattrdatalen(0),
-      xattrdata(PM_MESSAGE),
-      metadatas_list(10, true),
-      prevjobname(NULL)
-{
-   /* TODO: we have a ctx variable stored internally, decide if we use it
-    * for every method or rip it off as not required in our code */
-   ctx = bpctx;
-}
-
-/*
- * Main PLUGIN class destructor, handles variable freeing on delete.
- *
- * in:
- *    none
- * out:
- *    freed internal variables and class allocated during job execution
- */
-METAPLUGIN::~METAPLUGIN()
-{
-   /* free standard variables */
-   free_and_null_pool_memory(robjbuf);
-}
 
 /*
  * Check if a parameter (param) exist in ConfigFile variables set by user.
@@ -594,7 +542,7 @@ bRC send_endjob(bpContext *ctx, PTCOMM *ptcomm)
  */
 bRC backendctx_jobend_func(PTCOMM *ptcomm, void *cp)
 {
-   bpContext * ctx = (bpContext*)cp;
+   bpContext *ctx = (bpContext *)cp;
    bRC status = bRC_OK;
 
    if (send_endjob(ctx, ptcomm) != bRC_OK){
@@ -622,6 +570,46 @@ bRC backendctx_jobend_func(PTCOMM *ptcomm, void *cp)
 bRC METAPLUGIN::terminate_all_backends(bpContext *ctx)
 {
    return backend.foreach_command_status(backendctx_jobend_func, ctx);
+}
+
+/**
+ * @brief Callback used for sending a `cancel event` to the selected backend
+ *
+ * @param ptcomm the backend communication object
+ * @param cp a bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK when success
+ */
+bRC backendctx_cancel_func(PTCOMM *ptcomm, void *cp)
+{
+   bpContext * ctx = (bpContext*)cp;
+
+   // cancel procedure
+   // 1. get backend pid
+   // 2. send SIGUSR1 to backend pid
+   // 3. wait default 5 sec or defined in CUSTOMCANCELSLEEP
+   // 4. terminate the backend as usual
+
+   pid_t pid = ptcomm->get_backend_pid();
+   DMSG(ctx, DINFO, "Inform backend about Cancel at PID=%d ...\n", pid)
+   kill(pid, SIGUSR1);
+   int32_t waitsleep = (CUSTOMCANCELSLEEP == 0) * 5 + CUSTOMCANCELSLEEP;
+   bmicrosleep(waitsleep, 1);
+   DMSG(ctx, DINFO, "Terminate backend at PID=%d\n", pid);
+   ptcomm->terminate(ctx);
+   return bRC_OK;
+}
+
+/**
+ * @brief Send `cancel event` to every backend and terminate it.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK when success, bRC_Error if not
+ */
+bRC METAPLUGIN::cancel_all_backends(bpContext *ctx)
+{
+   METAPLUGIN *pctx = (METAPLUGIN *)ctx->pContext;
+   // the cancel procedure: for all backends execute cancel func
+   return pctx->backend.foreach_command_status(backendctx_cancel_func, ctx);
 }
 
 /*
@@ -788,6 +776,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       "regress_error_backup_abort",
       "regress_metadata_support",
       "regress_standard_error_backup",
+      "regress_cancel_backup",
       NULL,
    };
 #endif
@@ -1172,7 +1161,15 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
 bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 {
    bRC status;
-   POOL_MEM tmp;
+
+   // extract original plugin context, basically it should be `this`
+   METAPLUGIN *pctx = (METAPLUGIN *)ctx->pContext;
+   // this ensures that handlePluginEvent is thread safe for extracted pContext
+   smart_lock<smart_mutex> lg(&pctx->mutex);
+
+   if (job_cancelled) {
+      return bRC_Error;
+   }
 
    switch (event->eventType)
    {
@@ -1186,10 +1183,8 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       break;
 
    case bEventJobEnd:
-      status = bRC_OK;
       DMSG(ctx, D3, "bEventJobEnd value=%s\n", NPRT((char *)value));
-      status = terminate_all_backends(ctx);
-      return status;
+      return terminate_all_backends(ctx);
 
    case bEventLevel:
       char lvl;
@@ -1297,20 +1292,12 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       return parse_plugin_restoreobj(ctx, (restore_object_pkt *) value);
 
    case bEventCancelCommand:
-      DMSG(ctx, D3, "bEventCancelCommand value=%s\n", NPRT((char *)value));
-      /*
-         TODO: The code can set a flag (better if protected via a global mutex), and we
-         TODO: can send a kill USR1 or TERM signal to the backend if the variable is
-         TODO: protected with the global mutex and available easily.
-         TODO: PETITION: Our plugin (RHV WhiteBearSolutions) search the packet E CANCEL.
-         TODO: If you modify this behaviour, please you notify us.
-      */
-      if (backend.ctx != NULL) {
-         // XXX: something is going different then designed here, as backend.ctx is NULL
-         bsscanf("CANCEL", "%s", tmp.c_str());
-         backend.ctx->signal_error(ctx, tmp.c_str());
-      }
-      break;
+      DMSG2(ctx, D3, "bEventCancelCommand self = %p pctx = %p\n", this, pctx);
+      // TODO: PETITION: Our plugin (RHV WhiteBearSolutions) search the packet E CANCEL.
+      // TODO: If you modify this behaviour, please you notify us.
+      // TODO: RPK[20210623]: The information about a new procedure was sent to Eric
+      pctx->job_cancelled = true;
+      return cancel_all_backends(ctx);
 
    default:
       // enabled only for Debug
@@ -1346,7 +1333,7 @@ bRC METAPLUGIN::perform_read_data(bpContext *ctx, struct io_pkt *io)
    }
    io->status = rc;
    if (backend.ctx->is_eod()){
-      /* TODO: we signal EOD as rc=0, so no need to explicity check for EOD, right? */
+      // TODO: we signal EOD as rc=0, so no need to explicity check for EOD, right?
       io->status = 0;
    }
    return bRC_OK;
@@ -1588,7 +1575,7 @@ bRC METAPLUGIN::perform_read_metadata_info(bpContext *ctx, metadata_type type, s
  * @param cmd a command string read from backend
  * @return metadata_type returned from map
  */
-metadata_type METAPLUGIN::scan_metadata_type(const POOL_MEM &cmd)
+metadata_type METAPLUGIN::scan_metadata_type(bpContext *ctx, const POOL_MEM &cmd)
 {
    DMSG1(ctx, DDEBUG, "scan_metadata_type checking: %s\n", cmd.c_str());
    for (int i = 0; plugin_metadata_map[i].command != NULL; i++)
@@ -1877,6 +1864,14 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
 {
    static int rw = 0;      // this variable handles single debug message
 
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
+
    /* assume no error from the very beginning */
    io->status = 0;
    io->io_errno = 0;
@@ -1988,19 +1983,21 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    int32_t nfi;
    int reqparams = 2;
 
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
+
    /* The first file in Full backup, is the RestoreObject */
    if (!estimate && mode == BACKUP_FULL && robjsent == false) {
       ConfigFile ini;
-
-      /* robj for the first time, allocate the buffer */
-      if (!robjbuf){
-         robjbuf = get_pool_memory(PM_FNAME);
-      }
-
       ini.register_items(plugin_items_dump, sizeof(struct ini_items));
       sp->restore_obj.object_name = (char *)INI_RESTORE_OBJECT_NAME;
-      sp->restore_obj.object_len = ini.serialize(&robjbuf);
-      sp->restore_obj.object = robjbuf;
+      sp->restore_obj.object_len = ini.serialize(robjbuf.c_str());
+      sp->restore_obj.object = robjbuf.c_str();
       sp->type = FT_PLUGIN_CONFIG;
       DMSG0(ctx, DINFO, "Prepared RestoreObject sent.\n");
       return bRC_OK;
@@ -2115,7 +2112,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
             }
             continue;
          }
-         metadata_type mtype = scan_metadata_type(cmd);
+         metadata_type mtype = scan_metadata_type(ctx, cmd);
          if (mtype != plugin_meta_invalid) {
             DMSG1(ctx, DDEBUG, "metaData handling: %d\n", mtype);
             if (perform_read_metadata_info(ctx, mtype, sp) != bRC_OK) {
@@ -2179,6 +2176,14 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
 {
    POOL_MEM cmd(PM_FNAME);
 
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
+
    if (!estimate){
       /* The current file was the restore object, so just ask for the next file */
       if (mode == BACKUP_FULL && robjsent == false) {
@@ -2241,6 +2246,14 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
 {
    POOL_MEM cmd(PM_FNAME);
    char type;
+
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
 
    skipextract = false;
    acldatalen = 0;
@@ -2364,6 +2377,14 @@ void METAPLUGIN::setup_backend_command(bpContext *ctx, POOL_MEM &exepath)
  */
 bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
 {
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
+
    switch (xacl->func)
    {
    case BACL_BACKUP:
@@ -2435,6 +2456,14 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
       return bRC_OK;
    }
 
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
+
    if (listing == None) {
       listing = Query;
       Mmsg(cmd, "%s query=%s", qp->command, qp->parameter);
@@ -2499,14 +2528,8 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
       if (values.size() > 1){
          ow.end_list();
       }
-
-      /* allocate working buffer, we use robjbuf variable for that as it will be freed at dtor */
-      if (!robjbuf){
-         robjbuf = get_pool_memory(PM_MESSAGE);
-      }
-
-      pm_strcpy(&robjbuf, ow.get_output(OT_END));
-      qp->result = robjbuf;
+      pm_strcpy(robjbuf, ow.get_output(OT_END));
+      qp->result = robjbuf.c_str();
    }
 
    return ret;
@@ -2521,6 +2544,14 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
  */
 bRC METAPLUGIN::metadataRestore(bpContext *ctx, struct meta_pkt *mp)
 {
+   {
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (job_cancelled) {
+         return bRC_Error;
+      }
+   }
+
    if (!skipextract){
       POOL_MEM cmd(PM_FNAME);
 
@@ -2576,8 +2607,12 @@ bRC METAPLUGIN::checkFile(bpContext * ctx, char *fname)
 {
    if ((!CUSTOMNAMESPACE && isourpluginfname(PLUGINPREFIX, fname)) || (CUSTOMNAMESPACE && isourpluginfname(PLUGINNAMESPACE, fname)))
    {
-      if (::checkFile != NULL){
-         return ::checkFile(ctx, fname);
+      // synchronie access to job_cancelled variable
+      smart_lock<smart_mutex> lg(&mutex);
+      if (!job_cancelled) {
+         if (::checkFile != NULL) {
+            return ::checkFile(ctx, fname);
+         }
       }
       return bRC_Seen;
    }
@@ -2596,13 +2631,15 @@ static bRC newPlugin(bpContext *ctx)
 {
    int JobId;
    char *exepath;
-   METAPLUGIN *self = New(METAPLUGIN(ctx));
+   METAPLUGIN *self = New(METAPLUGIN);
    POOL_MEM exepath_clean(PM_FNAME);
 
    if (!self)
       return bRC_Error;
 
    ctx->pContext = (void*) self;
+   pthread_t mythid = pthread_self();
+   DMSG2(ctx, DVDEBUG, "pContext = %p thid = %p\n", self, mythid);
 
    /* setup the backend command */
    getBaculaVar(bVarExePath, (void *)&exepath);
@@ -2669,9 +2706,9 @@ static bRC setPluginValue(bpContext *ctx, pVariable var, void *value)
 static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 {
    ASSERT_CTX;
-
-   DMSG(ctx, D1, "handlePluginEvent (%i)\n", event->eventType);
+   pthread_t mythid = pthread_self();
    METAPLUGIN *self = pluginclass(ctx);
+   DMSG3(ctx, D1, "handlePluginEvent (%i) pContext = %p thid = %p\n", event->eventType, self, mythid);
    return self->handlePluginEvent(ctx, event, value);
 }
 
@@ -2685,8 +2722,9 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
 {
    ASSERT_CTX;
-   if (!sp)
+   if (!sp) {
       return bRC_Error;
+   }
 
    DMSG0(ctx, D1, "startBackupFile.\n");
    METAPLUGIN *self = pluginclass(ctx);

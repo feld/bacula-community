@@ -28,6 +28,7 @@
 
 #include "pluginlib.h"
 #include "ptcomm.h"
+#include "smartmutex.h"
 #include "lib/ini.h"
 #include "pluginlib/commctx.h"
 #include "pluginlib/smartalist.h"
@@ -59,13 +60,14 @@ extern const char *PLUGIN_VERSION;
 extern const char *PLUGIN_DESCRIPTION;
 
 // Plugin linking time variables
-extern const char *PLUGINPREFIX;       /// is used for prefixing every Job and Debug messages generted by a plugin
-extern const char *PLUGINNAME;         /// should match the backend $pluginname$ used for Handshake procedure
-extern const bool CUSTOMNAMESPACE;     /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
-extern const bool CUSTOMPREVJOBNAME;   /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
-extern const char *PLUGINNAMESPACE;    /// custom backend plugin namespace used as file name prefix
-extern const char *PLUGINAPI;
-extern const char *BACKEND_CMD;
+extern const char *PLUGINPREFIX;          /// is used for prefixing every Job and Debug messages generted by a plugin
+extern const char *PLUGINNAME;            /// should match the backend $pluginname$ used for Handshake procedure
+extern const bool CUSTOMNAMESPACE;        /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
+extern const bool CUSTOMPREVJOBNAME;      /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
+extern const char *PLUGINNAMESPACE;       /// custom backend plugin namespace used as file name prefix
+extern const char *PLUGINAPI;             /// the plugin api string which should match backend expectations
+extern const char *BACKEND_CMD;           /// a backend execution command path
+extern const int32_t CUSTOMCANCELSLEEP;   /// custom wait time for backend between USR1 and terminate procedures
 
 /// defines if metaplugin should handle local filesystem restore with Bacula Core functions
 /// `false` means metaplugin will redirect local restore to backend
@@ -123,13 +125,51 @@ public:
    bRC queryParameter(bpContext *ctx, struct query_pkt *qp);
    bRC metadataRestore(bpContext *ctx, struct meta_pkt *mp);
    void setup_backend_command(bpContext *ctx, POOL_MEM &exepath);
-   METAPLUGIN(bpContext *bpctx);
+   METAPLUGIN() :
+      backend_cmd(PM_FNAME),
+      job_cancelled(false),
+      backend_available(false),
+      backend_error(PM_MESSAGE),
+      mode(NONE),
+      JobId(0),
+      JobName(NULL),
+      since(0),
+      where(NULL),
+      regexwhere(NULL),
+      replace(0),
+      robjsent(false),
+      estimate(false),
+      listing(None),
+      nodata(false),
+      nextfile(false),
+      openerror(false),
+      pluginobject(false),
+      pluginobjectsent(false),
+      readacl(false),
+      readxattr(false),
+      skipextract(false),
+      last_type(0),
+      fname(PM_FNAME),
+      lname(PM_FNAME),
+      robjbuf(PM_MESSAGE),
+      plugin_obj_cat(PM_FNAME),
+      plugin_obj_type(PM_FNAME),
+      plugin_obj_name(PM_FNAME),
+      plugin_obj_src(PM_FNAME),
+      plugin_obj_uuid(PM_FNAME),
+      plugin_obj_size(PM_FNAME),
+      acldatalen(0),
+      acldata(PM_MESSAGE),
+      xattrdatalen(0),
+      xattrdata(PM_MESSAGE),
+      metadatas_list(10, true),
+      prevjobname(NULL)
+   {}
 #if __cplusplus > 201103L
-   METAPLUGIN() = delete;
    METAPLUGIN(METAPLUGIN&) = delete;
    METAPLUGIN(METAPLUGIN&&) = delete;
 #endif
-   ~METAPLUGIN();
+   ~METAPLUGIN() {}
 
 private:
    enum LISTING
@@ -139,8 +179,8 @@ private:
       Query,
    };
 
-   // TODO: define a variable which will signal job cancel
-   bpContext *ctx;               // Bacula Plugin Context
+   bool job_cancelled;           // it signal the metaplugin that job was cancelled
+   smart_mutex mutex;            // mutex to synchronize data access
    bool backend_available;       // When `False` then backend program is unuseable or unavailable
    POOL_MEM backend_error;       // Holds the error string when backend program is unavailable
    MODE mode;                    // Plugin mode of operation
@@ -165,7 +205,7 @@ private:
    COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
    POOL_MEM lname;               // current LSTAT data if any
-   POOLMEM *robjbuf;             // the buffer for restore object data
+   POOL_MEM robjbuf;             // the buffer for restore object data
    POOL_MEM plugin_obj_cat;      // Plugin object Category
    POOL_MEM plugin_obj_type;     // Plugin object Type
    POOL_MEM plugin_obj_name;     // Plugin object Name
@@ -210,7 +250,7 @@ private:
    bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
    bRC perform_file_index_query(bpContext *ctx);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
-   metadata_type scan_metadata_type(const POOL_MEM &cmd);
+   metadata_type scan_metadata_type(bpContext *ctx, const POOL_MEM &cmd);
    const char *prepare_metadata_type(metadata_type type);
    int check_ini_param(char *param);
    bool check_plugin_param(const char *param, alist *params);
@@ -219,6 +259,7 @@ private:
    bRC switch_or_run_backend(bpContext *ctx, char *command);
    bRC terminate_current_backend(bpContext *ctx);
    bRC terminate_all_backends(bpContext *ctx);
+   bRC cancel_all_backends(bpContext *ctx);
    bRC signal_finish_all_backends(bpContext *ctx);
    bRC render_param(bpContext *ctx, POOLMEM *param, INI_ITEM_HANDLER *handler, char *key, item_value val);
 };
