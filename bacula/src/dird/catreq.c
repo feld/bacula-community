@@ -642,7 +642,8 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
    } else if (Stream == STREAM_PLUGIN_OBJECT) {
       OBJECT_DBR obj_r;
       if (!obj_r.parse_plugin_object_string(&p)) {
-         Jmsg0(jcr, M_FATAL, 0, _("Failed to parse plugin object!\n"));
+         /* Report warning, backup can proceed without plugin object creation */
+         Jmsg0(jcr, M_WARNING, 0, _("Failed to parse plugin object!\n"));
          return;
       }
 

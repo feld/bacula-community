@@ -166,6 +166,7 @@ bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
 {
    bool ret = false;
    int fnl, pnl;
+   uint64_t val = 0;
 
    char *tmp = get_next_tag(obj_str);
    if (!tmp) {
@@ -224,38 +225,37 @@ bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
    unbash_spaces(ObjectUUID);
 
    tmp = get_next_tag(obj_str);
-   if (tmp) {
-      uint64_t val = str_to_uint64(tmp);
-      ObjectSize = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
+   if (!tmp) {
+      goto bail_out;
+   }
+   val = str_to_uint64(tmp);
+   ObjectSize = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
 
-   } else if (*obj_str) {
-      /* Object size is the last tag here, we are not expecting to have status in the stream */
-      uint64_t val = str_to_uint64(*obj_str);
-      ObjectSize = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
+   /* We should have status and count in the end of the stream */
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
+      /* We want to work with plugins that does not send the status and count since it's not required,
+       * so we're good to proceed here - simply return success */
       ret = true;
       goto bail_out;
+   }
+   ObjectStatus = (int)*tmp;
 
-   } else {
+   tmp = get_next_tag(obj_str);
+   if (!tmp) {
       goto bail_out;
    }
-
-   /* We should have status string in the end */
-   if (*obj_str) {
-      tmp = get_next_tag(obj_str);
-      if (!tmp) {
-         goto bail_out;
-      }
-      ObjectStatus = (int)*tmp;
-      if (*obj_str) {
-         ObjectCount = str_to_uint64(*obj_str);
-      }
-   } else {
-      goto bail_out;
-   }
+   ObjectCount = str_to_uint64(*obj_str);
 
    ret = true;
 
 bail_out:
+   /* Print whatever was parsed */
+   Dmsg11(dbglvl, "Parsed PluginObject: Path: %s Fname: %s PluginName: %s Category: %s "
+                  "Type: %s Name: %s Source: %s  UUID: %s Size: %lld Status: %d Count: %lld\n",
+                  Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource,
+                  ObjectUUID, ObjectSize, (char)ObjectStatus, ObjectCount);
+
    if (!ret) {
       /* Reset parsed fields */
       reset();

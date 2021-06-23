@@ -1214,7 +1214,7 @@ bool BDB::bdb_create_object_record(JCR *jcr, OBJECT_DBR *obj)
          "VALUES (%lu, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %llu, '%c', %lu)",
          obj->JobId, esc_path, esc_filename, esc_plugin_name, esc_obj_category,
          esc_obj_type, esc_obj_name, esc_obj_source, esc_obj_uuid,
-         obj->ObjectSize, (char)obj->ObjectStatus, obj->ObjectCount);
+         obj->ObjectSize, obj->ObjectStatus ? (char)obj->ObjectStatus : 'U', obj->ObjectCount);
 
    obj->ObjectId = sql_insert_autokey_record(cmd, NT_("Object"));
    if (obj->ObjectId == 0) {
