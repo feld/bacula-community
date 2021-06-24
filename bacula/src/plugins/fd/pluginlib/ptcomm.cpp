@@ -66,44 +66,41 @@ bool PTCOMM::close_extpipe(bpContext *ctx)
    return true;
 }
 
-/*
- * Terminate the connection represented by BPIPE object.
+/**
+ * @brief Terminate the connection represented by BPIPE object.
  *    it shows a debug and job messages when connection close is unsuccessful
  *    and when ctx is available only.
  *
- * in:
- *    bpContext - Bacula Plugin context required for debug/job messages to show,
- *                it could be NULL in this case no messages will be shown
- * out:
- *    none
+ * @param ctx bpContext - Bacula Plugin context required for debug/job messages to show,
+ *    it could be NULL in this case no messages will be shown
  */
 void PTCOMM::terminate(bpContext *ctx)
 {
-   if (is_closed())
+   if (is_closed()) {
       return;
+   }
 
    pid_t worker_pid = bpipe->worker_pid;
    int status = close_bpipe(bpipe);
 
-   bpipe = NULL;     // indicte closed bpipe
+   bpipe = NULL;     // indicate closed bpipe
 
-   if (status && ctx)
-   {
+   if (status && ctx) {
       /* error during close */
       berrno be;
       DMSG(ctx, DERROR, "Error closing backend. Err=%s\n", be.bstrerror(status));
       JMSG(ctx, M_ERROR, "Error closing backend. Err=%s\n", be.bstrerror(status));
    }
 
-   if (worker_pid)
-   {
+   if (worker_pid) {
       /* terminate the backend */
       kill(worker_pid, SIGTERM);
    }
 
-   if (extpipe > 0)
+   if (extpipe > 0) {
       close_extpipe(ctx);
-};
+   }
+}
 
 /**
  * @brief Reads `nbytes` of data from backend into a buffer `buf`.

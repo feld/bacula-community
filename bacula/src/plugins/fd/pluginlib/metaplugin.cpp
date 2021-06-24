@@ -586,16 +586,11 @@ bRC backendctx_cancel_func(PTCOMM *ptcomm, void *cp)
    // cancel procedure
    // 1. get backend pid
    // 2. send SIGUSR1 to backend pid
-   // 3. wait default 5 sec or defined in CUSTOMCANCELSLEEP
-   // 4. terminate the backend as usual
 
    pid_t pid = ptcomm->get_backend_pid();
    DMSG(ctx, DINFO, "Inform backend about Cancel at PID=%d ...\n", pid)
    kill(pid, SIGUSR1);
-   int32_t waitsleep = (CUSTOMCANCELSLEEP == 0) * 5 + CUSTOMCANCELSLEEP;
-   bmicrosleep(waitsleep, 1);
-   DMSG(ctx, DINFO, "Terminate backend at PID=%d\n", pid);
-   ptcomm->terminate(ctx);
+
    return bRC_OK;
 }
 
@@ -2620,6 +2615,47 @@ bRC METAPLUGIN::checkFile(bpContext * ctx, char *fname)
    return bRC_OK;
 }
 
+/**
+ * @brief Unconditionally terminates backend
+ *    This callback is used on cancel event handling.
+ *
+ * @param ptcomm the backend communication object
+ * @param cp a bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK when success
+ */
+bRC backendctx_termination_func(PTCOMM *ptcomm, void *cp)
+{
+   bpContext * ctx = (bpContext*)cp;
+
+   // terminate procedure
+   // 1. wait default 5 sec or defined in CUSTOMCANCELSLEEP
+   // 2. terminate the backend as usual
+
+   pid_t pid = ptcomm->get_backend_pid();
+   DMSG(ctx, DINFO, "Preparing the backend termination on Cancel at PID=%d ...\n", pid)
+   int32_t waitsleep = (CUSTOMCANCELSLEEP == 0) * 5 + CUSTOMCANCELSLEEP;
+   bmicrosleep(waitsleep, 1);
+   DMSG(ctx, DINFO, "Terminate backend at PID=%d\n", pid);
+   ptcomm->terminate(ctx);
+
+   return bRC_OK;
+}
+
+/**
+ * @brief Conditionally terminate backends for cancelled job
+ *
+ * @param ctx a bpContext - for Bacula debug and jobinfo messages
+ */
+void METAPLUGIN::terminate_backends_oncancel(bpContext *ctx)
+{
+   smart_lock<smart_mutex> lg(&mutex);
+   if (job_cancelled) {
+      DMSG0(ctx, DINFO, "Ensure backend termination on cancelled job\n");
+      backend.foreach_command_status(backendctx_termination_func, ctx);
+      job_cancelled = false;
+   }
+}
+
 /*
  * Called here to make a new instance of the plugin -- i.e. when
  * a new Job is started.  There can be multiple instances of
@@ -2668,7 +2704,9 @@ static bRC freePlugin(bpContext *ctx)
    if (!self){
       return bRC_Error;
    }
+   self->terminate_backends_oncancel(ctx);
    delete self;
+
    return bRC_OK;
 }
 
