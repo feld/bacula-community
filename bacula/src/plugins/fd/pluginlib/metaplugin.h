@@ -180,7 +180,7 @@ private:
    };
 
    bool job_cancelled;           // it signal the metaplugin that job was cancelled
-   smart_mutex mutex;            // mutex to synchronize data access
+   // smart_mutex mutex;            // mutex to synchronize data access - removed on request
    bool backend_available;       // When `False` then backend program is unuseable or unavailable
    POOL_MEM backend_error;       // Holds the error string when backend program is unavailable
    MODE mode;                    // Plugin mode of operation
