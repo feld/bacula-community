@@ -4,23 +4,24 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 
-TestName="kubernetes-plugin-protocol-test"
+TestName="openshift-plugin-protocol-test"
 JobBackup1="PluginK8STestProtocol1"
 FilesetBackup1="TestPluginK8SSetProtocol1"
+FilesetBackup5="TestPluginK8SSetProtocol5"
 JobBackup2="PluginK8STestProtocol2"
 JobBackup3="PluginK8STestProtocol3"
 JobBackup4="PluginK8STestProtocol4"
 JobBackup5="PluginK8STestProtocol5"
 JobBackup6="PluginK8STestProtocol6"
 JobBackup7="PluginK8STestProtocol7"
-Plugin="kubernetes:"
+Plugin="openshift:"
 
 . scripts/functions
 
 # export debug=1
 
 scripts/cleanup
-scripts/copy-kubernetes-plugin-confs
-make -C $src/src/plugins/fd/kubernetes/src/plugin install-test-plugin
+scripts/copy-openshift-plugin-confs
+make -C ${src}/src/plugins/fd/openshift install-test-plugin
 
 . scripts/metaplugin-protocol-tests.sh

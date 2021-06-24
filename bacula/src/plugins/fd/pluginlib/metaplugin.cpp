@@ -772,6 +772,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       "regress_metadata_support",
       "regress_standard_error_backup",
       "regress_cancel_backup",
+      "regress_cancel_restore",
       NULL,
    };
 #endif

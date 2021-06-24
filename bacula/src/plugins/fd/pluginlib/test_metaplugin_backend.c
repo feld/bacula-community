@@ -70,6 +70,7 @@ bool regress_backup_other_file = false;
 bool regress_metadata_support = false;
 bool regress_standard_error_backup = false;
 bool regress_cancel_backup = false;
+bool regress_cancel_restore = false;
 
 
 #define BUFLEN             4096
@@ -249,7 +250,14 @@ static bool jobcancelled = false;
 
 static void catch_function(int signo)
 {
-   LOG("#CANCELLED#");
+   if (regress_cancel_backup) {
+      LOG("#CANCELLED BACKUP#");
+   } else
+   if (regress_cancel_restore) {
+      LOG("#CANCELLED RESTORE#");
+   } else {
+      LOG("#CANCELLED UNKNOWN#");
+   }
    jobcancelled = true;
 }
 
@@ -303,6 +311,8 @@ void perform_backup()
    if (regress_cancel_backup)
    {
       LOG("#Cancel wait started...");
+      snprintf(buf, BIGBUFLEN, "#Cancel PID: %d", getpid());
+      write_plugin('I', buf);
       while (!jobcancelled)
          sleep(1);
       LOG("#Cancel event received, EXIT");
@@ -1025,6 +1035,7 @@ int main(int argc, char** argv) {
       // "regress_error_backup_abort",
       // "regress_standard_error_backup",
       // "regress_cancel_backup",
+      // "regress_cancel_restore",
 
       if (strcmp(buf, "regress_error_plugin_params=1\n") == 0) {
          regress_error_plugin_params = true;
@@ -1076,10 +1087,10 @@ int main(int argc, char** argv) {
       }
       if (strcmp(buf, "regress_cancel_backup=1\n") == 0) {
          regress_cancel_backup = true;
-         if (signal(SIGUSR1, catch_function) == SIG_ERR){
-            LOG("Cannot setup signal handler!");
-            exit(EXIT_BACKEND_SIGNAL_HANDLER_ERROR);
-         }
+         continue;
+      }
+      if (strcmp(buf, "regress_cancel_restore=1\n") == 0) {
+         regress_cancel_restore = true;
          continue;
       }
       if (sscanf(buf, "listing=%s\n", buf) == 1){
@@ -1089,6 +1100,12 @@ int main(int argc, char** argv) {
       if (sscanf(buf, "query=%s\n", buf) == 1){
          strcpy(query, buf);
          continue;
+      }
+   }
+   if (regress_cancel_restore || regress_cancel_backup) {
+      if (signal(SIGUSR1, catch_function) == SIG_ERR){
+         LOG("Cannot setup signal handler!");
+         exit(EXIT_BACKEND_SIGNAL_HANDLER_ERROR);
       }
    }
    write_plugin('I', "TEST3");

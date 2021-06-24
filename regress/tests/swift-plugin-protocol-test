@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Copyright (C) 2020 Radosław Korzeniewski
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+TestName="swift-plugin-protocol-test"
+JobBackup1="PluginSWIFTTestProtocol1"
+FilesetBackup1="TestPluginSWIFTSetProtocol1"
+JobBackup2="PluginSWIFTTestProtocol2"
+JobBackup3="PluginSWIFTTestProtocol3"
+JobBackup4="PluginSWIFTTestProtocol4"
+JobBackup5="PluginSWIFTTestProtocol5"
+JobBackup6="PluginSWIFTTestProtocol6"
+JobBackup7="PluginSWIFTTestProtocol7"
+Plugin="swift:"
+
+. scripts/functions
+
+# export debug=1
+
+scripts/cleanup
+scripts/copy-swift-plugin-confs
+make -C $src/src/plugins/fd/swift/src install-test-plugin
+
+. scripts/metaplugin-protocol-tests.sh

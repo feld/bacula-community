@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Copyright (C) 2020 Radosław Korzeniewski
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+TestName="rhv-plugin-protocol-test"
+JobBackup1="PluginRHEVTestProtocol1"
+FilesetBackup1="TestPluginRHEVSetProtocol1"
+JobBackup2="PluginRHEVTestProtocol2"
+JobBackup3="PluginRHEVTestProtocol3"
+JobBackup4="PluginRHEVTestProtocol4"
+JobBackup5="PluginRHEVTestProtocol5"
+JobBackup6="PluginRHEVTestProtocol6"
+JobBackup7="PluginRHEVTestProtocol7"
+Plugin="rhv:"
+
+. scripts/functions
+
+# export debug=1
+
+scripts/cleanup
+scripts/copy-rhv-plugin-confs
+make -C ${src}/src/plugins/fd/rhv/src install-test-plugin
+
+. scripts/metaplugin-protocol-tests.sh

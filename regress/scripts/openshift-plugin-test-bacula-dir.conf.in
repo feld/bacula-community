@@ -48,7 +48,7 @@ FileSet {
   Name = "TestPluginK8SSetProtocol1"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes:"
+    Plugin = "openshift:"
   }
 }
 
@@ -62,7 +62,7 @@ FileSet {
   Name = "TestPluginK8SSetProtocol2"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_backup_plugin_objects"
+    Plugin = "openshift: regress_backup_plugin_objects"
   }
 }
 
@@ -76,8 +76,8 @@ FileSet {
   Name = "TestPluginK8SSetProtocol3"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes:"
-    Plugin = "kubernetes: regress_backup_other_file"
+    Plugin = "openshift:"
+    Plugin = "openshift: regress_backup_other_file"
   }
 }
 
@@ -91,7 +91,7 @@ FileSet {
   Name = "TestPluginK8SSetProtocol4"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_error_backup_stderr"
+    Plugin = "openshift: regress_error_backup_stderr"
   }
 }
 
@@ -105,7 +105,7 @@ FileSet {
   Name = "TestPluginK8SSetProtocol5"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_metadata_support"
+    Plugin = "openshift: regress_metadata_support"
   }
 }
 
@@ -119,7 +119,7 @@ FileSet {
   Name = "TestPluginK8SSetProtocol6"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_standard_error_backup"
+    Plugin = "openshift: regress_standard_error_backup"
   }
 }
 
@@ -133,7 +133,7 @@ FileSet {
   Name = "TestPluginK8SSetProtocol7"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_cancel_backup"
+    Plugin = "openshift: regress_cancel_backup"
   }
 }
 

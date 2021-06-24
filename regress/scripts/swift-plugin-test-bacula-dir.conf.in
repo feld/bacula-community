@@ -39,210 +39,210 @@ JobDefs {
 }
 
 Job {
-  Name = "PluginK8STestProtocol1"
+  Name = "PluginSWIFTTestProtocol1"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol1"
+  FileSet="TestPluginSWIFTSetProtocol1"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol1"
+  Name = "TestPluginSWIFTSetProtocol1"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes:"
+    Plugin = "swift:"
   }
 }
 
 Job {
-  Name = "PluginK8STestProtocol2"
+  Name = "PluginSWIFTTestProtocol2"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol2"
+  FileSet="TestPluginSWIFTSetProtocol2"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol2"
+  Name = "TestPluginSWIFTSetProtocol2"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_backup_plugin_objects"
+    Plugin = "swift: regress_backup_plugin_objects"
   }
 }
 
 Job {
-  Name = "PluginK8STestProtocol3"
+  Name = "PluginSWIFTTestProtocol3"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol3"
+  FileSet="TestPluginSWIFTSetProtocol3"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol3"
+  Name = "TestPluginSWIFTSetProtocol3"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes:"
-    Plugin = "kubernetes: regress_backup_other_file"
+    Plugin = "swift:"
+    Plugin = "swift: regress_backup_other_file"
   }
 }
 
 Job {
-  Name = "PluginK8STestProtocol4"
+  Name = "PluginSWIFTTestProtocol4"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol4"
+  FileSet="TestPluginSWIFTSetProtocol4"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol4"
+  Name = "TestPluginSWIFTSetProtocol4"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_error_backup_stderr"
+    Plugin = "swift: regress_error_backup_stderr"
   }
 }
 
 Job {
-  Name = "PluginK8STestProtocol5"
+  Name = "PluginSWIFTTestProtocol5"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol5"
+  FileSet="TestPluginSWIFTSetProtocol5"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol5"
+  Name = "TestPluginSWIFTSetProtocol5"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_metadata_support"
+    Plugin = "swift: regress_metadata_support"
   }
 }
 
 Job {
-  Name = "PluginK8STestProtocol6"
+  Name = "PluginSWIFTTestProtocol6"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol6"
+  FileSet="TestPluginSWIFTSetProtocol6"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol6"
+  Name = "TestPluginSWIFTSetProtocol6"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_standard_error_backup"
+    Plugin = "swift: regress_standard_error_backup"
   }
 }
 
 Job {
-  Name = "PluginK8STestProtocol7"
+  Name = "PluginSWIFTTestProtocol7"
   JobDefs = "BackupJob"
-  FileSet="TestPluginK8SSetProtocol7"
+  FileSet="TestPluginSWIFTSetProtocol7"
 }
 
 FileSet {
-  Name = "TestPluginK8SSetProtocol7"
+  Name = "TestPluginSWIFTSetProtocol7"
   Include {
     Options { signature=MD5 }
-    Plugin = "kubernetes: regress_cancel_backup"
+    Plugin = "swift: regress_cancel_backup"
   }
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet"
+  Name = "TestPluginSWIFTSet"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@"
   }
 }
 Job {
-  Name = "PluginKubernetesTest"
+  Name = "PluginSWIFTTest"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet
+  FileSet = TestPluginSWIFTSet
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet1"
+  Name = "TestPluginSWIFTSet1"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ namespace=plugintest"
   }
 }
 Job {
-  Name = "PluginKubernetesTest1"
+  Name = "PluginSWIFTTest1"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet1
+  FileSet = TestPluginSWIFTSet1
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet2"
+  Name = "TestPluginSWIFTSet2"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ persistentvolume=@PV1@"
   }
 }
 Job {
-  Name = "PluginKubernetesTest2"
+  Name = "PluginSWIFTTest2"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet2
+  FileSet = TestPluginSWIFTSet2
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet3"
+  Name = "TestPluginSWIFTSet3"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ namespace=plugintest persistentvolume=@PV1@"
   }
 }
 Job {
-  Name = "PluginKubernetesTest3"
+  Name = "PluginSWIFTTest3"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet3
+  FileSet = TestPluginSWIFTSet3
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet11"
+  Name = "TestPluginSWIFTSet11"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ namespace=nonexistent"
   }
 }
 Job {
-  Name = "PluginKubernetesTest11"
+  Name = "PluginSWIFTTest11"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet11
+  FileSet = TestPluginSWIFTSet11
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet12"
+  Name = "TestPluginSWIFTSet12"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ persistentvolume=nonexistent"
   }
 }
 Job {
-  Name = "PluginKubernetesTest12"
+  Name = "PluginSWIFTTest12"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet12
+  FileSet = TestPluginSWIFTSet12
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet13"
+  Name = "TestPluginSWIFTSet13"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ persistentvolume=@PV1@ invalidoption"
   }
 }
 Job {
-  Name = "PluginKubernetesTest13"
+  Name = "PluginSWIFTTest13"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet13
+  FileSet = TestPluginSWIFTSet13
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet21"
+  Name = "TestPluginSWIFTSet21"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ namespace=nonexistent abort_on_error"
   }
 }
 Job {
-  Name = "PluginKubernetesTest21"
+  Name = "PluginSWIFTTest21"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet21
+  FileSet = TestPluginSWIFTSet21
 }
 
 FileSet {
-  Name = "TestPluginKubernetesSet22"
+  Name = "TestPluginSWIFTSet22"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ persistentvolume=nonexistent abort_on_error"
   }
 }
 Job {
-  Name = "PluginKubernetesTest22"
+  Name = "PluginSWIFTTest22"
   JobDefs = Default
-  FileSet = TestPluginKubernetesSet22
+  FileSet = TestPluginSWIFTSet22
 }
 
 

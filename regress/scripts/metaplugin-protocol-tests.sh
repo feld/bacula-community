@@ -9,21 +9,26 @@
 #
 # It is expected to use this test just after a proper regression setup, i.e.
 #
-#  TestName="rhv-plugin-protocol-test"
-#  JobBackup1="PluginRHEVTestProtocol1"
-#  FilesetBackup1="TestPluginRHEVSetProtocol1"
-#  JobBackup2="PluginRHEVTestProtocol2"
-#  JobBackup3="PluginRHEVTestProtocol3"
-#  JobBackup4="PluginRHEVTestProtocol4"
-#  Plugin="rhv:"
-#  . scripts/functions
-#  scripts/cleanup
-#  scripts/copy-rhv-plugin-confs
-#  make -C $src/src/plugins/fd/rhv/src install-test-plugin
-#  . scripts/metaplugin-protocol-tests.sh
+# TestName="kubernetes-plugin-protocol-test"
+# JobBackup1="PluginK8STestProtocol1"
+# FilesetBackup1="TestPluginK8SSetProtocol1"
+# FilesetBackup5="TestPluginK8SSetProtocol5"
+# JobBackup2="PluginK8STestProtocol2"
+# JobBackup3="PluginK8STestProtocol3"
+# JobBackup4="PluginK8STestProtocol4"
+# JobBackup5="PluginK8STestProtocol5"
+# JobBackup6="PluginK8STestProtocol6"
+# JobBackup7="PluginK8STestProtocol7"
+# Plugin="kubernetes:"
+# . scripts/functions
+# scripts/cleanup
+# scripts/copy-kubernetes-plugin-confs
+# make -C ${src}/src/plugins/fd/kubernetes install-test-plugin
+# . scripts/metaplugin-protocol-tests.sh
 #
 
-if [ "x$JobBackup1" = "x" ] || [ "x$JobBackup2" = "x" ] || [ "x$JobBackup3" = "x" ] || [ "x$JobBackup4" = "x" ] || [ "x$JobBackup5" = "x" ] || [ "x$JobBackup6" = "x" ] || [ "x$FilesetBackup1" = "x" ]
+if [ "x$JobBackup1" = "x" ] || [ "x$JobBackup2" = "x" ] || [ "x$JobBackup3" = "x" ] || [ "x$JobBackup4" = "x" ] || [ "x$JobBackup5" = "x" ] || [ "x$JobBackup6" = "x" ] || [ "x$JobBackup7" = "x" ] \
+   || [ "x$FilesetBackup1" = "x" ] || [ "x$FilesetBackup5" = "x" ]
 then
    echo "You have to setup required variables!"
    exit 2
@@ -155,6 +160,31 @@ wait
 status client=$CLIENT
 messages
 llist job=$JobBackup6
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
+# now cancel a backup job
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Backup and cancel event
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log9.out
+status client=$CLIENT
+setdebug level=500 client=$CLIENT trace=1
+run job=$JobBackup7 yes
+@sleep 10
+status client=$CLIENT
+messages
+cancel all yes
+wait
+status client=$CLIENT
+messages
+llist job=$JobBackup7
 @output
 quit
 END_OF_DATA
@@ -408,14 +438,23 @@ then
    bstat=$((bstat+64))
 fi
 
+RET=$(grep "jobstatus:" ${cwd}/tmp/log9.out | awk '{print $2}')
+PID=$(grep -w "#Cancel PID:" ${cwd}/tmp/log9.out | awk '{print $9}')
+CANCELLED=$(grep -c -w "#CANCELLED BACKUP#" ${cwd}/working/*${PID}.log)
+if [ "x$RET" != "xA" ] || [ "$CANCELLED" -ne 1 ]
+then
+   echo "log9" "$RET" "$CANCELLED"
+   bstat=$((bstat+128))
+fi
+
 MINFO=$(grep -c M_INFO ${cwd}/tmp/log8.out)
 MWARNING=$(grep -c M_WARNING ${cwd}/tmp/log8.out)
-MSAVED=$(grep -c M_SAVED ${cwd}/tmp/log8.out)
+# MSAVED=$(grep -c M_SAVED ${cwd}/tmp/log8.out)
 MNOTSAVED=$(grep -c M_NOTSAVED ${cwd}/tmp/log8.out)
 if [ "$MINFO" -ne 1 ] || [ "$MWARNING" -ne 1 ] || [ "$MNOTSAVED" -ne 1 ]
 then
    echo "log8msg" "$MINFO" "$MWARNING" "$MNOTSAVED"
-   bstat=$((bstat+128))
+   bstat=$((bstat+256))
 fi
 
 EFILE1=$(grep -c vm1.iso ${cwd}/tmp/log3.out)

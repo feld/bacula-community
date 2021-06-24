@@ -64,12 +64,6 @@ all: $(COMMONPLUGINOBJ) # $(TESTMETAPLUGINBACKENDOBJ)
 
 tests: $(COMMONPLUGINTESTS)
 
-$(UNITTESTSOBJ):
-	$(MAKE) -C $(LIBDIR) unittests.lo
-
-$(LIBBACOBJ):
-	$(MAKE) -C $(LIBDIR) libbac.la
-
 $(LIBBACCFGOBJ):
 	$(MAKE) -C $(LIBDIR) libbaccfg.la
 

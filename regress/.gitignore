@@ -21,6 +21,7 @@ working2
 c
 diff
 1
+.vscode
 *.out
 backup-mysql-7.0.sql
 backup-postgres-5.2.sql
@@ -28,7 +29,6 @@ bacula-postgres-7.0.sql
 bin-5.2.0/
 bin-7.0/
 do_database_ugrade
-
 scripts/bacula-dir.conf.accurate
 scripts/bacula-dir.conf.errors
 scripts/bacula-dir.conf.maxruntime
