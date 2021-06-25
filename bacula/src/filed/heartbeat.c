@@ -151,7 +151,7 @@ void stop_heartbeat_monitor(JCR *jcr)
    }
 
    /* Wait max 10 secs for heartbeat thread to start (hb_status= 0 => 1 */
-   while (!jcr->hb_status == 0 && cnt++ < 200) {
+   while (jcr->hb_status == 0 && cnt++ < 200) {
       bmicrosleep(0, 50000);         /* wait for start */
    }
 
