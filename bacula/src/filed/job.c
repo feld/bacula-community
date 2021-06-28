@@ -3485,7 +3485,7 @@ int response(JCR *jcr, BSOCK *sd, char *resp, const char *cmd)
          return 1;
       }
    }
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       return 0;                       /* if canceled avoid useless error messages */
    }
    if (sd->is_error()) {

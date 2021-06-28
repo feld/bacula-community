@@ -822,14 +822,14 @@ bool dir_ask_sysop_to_create_appendable_volume(DCR *dcr)
    JCR *jcr = dcr->jcr;
    bool got_vol = false;
 
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       dev->poll = false;
       return false;
    }
    Dmsg0(400, "enter dir_ask_sysop_to_create_appendable_volume\n");
    ASSERT(dev->blocked());
    for ( ;; ) {
-      if (job_canceled(jcr)) {
+      if (job_canceled(jcr) || jcr->is_incomplete()) {
          Mmsg(dev->errmsg,
               _("Job %s canceled while waiting for mount on Storage Device \"%s\".\n"),
               jcr->Job, dev->print_name());
@@ -865,6 +865,14 @@ bool dir_ask_sysop_to_create_appendable_volume(DCR *dcr)
       if (dev->poll) {
          Dmsg1(dbglvl, "Poll timeout in create append vol on device %s\n", dev->print_name());
          continue;
+      }
+      if (stat == W_WAKE) {
+         /* Job could be marked to stopped, need to break */
+         Mmsg0(dev->errmsg, _("Job was stopped by the user.\n"));
+         Jmsg(jcr, M_INFO, 0, "%s", dev->errmsg);
+         Dmsg1(dbglvl, "Job marked to be stopped. Gave up waiting on device %s\n", dev->print_name());
+         dev->poll = false;
+         return false;
       }
       if (stat == W_TIMEOUT) {
          if (!double_dev_wait_time(dev)) {
@@ -930,7 +938,7 @@ bool dir_ask_sysop_to_mount_volume(DCR *dcr, bool write_access)
    }
 
    for ( ;; ) {
-      if (job_canceled(jcr)) {
+      if (job_canceled(jcr) || jcr->is_incomplete()) {
          Mmsg(dev->errmsg, _("Job %s canceled while waiting for mount on Storage Device %s.\n"),
               jcr->Job, dev->print_name());
          dev->poll = false;
@@ -978,6 +986,14 @@ bool dir_ask_sysop_to_mount_volume(DCR *dcr, bool write_access)
          goto get_out;
       }
 
+      if (stat == W_WAKE) {
+         /* Job could be marked to stopped, need to break */
+         Mmsg0(dev->errmsg, _("Job was stopped by the user.\n"));
+         Jmsg(jcr, M_INFO, 0, "%s", dev->errmsg);
+         Dmsg1(dbglvl, "Job marked to be stopped. Gave up waiting on device %s\n", dev->print_name());
+         dev->poll = false;
+         return false;
+      }
       if (stat == W_TIMEOUT) {
          if (!double_dev_wait_time(dev)) {
             Mmsg(dev->errmsg, _("Max time exceeded waiting to mount Storage Device %s for Job %s\n"),
@@ -1001,7 +1017,7 @@ bool dir_ask_sysop_to_mount_volume(DCR *dcr, bool write_access)
    }
 
 get_out:
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       Mmsg(dev->errmsg, _("Job %s canceled while waiting for mount on Storage Device %s.\n"),
            jcr->Job, dev->print_name());
       dev->poll = false;

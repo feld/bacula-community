@@ -370,7 +370,7 @@ VOLRES *reserve_volume(DCR *dcr, const char *VolumeName)
    JCR *jcr = dcr->jcr;
 
    jcr->errmsg[0] = 0;
-   if (job_canceled(dcr->jcr)) {
+   if (job_canceled(dcr->jcr) || jcr->is_incomplete()) {
       Mmsg1(jcr->errmsg, _("Could not reserve volume \"%s\", because job canceled.\n"),
          dev->VolHdr.VolumeName);
       return NULL;
@@ -846,7 +846,7 @@ bool DCR::can_i_use_volume()
    bool rtn = true;
    VOLRES *vol;
 
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       Mmsg(jcr->errmsg, "Job is canceled\n");
       return false;
    }

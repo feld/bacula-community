@@ -367,7 +367,7 @@ static bool use_device_cmd(JCR *jcr)
          rctx.jcr->read_dcr = jcr->dcr;
       }
       lock_reservations();
-      for ( ; !fail && !job_canceled(jcr); ) {
+      for ( ; !fail && !job_canceled(jcr) && !jcr->is_incomplete(); ) {
          int i;
          pop_reserve_messages(jcr);
          rctx.suitable_device = false;

@@ -807,7 +807,7 @@ int wait_for_job_termination(JCR *jcr, int timeout)
             Jmsg(jcr, M_WARNING, 0, _("Unexpected Client Job message: %s\n"),
                  fd->msg);
          }
-         if (job_canceled(jcr)) {
+         if (job_canceled(jcr) || jcr->is_incomplete()) {
             break;
          }
       }

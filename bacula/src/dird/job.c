@@ -685,7 +685,10 @@ int cancel_inactive_job(UAContext *ua)
    }
 
    jcr->store_mngr->set_wstorage(store.store, store.store_source);
-   cancel_sd_job(ua, "cancel", jcr);
+   if (!cancel_sd_job(ua, "cancel", jcr)) {
+      ua->error_msg(_("Failed to cancel storage dameon job for JobId=%d\n"), jcr->JobId);
+      goto bail_out;
+   }
 
 bail_out:
    jcr->JobId = 0;
@@ -706,6 +709,7 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
    char ed1[50];
    int32_t old_status = jcr->JobStatus;
    int status;
+   bool ret = false, not_running = false;
    const char *reason, *cmd;
 
    /* Keep track of this important event */
@@ -723,7 +727,24 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
       }
    }
 
-   if (cancel) {
+   switch (old_status) {
+      case JS_Created:
+      case JS_WaitJobRes:
+      case JS_WaitClientRes:
+      case JS_WaitStoreRes:
+      case JS_WaitPriority:
+      case JS_WaitMaxJobs:
+      case JS_WaitStartTime:
+      case JS_WaitDevice:
+         not_running = true;
+         break;
+      default:
+         break;
+   }
+
+   /* If job has not been started at all, there is no need to stoping it,
+    * can be simply canceled and removed from the watiting queue*/
+   if (cancel || not_running) {
       status = JS_Canceled;
       reason = _("canceled");
       cmd = NT_("cancel");
@@ -736,29 +757,34 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
 
    jcr->setJobStatus(status);
 
-   switch (old_status) {
-   case JS_Created:
-   case JS_WaitJobRes:
-   case JS_WaitClientRes:
-   case JS_WaitStoreRes:
-   case JS_WaitPriority:
-   case JS_WaitMaxJobs:
-   case JS_WaitStartTime:
-   case JS_WaitDevice:
-      ua->info_msg(_("JobId %s, Job %s marked to be %s.\n"),
-              edit_uint64(jcr->JobId, ed1), jcr->Job,
-              reason);
-      jobq_remove(&job_queue, jcr); /* attempt to remove it from queue */
-      break;
-
-   default:
+   if (not_running) {
+      status = jobq_remove(&job_queue, jcr); /* attempt to remove it from queue */
+      if (status != 0) {
+         ua->error_msg(_("Cannot %s JobId %s, Job %s is not in work queue\n"),
+               cmd, edit_uint64(jcr->JobId, ed1), jcr->Job);
+         goto bail_out;
+      }
+      if (!cancel) {
+         /* Inform user about command 'upgrade' */
+         ua->info_msg(_("Canceling JobId %s, Job %s because it was not started at all.\n"),
+               edit_uint64(jcr->JobId, ed1), jcr->Job,
+               reason);
+      }
+      ret = true;
+   } else {
+      ret = true; /* This will be set to false in case of error from any daemon below */
 
       /* Cancel File daemon */
       if (jcr->file_bsock) {
          btimer_t *tid;
-         /* do not return now, we want to try to cancel the sd */
+         /* do not return now, we want to try to cancel the sd.
+          * We don't want to wait too long because it's pretty hard to synchronize jcrs for both daemons
+          * and we want to shutdown the connection anyway. */
          tid = start_bsock_timer(jcr->file_bsock, 120);
-         cancel_file_daemon_job(ua, cmd, jcr);
+         if (!cancel_file_daemon_job(ua, cmd, jcr)) {
+            Dmsg1(400, "Failed to cancel file dameon job id=%d\n", jcr->JobId);
+            ret = false;
+         }
          stop_bsock_timer(tid);
       }
 
@@ -773,15 +799,18 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
       /* Cancel Storage daemon */
       if (jcr->store_bsock) {
          btimer_t *tid;
-         /* do not return now, we want to try to cancel the sd socket */
-         tid = start_bsock_timer(jcr->store_bsock, 120);
-         cancel_sd_job(ua, cmd, jcr);
+         /* Do not return now, we want to try to cancel the sd socket.
+          * We don't want to wait too long because it's pretty hard to synchronize jcrs freeing for both daemons
+          * and we want to shutdown the connection anyway. */
+         tid = start_bsock_timer(jcr->store_bsock, 20);
+         if (!cancel_sd_job(ua, cmd, jcr)) {
+            Dmsg1(400, "Failed to cancel storage dameon job id=%d\n", jcr->JobId);
+            ret = false;
+         }
          stop_bsock_timer(tid);
       }
 
-      /* We test file_bsock because the previous operation can take
-       * several minutes
-       */
+      /* We test file_bsock because the previous operation can take some time */
       if (jcr->store_bsock && cancel) {
          jcr->store_bsock->set_timed_out();
          jcr->store_bsock->set_terminated();
@@ -796,14 +825,17 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
 
          if (wjcr->store_bsock) {
              btimer_t *tid;
-            /* do not return now, we want to try to cancel the sd socket */
-            tid = start_bsock_timer(wjcr->store_bsock, 120);
-            cancel_sd_job(ua, cmd, wjcr);
+            /* Do not return now, we want to try to cancel the sd socket.
+             * We don't want to wait too long because it's pretty hard to synchronize jcrs freeing for both daemons
+             * and we want to shutdown the connection anyway. */
+            tid = start_bsock_timer(wjcr->store_bsock, 20);
+            if (!cancel_sd_job(ua, cmd, wjcr)) {
+               Dmsg1(400, "Failed to cancel storage dameon job id=%d\n", jcr->JobId);
+               ret = false;
+            }
             stop_bsock_timer(tid);
          }
-         /* We test store_bsock because the previous operation can take
-          * several minutes
-          */
+         /* We test store_bsock because the previous operation can take some time */
          if (wjcr->store_bsock && cancel) {
             wjcr->store_bsock->set_timed_out();
             wjcr->store_bsock->set_terminated();
@@ -811,10 +843,15 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
             wjcr->my_thread_send_signal(TIMEOUT_SIGNAL);
          }
       }
-      break;
    }
 
-   return true;
+   if (ret) {
+      ua->info_msg(_("JobId %s, Job %s marked to be %s.\n"),
+            edit_uint64(jcr->JobId, ed1), jcr->Job,
+            reason);
+   }
+bail_out:
+      return ret;
 }
 
 void cancel_storage_daemon_job(JCR *jcr)
@@ -1522,6 +1559,7 @@ void dird_free_jcr(JCR *jcr)
    /* Free bsock packets */
    free_bsock(jcr->file_bsock);
    free_bsock(jcr->store_bsock);
+
    if (jcr->term_wait_inited) {
       pthread_cond_destroy(&jcr->term_wait);
       jcr->term_wait_inited = false;

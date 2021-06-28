@@ -503,7 +503,7 @@ static bool cancel_cmd(JCR *cjcr)
    BSOCK *dir = cjcr->dir_bsock;
    int oldStatus;
    char Job[MAX_NAME_LENGTH];
-   JCR *jcr;
+   JCR *jcr = NULL;
    int status;
    const char *reason;
 
@@ -547,13 +547,17 @@ static bool cancel_cmd(JCR *cjcr)
          pthread_cond_broadcast(&wait_device_release);
       }
       jcr->my_thread_send_signal(TIMEOUT_SIGNAL);
+      /* Inform the Director about the result and send EOD signal before free_jcr() below,
+       * since it might take some time if we hold the last reference */
       dir->fsend(_("3000 JobId=%ld Job=\"%s\" marked to be %s.\n"),
          jcr->JobId, jcr->Job, reason);
-      free_jcr(jcr);
    }
 
 bail_out:
    dir->signal(BNET_EOD);
+   if (jcr) {
+      free_jcr(jcr);
+   }
    return 1;
 }
 

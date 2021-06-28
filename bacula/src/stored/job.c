@@ -247,7 +247,7 @@ bool run_cmd(JCR *jcr)
 
    memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
 
-   if (jcr->authenticated && !job_canceled(jcr)) {
+   if (jcr->authenticated && !job_canceled(jcr) && !jcr->is_incomplete()) {
       Dmsg2(800, "Running jid=%d %p\n", jcr->JobId, jcr);
       run_job(jcr);                   /* Run the job */
    }

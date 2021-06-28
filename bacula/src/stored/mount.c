@@ -99,7 +99,7 @@ mount_next_vol:
       P(mount_mutex);
       Dmsg1(90, "Continue after dir_ask_sysop_to_mount. must_load=%d\n", dev->must_load());
    }
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       Jmsg(jcr, M_FATAL, 0, _("Job %d canceled.\n"), jcr->JobId);
       goto bail_out;
    }
@@ -116,7 +116,7 @@ mount_next_vol:
       goto bail_out;
    }
 
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       goto bail_out;
    }
    Dmsg3(100, "After find_a_volume. Vol=%s Slot=%d VolType=%d\n",
@@ -175,7 +175,7 @@ mount_next_vol:
       }
       P(mount_mutex);
    }
-   if (job_canceled(jcr)) {
+   if (job_canceled(jcr) || jcr->is_incomplete()) {
       goto bail_out;
    }
    Dmsg3(100, "want vol=%s devvol=%s dev=%s\n", VolumeName,
@@ -370,7 +370,7 @@ bool DCR::find_a_volume()
          Dmsg0(200, "Before dir_find_next_appendable_volume.\n");
          while (!dir_find_next_appendable_volume(dcr)) {
             Dmsg0(200, "not dir_find_next\n");
-            if (job_canceled(jcr)) {
+            if (job_canceled(jcr) || jcr->is_incomplete()) {
                return false;
             }
             /*
@@ -387,7 +387,7 @@ bool DCR::find_a_volume()
                ok = dir_ask_sysop_to_create_appendable_volume(dcr);
             }
             P(mount_mutex);
-            if (!ok || job_canceled(jcr)) {
+            if (!ok || job_canceled(jcr) || jcr->is_incomplete()) {
                return false;
             }
             Dmsg0(150, "Again dir_find_next_append...\n");
