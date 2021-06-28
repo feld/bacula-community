@@ -823,20 +823,19 @@ void tls_bsock_shutdown(BSOCKCORE *bsock)
       tid = start_bsock_timer(bsock, 60 * 2);
       err = SSL_shutdown(bsock->tls->openssl);
       stop_bsock_timer(tid);
-   }
 
-
-   switch (SSL_get_error(bsock->tls->openssl, err)) {
-   case SSL_ERROR_NONE:
-      break;
-   case SSL_ERROR_ZERO_RETURN:
-      /* TLS connection was shut down on us via a TLS protocol-level closure */
-      openssl_post_errors(bsock->get_jcr(), M_ERROR, _("TLS shutdown failure."));
-      break;
-   default:
-      /* Socket Error Occurred */
-      openssl_post_errors(bsock->get_jcr(), M_ERROR, _("TLS shutdown failure."));
-      break;
+      switch (SSL_get_error(bsock->tls->openssl, err)) {
+         case SSL_ERROR_NONE:
+            break;
+         case SSL_ERROR_ZERO_RETURN:
+            /* TLS connection was shut down on us via a TLS protocol-level closure */
+            openssl_post_errors(bsock->get_jcr(), M_ERROR, _("TLS shutdown failure."));
+            break;
+         default:
+            /* Socket Error Occurred */
+            openssl_post_errors(bsock->get_jcr(), M_ERROR, _("TLS shutdown failure."));
+            break;
+      }
    }
 }
 
