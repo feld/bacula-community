@@ -93,6 +93,13 @@ ADD_TEST(misc:director-autoprune-test "@regressdir@/tests/director-autoprune-tes
 ADD_TEST(misc:query-test "@regressdir@/tests/query-test")
 ADD_TEST(misc:query-subst-test "@regressdir@/tests/query-subst-test")
 ADD_TEST(misc:tag-test "@regressdir@/tests/tag-test")
+ADD_TEST(misc:spool-attributes-test "@regressdir@/tests/spool-attributes-test")
+# ADD_TEST(misc:priority-test "@regressdir@/tests/priority-test")
+# ADD_TEST(misc:worm-tape-test "@regressdir@/tests/worm-tape-test")
+ADD_TEST(misc:daemons-connection-copy-log-test "@regressdir@/tests/daemons-connection-copy-log-test")
+ADD_TEST(misc:daemons-connection-verify-log-test "@regressdir@/tests/daemons-connection-verify-log-test")
+ADD_TEST(misc:daemons-connection-log-test "@regressdir@/tests/daemons-connection-log-test")
+ADD_TEST(misc:daemons-connection-virt_full-log-test "@regressdir@/tests/daemons-connection-virt_full-log-test")
 
 ADD_TEST(misc:query-subst-test "@regressdir@/tests/query-subst-test")
 # ADD_TEST(misc:priority-test "@regressdir@/tests/priority-test")
