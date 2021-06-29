@@ -2437,13 +2437,6 @@ bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
  */
 bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
 {
-   bRC ret = bRC_More;
-   OutputWriter ow(qp->api_opts);
-   POOL_MEM cmd(PM_MESSAGE);
-   char *p, *q, *t;
-   alist values(10, not_owned_by_alist);
-   key_pair *kp;
-
    DMSG0(ctx, D1, "METAPLUGIN::queryParameter\n");
 
    // check if it is our Plugin command
@@ -2460,6 +2453,8 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
       }
    }
 
+   POOL_MEM cmd(PM_MESSAGE);
+
    if (listing == None) {
       listing = Query;
       Mmsg(cmd, "%s query=%s", qp->command, qp->parameter);
@@ -2469,11 +2464,15 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
    }
 
    /* read backend response */
-   if (backend.ctx->read_command(ctx, cmd) < 0){
+   char pkt = 0;
+   int32_t pktlen = backend.ctx->read_any(ctx, &pkt, cmd);
+   if (pktlen < 0) {
       DMSG(ctx, DERROR, "Cannot read backend query response for %s command.\n", qp->parameter);
       JMSG(ctx, backend.ctx->jmsg_err_level(), "Cannot read backend query response for %s command.\n", qp->parameter);
       return bRC_Error;
    }
+
+   bRC ret = bRC_More;
 
    /* check EOD */
    if (backend.ctx->is_eod()){
@@ -2484,48 +2483,72 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
       qp->result = NULL;
       ret = bRC_OK;
    } else {
-      /*
-      * here we have:
-      *    key=value[,key2=value2[,...]]
-      * parameters we should decompose
-      */
-      p = cmd.c_str();
-      while (*p != '\0'){
-         q = strchr(p, ',');
-         if (q != NULL){
-            *q++ = '\0';
-         }
-         // single key=value
-         DMSG(ctx, D1, "METAPLUGIN::queryParameter:scan %s\n", p);
-         if ((t = strchr(p, '=')) != NULL){
-            *t++ = '\0';
-         } else {
-            t = (char*)"";     // pointer to empty string
-         }
-         DMSG2(ctx, D1, "METAPLUGIN::queryParameter:pair '%s' = '%s'\n", p, t);
-         if (strlen(p) > 0){
-            // push values only when we have key name
-            kp = New(key_pair(p, t));
-            values.append(kp);
-         }
-         p = q != NULL ? q : (char*)"";
-      }
+      switch (pkt)
+      {
+      case 'C':
+         {
+            OutputWriter ow(qp->api_opts);
+            char *p, *q, *t;
+            alist values(10, not_owned_by_alist);
+            key_pair *kp;
 
-      // if more values then one then it is a list
-      if (values.size() > 1){
-         DMSG0(ctx, D1, "METAPLUGIN::queryParameter: will render list\n")
-         ow.start_list(qp->parameter);
+            /*
+            * here we have:
+            *    key=value[,key2=value2[,...]]
+            * parameters we should decompose
+            */
+            p = cmd.c_str();
+            while (*p != '\0') {
+               q = strchr(p, ',');
+               if (q != NULL) {
+                  *q++ = '\0';
+               }
+               // single key=value
+               DMSG(ctx, D1, "METAPLUGIN::queryParameter:scan %s\n", p);
+               if ((t = strchr(p, '=')) != NULL) {
+                  *t++ = '\0';
+               } else {
+                  t = (char*)"";     // pointer to empty string
+               }
+               DMSG2(ctx, D1, "METAPLUGIN::queryParameter:pair '%s' = '%s'\n", p, t);
+               if (strlen(p) > 0) {
+                  // push values only when we have key name
+                  kp = New(key_pair(p, t));
+                  values.append(kp);
+               }
+               p = q != NULL ? q : (char*)"";
+            }
+
+            // if more values then one then it is a list
+            if (values.size() > 1) {
+               DMSG0(ctx, D1, "METAPLUGIN::queryParameter: will render list\n")
+               ow.start_list(qp->parameter);
+            }
+            // render all values
+            foreach_alist(kp, &values) {
+               ow.get_output(OT_STRING, kp->key.c_str(), kp->value.c_str(), OT_END);
+               delete kp;
+            }
+            if (values.size() > 1) {
+               ow.end_list();
+            }
+            pm_strcpy(robjbuf, ow.get_output(OT_END));
+            qp->result = robjbuf.c_str();
+         }
+         break;
+      case 'D':
+         pm_memcpy(robjbuf, cmd.c_str(), pktlen);
+         qp->result = robjbuf.c_str();
+         break;
+      default:
+         DMSG(ctx, DERROR, "METAPLUGIN::queryParameter: got invalid packet: %c\n", pkt);
+         JMSG(ctx, M_ERROR, "METAPLUGIN::queryParameter: got invalid packet: %c\n", pkt);
+         backend.ctx->signal_term(ctx);
+         backend.ctx->terminate(ctx);
+         qp->result = NULL;
+         ret = bRC_Error;
+         break;
       }
-      // render all values
-      foreach_alist(kp, &values){
-         ow.get_output(OT_STRING, kp->key.c_str(), kp->value.c_str(), OT_END);
-         delete kp;
-      }
-      if (values.size() > 1){
-         ow.end_list();
-      }
-      pm_strcpy(robjbuf, ow.get_output(OT_END));
-      qp->result = robjbuf.c_str();
    }
 
    return ret;

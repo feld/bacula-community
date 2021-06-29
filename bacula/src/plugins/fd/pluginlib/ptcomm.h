@@ -89,11 +89,11 @@ protected:
    bool recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes);
    bool sendbackend_data(bpContext *ctx, char *buf, int32_t nbytes);
 
-   int32_t recvbackend_header(bpContext *ctx, char cmd);
-   int32_t handle_read_header(bpContext *ctx, char cmd);
+   int32_t recvbackend_header(bpContext *ctx, char *cmd, bool any=false);
+   int32_t handle_read_header(bpContext *ctx, char *cmd, bool any=false);
    int32_t handle_payload(bpContext *ctx, char *buf, int32_t nbytes);
 
-   int32_t recvbackend(bpContext *ctx, char cmd, POOL_MEM &buf);
+   int32_t recvbackend(bpContext *ctx, char *cmd, POOL_MEM &buf, bool any=false);
    int32_t recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t bufsize);
 
    int32_t sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len);
@@ -124,6 +124,7 @@ public:
    bool handshake(bpContext *ctx, const char *pluginname, const char *pluginapi);
 
    int32_t read_command(bpContext *ctx, POOL_MEM &buf);
+   int32_t read_any(bpContext *ctx, char *cmd, POOL_MEM &buf);
    int32_t read_data(bpContext *ctx, POOL_MEM &buf);
    int32_t read_data_fixed(bpContext *ctx, char *buf, int32_t len);
 

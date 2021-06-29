@@ -367,6 +367,22 @@ END_OF_DATA
 run_bconsole
 TEST=$((TEST+1))
 
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Query
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/qlog${TEST}.out
+setdebug level=500 client=$CLIENT trace=1
+.query client=$CLIENT plugin="$Plugin" parameter="m_json"
+messages
+@output
+quit
+END_OF_DATA
+run_bconsole
+TEST=$((TEST+1))
+
 stop_bacula
 
 RET=$(grep "jobstatus:" ${cwd}/tmp/log1.out | awk '{print $2}')
@@ -533,6 +549,14 @@ if [ "$RET" -gt 0 ]
 then
    echo "qlog2" "$RET"
    estat=3
+fi
+
+JSON=$(grep -c "widget" ${cwd}/tmp/qlog3.out)
+BASE=$(grep -c "UmFkb3PFgmF3IEtvcnplbmlld3NraQo=" ${cwd}/tmp/qlog3.out)
+if [ "$JSON" -ne 1 ] || [ "$BASE" -ne 1 ]
+then
+   echo "qlog3" "$JSON" "$BASE"
+   estat=4
 fi
 
 end_test

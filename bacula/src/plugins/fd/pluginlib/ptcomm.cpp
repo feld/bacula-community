@@ -282,11 +282,17 @@ bool PTCOMM::sendbackend_data(bpContext *ctx, POOLMEM *buf, int32_t nbytes)
  * @param cmd - an expected command to read: `C` or `D`
  * @return int32_t - the size of the packet payload
  */
-int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
+int32_t PTCOMM::recvbackend_header(bpContext *ctx, char *cmd, bool any)
 {
-   if (is_closed()){
+   if (is_closed()) {
       DMSG0(ctx, DERROR, "BPIPE to backend is closed, cannot receive data.\n");
       JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "BPIPE to backend is closed, cannot receive data.\n");
+      return -1;
+   }
+
+   if (cmd == NULL) {
+      DMSG0(ctx, DERROR, "Runtime error. cmd == NULL. Cannot read data.\n");
+      JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "Runtime error. cmd == NULL. Cannot read data.\n");
       return -1;
    }
 
@@ -326,15 +332,16 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
       // convert packet length from ASCII to binary
       int32_t msglen = atoi(header.length);
 
-      if (header.status == 'C' || header.status == 'D')
-      {
-         if (header.status != cmd)
-         {
-            DMSG2(ctx, DERROR, "Protocol error. Expected packet: %c got: %c\n", cmd, header.status);
-            JMSG2(ctx, M_FATAL, "Protocol error. Expected packet: %c got: %c\n", cmd, header.status);
-            return -1;
+      if (header.status == 'C' || header.status == 'D') {
+         if (!any) {
+            if (header.status != *cmd) {
+               DMSG2(ctx, DERROR, "Protocol error. Expected packet: %c got: %c\n", *cmd, header.status);
+               JMSG2(ctx, M_FATAL, "Protocol error. Expected packet: %c got: %c\n", *cmd, header.status);
+               return -1;
+            }
+         } else {
+            *cmd = header.status;
          }
-
          // this means no additional handling required
          return msglen;
       }
@@ -440,14 +447,13 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char cmd)
  * @param cmd
  * @return int32_t
  */
-int32_t PTCOMM::handle_read_header(bpContext *ctx, char cmd)
+int32_t PTCOMM::handle_read_header(bpContext *ctx, char *cmd, bool any)
 {
    // first read is the packet header where we will have info about data
    // which is sent to us; the packet header is 8 chars/bytes length fixed
    // nbytes shows how many bytes we expects to read
-   int32_t length = recvbackend_header(ctx, cmd);
-   if (length < 0)
-   {
+   int32_t length = recvbackend_header(ctx, cmd, any);
+   if (length < 0) {
       // error
       DMSG0(ctx, DERROR, "PTCOMM cannot get packet header from backend.\n");
       JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "PTCOMM cannot get packet header from backend.\n");
@@ -502,16 +508,16 @@ int32_t PTCOMM::handle_payload(bpContext *ctx, char *buf, int32_t nbytes)
  *        ctx is not NULL
  *    <n>: the size of received message
  */
-int32_t PTCOMM::recvbackend(bpContext *ctx, char cmd, POOL_MEM &buf)
+int32_t PTCOMM::recvbackend(bpContext *ctx, char *cmd, POOL_MEM &buf, bool any)
 {
    // handle header
-   int32_t length = handle_read_header(ctx, cmd);
-   if (length < 0)
+   int32_t length = handle_read_header(ctx, cmd, any);
+   if (length < 0) {
       return -1;
+   }
 
    // handle data payload
-   if (length > 0)
-   {
+   if (length > 0) {
       // check requested buffer size
       buf.check_size(length + 1);
       return handle_payload(ctx, buf.c_str(), length);
@@ -541,16 +547,17 @@ int32_t PTCOMM::recvbackend(bpContext *ctx, char cmd, POOL_MEM &buf)
 int32_t PTCOMM::recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t bufsize)
 {
    int32_t length = remaininglen;
+   char lcmd = cmd;
 
-   if (!f_cont){
+   if (!f_cont) {
       // handle header
-      length = handle_read_header(ctx, cmd);
+      length = handle_read_header(ctx, &lcmd);
       if (length < 0)
          return -1;
    }
 
    // handle data payload
-   if (length > 0){
+   if (length > 0) {
       // we will need subsequent call to handle remaining data only when `buf` to short
       f_cont = length > bufsize;
       int32_t nbytes = f_cont * bufsize + (!f_cont) * length;
@@ -666,13 +673,42 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
  */
 int32_t PTCOMM::read_command(bpContext *ctx, POOL_MEM &buf)
 {
-   int32_t status = recvbackend(ctx, 'C', buf);
-   if (status > 0)
-   {
+   char cmd = 'C';
+   int32_t status = recvbackend(ctx, &cmd, buf, false);
+   if (status > 0) {
       /* mark end of string because every command is a string */
+      buf.check_size(status + 1);
       buf.c_str()[status] = '\0';
       /* strip any junk in command like '\n' or trailing spaces */
       strip_trailing_junk(buf.c_str());
+   }
+
+   return status;
+}
+
+/**
+ * @brief Reads the next packet from the backend communication channel.
+ *
+ * It accepts any command or data packet. The next byte after
+ * the received data will be terminated with '\0' for easy string
+ * handling.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param cmd a pointer to a `char` which show what kind of packet was received
+ * @param buf buffer allocated for command
+ * @return int32_t
+ *    -1 - when encountered any error
+ *    0 - when backend sent signal, i.e. EOD or Term
+ *    <n> - the number of bytes received, success
+ */
+int32_t PTCOMM::read_any(bpContext *ctx, char *cmd, POOL_MEM &buf)
+{
+   int32_t status = recvbackend(ctx, cmd, buf, true);
+   if (status > 0) {
+      /* mark end of string for easy usage */
+      buf.check_size(status + 1);
+      buf.c_str()[status] = '\0';
+      status++;
    }
 
    return status;
@@ -697,11 +733,12 @@ int32_t PTCOMM::read_command(bpContext *ctx, POOL_MEM &buf)
 int32_t PTCOMM::read_data(bpContext *ctx, POOL_MEM &buf)
 {
    int32_t status;
+   char cmd = 'D';
 
-   if (extpipe > 0){
+   if (extpipe > 0) {
       status = read(extpipe, buf.c_str(), buf.size());
    } else {
-      status = recvbackend(ctx, 'D', buf);
+      status = recvbackend(ctx, &cmd, buf, false);
    }
 
    return status;
@@ -748,9 +785,9 @@ int32_t PTCOMM::read_data_fixed(bpContext *ctx, char *buf, int32_t len)
 bool PTCOMM::read_ack(bpContext *ctx)
 {
    POOL_MEM buf(PM_FNAME);
+   char cmd = 'F';
 
-   if (recvbackend(ctx, 'F', buf) == 0 && f_eod)
-   {
+   if (recvbackend(ctx, &cmd, buf, false) == 0 && f_eod) {
       f_eod = false;
       return true;
    }
