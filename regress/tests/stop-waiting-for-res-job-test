@@ -49,10 +49,16 @@ END_OF_DATA
 run_bacula
 
 #Check if job was stopped correctly
-n_lines=`cat $tmp/log3.out | tr -s ' ' | grep "Termination: Backup failed -- Incomplete" | wc -l`
-if [ $n_lines -ne 2 ]; then
+n_lines=`cat $tmp/log3.out | tr -s ' ' | grep "Termination: Backup Canceled" | wc -l`
+if [ $n_lines -ne 1 ]; then
    estat=1
    print_debug "Job not stopped as expected (cancelled jobs: ${n_lines}). See ${tmp}/log3.out"
+fi
+
+n_lines=`cat $tmp/log3.out | tr -s ' ' | grep "Termination: Backup failed -- Incomplete" | wc -l`
+if [ $n_lines -ne 1 ]; then
+   estat=1
+   print_debug "Job not stopped as expected (incomplete jobs: ${n_lines}). See ${tmp}/log3.out"
 fi
 
 stop_bacula
