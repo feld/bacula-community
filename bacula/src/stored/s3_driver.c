@@ -776,9 +776,11 @@ bool s3_driver::copy_cache_part_to_cloud(transfer *xfer)
    S3Status status = S3StatusOK;
    do {
       /* when the driver decide to retry, it must reset the processed size */
-      xfer->inc_retry();
       xfer->reset_processed_size();
       status = put_object(xfer, xfer->m_cache_fname, cloud_fname);
+      if (status != S3StatusOK) {
+         xfer->inc_retry();
+      }
       --retry;
    } while (retry_put_object(status, retry) && (retry>0));
    free_pool_memory(cloud_fname);

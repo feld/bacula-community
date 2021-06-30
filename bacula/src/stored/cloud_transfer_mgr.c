@@ -207,45 +207,51 @@ bool transfer::is_canceled() const
 uint32_t transfer::append_status(POOL_MEM& msg)
 {
    POOLMEM *tmp_msg = get_pool_memory(PM_MESSAGE);
-   char ec[50], ed1[50];
+   char ec[50], ed1[50], ed2[50];
    uint32_t ret=0;
    static const char *state[]  = {"created",  "queued",  "process", "done", "error"};
 
    lock_guard lg(m_stat_mutex);
    if (m_state > TRANS_STATE_PROCESSED) {
       if (m_hash64[0]||m_hash64[1]||m_hash64[2]||m_hash64[3]||m_hash64[4]||m_hash64[5]||m_hash64[6]||m_hash64[7]) {
-         ret =  Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s size=%sB duration=%ds hash=%02x%02x%02x%02x%02x%02x%02x%02x%s%s%s%s\n"),
+         ret =  Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s %s%s%s%s size=%sB duration=%ds hash=%02x%02x%02x%02x%02x%02x%02x%02x%s%s\n"),
                      m_volume_name, m_part,
                      state[m_state],
+                     (m_retry != 0)?"retry=":"",
+                     (m_retry != 0)?edit_uint64(m_retry, ed1):"",
+                     (m_retry != 0)?"/":"",
+                     (m_retry != 0)?edit_uint64(m_driver->max_upload_retries, ed2):"",
                      edit_uint64_with_suffix(m_stat_size, ec),
                      m_stat_duration/ONE_SEC,
                      m_hash64[0],m_hash64[1],m_hash64[2],m_hash64[3],m_hash64[4],m_hash64[5],m_hash64[6],m_hash64[7],
                      (strlen(m_message) != 0)?" msg=":"",
-                     (strlen(m_message) != 0)?m_message:"",
-                     (m_retry > 1)?" retry=":"",
-                     (m_retry > 1)?edit_uint64(m_retry, ed1):"");
+                     (strlen(m_message) != 0)?m_message:"");
       } else {
-         ret =  Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s size=%sB duration=%ds%s%s%s%s\n"),
+         ret =  Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s %s%s%s%s size=%sB duration=%ds%s%s\n"),
                      m_volume_name, m_part,
                      state[m_state],
+                     (m_retry != 0)?"retry=":"",
+                     (m_retry != 0)?edit_uint64(m_retry, ed1):"",
+                     (m_retry != 0)?"/":"",
+                     (m_retry != 0)?edit_uint64(m_driver->max_upload_retries, ed2):"",
                      edit_uint64_with_suffix(m_stat_size, ec),
                      m_stat_duration/ONE_SEC,
                      (strlen(m_message) != 0)?" msg=":"",
-                     (strlen(m_message) != 0)?m_message:"",
-                     (m_retry > 1)?" retry=":"",
-                     (m_retry > 1)?edit_uint64(m_retry, ed1):"");
+                     (strlen(m_message) != 0)?m_message:"");
       }
       pm_strcat(msg, tmp_msg);
    } else {
-      ret = Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s size=%sB eta=%ds%s%s%s%s\n"),
+      ret = Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s %s%s%s%s size=%sB eta=%ds%s%s\n"),
                   m_volume_name, m_part,
                   state[m_state],
+                  (m_retry != 0)?"retry=":"",
+                  (m_retry != 0)?edit_uint64(m_retry, ed1):"",
+                  (m_retry != 0)?"/":"",
+                  (m_retry != 0)?edit_uint64(m_driver->max_upload_retries, ed2):"",
                   edit_uint64_with_suffix(m_stat_size, ec),
                   m_stat_eta/ONE_SEC,
                   (strlen(m_message) != 0)?" msg=":"",
-                  (strlen(m_message) != 0)?m_message:"",
-                  (m_retry > 1)?" retry=":"",
-                  (m_retry > 1)?edit_uint64(m_retry, ed1):"");
+                  (strlen(m_message) != 0)?m_message:"");
       pm_strcat(msg, tmp_msg);
    }
    free_pool_memory(tmp_msg);

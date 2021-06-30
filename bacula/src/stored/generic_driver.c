@@ -661,6 +661,9 @@ bool generic_driver::copy_cache_part_to_cloud(transfer *xfer)
             call_fct("delete", xfer->m_volume_name, xfer->m_part, NULL, NULL, &ccb, xfer->m_message, NULL);
          }
          ret=call_fct("upload",xfer->m_volume_name, xfer->m_part, &rcb, &wcb, &ccb, xfer->m_message, NULL);
+         if (ret!=0) {
+            xfer->inc_retry();
+         }
          --retry;
       }
 
@@ -697,6 +700,10 @@ bool generic_driver::copy_cache_part_to_cloud(transfer *xfer)
             call_fct("delete", xfer->m_volume_name, xfer->m_part, NULL, NULL, &ccb, xfer->m_message, NULL);
          }
          ret=call_fct("upload",xfer->m_volume_name, xfer->m_part, &rcb, NULL, &ccb, xfer->m_message, xfer->m_cache_fname);
+         if (ret!=0) {
+            xfer->inc_retry();
+         }
+
          --retry;
       }
       if (getenv("GENERATE_CLOUD_HASH") && (ret==0)) {
