@@ -1624,6 +1624,16 @@ void get_job_storage(USTORE *store, JOB *job, RUN *run)
 /* Init storage manager with specified storage group policy */
 static void init_store_manager(JCR *jcr, const char *policy)
 {
+   if (jcr->store_mngr) {
+      if (strcmp(jcr->store_mngr->get_policy_name(), policy) == 0) {
+         /* Already instantiated manager is of the exact type we need, no work needed here */
+         return;
+      } else {
+         /* Destroy old manager to loose pointer of the previous one since new one will be initialized */
+         delete jcr->store_mngr;
+      }
+   }
+
    if (policy) {
       if (strcmp(policy, "LeastUsed") == 0) {
          Dmsg1(dbglvl_store_mngr, "Setting LeastUsed storage group policy for JobId: %d\n", jcr->JobId);
