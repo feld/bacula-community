@@ -7,6 +7,8 @@
 TestName="kubernetes-plugin-protocol-test"
 JobBackup1="PluginK8STestProtocol1"
 FilesetBackup1="TestPluginK8SSetProtocol1"
+FilesetBackup3="TestPluginK8SSetProtocol3"
+FilesetBackup5="TestPluginK8SSetProtocol5"
 JobBackup2="PluginK8STestProtocol2"
 JobBackup3="PluginK8STestProtocol3"
 JobBackup4="PluginK8STestProtocol4"

@@ -7,6 +7,11 @@
 TestName="rhv-plugin-protocol-test"
 JobBackup1="PluginRHEVTestProtocol1"
 FilesetBackup1="TestPluginRHEVSetProtocol1"
+<<<<<<< HEAD
+=======
+FilesetBackup3="TestPluginRHEVSetProtocol3"
+FilesetBackup5="TestPluginRHEVSetProtocol5"
+>>>>>>> c6cdeaf069 (regress: Metaplugin RO updates.)
 JobBackup2="PluginRHEVTestProtocol2"
 JobBackup3="PluginRHEVTestProtocol3"
 JobBackup4="PluginRHEVTestProtocol4"

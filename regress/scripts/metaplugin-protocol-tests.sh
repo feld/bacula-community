@@ -28,7 +28,7 @@
 #
 
 if [ "x$JobBackup1" = "x" ] || [ "x$JobBackup2" = "x" ] || [ "x$JobBackup3" = "x" ] || [ "x$JobBackup4" = "x" ] || [ "x$JobBackup5" = "x" ] || [ "x$JobBackup6" = "x" ] || [ "x$JobBackup7" = "x" ] \
-   || [ "x$FilesetBackup1" = "x" ] || [ "x$FilesetBackup5" = "x" ]
+   || [ "x$FilesetBackup1" = "x" ] || [ "x$FilesetBackup3" = "x" ] || [ "x$FilesetBackup5" = "x" ]
 then
    echo "You have to setup required variables!"
    exit 2
@@ -219,6 +219,26 @@ messages
 @$out ${cwd}/tmp/rlog1.out
 setdebug level=500 client=$CLIENT trace=1
 restore fileset=$FilesetBackup1 where=${cwd}/tmp select all storage=File done
+yes
+wait
+messages
+llist job=RestoreFiles
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
+# now test restore object job
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Restore
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/rlog6.out
+setdebug level=500 client=$CLIENT trace=1
+restore fileset=$FilesetBackup3 where=${cwd}/tmp select all storage=File done
 yes
 wait
 messages
@@ -535,6 +555,15 @@ if [ "x$RET" != "xT" ] || [ "$REND" -ne 1 ] || [ "$RSKIP" -ne 1 ]
 then
    echo "rlog5" "$RET" "$REND" "$RSKIP"
    rstat=5
+fi
+
+RET=$(grep "jobstatus:" ${cwd}/tmp/rlog6.out | tail -1 | awk '{print $2}')
+REND=$(grep -w -c "TESTEND" ${cwd}/tmp/rlog6.out)
+RRO=$(grep -c "TEST6R" ${cwd}/tmp/rlog6.out)
+if [ "x$RET" != "xT" ] || [ "$REND" -ne 2 ] || [ "$RRO" -ne 2 ]
+then
+   echo "rlog6" "$RET" "$REND" "$RRO"
+   rstat=6
 fi
 
 RET=$(grep -c "m_id=test" ${cwd}/tmp/qlog1.out)

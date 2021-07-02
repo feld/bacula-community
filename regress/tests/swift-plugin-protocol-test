@@ -7,6 +7,8 @@
 TestName="swift-plugin-protocol-test"
 JobBackup1="PluginSWIFTTestProtocol1"
 FilesetBackup1="TestPluginSWIFTSetProtocol1"
+FilesetBackup3="TestPluginSWIFTSetProtocol3"
+FilesetBackup5="TestPluginSWIFTSetProtocol5"
 JobBackup2="PluginSWIFTTestProtocol2"
 JobBackup3="PluginSWIFTTestProtocol3"
 JobBackup4="PluginSWIFTTestProtocol4"
