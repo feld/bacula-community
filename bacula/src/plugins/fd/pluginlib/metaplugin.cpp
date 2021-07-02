@@ -1169,8 +1169,6 @@ bRC METAPLUGIN::prepare_backend(bpContext *ctx, char type, char *command)
  */
 bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 {
-   bRC status;
-
    // extract original plugin context, basically it should be `this`
    METAPLUGIN *pctx = (METAPLUGIN *)ctx->pContext;
    // this ensures that handlePluginEvent is thread safe for extracted pContext

@@ -735,7 +735,7 @@ void perform_backup()
       snprintf(buf, BIGBUFLEN, "RESTOREOBJ:OtherObject%d\n", mypid);
       write_plugin('C', buf);
       const char *r_data = "/* here comes a file data contents */";
-      snprintf(buf, BIGBUFLEN, "RESTOREOBJ_LEN:%u\n", strlen(r_data) + 1);
+      snprintf(buf, BIGBUFLEN, "RESTOREOBJ_LEN:%lu\n", strlen(r_data) + 1);
       write_plugin('C', buf);
       write_plugin('D', r_data);
       signal_eod();
