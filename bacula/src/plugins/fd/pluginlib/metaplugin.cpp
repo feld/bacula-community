@@ -376,17 +376,19 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, alist 
  *    bRC_OK - on success
  *    bRC_Error - on error
  */
-bRC METAPLUGIN::parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop)
+bRC METAPLUGIN::handle_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop)
 {
    if (!rop){
       return bRC_OK;    /* end of rop list */
    }
 
-   if (!strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME)) {
-      /* we have a single RO for every backend */
-      backend.switch_command(rop->plugin_name);
+   /* we have a single RO for every backend */
+   backend.switch_command(rop->plugin_name);
 
-      DMSG(ctx, DINFO, "INIcmd: %s\n", rop->plugin_name);
+   // if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0) {
+   if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0 && rop->object_type == FT_PLUGIN_CONFIG) {
+
+      DMSG2(ctx, DINFO, "INIcmd: %s %d\n", rop->plugin_name, rop->object_type);
 
       ini.clear_items();
       if (!ini.dump_string(rop->object, rop->object_len))
@@ -404,8 +406,7 @@ bRC METAPLUGIN::parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop)
          return bRC_Error;
       }
 
-      for (int i=0; ini.items[i].name; i++)
-      {
+      for (int i = 0; ini.items[i].name; i++) {
          if (ini.items[i].found){
             if (ini.items[i].handler == ini_store_str){
                DMSG2(ctx, DINFO, "INI: %s = %s\n", ini.items[i].name, ini.items[i].val.strval);
@@ -422,7 +423,19 @@ bRC METAPLUGIN::parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop)
             }
          }
       }
+
+      return bRC_OK;
    }
+
+   // handle any other RO restore
+   restore_object_class *ropclass = new restore_object_class;
+   ropclass->sent = false;
+   pm_strcpy(ropclass->plugin_name, rop->plugin_name);
+   pm_strcpy(ropclass->object_name, rop->object_name);
+   ropclass->length = rop->object_len;
+   pm_memcpy(ropclass->data, rop->object, rop->object_len);
+   restoreobject_list.append(ropclass);
+   DMSG2(ctx, DINFO, "ROclass saved for later: %s %d\n", ropclass->object_name.c_str(), ropclass->length);
 
    return bRC_OK;
 }
@@ -1242,7 +1255,7 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    /* Plugin command e.g. plugin = <plugin-name>:parameters */
    case bEventBackupCommand:
       DMSG(ctx, D2, "bEventBackupCommand value=%s\n", NPRT((char *)value));
-      robjsent = false;
+      pluginconfigsent = false;
       return prepare_backend(ctx, BACKEND_JOB_INFO_BACKUP, (char*)value);
 
    /* Plugin command e.g. plugin = <plugin-name>:parameters */
@@ -1285,7 +1298,7 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
          break;
       }
       DMSG(ctx, D2, "bEventRestoreObject value=%p\n", value);
-      return parse_plugin_restoreobj(ctx, (restore_object_pkt *) value);
+      return handle_plugin_restoreobj(ctx, (restore_object_pkt *) value);
 
    case bEventCancelCommand:
       DMSG2(ctx, D3, "bEventCancelCommand self = %p pctx = %p\n", this, pctx);
@@ -1690,7 +1703,8 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
 
    DMSG0(ctx, DDEBUG, "perform_read_metadata()\n");
    // setup flags
-   nextfile = pluginobject = readacl = readxattr = false;
+   nextfile = readacl = readxattr = false;
+   objectsent = false;
    // loop on metadata from backend or EOD which means no more files to backup
    while (true)
    {
@@ -1700,12 +1714,21 @@ bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
          if (scan_parameter_str(cmd, "FNAME:", fname)){
             /* got FNAME: */
             nextfile = true;
+            object = FileObject;
             return bRC_OK;
          }
          if (scan_parameter_str(cmd, "PLUGINOBJ:", fname)){
             /* got Plugin Object header */
             nextfile = true;
-            pluginobject = true;
+            object = PluginObject;
+            // pluginobject = true;
+            return bRC_OK;
+         }
+         if (scan_parameter_str(cmd, "RESTOREOBJ:", fname)){
+            /* got Restore Object header */
+            nextfile = true;
+            object = RestoreObject;
+            // restoreobject = true;
             return bRC_OK;
          }
          if (bstrcmp(cmd.c_str(), "ACL")){
@@ -1761,9 +1784,9 @@ bRC METAPLUGIN::perform_file_index_query(bpContext *ctx)
 /**
  * @brief
  *
- * @param ctx
- * @param sp
- * @return bRC
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param sp save_pkt from startBackupFile()
+ * @return bRC bRC_OK when success, bRC_Error if not
  */
 bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
 {
@@ -1835,14 +1858,84 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
          if (backend.ctx->is_eod()){
             /* no more plugin object params to backup */
             DMSG0(ctx, DINFO, "No more Plugin Object params from backend.\n");
-            pluginobject = false;
-            pluginobjectsent = true;
+            // pluginobject = false;
+            // pluginobjectsent = true;
+            objectsent = true;
             return bRC_OK;
          }
       }
    }
 
    return bRC_Error;
+}
+
+/**
+ * @brief Receives a Restore Object data and populates save_pkt.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param sp save_pkt from startBackupFile()
+ * @return bRC bRC_OK when success, bRC_Error if not
+ */
+bRC METAPLUGIN::perform_read_restoreobject(bpContext *ctx, struct save_pkt *sp)
+{
+   POOL_MEM cmd(PM_FNAME);
+
+   sp->restore_obj.object = NULL;
+
+   if (strlen(fname.c_str()) == 0){
+      // input variable is not valid
+      return bRC_Error;
+   }
+
+   DMSG0(ctx, DDEBUG, "perform_read_restoreobject()\n");
+   // read object length required param
+   if (backend.ctx->read_command(ctx, cmd) > 0) {
+      DMSG(ctx, DDEBUG, "read_command(4): %s\n", cmd.c_str());
+      POOL_MEM param(PM_NAME);
+      uint64_t length;
+      if (scan_parameter_str(cmd, "RESTOREOBJ_LEN:", param)) {
+         if (!size_to_uint64(param.c_str(), strlen(param.c_str()), &length)){
+            // error in convert
+            DMSG1(ctx, DERROR, "Cannot convert Restore Object length to integer! p=%s\n", param.c_str());
+            JMSG1(ctx, M_ERROR, "Cannot convert Restore Object length to integer! p=%s\n", param.c_str());
+            return bRC_Error;
+         }
+         DMSG1(ctx, DDEBUG, "size: %llu\n", length);
+         sp->restore_obj.object_len = length;
+         robjbuf.check_size(length + 1);
+      } else {
+         // no required param
+         DMSG0(ctx, DERROR, "Cannot read Restore Object length!\n");
+         JMSG0(ctx, M_ERROR, "Cannot read Restore Object length!\n");
+         return bRC_Error;
+      }
+   } else {
+      if (backend.ctx->is_fatal()){
+         /* raise up error from backend */
+         return bRC_Error;
+      }
+   }
+
+   int32_t recv_len = 0;
+
+   if (backend.ctx->recv_data(ctx, robjbuf, &recv_len) != bRC_OK) {
+      DMSG0(ctx, DERROR, "Cannot read data from backend!\n");
+      return bRC_Error;
+   }
+
+   /* no more restore object data to backup */
+   DMSG0(ctx, DINFO, "No more Restore Object data from backend.\n");
+   objectsent = true;
+
+   if (recv_len != sp->restore_obj.object_len) {
+      DMSG2(ctx, DERROR, "Backend reported RO length:%ld read:%ld\n", sp->restore_obj.object_len, recv_len);
+      JMSG2(ctx, M_ERROR, "Backend reported RO length:%ld read:%ld\n", sp->restore_obj.object_len, recv_len);
+      sp->restore_obj.object_len = recv_len;
+   }
+
+   sp->restore_obj.object = robjbuf.c_str();
+
+   return bRC_OK;
 }
 
 /*
@@ -1988,14 +2081,14 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    }
 
    /* The first file in Full backup, is the RestoreObject */
-   if (!estimate && mode == BACKUP_FULL && robjsent == false) {
+   if (!estimate && mode == BACKUP_FULL && pluginconfigsent == false) {
       ConfigFile ini;
       ini.register_items(plugin_items_dump, sizeof(struct ini_items));
       sp->restore_obj.object_name = (char *)INI_RESTORE_OBJECT_NAME;
       sp->restore_obj.object_len = ini.serialize(robjbuf.c_str());
       sp->restore_obj.object = robjbuf.c_str();
       sp->type = FT_PLUGIN_CONFIG;
-      DMSG0(ctx, DINFO, "Prepared RestoreObject sent.\n");
+      DMSG2(ctx, DINFO, "Prepared RestoreObject/%s (%d) sent.\n", INI_RESTORE_OBJECT_NAME, FT_PLUGIN_CONFIG);
       return bRC_OK;
    }
 
@@ -2017,8 +2110,36 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    DMSG(ctx, DINFO, "fname:%s\n", fname.c_str());
    sp->fname = fname.c_str();
 
-   if (!pluginobject){
-      // here we handle metadata information
+   switch (object)
+   {
+   case RestoreObject:
+      // handle Restore Object parameters and data
+      if (perform_read_restoreobject(ctx, sp) != bRC_OK) {
+         // signal error
+         return bRC_Error;
+      }
+      sp->restore_obj.object_name = fname.c_str();
+      sp->type = FT_RESTORE_FIRST;
+      size = sp->restore_obj.object_len;
+      sp->statp.st_mode = 0700 | S_IFREG;
+      {
+         time_t now = time(NULL);
+         sp->statp.st_ctime = now;
+         sp->statp.st_mtime = now;
+         sp->statp.st_atime = now;
+      }
+      break;
+   case PluginObject:
+      // handle Plugin Object parameters
+      if (perform_read_pluginobject(ctx, sp) != bRC_OK) {
+         // signal error
+         return bRC_Error;
+      }
+      sp->type = FT_PLUGIN_OBJECT;
+      size = sp->plugin_obj.object_size;
+      break;
+   default:
+      // here we handle standard file metadata information
       reqparams--;
 
       // ensure clear state for metadatas
@@ -2131,14 +2252,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
          return bRC_Error;
       }
 
-   } else {
-      // handle Plugin Object parameters
-      if (perform_read_pluginobject(ctx, sp) != bRC_OK) {
-         // signal error
-         return bRC_Error;
-      }
-      sp->type = FT_PLUGIN_OBJECT;
-      size = sp->plugin_obj.object_size;
+      break;
    }
 
    if (backend.ctx->is_error()) {
@@ -2182,16 +2296,16 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
 
    if (!estimate){
       /* The current file was the restore object, so just ask for the next file */
-      if (mode == BACKUP_FULL && robjsent == false) {
-         robjsent = true;
+      if (mode == BACKUP_FULL && pluginconfigsent == false) {
+         pluginconfigsent = true;
          return bRC_More;
       }
    }
 
    // check for next file only when no previous error
    if (!openerror) {
-      if (estimate || pluginobjectsent) {
-         pluginobjectsent = false;
+      if (estimate || objectsent) {
+         objectsent = false;
          if (perform_read_metadata(ctx) != bRC_OK) {
             /* signal error */
             return bRC_Error;
@@ -2212,6 +2326,38 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
  */
 bRC METAPLUGIN::startRestoreFile(bpContext *ctx, const char *cmd)
 {
+   if (restoreobject_list.size() > 0) {
+      restore_object_class *ropclass;
+      POOL_MEM backcmd(PM_FNAME);
+
+      foreach_alist(ropclass, &restoreobject_list) {
+         if (!ropclass->sent && strcmp(cmd, ropclass->plugin_name.c_str()) == 0) {
+
+            Mmsg(backcmd, "RESTOREOBJ:%s\n", ropclass->object_name.c_str());
+            DMSG1(ctx, DINFO, "%s", backcmd.c_str());
+            ropclass->sent = true;
+
+            if (backend.ctx->write_command(ctx, backcmd.c_str()) < 0)
+            {
+               DMSG0(ctx, DERROR, "Error sending RESTOREOBJ command\n");
+               return bRC_Error;
+            }
+
+            Mmsg(backcmd, "RESTOREOBJ_LEN:%d\n", ropclass->length);
+            if (backend.ctx->write_command(ctx, backcmd.c_str()) < 0) {
+               DMSG0(ctx, DERROR, "Error sending RESTOREOBJ_LEN command\n");
+               return bRC_Error;
+            }
+
+            /* send data */
+            if (backend.ctx->send_data(ctx, ropclass->data.c_str(), ropclass->length) != bRC_OK) {
+               DMSG0(ctx, DERROR, "Error sending RestoreObject data\n");
+               return bRC_Error;
+            }
+         }
+      }
+   }
+
    return bRC_OK;
 }
 

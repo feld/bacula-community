@@ -583,7 +583,7 @@ int32_t PTCOMM::recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t b
  *    -1 - when encountered any error
  *    <n> - the number of bytes sent, success
  */
-int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
+int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, const char *buf, int32_t len)
 {
    int status;
    PTHEADER *header;
@@ -595,7 +595,7 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len)
       return -1;
    }
 
-   if (len > 999999){
+   if (len > PTCOMM_MAX_PACKET_SIZE){
       /* message length too long, cannot send it */
       DMSG(ctx, DERROR, "Message length %i too long, cannot send data.\n", len);
       JMSG(ctx, M_FATAL, "Message length %i too long, cannot send data.\n", len);
@@ -806,7 +806,7 @@ bool PTCOMM::read_ack(bpContext *ctx)
  *    -1 - when encountered any error
  *    <n> - the number of bytes sent, success
  */
-int32_t PTCOMM::write_command(bpContext *ctx, POOLMEM *buf)
+int32_t PTCOMM::write_command(bpContext *ctx, const char *buf)
 {
    int32_t len;
    len = buf ? strlen(buf) : 0;
@@ -825,7 +825,7 @@ int32_t PTCOMM::write_command(bpContext *ctx, POOLMEM *buf)
  *    -1 - when encountered any error
  *    <n> - the number of bytes sent, success
  */
-int32_t PTCOMM::write_data(bpContext *ctx, POOLMEM *buf, int32_t len)
+int32_t PTCOMM::write_data(bpContext *ctx, const char *buf, int32_t len)
 {
    int32_t status;
 
@@ -902,4 +902,74 @@ bool PTCOMM::handshake(bpContext *ctx, const char *pluginname, const char * plug
    }
 
    return false;
+}
+
+/**
+ * @brief Sends a single stream of data to backend read from a buf.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param buf a buffer to read a data to send
+ * @param len a lengtho of the data to send
+ * @return bRC bRC_OK when successful, bRC_Error otherwise
+ */
+bRC PTCOMM::send_data(bpContext *ctx, const char *buf, int32_t len)
+{
+   /* send data */
+   int32_t offset = 0;
+
+   while (offset < len)
+   {
+      int32_t count = MIN(len - offset, PTCOMM_MAX_PACKET_SIZE);
+      int32_t status = write_data(ctx, buf + offset, count);
+      if (status < 0) {
+         /* got some error */
+         return bRC_Error;
+      }
+      offset += status;
+   }
+
+   /* signal end of data to restore and get ack */
+   if (!send_ack(ctx)) {
+      return bRC_Error;
+   }
+
+   return bRC_OK;
+}
+
+/**
+ * @brief Receives a single stream of data from backend and saves it at buf.
+ *    For a good performance it is expected that `buf` will be preallocated
+ *    for the expected size of the stream.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param buf a buffer to save received data
+ * @param recv_len a number of bytes saved at buf
+ * @return bRC bRC_OK when successful, bRC_Error otherwise
+ */
+bRC PTCOMM::recv_data(bpContext *ctx, POOL_MEM &buf, int32_t *recv_len)
+{
+   POOL_MEM cmd(PM_MESSAGE);
+   int32_t offset = 0;
+
+   // loop on data from backend and EOD
+   while (!is_eod())
+   {
+      int32_t status = read_data(ctx, cmd);
+      if (status > 0) {
+         buf.check_size(offset + status);   // it should be preallocated
+         memcpy(buf.c_str() + offset, cmd.c_str(), status);
+         offset += status;
+      } else {
+         if (is_fatal()){
+            /* raise up error from backend */
+            return bRC_Error;
+         }
+      }
+   }
+
+   if (recv_len != NULL) {
+      *recv_len = offset;
+   }
+
+   return bRC_OK;
 }

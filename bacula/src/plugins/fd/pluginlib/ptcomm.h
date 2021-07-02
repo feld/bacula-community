@@ -34,6 +34,8 @@
 #define PTCOMM_DEFAULT_TIMEOUT   3600        // timeout waiting for data is 1H as some backends could spent it doing real work
                                              // TODO: I think we should move it to plugin configurable variable instead of a const
 
+#define PTCOMM_MAX_PACKET_SIZE   999999
+
 /*
  * The protocol packet header.
  *  Every packet exchanged between Plugin and Backend will have a special header
@@ -96,7 +98,7 @@ protected:
    int32_t recvbackend(bpContext *ctx, char *cmd, POOL_MEM &buf, bool any=false);
    int32_t recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t bufsize);
 
-   int32_t sendbackend(bpContext *ctx, char cmd, POOLMEM *buf, int32_t len);
+   int32_t sendbackend(bpContext *ctx, char cmd, const char *buf, int32_t len);
 
 public:
    PTCOMM(const char * command = NULL) :
@@ -128,7 +130,10 @@ public:
    int32_t read_data(bpContext *ctx, POOL_MEM &buf);
    int32_t read_data_fixed(bpContext *ctx, char *buf, int32_t len);
 
-   int32_t write_command(bpContext *ctx, char *buf);
+   int32_t write_command(bpContext *ctx, const char *buf);
+
+   bRC send_data(bpContext *ctx, const char *buf, int32_t len);
+   bRC recv_data(bpContext *ctx, POOL_MEM &buf, int32_t *recv_len=NULL);
 
    /**
     * @brief Sends a command to the backend.
@@ -140,7 +145,7 @@ public:
     *    <n> - the number of bytes sent, success
     */
    int32_t write_command(bpContext *ctx, POOL_MEM &buf) { return write_command(ctx, buf.addr()); }
-   int32_t write_data(bpContext *ctx, char *buf, int32_t len);
+   int32_t write_data(bpContext *ctx, const char *buf, int32_t len);
 
    bool read_ack(bpContext *ctx);
    bool send_ack(bpContext *ctx);

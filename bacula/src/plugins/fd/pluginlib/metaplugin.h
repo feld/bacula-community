@@ -28,10 +28,9 @@
 
 #include "pluginlib.h"
 #include "ptcomm.h"
-#include "smartmutex.h"
 #include "lib/ini.h"
-#include "pluginlib/commctx.h"
-#include "pluginlib/smartalist.h"
+#include "commctx.h"
+#include "smartalist.h"
 
 
 #define USE_CMD_PARSER
@@ -82,6 +81,16 @@ extern const char *valid_params[];
 
 // custom checkFile() callback
 extern checkFile_t checkFile;
+
+// a simple ro buf class
+struct restore_object_class
+{
+   POOL_MEM plugin_name;
+   POOL_MEM object_name;
+   POOL_MEM data;
+   int32_t length;
+   bool sent;
+};
 
 /*
  * This is a main plugin API class. It manages a plugin context.
@@ -137,14 +146,17 @@ public:
                   where(NULL),
                   regexwhere(NULL),
                   replace(0),
-                  robjsent(false),
+                  pluginconfigsent(false),
                   estimate(false),
                   listing(None),
                   nodata(false),
                   nextfile(false),
                   openerror(false),
-                  pluginobject(false),
-                  pluginobjectsent(false),
+                  object(FileObject),
+                  objectsent(false),
+                  // pluginobject(false),
+                  // pluginobjectsent(false),
+                  // restoreobject(false),
                   readacl(false),
                   readxattr(false),
                   skipextract(false),
@@ -162,8 +174,9 @@ public:
                   acldata(PM_MESSAGE),
                   xattrdatalen(0),
                   xattrdata(PM_MESSAGE),
-                  metadatas_list(10, true),
-                  prevjobname(NULL)
+                  metadatas_list(10, owned_by_alist),
+                  prevjobname(NULL),
+                  restoreobject_list()
    {}
 #if __cplusplus > 201103L
    METAPLUGIN(METAPLUGIN&) = delete;
@@ -172,6 +185,12 @@ public:
    ~METAPLUGIN() {}
 
 private:
+   enum OBJECT
+   {
+      FileObject,
+      PluginObject,
+      RestoreObject,
+   };
    enum LISTING
    {
       None,
@@ -190,14 +209,17 @@ private:
    char *where;                  // the Where variable for restore job if set by user
    char *regexwhere;             // the RegexWhere variable for restore job if set by user
    char replace;                 // the replace variable for restore job
-   bool robjsent;                // set when RestoreObject was sent during Full backup
+   bool pluginconfigsent;        // set when RestoreObject/INI_RESTORE_OBJECT_NAME_FT_PLUGIN_CONFIG was sent during Full backup
    bool estimate;                // used when mode is METAPLUGIN_BACKUP_* but we are doing estimate only
    LISTING listing;              // used for a Listing procedure for estimate
    bool nodata;                  // set when backend signaled no data for backup or no data for restore
    bool nextfile;                // set when IO_CLOSE got FNAME: command
    bool openerror;               // show if "openfile" was unsuccessful
-   bool pluginobject;            // set when IO_CLOSE got FNAME: command
-   bool pluginobjectsent;        // set when startBackupFile handled plugin object and endBackupFile has to check for nextfile
+   OBJECT object;                //
+   bool objectsent;              // set when startBackupFile handled object and endBackupFile has to check for nextfile
+   // bool pluginobject;            // set when got PLUGINOBJ: command
+   // bool pluginobjectsent;        // set when startBackupFile handled plugin object and endBackupFile has to check for nextfile
+   // bool restoreobject;           // set when got RESTOREOBJ: command
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
    bool skipextract;             // got SKIP response from backend, so we should artificially skip it for backend
@@ -218,12 +240,14 @@ private:
    POOL_MEM xattrdata;           // the buffer for XATTR data received from backend
    cmd_parser parser;            // Plugin command parser
    ConfigFile ini;               // Restore ini file handler
-   alist metadatas_list;         //
-   plugin_metadata metadatas;    //
+   alist metadatas_list;         // a list if managed metadatas
+   plugin_metadata metadatas;    // the private metadata class
    const char *prevjobname;      // this is a bVarPrevJobName parameter if requested
+   // a list of received RO from bacula which we will use to feed into backend later
+   smart_alist<restore_object_class> restoreobject_list;
 
    bRC parse_plugin_command(bpContext *ctx, const char *command, alist *params);
-   bRC parse_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop);
+   bRC handle_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop);
    bRC run_backend(bpContext *ctx);
    bRC send_parameters(bpContext *ctx, char *command);
    bRC send_jobinfo(bpContext *ctx, char type);
@@ -243,6 +267,7 @@ private:
    bRC perform_read_metadata(bpContext *ctx);
    bRC perform_read_fstatdata(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp);
+   bRC perform_read_restoreobject(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_acl(bpContext *ctx);
    bRC perform_write_acl(bpContext *ctx, const xacl_pkt * xacl);
    bRC perform_read_xattr(bpContext *ctx);
