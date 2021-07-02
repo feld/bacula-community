@@ -9,6 +9,9 @@
 
 include ../Makefile.inc
 
+_GIT := $(shell eval $(topdir)/scripts/getgitcommit)
+VERSIONGIT = "/git-$(_GIT)"
+
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
 LIBBACOBJ = $(LIBDIR)/libbac.la
 LIBBACCFGOBJ = $(LIBDIR)/libbaccfg.la
