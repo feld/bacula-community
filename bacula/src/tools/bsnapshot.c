@@ -20,8 +20,14 @@
 #include "bacula.h"
 #include "lib/ini.h"
 
-#ifdef HAVE_SUN_OS
+#if defined(HAVE_SUN_OS) || defined(HAVE_DARWIN_OS)
 #include <sys/types.h>
+#endif
+
+// Not used on MacOS, fake declaration
+#ifdef HAVE_DARWIN_OS
+#define major(x) x
+#define minor(x) x
 #endif
 
 #ifdef MAJOR_IN_MKDEV
@@ -222,6 +228,7 @@ public:
    char *snapmountpoint;        /* snapshot mountpoint */
    char *type;                  /* snapshot type */
    char *fstype;                /* filesystem type */
+   char *working;               /* working directory */
    const char *snapdir;         /* .snapshot */
    const char *sudo;            /* prepend sudo to commands */
    int  verbose;
@@ -240,6 +247,7 @@ public:
       snapmountpoint(getenv("SNAPSHOT_SNAPMOUNTPOINT")),
       type(  getenv("SNAPSHOT_TYPE")),
       fstype(getenv("SNAPSHOT_FSTYPE")),
+      working(getenv("SNAPSHOT_WORKING")),
       snapdir(".snapshots"),
       sudo(""),
       verbose(0),
@@ -466,6 +474,286 @@ public:
       return 2;              /* Error */
    };
 };
+
+/****************************************************************/
+
+/* MacOS Implementation
+ *  - tmutil localsnapshot           -- take a snapshot, name with a timestamp
+ *   Created local snapshot with date: 2021-07-02-170400
+ *  - tmutil listlocalsnapshots <mount_point>    -- list snapshots
+ *   Snapshots for volume group containing disk /:
+ *   com.apple.TimeMachine.2021-07-02-170400.local
+ *  - tmutil deletelocalsnapshots [<mount_point> | <snapshot_date>]
+ *   Need to specify the snapshot date
+ *  - tmutil listlocalsnapshotdates
+ *   Snapshot dates for all disks:
+ *   2021-07-02-171341
+ *  - mount_apfs -s com.apple.TimeMachine.2021-07-02-170400.local / /private/tmp/1
+ *  - tmutil deletelocalsnapshots /private/tmp/1
+ */
+/* apfs backend */
+class apfs: public snapshot {
+public:
+   apfs(arguments *arg): snapshot(arg, "apfs")  {
+      arg->snapdir = "/private/tmp/.apfs-snapshot";
+   };
+
+   int mount() {
+      if (!snapshot::mount()) {
+         return 0;
+      }
+      pm_strcpy(fname, arg->mountpoint);
+      for(char *p = fname; *p; p++) {
+         if (*p == '/') {
+            *p = '_';           // Need a better function to escape
+         }
+      }
+      Mmsg(path, "%s-%s-%s", arg->snapdir, arg->name, fname);
+      if (!makedir(path)) {
+         printf("status=%d error=\"Unable to create mountpoint directory %s errno=%d\n",
+                get_error_code(),
+                path, errno);
+         return 0;
+      }
+      MmsgD4(10, cmd, "%smount_apfs -s \"com.apple.TimeMachine.%s.local\" \"%s\" \"%s\"",
+             arg->sudo, arg->volume, arg->mountpoint, path);
+      if (run_program(cmd, 60, errmsg)) {
+         Dmsg(10, "Unable to mount snapshot %s %s\n", path, errmsg);
+         strip_quotes(errmsg);
+         printf("status=%d error=\"Unable to mount snapshot %s\"\n",
+                get_error_code(),
+                errmsg);
+         return 0;
+      }
+      fprintf(stdout, "status=1 snapmountpoint=\"%s\"\n", path);
+      return 1;
+   };
+
+   int unmount() {
+      int ret, retry = arg->retry;
+
+      if (!snapshot::unmount()) {
+         return 0;
+      }
+
+      MmsgD2(10, cmd, "%sumount \"%s\"", arg->sudo, arg->snapmountpoint);
+      do {
+         ret = run_program(cmd, 60, errmsg);
+         if (ret != 0) {
+            Dmsg(10, "Unable to unmount the directory. ERR=%s\n", errmsg);
+            sleep(3);
+         }
+      } while (ret != 0 && retry-- > 0);
+
+      if (ret != 0) {
+         Dmsg(10, "Unable to mount volume. ERR=%s\n", errmsg);
+         strip_quotes(errmsg);
+         printf("status=0 error=\"Unable to umount the device %s\"\n", errmsg);
+         return 0;
+      }
+
+      retry = arg->retry;
+      do {
+         Dmsg(10, "Trying to delete mountpoint %s\n", arg->snapmountpoint);
+         if ((ret = rmdir(arg->snapmountpoint)) != 0) {
+            sleep(3);
+         }
+      } while (retry-- > 0 && ret != 0);
+
+      if (ret != 0) {
+         berrno be;
+         Dmsg(10, "Unable to delete mountpoint after unmount\n");
+         printf("error=\"Unable to delete mountpoint after unmount errno=%s\"",
+                be.bstrerror(errno));
+      }
+      printf("status=1\n");
+      return 1;
+   };
+
+   int support() {
+      if (!snapshot::support()) {
+         return 0;
+      }
+      printf("status=1 device=\"%s\" type=apfs\n", arg->mountpoint);
+      return 1;
+   };
+
+   int check() {
+      char *p;
+      int m1, m2, m3;
+      struct stat sp;
+      if (!snapshot::check()) {
+         return 0;
+      }
+      if (!arg->working) {
+         printf("status=0 type=apfs error=\"Unable to use SNAPSHOT_WORKING\"\n");
+         return 0;
+      }
+
+      Mmsg(path, "%s/snapshotdb", arg->working);
+      if (stat(path, &sp) != 0) {
+         if (!makedir(path)) {
+            printf("status=%d error=\"Unable to create working database directory %s errno=%d\n",
+                   get_error_code(),
+                   arg->mountpoint, errno);
+            return 0;
+         }
+      }
+
+      MmsgD0(10, cmd, "sw_vers");
+      if (run_program_full_output(cmd, 60, errmsg)) {
+         printf("status=0 type=apfs error=\"Unable to run sw_vers\"\n");
+         return 0;
+      }
+      p = strstr(errmsg, "ProductVersion:");
+      if (!p) {
+         printf("status=0 type=apfs error=\"Unable to locate ProductVersion in sw_vers output\"\n");
+         printf("%s\n", errmsg);
+         return 0;
+      }
+      if (scan_string(p, "ProductVersion: %d.%d.%d", &m1, &m2, &m3) != 3) {
+         printf("status=0 type=apfs error=\"Unable to decode sw_vers output\"\"\n");
+         return 0;
+      }
+      if (m1 < 10 || (m1 == 10 &&  m2 < 15)) {
+         printf("status=0 type=apfs error=\"Old version of MacOS detected %d.%d.%d\"\n",
+                m1, m2, m3);
+         return 0;
+      }
+      printf("status=1 type=apfs\n");
+      return 1;
+   };
+
+   int create() {
+      char ed1[50];
+      struct stat sp;
+      /* We have SNAPSHOT_NAME, DEVICE, TYPE, FSTYPE, MOUNTPOINT, ACTION */
+      if (!snapshot::create()) {
+         return 0;
+      }
+      /* TODO: We need to keep an association between SNAPSHOT_NAME and macos
+       * snapshot name. Replace with joblist for example.
+       *
+       * The snapshot is taken for all volumes at the same time
+       */
+      Mmsg(path, "%s/snapshotdb/%s", arg->working, arg->name);
+      if (stat(path, &sp) == 0) {
+         FILE *fp = fopen(path, "r");
+         if (!fp) {
+            printf("status=0 error=\"Unable to get information about snapshot\n");
+            return 0;
+         }
+         bfgets(path, fp);
+         fclose(fp);
+         strip_trailing_junk(path);
+         printf("status=1 volume=\"%s\" createtdate=%s type=apfs\n",
+                path, edit_uint64(sp.st_ctime, ed1));
+         return 1;
+      }
+      /* Doesn't exist yet */
+      MmsgD1(10, cmd, "%stmutil localsnapshot", arg->sudo);
+      if (run_program_full_output(cmd, 60, errmsg)) {
+         strip_quotes(errmsg);
+         printf("status=%d error=\"Unable to create snapshot %s\"\n",
+                get_error_code(),
+                errmsg);
+         return 0;
+      }
+      char *p = strstr(errmsg, "Created local snapshot with date:");
+      if (p) {
+         strip_trailing_junk(p);
+         p += strlen("Created local snapshot with date:");
+         skip_spaces(&p);
+         pm_strcpy(fname, p);
+
+      } else {
+         printf("status=%d error=\"Unable to create snapshot %s\"\n",
+                get_error_code(),
+                errmsg);
+         return 0;
+      }
+
+      FILE *fp = fopen(path, "w");
+      if (!fp) {
+         berrno be;
+         printf("status=0 error=\"Unable to store information about snapshot errno=%s\"\n", be.bstrerror());
+         return 0;
+      }
+      fprintf(fp, "%s\n", fname);
+      fclose(fp);
+
+      printf("status=1 volume=\"%s\" createtdate=%s type=apfs\n",
+             fname, edit_uint64(time(NULL), ed1));
+      return 1;
+   };
+
+   int del() {
+      if (!snapshot::del()) {
+         return 0;
+      }
+      Mmsg(path, "%s/snapshotdb/%s", arg->working, arg->name);
+      unlink(path);
+
+      MmsgD2(10, cmd, "%stmutil deletelocalsnapshots \"%s\"", arg->sudo, arg->volume);
+      if (run_program(cmd, 300, errmsg)) {
+         // TODO: The snapshot is global, so when we delete one it's over
+         Dmsg(10, "Unable to delete snapshot %s\n", errmsg);
+         strip_quotes(errmsg);
+         printf("status=0 type=apfs error=\"%s\"\n", errmsg);
+         return 0;
+      }
+      printf("status=1\n");
+      return 1;
+   };
+   /*
+    * bacula@baculas-Mac-mini 1 % tmutil listlocalsnapshotdates
+    * Snapshot dates for all disks:
+    * 2021-07-02-173507
+    */
+   int list() {
+      char *p, *end;
+      if (!snapshot::list()) {
+         return 0;
+      }
+      MmsgD2(10, cmd, "%stmutil listlocalsnapshots \"%s\"", arg->sudo, arg->mountpoint);
+      if (run_program_full_output(cmd, 300, errmsg)) {
+         Dmsg(10, "Unable to list snapshot %s\n", errmsg);
+         strip_quotes(errmsg);
+         printf("status=0 type=apfs error=\"%s\"\n", errmsg);
+         return 0;
+      }
+      for (p = errmsg; p && *p ;) {
+         /* Replace final \n by \0 to have strstr() happy */
+         end = strchr(p, '\n');
+
+         /* If end=NULL, we are at the end of the buffer (without trailing \n) */
+         if (end) { 
+            *end = 0;
+         }
+         int i1, i2, i3, i4;
+         if (scan_string(p, "com.apple.TimeMachine.%d-%d-%d-%d.local", &i1, &i2, &i3, &i4) == 4) {
+            char ed1[50];
+            edit_uint64(i4, ed1);
+            printf("name=\"%s\" volume=\"%d-%02d-%02d-%06d\" device=\"%s\" createdate=\"%d-%02d-%02d %c%c:%c%c:%c%c\" type=\"apfs\"\n",
+                   p, i1, i2, i3, i4, arg->device, i1, i2, i3,
+                   ed1[0], ed1[1],
+                   ed1[2], ed1[3],
+                   ed1[4], ed1[5]); // TODO: decode date from snapshot name
+         } else {
+            Dmsg(10, "Skip %s\n", p);
+         }
+         if (end) {
+            *end = '\n';
+            end++;
+         }
+         p = end;
+      }
+      return 1;
+   };
+   
+};
+
+/****************************************************************/
 
 /* Structure used to sort subvolumes with btrfs backend */
 struct vols {
@@ -1377,7 +1665,7 @@ public:
 
             /* It might be a size */
             if (size_to_uint64(p+1, strlen(p+1), &s)) {
-               Dmsg(10, "Found size %ld\n", s);
+               Dmsg(10, "Found size %lld\n", s);
                return s;
             }
             Dmsg(10, "Unable to use %s\n", tmp);
@@ -1430,7 +1718,7 @@ public:
 
       lvname = get_lv_value(arg->device, "Path");
       maxsize = get_space_available(lvname);
-      Dmsg(10, "maxsize=%ld size=%ld\n", maxsize, size);
+      Dmsg(10, "maxsize=%lld size=%lld\n", maxsize, size);
 
       if (maxsize < 0) {
          printf("status=%d error=\"Unable to detect maxsize\" type=lvm\n",
@@ -1908,6 +2196,9 @@ snapshot *detect_snapshot_backend(arguments *arg)
 
       } else if (strcasecmp(arg->type, "zfs") == 0) {
          return new zfs(arg);
+
+      } else if (strcasecmp(arg->type, "apfs") == 0) {
+         return new apfs(arg);
       }
    }
    if (arg->fstype) {
@@ -1916,6 +2207,9 @@ snapshot *detect_snapshot_backend(arguments *arg)
 
       } else if (strcasecmp(arg->fstype, "tmpfs") == 0) {
          return new simulator(arg);
+
+      } else if (strcasecmp(arg->fstype, "apfs") == 0) {
+         return new apfs(arg);
 
       /* TODO: Need to find something smarter here */
       } else if (strcasecmp(arg->fstype, "ext4") == 0) {

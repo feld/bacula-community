@@ -612,7 +612,7 @@ public:
       free_env();
 
       /* Update "10" to add more variables */
-      env = (char **) malloc(sizeof(char *) * 10);
+      env = (char **) malloc(sizeof(char *) * 15);
 
       if (*Name) {
          Mmsg(tmp, "SNAPSHOT_NAME=%s", Name);
@@ -646,6 +646,10 @@ public:
          Mmsg(tmp, "SNAPSHOT_SNAPMOUNTPOINT=%s", SnapMountPoint);
          env[i++] = bstrdup(tmp);
       }
+
+      Mmsg(tmp, "SNAPSHOT_WORKING=%s", me->working_directory);
+      env[i++] = bstrdup(tmp);
+
       /* When adding new entries, do not forget to add more slots to env[] */
 
       Mmsg(tmp, "SNAPSHOT_ACTION=%s", action);
