@@ -30,7 +30,7 @@ Job {
   Name = "StoreGroupJob"
   Type = Backup
   Messages = Standard
-  Client = VBox-fd
+  JobDefs = DefaultJob
   FileSet = "Full Set"
   Pool = StorePool
   Maximum Concurrent Jobs = 10

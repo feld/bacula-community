@@ -57,6 +57,7 @@ if [ $? -ne 0 ]; then
     print_debug "ERROR: should find Migration Error in $tmp/log2.out"
     estat=1
 fi
-#stop_bacula
+
+stop_bacula
 
 end_test

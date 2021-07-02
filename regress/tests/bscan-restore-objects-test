@@ -43,7 +43,7 @@ list jobs
 llist pluginrestoreconf jobid=1
 sql
 @$out $tmp/robjs_count
-select count(*) from restoreobject;
+select count(*) from RestoreObject;
 
 quit
 END_OF_DATA
@@ -166,9 +166,8 @@ fi
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 sql
 @$out $tmp/robjs_count_double_bscan
-select count(*) from restoreobject;
+select count(*) from RestoreObject;
 
-quit
 quit
 END_OF_DATA
 
@@ -176,7 +175,7 @@ run_bconsole
 
 # Check if there are no duplicates
 robjs_after_bscan=`cat tmp/robjs_count_double_bscan  | grep '|' | cut -d'|' -f2 | tail -1`
-if [ $robjs_after_bscan -ne ${robjs_orig} ]; then
+if [ ${robjs_after_bscan} -ne ${robjs_orig} ]; then
     print_debug "ERROR: Running bscan twice produced some duplicates of restore objects. \
                  Original count: ${robjs_orig}, after second bscan: ${robjs_after_bscan}"
     bstat=1
