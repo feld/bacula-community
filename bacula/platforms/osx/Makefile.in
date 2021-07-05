@@ -101,9 +101,9 @@ pkg: ${BACULA_DESTDIR} ${BACULA_PMDOC} ${WORKING_DIR}/resources
 
 	mkdir -p "${CURDIR}/${BACULA_DESTDIR}${WORKING_DIR}"
 
-	${PB} --identifier "${PACKAGE_ID}" --root "${CURDIR}/${BACULA_DESTDIR}" "Bacula Enterprise File Daemon-${BACULA_VERSION}.pkg"
-	
-	cp "Bacula Enterprise File Daemon-${BACULA_VERSION}.pkg" "${PACKAGE_DIR}"
+	${PB} --identifier "${PACKAGE_ID}" --root "${CURDIR}/${BACULA_DESTDIR}" "${PACKAGE_TITLE}.pkg"
+
+	cp "${PACKAGE_TITLE}.pkg" "${PACKAGE_DIR}"
 	cp ${WORKING_DIR}/resources/ReadMe.html "${PACKAGE_DIR}/ReadMe.html"
 
 	sed ${INFILE_SUBST} \
@@ -138,6 +138,8 @@ ${BACULA_DESTDIR}: ${BACULA_SOURCE}
 	(cd ${BACULA_SOURCE} && ./configure ${CONFIGFLAGS} CPPFLAGS="${CPPFLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CXXFLAGS}" LDFLAGS="${LDFLAGS}" CC="${CC}" CPP="${CPP}" CXX="${CXX}" CXXPP="${CXXPP}")
 	${MAKE} -C ${BACULA_SOURCE}
 	${MAKE} -C ${BACULA_SOURCE} install DESTDIR="${CURDIR}/${BACULA_DESTDIR}"
+	${MAKE} -C ${BACULA_SOURCE}/src/tools bsnapshot
+	${MAKE} -C ${BACULA_SOURCE}/src/tools install-bsnapshot DESTDIR="${CURDIR}/${BACULA_DESTDIR}"
 
 	rm -rf "${BACULA_DESTDIR}/tmp"
 
