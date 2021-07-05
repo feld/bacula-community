@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Attempt to backup and restore a VM with the RHV Plugin
+#
+# HOWTO:
+# Add to your ./config
+#
+# RHV_REPO=/path/to/git/rhv
+#
+# JAVA_TRUSTSTORE=/etc/ssl/certs/java/cacerts
+# JAVA_KEY_TOOL=keytool
+#
+# RHV_SERVER="rhv.fqdn"
+# RHV_AUTH="http"
+# RHV_USER="admin"
+# RHV_PROFILE="internal"
+# RHV_PASSWORD="rhvadminpass"
+# RHV_TRUSTSTORE_PASSWORD="changeit"
+# RHV_TARGET_VIRTUALMACHINE="VMNameToBackup"
+#
+
+# ==== Test inizialization =======================
+TestName="rhv-backup-restore-vm-test"
+. scripts/functions
+. scripts/rhv-helpers.sh
+
+is_var_defined "$RHV_TARGET_VIRTUALMACHINE" "RHV_TARGET_VIRTUALMACHINE"
+
+rhv_init_test
+# ================================================
+
+# ==== Run backup ================================
+rhv_setup_job
+run_job_and_check "Full"
+# ================================================
+
+# ==== Run restore ===============================
+RESTORE_SOURCE="/@rhv/"
+RHV_RESTORE_FORCE_OVERWRITE=yes
+RHV_VM_NAME=${new_unique_dirname}
+
+rhv_run_restore_and_check ${BACKUPID} ${RESTORE_SOURCE} "log-session.out"
+# ================================================
+
+# ==== End and cleaning=============================
+stop_bacula
+end_test
+# ==================================================

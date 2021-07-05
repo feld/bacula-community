@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Attempt to backup and restore a VM with the RHV Plugin
+#
+# HOWTO:
+# Add to your ./config
+#
+# RHV_REPO=/path/to/git/rhv
+#
+# JAVA_TRUSTSTORE=/etc/ssl/certs/java/cacerts
+# JAVA_KEY_TOOL=keytool
+#
+# RHV_SERVER="rhv.fqdn"
+# RHV_AUTH="http"
+# RHV_USER="admin"
+# RHV_PROFILE="internal"
+# RHV_PASSWORD="rhvadminpass"
+# RHV_TRUSTSTORE_PASSWORD="changeit"
+# RHV_TARGET_VIRTUALMACHINE="VMNameToBackup"
+# RHV_PROXY_REMOTE_ADDR=1.2.3.4
+# RHV_PROXY_REMOTE_PASSWORD=6eorureoureo
+# RHV_PROXY_REMOTE_DIRNAME=oVirt-VM-BEE-dir
+# RHV_PROXY_VM=proxy-VM
+#
+# TODO:
+#  - Test Incremental backup
+#  - Test from different storages (ISCSI & NFS)
+#  - Test Backup Template
+#  - Test restore variations (play with id, name, etc)
+#
+
+# ==== Test inizialization =======================
+TestName="rhv-proxy-vm-test"
+. scripts/functions
+. scripts/rhv-helpers.sh
+
+is_var_defined "$RHV_TARGET_VIRTUALMACHINE" "RHV_TARGET_VIRTUALMACHINE"
+is_var_defined "$RHV_PROXY_REMOTE_ADDR" "RHV_PROXY_REMOTE_ADDR"
+is_var_defined "$RHV_PROXY_REMOTE_PASSWORD" "RHV_PROXY_REMOTE_PASSWORD"
+is_var_defined "$RHV_PROXY_REMOTE_DIRNAME" "RHV_PROXY_REMOTE_DIRNAME"
+is_var_defined "$RHV_PROXY_VM" "RHV_PROXY_VM"
+
+rhv_init_test
+# ================================================
+
+# ==== Proxy client config: Where FD and RHV plugin is installed and running ====================================
+# We use our local client as if it was the remote, so we put remote address and the password the remote FD has
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'address', '$RHV_PROXY_REMOTE_ADDR', 'Client', '127.0.0.1-fd')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'password', '$RHV_PROXY_REMOTE_PASSWORD', 'Client', '127.0.0.1-fd')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'FDPort', '9102', 'Client', '127.0.0.1-fd')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'SD Calls Client', 'yes', 'Client', '127.0.0.1-fd')"
+
+# We need to know how the remote FD is configured, so w need to know the remote dirname in remote bacula-fd.conf
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Name', '$RHV_PROXY_REMOTE_DIRNAME', 'Director')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'Name', '$RHV_PROXY_REMOTE_DIRNAME', 'Director')"
+
+# ==== Run backup ================================
+RHV_TRUSTSTORE_FILE=/opt/bacula/etc/rhv.cacerts
+rhv_setup_job
+run_job_and_check "Full"
+# ================================================
+
+# ==== Run restore ===============================
+RESTORE_SOURCE="/@rhv/"
+RHV_RESTORE_FORCE_OVERWRITE=yes
+RHV_VM_NAME=${new_unique_dirname}
+
+rhv_run_restore_and_check ${BACKUPID} ${RESTORE_SOURCE} "log-session.out"
+# ================================================
+
+# ==== End and cleaning=============================
+stop_bacula
+end_test
+# ==================================================
