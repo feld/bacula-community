@@ -603,8 +603,12 @@ bool read_mtab(mtab_handler_t *mtab_handler, void *user_ctx)
          if (stat(mntinfo->f_mntonname, &st) < 0) {
             continue;
          }
-         mtab_handler(user_ctx, &st, mntinfo->f_mntfromname,
-            mntinfo->f_mntonname, mntinfo->f_fstypename, NULL);
+
+         mtab_handler(user_ctx, &st,
+                      mntinfo->f_fstypename,  // fstype
+                      mntinfo->f_mntonname,   // mountpoint
+                      NULL,                   // mntopts
+                      mntinfo->f_mntfromname); // device
          mntinfo++;
       }
    }
