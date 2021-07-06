@@ -19,11 +19,11 @@
 # RHV_PROFILE="internal"
 # RHV_PASSWORD="rhvadminpass"
 # RHV_TRUSTSTORE_PASSWORD="changeit"
-# RHV_TARGET_VIRTUALMACHINE="VMNameToBackup"
+# RHV_PROXY_TARGET_VIRTUALMACHINE="VMNameToBackup"
 # RHV_PROXY_REMOTE_ADDR=1.2.3.4
 # RHV_PROXY_REMOTE_PASSWORD=6eorureoureo
 # RHV_PROXY_REMOTE_DIRNAME=oVirt-VM-BEE-dir
-# RHV_PROXY_VM=proxy-VM
+# RHV_PROXY_PROXY_VM=proxy-VM
 #
 # TODO:
 #  - Test Incremental backup
@@ -37,11 +37,14 @@ TestName="rhv-proxy-vm-test"
 . scripts/functions
 . scripts/rhv-helpers.sh
 
-is_var_defined "$RHV_TARGET_VIRTUALMACHINE" "RHV_TARGET_VIRTUALMACHINE"
+is_var_defined "$RHV_PROXY_TARGET_VIRTUALMACHINE" "RHV_PROXY_TARGET_VIRTUALMACHINE"
 is_var_defined "$RHV_PROXY_REMOTE_ADDR" "RHV_PROXY_REMOTE_ADDR"
 is_var_defined "$RHV_PROXY_REMOTE_PASSWORD" "RHV_PROXY_REMOTE_PASSWORD"
 is_var_defined "$RHV_PROXY_REMOTE_DIRNAME" "RHV_PROXY_REMOTE_DIRNAME"
-is_var_defined "$RHV_PROXY_VM" "RHV_PROXY_VM"
+is_var_defined "$RHV_PROXY_PROXY_VM" "RHV_PROXY_PROXY_VM"
+
+RHV_TARGET_VIRTUALMACHINE="${RHV_PROXY_TARGET_VIRTUALMACHINE}"
+RHV_PROXY_VM="${RHV_PROXY_PROXY_VM}"
 
 rhv_init_test
 # ================================================
@@ -66,7 +69,7 @@ run_job_and_check "Full"
 # ==== Run restore ===============================
 RESTORE_SOURCE="/@rhv/"
 RHV_RESTORE_FORCE_OVERWRITE=yes
-RHV_VM_NAME=${new_unique_dirname}
+RHV_VM_NAME=$(new_unique_dirname)
 
 rhv_run_restore_and_check ${BACKUPID} ${RESTORE_SOURCE} "log-session.out"
 # ================================================
