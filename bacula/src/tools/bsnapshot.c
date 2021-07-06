@@ -571,9 +571,26 @@ public:
    };
 
    int support() {
+      struct stat sp;
       if (!snapshot::support()) {
          return 0;
       }
+
+      if (!arg->working) {
+         printf("status=0 type=apfs error=\"Unable to use SNAPSHOT_WORKING\"\n");
+         return 0;
+      }
+
+      Mmsg(path, "%s/snapshotdb", arg->working);
+      if (stat(path, &sp) < 0) {
+         if (!makedir(path)) {
+            printf("status=%d error=\"Unable to create working database directory %s errno=%d\n",
+                   get_error_code(),
+                   arg->mountpoint, errno);
+            return 0;
+         }
+      }
+
       printf("status=1 device=\"%s\" type=apfs\n", arg->mountpoint);
       return 1;
    };
@@ -591,7 +608,7 @@ public:
       }
 
       Mmsg(path, "%s/snapshotdb", arg->working);
-      if (stat(path, &sp) != 0) {
+      if (stat(path, &sp) < 0) {
          if (!makedir(path)) {
             printf("status=%d error=\"Unable to create working database directory %s errno=%d\n",
                    get_error_code(),
@@ -676,7 +693,7 @@ public:
       FILE *fp = fopen(path, "w");
       if (!fp) {
          berrno be;
-         printf("status=0 error=\"Unable to store information about snapshot errno=%s\"\n", be.bstrerror());
+         printf("status=0 error=\"Unable to store information about snapshot in %s errno=%s\"\n", path, be.bstrerror());
          return 0;
       }
       fprintf(fp, "%s\n", fname);
