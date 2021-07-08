@@ -397,7 +397,7 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
 static void  list_running_jobs_api(STATUS_PKT *sp)
 {
    OutputWriter ow(sp->api_opts);
-   int sec, bps, brps;
+   int sec, bps, brps, val;
    char *p;
    JCR *njcr;
 
@@ -413,7 +413,7 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       p = ow.get_output(OT_CLEAR, OT_START_OBJ, OT_END);
 
       if (njcr->JobId == 0) {
-         int val = (njcr->dir_bsock && njcr->dir_bsock->tls)?1:0;
+         val = (njcr->dir_bsock && njcr->dir_bsock->tls)?1:0;
          ow.get_output(OT_UTIME, "DirectorConnected", (utime_t)njcr->start_time,
                        OT_INT, "DirTLS", val,
                        OT_END);
@@ -466,7 +466,7 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       }
 
       if (njcr->store_bsock) {
-         int val = (njcr->store_bsock->tls)?1:0;
+         val = (njcr->store_bsock->tls)?1:0;
          ow.get_output(OT_INT64, "SDReadSeqNo", (int64_t)njcr->store_bsock->read_seqno,
                        OT_INT,   "fd",          njcr->store_bsock->m_fd,
                        OT_INT,   "SDtls",       val,
@@ -474,6 +474,10 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       } else {
          ow.get_output(OT_STRING, "SDSocket", "closed", OT_END);
       }
+      val = (njcr->dir_bsock && njcr->dir_bsock->tls) ? 1 : 0;
+      ow.get_output(OT_INT, "DirTLS", val,
+                    OT_END);
+
       ow.get_output(OT_END_OBJ, OT_END);
       sendit(p, strlen(p), sp);
    }
