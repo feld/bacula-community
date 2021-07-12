@@ -29,6 +29,10 @@
 
 #include "bacula.h"
 #include "find.h"
+#if defined(HAVE_LINUX_OS) && defined(HAVE_NODUMP)
+  #include <linux/ioctl.h>
+  #include <linux/fs.h>
+#endif
 #ifdef HAVE_DARWIN_OS
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -222,15 +226,52 @@ static bool volume_has_attrlist(const char *fname)
  */
 static bool no_dump(JCR *jcr, FF_PKT *ff_pkt)
 {
-#if defined(HAVE_CHFLAGS) && defined(UF_NODUMP)
+#ifdef HAVE_NODUMP
+   bool ret = false; /* do backup */
+   int attr;
+   int fd = -1;
+   if (ff_pkt->flags & FO_HONOR_NODUMP) {
+      int fd = open(ff_pkt->fname, O_RDONLY);
+      if (fd < 0) {
+         Dmsg2(50, "Failed to open file: %s err: %d\n",
+               ff_pkt->fname, errno);
+         goto bail_out;
+      }
+
+      int ioctl_ret = ioctl(fd, FS_IOC_GETFLAGS, &attr);
+      if (ioctl_ret < 0) {
+         if (errno == ENOTTY) {
+            Dmsg2(50, "Failed to check for NODUMP flag for file: %s er: %d, "
+                      "probably because of wrong filesystem used.\n",
+                  errno, ff_pkt->fname);
+         } else {
+            Dmsg2(50, "Failed to send Getflags IOCTL for: %s err: %d\n",
+                  ff_pkt->fname, errno);
+         }
+         goto bail_out;
+      }
+
+      /* Check if file has NODUMP flag set */
+      ret = attr & FS_NODUMP_FL;
+   }
+
+bail_out:
+   if (fd > 0) {
+      close(fd);
+   }
+   Dmsg2(500, "fname: %s nodump flag: %d\n", ff_pkt->fname, ret);
+   return ret;
+
+#elif defined(HAVE_CHFLAGS) && defined(UF_NODUMP)
    if ( (ff_pkt->flags & FO_HONOR_NODUMP) &&
         (ff_pkt->statp.st_flags & UF_NODUMP) ) {
       Jmsg(jcr, M_INFO, 1, _("     NODUMP flag set - will not process %s\n"),
            ff_pkt->fname);
       return true;                    /* do not backup this file */
    }
+#else
+   return false; /* do backup */
 #endif
-   return false;                      /* do backup */
 }
 
 /* check if a file have changed during backup and display an error */
