@@ -391,54 +391,51 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
    bdb_unlock();
 }
 
-void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId,
+void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
                               DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-   char ed1[50];
-
+   POOL_MEM where2;
    bdb_lock();
    /* Get some extra SQL parameters if needed */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_CLIENT), (JobId == 0));
+                                DB_ACL_BIT(DB_ACL_POOL)    |
+                                DB_ACL_BIT(DB_ACL_CLIENT), (JobId == 0 || volume != NULL));
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
+                                                   DB_ACL_BIT(DB_ACL_POOL)    |
                                                    DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
+   if (JobId) {
+      Mmsg(where2, " WHERE JobMedia.JobId=%lu ", JobId);
+   }
+   
+   if (volume) {
+      POOL_MEM tmp, tmp2;
+      int len = strlen(volume);
+      tmp.check_size(len*2+1);
+      db_escape_string(jcr, this, tmp.c_str(), volume, len);
+      Mmsg(tmp2, " %s Media.VolumeName = '%s' ", JobId == 0 ?"WHERE": "AND", tmp.c_str());
+      pm_strcat(where2, tmp2.c_str());
+   }
+
    if (type == VERT_LIST || type == JSON_LIST) {
-      if (JobId > 0) {                   /* do by JobId */
-         Mmsg(cmd, "SELECT JobMediaId,JobId,Media.MediaId,Media.VolumeName,"
-            "FirstIndex,LastIndex,StartFile,JobMedia.EndFile,StartBlock,"
-            "JobMedia.EndBlock "
-            "FROM JobMedia JOIN Media USING (MediaId) %s "
-            "WHERE JobMedia.JobId=%s %s",
-              join,
-              edit_int64(JobId, ed1),
-              where);
-      } else {
-         Mmsg(cmd, "SELECT JobMediaId,JobId,Media.MediaId,Media.VolumeName,"
-            "FirstIndex,LastIndex,StartFile,JobMedia.EndFile,StartBlock,"
-            "JobMedia.EndBlock "
-            "FROM JobMedia JOIN Media USING (MediaId) %s %s",
-              join,
-              where);
-      }
+      Mmsg(cmd, "SELECT JobMediaId,JobId,Media.MediaId,Media.VolumeName,"
+           "FirstIndex,LastIndex,StartFile,JobMedia.EndFile,StartBlock,"
+           "JobMedia.EndBlock "
+           "FROM JobMedia JOIN Media USING (MediaId) %s "
+           "%s %s ORDER BY JobMediaId ASC",
+           join,
+           where2.c_str(),
+           where);
 
    } else {
-      if (JobId > 0) {                   /* do by JobId */
-         Mmsg(cmd, "SELECT JobId,Media.VolumeName,FirstIndex,LastIndex "
-            "FROM JobMedia JOIN Media USING (MediaId) %s WHERE "
-            "JobMedia.JobId=%s %s",
-              join,
-              edit_int64(JobId, ed1),
-              where);
-      } else {
-         Mmsg(cmd, "SELECT JobId,Media.VolumeName,FirstIndex,LastIndex "
-              "FROM JobMedia JOIN Media USING (MediaId) %s %s",
-              join,
-              where);
-      }
+      Mmsg(cmd, "SELECT JobId,Media.VolumeName,FirstIndex,LastIndex "
+           "FROM JobMedia JOIN Media USING (MediaId) %s %s %s ORDER BY JobMediaId ASC",
+           join,
+           where2.c_str(),
+           where);
    }
    Dmsg1(DT_SQL|50, "q=%s\n", cmd);
 

@@ -637,6 +637,13 @@ bool is_volume_name_legal(UAContext *ua, const char *name)
    const char *p;
    const char *accept = ":.-_";
 
+   if (!name) {
+      if (ua) {
+         ua->error_msg(_("No volume specified.\n"));
+      }
+      return 0;
+   }
+   
    /* Restrict the characters permitted in the Volume name */
    for (p=name; *p; p++) {
       if (B_ISALPHA(*p) || B_ISDIGIT(*p) || strchr(accept, (int)(*p))) {

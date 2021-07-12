@@ -543,25 +543,30 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
       /* List JOBMEDIA */
       } else if (strcasecmp(ua->argk[i], NT_("jobmedia")) == 0) {
-         bool done = false;
+         char *volume = NULL;
+         jobid = 0;
+
          for (j=i+1; j<ua->argc; j++) {
-            if (strcasecmp(ua->argk[j], NT_("ujobid")) == 0 && ua->argv[j]) {
+            if (strcasecmp(ua->argk[j], NT_("ujobid")) == 0 && ua->argv[j] && is_name_valid(ua->argv[j], NULL)) {
                bstrncpy(jr.Job, ua->argv[j], MAX_NAME_LENGTH);
                jr.JobId = 0;
                db_get_job_record(ua->jcr, ua->db, &jr);
                jobid = jr.JobId;
+
             } else if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
                jobid = str_to_int64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("volume")) == 0 &&
+                       ua->argv[j] && is_volume_name_legal(ua, ua->argv[j])) {
+               volume = ua->argv[j];
+
             } else {
                continue;
             }
-            db_list_jobmedia_records(ua->jcr, ua->db, jobid, prtit, ua, llist);
-            done = true;
          }
-         if (!done) {
-            /* List for all jobs (jobid=0) */
-            db_list_jobmedia_records(ua->jcr, ua->db, 0, prtit, ua, llist);
-         }
+
+         db_list_jobmedia_records(ua->jcr, ua->db, jobid, volume, prtit, ua, llist);
+         return 1;
 
       /* list filemedia */
       } else if (strcasecmp(ua->argk[i], NT_("filemedia")) == 0) {

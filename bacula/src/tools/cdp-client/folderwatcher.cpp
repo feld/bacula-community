@@ -75,13 +75,13 @@ POOLMEM *FolderWatcher::watch(const char *folder)
    return this->watchDirRecursive(folder);
 }
 
-POOLMEM *FolderWatcher::watchDirRecursive(const char *dir)
+char *FolderWatcher::watchDirRecursive(const char *dir, POOLMEM **err_msg)
 {
    DIR *dirReader = NULL;
    struct dirent *dirFile = NULL;
    const char *separator = NULL;
    POOLMEM *subdirPath = NULL;
-   char *err_msg = NULL;
+   pm_strcpy(err_msg, "");
 
    uint32_t mask = IN_CLOSE | IN_ATTRIB | IN_MOVE
       | IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_OPEN
@@ -90,8 +90,6 @@ POOLMEM *FolderWatcher::watchDirRecursive(const char *dir)
    int wd = inotify_add_watch(_fd, dir, mask);
 
    if (wd < 0) {
-      err_msg = get_pool_memory(PM_EMSG);
-
       switch (errno) {
          case EACCES:
             Mmsg(err_msg, "Could not watch Directory. Access Denied for: %s", dir);
@@ -185,7 +183,8 @@ void FolderWatcher::handleEvent(struct inotify_event *event)
    } else if (closeNoWriteFileEvent) {
       _openedFiles.erase(event->wd);
    } else if (createEvent && isDir) {
-      this->watchDirRecursive(fpath);
+      POOLMEM *tmp = this->watchDirRecursive(fpath);
+      free_and_null_pool_memory(tmp);
    } else if (movedToEvent) {
       _changeHandler->onChange(fpath);
    } else if ((modifyEvent || attribsChangeEvent)

@@ -272,8 +272,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_files_for_job(jcr, jobid, deleted, sendit, ctx)
 #define db_list_media_records(jcr, mdb, mdbr, sendit, ctx, type) \
            mdb->bdb_list_media_records(jcr, mdbr, sendit, ctx, type)
-#define db_list_jobmedia_records(jcr, mdb, JobId, sendit, ctx, type) \
-           mdb->bdb_list_jobmedia_records(jcr, JobId, sendit, ctx, type)
+#define db_list_jobmedia_records(jcr, mdb, JobId, volume, sendit, ctx, type) \
+           mdb->bdb_list_jobmedia_records(jcr, JobId, volume, sendit, ctx, type)
 #define db_list_filemedia_records(jcr, mdb, JobId, FI, sendit, ctx, type) \
            mdb->bdb_list_filemedia_records(jcr, JobId, FI, sendit, ctx, type)
 #define db_list_joblog_records(jcr, mdb, JobId, sendit, ctx, type)      \

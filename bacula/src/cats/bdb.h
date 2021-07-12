@@ -259,7 +259,7 @@ public:
    void bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER sendit, void *ctx);
    void bdb_list_files_for_job(JCR *jcr, uint32_t jobid, int deleted, DB_LIST_HANDLER sendit, void *ctx);
    void bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
-   void bdb_list_jobmedia_records(JCR *jcr, JobId_t JobId, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
+   void bdb_list_jobmedia_records(JCR *jcr, JobId_t JobId, char *volume, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_filemedia_records(JCR *jcr, JobId_t JobId, uint32_t FileIndex, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_joblog_records(JCR *jcr, JobId_t JobId, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    int  bdb_list_sql_query(JCR *jcr, const char *query, DB_LIST_HANDLER *sendit, void *ctx, int verbose, e_list_type type);
