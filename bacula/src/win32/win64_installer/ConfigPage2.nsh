@@ -52,7 +52,7 @@ Function EnterConfigPage2
   ${If} $R0 = 0
   ${OrIf} $AutomaticInstall = 0
     IntOp $R8 $R7 + 8
-    FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="DIR Name"$\r$\nLeft=6$\r$\nTop=$R7$\r$\nRight=60$\r$\nBottom=$R8$\r$\n$\r$\n'
+    FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="Director Name"$\r$\nLeft=6$\r$\nTop=$R7$\r$\nRight=60$\r$\nBottom=$R8$\r$\n$\r$\n'
     IntOp $R6 $R6 + 1
     IntOp $R7 $R7 - 2
 
@@ -65,12 +65,12 @@ Function EnterConfigPage2
       ${If} $R0 <> 0
         IntOp $R7 $R7 + 2
         IntOp $R8 $R8 - 2
-        FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="DIR Port"$\r$\nLeft=172$\r$\nTop=$R7$\r$\nRight=188$\r$\nBottom=$R8$\r$\n$\r$\n'
+        FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="Director Port"$\r$\nLeft=182$\r$\nTop=$R7$\r$\nRight=226$\r$\nBottom=$R8$\r$\n$\r$\n'
         IntOp $R6 $R6 + 1
         IntOp $R7 $R7 - 2
 
         IntOp $R8 $R8 + 2
-        FileWrite $R5 '[Field $R6]$\r$\nType="Text"$\r$\nFlags="ONLY_NUMBERS"$\r$\nState=$ConfigDirectorPort$\r$\nLeft=190$\r$\nTop=$R7$\r$\nRight=218$\r$\nBottom=$R8$\r$\n$\r$\n'
+        FileWrite $R5 '[Field $R6]$\r$\nType="Text"$\r$\nFlags="ONLY_NUMBERS"$\r$\nState=$ConfigDirectorPort$\r$\nLeft=228$\r$\nTop=$R7$\r$\nRight=256$\r$\nBottom=$R8$\r$\n$\r$\n'
         IntOp $R6 $R6 + 1
       ${EndIf}
 
@@ -99,7 +99,7 @@ Function EnterConfigPage2
       IntOp $R7 $R7 + 2
       IntOp $R8 $R7 + 8
 
-      FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="DIR Password"$\r$\nLeft=6$\r$\nTop=$R7$\r$\nRight=60$\r$\nBottom=$R8$\r$\n$\r$\n'
+      FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="Director Passwd"$\r$\nLeft=6$\r$\nTop=$R7$\r$\nRight=60$\r$\nBottom=$R8$\r$\n$\r$\n'
 
       IntOp $R6 $R6 + 1
       IntOp $R7 $R7 - 2
@@ -202,7 +202,7 @@ Function EnterConfigPage2
       IntOp $R7 $R7 + 2
       IntOp $R8 $R7 + 8
 
-      FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="DIR Address"$\r$\nLeft=6$\r$\nTop=$R7$\r$\nRight=60$\r$\nBottom=$R8$\r$\n$\r$\n'
+      FileWrite $R5 '[Field $R6]$\r$\nType="Label"$\r$\nText="Director Address"$\r$\nLeft=6$\r$\nTop=$R7$\r$\nRight=60$\r$\nBottom=$R8$\r$\n$\r$\n'
 
       IntOp $R6 $R6 + 1
       IntOp $R7 $R7 - 2
@@ -219,7 +219,6 @@ Function EnterConfigPage2
 
   ${If} $AutomaticInstall = 0
     IntOp $R0 $NewComponents & ${ComponentsFileAndStorageAndDirector}
-    IntOp $R0 0 & 0
     ${If} $R0 <> 0
       IntOp $R8 $R7 + 42
 
@@ -276,7 +275,6 @@ Function EnterConfigPage2
     ; Name
     IntOp $R6 $R6 + 1
     !insertmacro MUI_INSTALLOPTIONS_READ $HCTL "ConfigPage2.ini" "Field $R6" "HWND"
-    SendMessage $HCTL ${EM_LIMITTEXT} 30 0
     IntOp $R6 $R6 + 1
 
     ${If} $AutomaticInstall = 0
@@ -329,7 +327,6 @@ Function EnterConfigPage2
     ${If} $R0 <> 0
       IntOp $R6 $R6 + 2
       !insertmacro MUI_INSTALLOPTIONS_READ $HCTL "ConfigPage2.ini" "Field $R6" "HWND"
-      SendMessage $HCTL ${EM_LIMITTEXT} 30 0
       IntOp $R6 $R6 + 2
     ${EndIf}
   ${EndIf}
