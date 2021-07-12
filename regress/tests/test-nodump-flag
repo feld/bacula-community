@@ -1,0 +1,178 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for if handling files with NODUMP flag set is correct,
+# according to the 'honor nodump flag' directive.
+#
+
+TestName="test-nodump-flag"
+JobName=backup
+. scripts/functions
+$rscripts/cleanup
+
+copy_test_confs
+cp -f $rscripts/bacula-dir.conf.accurate $conf/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+
+rm -f ${cwd}/build/testfile
+
+# Create Fileset with 'honor nodump flag' set
+cat <<END_OF_DATA >>${conf}/bacula-dir.conf
+FileSet {
+ Name = FS_NODUMP_TEST
+ Include {
+    File=<${cwd}/tmp/file-list
+    Options {
+       Honor nodump flag = yes
+    }
+ }
+}
+END_OF_DATA
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "FS_NODUMP_TEST" , "Job", "backup")'
+
+rm -rf ${cwd}/build/test
+mkdir -p ${cwd}/build/test
+
+# Create files with NODUMP flag set
+for ITER in 1 2 3 4 5
+do
+   echo "nodump" >> ${cwd}/build/test/nodump$ITER
+   chattr +d ${cwd}/build/test/nodump$ITER
+done
+
+# Create regular files
+for ITER in 1 2 3 4 5
+do
+   echo "dump" >> ${cwd}/build/test/dump$ITER
+done
+
+echo "${cwd}/build/test" >${cwd}/tmp/file-list
+
+start_test
+
+# Run normal backup
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label volume=TestVolume001 storage=File pool=Default
+estimate listing fileset=FS_NODUMP_TEST job=backup
+messages
+@$out ${cwd}/tmp/log2.out
+run job=$JobName yes
+wait
+messages
+@$out ${cwd}/tmp/log3.out
+list files jobid=1
+quit
+END_OF_DATA
+
+run_bacula
+
+# Check if number of second backup files equals to number of files w/o 'nodump' flag
+backup_files=`cat ${cwd}/tmp/log2.out | grep 'SD Files Written:' | tr -s ' ' | cut -d ':' -f 2 | sed s/,//`
+if [ ${backup_files} -ne 6 ]; then
+   estat=1
+   print_debug "Wrong number of files backed up: ${backup_files}, expected: 6"
+fi
+
+# Make sure that only files without NODUMP flag are listed in estimate
+for ITER in 1 2 3 4 5
+do
+   n=`cat ${cwd}/tmp/log1.out | grep "${cwd}/build/test/dump$ITER" | wc -l`
+   if [ $n -ne 1 ]; then
+      estat=1
+      print_debug "Did not found dump$ITER file in estimate log!\n"
+   fi
+
+   n=`cat ${cwd}/tmp/log1.out | grep "${cwd}/build/test/nodump$ITER" | wc -l`
+   if [ $n -ne 0 ]; then
+      estat=1
+      print_debug "Found dump$ITER file in estimate log, should not happen - file is marked "
+                  "with a NODUMP flag!\n"
+   fi
+done
+
+# Make sure that only files without NODUMP flag are listed in joblog
+for ITER in 1 2 3 4 5
+do
+   n=`cat ${cwd}/tmp/log3.out | grep "${cwd}/build/test/dump$ITER" | wc -l`
+   if [ $n -ne 1 ]; then
+      estat=1
+      print_debug "Did not found dump$ITER file in estimate log!\n"
+   fi
+
+   n=`cat ${cwd}/tmp/log3.out | grep "${cwd}/build/test/nodump$ITER" | wc -l`
+   if [ $n -ne 0 ]; then
+      estat=1
+      print_debug "Found dump$ITER file in estimate log, should not happen - file is marked "
+                  "with a NODUMP flag!\n"
+   fi
+done
+
+
+# Now change directive to not honor nodump flag - we should expect that all files are being backed up now
+sed -i 's/Honor nodump/#Honor nodump/g' $conf/bacula-dir.conf
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out /dev/null
+messages
+@$out ${cwd}/tmp/log4.out
+reload
+estimate listing fileset=FS_NODUMP_TEST job=backup
+messages
+@$out ${cwd}/tmp/log5.out
+run job=$JobName yes level=Full
+wait
+messages
+@$out ${cwd}/tmp/log6.out
+list files jobid=2
+quit
+END_OF_DATA
+
+run_bconsole
+
+
+# Check if this time number of backup files equals to number of all files in the directory
+backup_files=`cat ${cwd}/tmp/log5.out | grep 'SD Files Written:' | tr -s ' ' | cut -d ':' -f 2 | sed s/,//`
+if [ ${backup_files} -ne 11 ]; then
+   estat=1
+   print_debug "Wrong number of files backed up: ${backup_files}, expected: 11"
+fi
+
+# Make sure that only files without NODUMP flag are listed
+for ITER in 1 2 3 4 5
+do
+   n=`cat ${cwd}/tmp/log4.out | grep "${cwd}/build/test/dump$ITER" | wc -l`
+   if [ $n -ne 1 ]; then
+      estat=1
+      print_debug "Did not found dump$ITER file in estimate log!\n"
+   fi
+done
+
+# Make sure that all files are listed in joblog
+for ITER in 1 2 3 4 5
+do
+   n=`cat ${cwd}/tmp/log6.out | grep "${cwd}/build/test/dump$ITER" | wc -l`
+   if [ $n -ne 1 ]; then
+      estat=1
+      print_debug "Did not found dump$ITER file in estimate log!\n"
+   fi
+
+   n=`cat ${cwd}/tmp/log4.out | grep "${cwd}/build/test/nodump$ITER" | wc -l`
+   if [ $n -ne 1 ]; then
+      estat=1
+      print_debug "Did not found dump$ITER file with NODUMP flag in estimate log - should be backed up!\n"
+   fi
+done
+
+stop_bacula
+
+# Cleanup
+rm -rf ${cwd}/build/test
+
+end_test
