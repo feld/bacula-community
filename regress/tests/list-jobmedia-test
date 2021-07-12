@@ -1,0 +1,96 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test 'list jobmedia' command with jobid and volume parameters
+#
+TestName="list-jobmedia-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+update volume=TestVolume001 volstatus=Used
+label volume=TestVolume002 storage=File1 pool=File slot=1 drive=0
+@exec "touch $cwd/build/po/fr.po"
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log2.out
+.jlist jobmedia
+@$out $tmp/log3.out
+.jlist jobmedia jobid=2
+@$out $tmp/log4.out
+.jlist jobmedia volume=TestVolume002
+@$out $tmp/log5.out
+.jlist jobmedia volume=TestVolume001 jobid=2
+@$out $tmp/log6.out
+.jlist jobmedia volume=TestVolume001 jobid=1
+@$out $tmp/log7.out
+.jlist jobmedia jobid=1 volume=TestVolume001
+quit
+END_OF_DATA
+
+run_bacula
+stop_bacula
+
+grep '{' $tmp/log2.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j));'
+if [ $? != 2 ]; then
+    print_debug "ERROR: Should find two jobmedia in $tmp/log2.out"
+    estat=1
+fi
+
+grep '{' $tmp/log3.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{jobid} == 2);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find one jobmedia for jobid=2 in $tmp/log3.out"
+    estat=1
+fi
+
+grep '{' $tmp/log4.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{volumename} == "TestVolume002");'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find one jobmedia for volume=TestVolume002 in $tmp/log4.out"
+    estat=1
+fi
+
+grep '\[' $tmp/log5.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 0);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find no jobmedia for volume=TestVolume001 and Jobid=2 in $tmp/log5.out"
+    estat=1
+fi
+
+grep '{' $tmp/log6.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{volumename} == "TestVolume001");'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find one jobmedia for volume=TestVolume001 and Jobid=1 in $tmp/log6.out"
+    estat=1
+fi
+
+grep '{' $tmp/log7.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{volumename} == "TestVolume001");'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find one jobmedia for volume=TestVolume001 and Jobid=1 in $tmp/log7.out"
+    estat=1
+fi
+
+
+end_test
