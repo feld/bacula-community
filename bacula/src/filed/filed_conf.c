@@ -41,7 +41,7 @@
 
 #include "bacula.h"
 #include "filed.h"
-#include "lib/status.h"
+#include "lib/status-pkt.h"
 
 /* Define the first and last resource ID record
  * types. Note, these should be unique for each

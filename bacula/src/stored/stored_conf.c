@@ -24,7 +24,7 @@
 
 #include "bacula.h"
 #include "stored.h"
-#include "lib/status.h"
+#include "lib/status-pkt.h"
 
 /* First and last resource ids */
 int32_t r_first = R_FIRST;
