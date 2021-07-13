@@ -2082,7 +2082,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       ConfigFile ini;
       ini.register_items(plugin_items_dump, sizeof(struct ini_items));
       sp->restore_obj.object_name = (char *)INI_RESTORE_OBJECT_NAME;
-      sp->restore_obj.object_len = ini.serialize(robjbuf.c_str());
+      sp->restore_obj.object_len = ini.serialize(robjbuf.handle());
       sp->restore_obj.object = robjbuf.c_str();
       sp->type = FT_PLUGIN_CONFIG;
       DMSG2(ctx, DINFO, "Prepared RestoreObject/%s (%d) sent.\n", INI_RESTORE_OBJECT_NAME, FT_PLUGIN_CONFIG);
