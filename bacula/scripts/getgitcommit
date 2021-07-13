@@ -3,7 +3,7 @@
 GIT=$(which git)
 if [ "x$GIT" != "x" ]
 then
-   COMMIT=$(git log --pretty=format:%h -n 1) 2> /dev/null
+   COMMIT=$(git log --pretty=format:%h -n 1 2>/dev/null)
    if [ "x$COMMIT" != "x" ]
    then
       echo "$COMMIT"
