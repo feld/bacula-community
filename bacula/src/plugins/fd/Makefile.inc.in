@@ -37,5 +37,16 @@ PLUGINLIBDIR = $(FDPLUGDIR)/pluginlib
 
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
 LIBBACOBJ = $(LIBDIR)/libbac.la
+PLUGINLIBOBJ = $(PLUGINLIBDIR)/pluginlib.lo
 
 .SUFFIXES:    .c .cpp   .lo
+.PHONY: $(PLUGINLIBDIR)
+
+$(PLUGINLIBDIR):
+	$(MAKE) -C $(PLUGINLIBDIR) all
+
+$(UNITTESTSOBJ):
+	$(MAKE) -C $(LIBDIR) unittests.lo
+
+$(LIBBACOBJ):
+	$(MAKE) -C $(LIBDIR) libbac.la
