@@ -27,7 +27,6 @@
  */
 
 #include "metaplugin.h"
-#include "smartlock.h"
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/select.h>
