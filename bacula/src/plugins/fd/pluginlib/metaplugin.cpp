@@ -381,13 +381,12 @@ bRC METAPLUGIN::handle_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop
       return bRC_OK;    /* end of rop list */
    }
 
-   /* we have a single RO for every backend */
-   backend.switch_command(rop->plugin_name);
+   DMSG2(ctx, DDEBUG, "handle_plugin_restoreobj: %s %d\n", rop->object_name, rop->object_type);
 
    // if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0) {
-   if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0 && rop->object_type == FT_PLUGIN_CONFIG) {
+   if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0 && (rop->object_type == FT_PLUGIN_CONFIG || rop->object_type == FT_PLUGIN_CONFIG_FILLED)) {
 
-      DMSG2(ctx, DINFO, "INIcmd: %s %d\n", rop->plugin_name, rop->object_type);
+      DMSG(ctx, DINFO, "INIcmd: %s\n", rop->plugin_name);
 
       ini.clear_items();
       if (!ini.dump_string(rop->object, rop->object_len))
