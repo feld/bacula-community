@@ -114,6 +114,12 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
    Dmsg2(400, "Replace=%c %d\n", (char)replace, replace);
    if (lstat(attr->ofname, &mstatp) == 0) {
       exists = true;
+   }
+
+   /* The file already exists and we are not updating it, we need 
+    * to choose if we skip the file or not based on the replace flag
+    */
+   if (exists && attr->delta_seq == 0) {
       switch (replace) {
       case REPLACE_IFNEWER:
          /* Set attributes if we created this directory */
@@ -146,6 +152,12 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
          break;
       }
    }
+
+   if (!exists && attr->delta_seq > 0) {
+      Qmsg(jcr, M_SKIPPED, 0, _("File skipped. File must exists to apply a patch: %s\n"), attr->ofname);
+      return CF_SKIP;
+   }
+
    switch (attr->type) {
    case FT_RAW:                       /* raw device to be written */
    case FT_FIFO:                      /* FIFO to be written to */
@@ -161,9 +173,11 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
        *  restore data, or we may blow away a partition definition.
        */
       if (exists && attr->type != FT_RAW && attr->type != FT_FIFO
-            && attr->stream != STREAM_UNIX_ATTRIBUTE_UPDATE) {
+          && attr->stream != STREAM_UNIX_ATTRIBUTE_UPDATE
+          && attr->delta_seq == 0)
+      {
          /* Get rid of old copy */
-         Dmsg1(400, "unlink %s\n", attr->ofname);
+         Dmsg1(50, "unlink %s\n", attr->ofname);
          if (unlink(attr->ofname) == -1) {
             berrno be;
             Qmsg(jcr, M_ERROR, 0, _("File %s already exists and could not be replaced. ERR=%s.\n"),
@@ -211,12 +225,18 @@ int create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
       switch(attr->type) {
       case FT_REGE:
       case FT_REG:
-         Dmsg1(100, "Create=%s\n", attr->ofname);
          flags =  O_WRONLY | O_CREAT | O_BINARY | O_EXCL;
+
+         /* Remove the O_EXCL flag if we will update an existing file */
+         if (attr->delta_seq > 0) {
+            flags &= ~O_EXCL;
+         }
 
          if (IS_CTG(attr->statp.st_mode)) {
             flags |= O_CTG;              /* set contiguous bit if needed */
          }
+         Dmsg3(50, "Create=%s flags=%lld delta=%d\n", attr->ofname, (uint64_t)flags, (int)attr->delta_seq);
+
          if (is_bopen(bfd)) {
             Qmsg1(jcr, M_ERROR, 0, _("bpkt already open fid=%d\n"), bfd->fid);
             bclose(bfd);

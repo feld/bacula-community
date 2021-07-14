@@ -591,7 +591,7 @@ void do_restore(JCR *jcr)
          pm_strcpy(jcr->last_fname, attr->ofname);
          jcr->last_type = attr->type;
          jcr->unlock();
-         Dmsg4(130, "Outfile=%s create_file stat=%d type=%ld rdev=%d\n", attr->ofname, stat, attr->type, attr->statp.st_rdev);
+         Dmsg4(100, "Outfile=%s create_file stat=%d type=%ld rdev=%d\n", attr->ofname, stat, attr->type, attr->statp.st_rdev);
          switch (stat) {
          case CF_ERROR:
          case CF_SKIP:
@@ -756,6 +756,10 @@ void do_restore(JCR *jcr)
                rctx.flags |= FO_OFFSETS;
             }
 
+            if (rctx.full_stream & STREAM_BIT_DELTA) {
+               rctx.flags |= FO_DELTA;
+            }
+
             if (rctx.stream == STREAM_GZIP_DATA
                   || rctx.stream == STREAM_SPARSE_GZIP_DATA
                   || rctx.stream == STREAM_WIN32_GZIP_DATA
@@ -800,7 +804,13 @@ void do_restore(JCR *jcr)
             if (is_win32_stream(rctx.stream) &&
                 (win32decomp || !have_win32_api())) {
                set_portable_backup(&rctx.bfd);
-               rctx.flags |= FO_WIN32DECOMP; /* "decompose" BackupWrite data */
+               // Specific fix for VSS plugin, it is marked as Win32, but
+               // it's not a win32 data stream when Delta and Offset are on
+               if ((rctx.flags & FO_OFFSETS) && rctx.attr->delta_seq > 0) {
+                  // noop
+               } else {
+                  rctx.flags |= FO_WIN32DECOMP; /* "decompose" BackupWrite data */
+               }
             }
 
             if (extract_data(rctx, bmsg->rbuf, bmsg->rbuflen) < 0) {
@@ -1279,6 +1289,7 @@ bool sparse_data(JCR *jcr, BFILE *bfd, uint64_t *addr, char **data, uint32_t *le
    unser_uint64(faddr);
    if (*addr != faddr) {
       *addr = faddr;
+      Dmsg1(100, "Need to seek at %lld\n", faddr);
       if (blseek(bfd, (boffset_t)*addr, SEEK_SET) < 0) {
          berrno be;
          Jmsg3(jcr, M_ERROR, 0, _("Seek to %s error on %s: ERR=%s\n"),
