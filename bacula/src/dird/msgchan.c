@@ -328,6 +328,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
          ok = false;
       }
       if (ok) {
+         Jmsg(jcr, M_INFO, 0, _("Using Device \"%s\" to read.\n"), device_name.c_str());
          pm_strcpy(jcr->read_dev, device_name.c_str());
       }
    }
@@ -366,6 +367,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
          ok = false;
       }
       if (ok) {
+         Jmsg(jcr, M_INFO, 0, _("Using Device \"%s\" to write.\n"), device_name.c_str());
          pm_strcpy(jcr->write_dev, device_name.c_str());
       }
    }
