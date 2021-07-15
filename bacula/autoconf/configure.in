@@ -2409,6 +2409,13 @@ AC_CHECK_DECL(
 )
 
 AC_CHECK_DECL(
+    FS_NODUMP_FL,
+    AC_DEFINE(HAVE_NODUMP, 1, [Set if nodump can be turned on]),
+    ,
+    [#include <linux/fs.h>]
+)
+
+AC_CHECK_DECL(
     F_SETLK,
     AC_DEFINE(HAVE_FCNTL_LOCK, 1, [Set if fcntl supports file locking]),
     ,
