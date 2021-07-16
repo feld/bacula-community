@@ -306,9 +306,19 @@ static void do_extract(char *devname)
    return;
 }
 
-static bool store_data(BFILE *bfd, char *data, const int32_t length)
+static bool store_data(int32_t stream, BFILE *bfd, char *data, const int32_t length)
 {
-   if (is_win32_stream(attr->data_stream) && !have_win32_api()) {
+   bool skip_win32 = false;
+   /* This is a workaround of VSS Plugin backups that were incorrectly
+    * generating WIN32 streams with the offset option
+    */
+   if (attr->data_stream == STREAM_WIN32_DATA && stream & STREAM_BIT_OFFSETS) {
+      set_portable_backup(bfd);
+      skip_win32 = true;        /* handle data as regular files */
+      Dmsg0(50, "Found incorrect stream for WIN32 data\n");
+   }
+
+   if (is_win32_stream(attr->data_stream) && !have_win32_api() && !skip_win32) {
       set_portable_backup(bfd);
       if (!processWin32BackupAPIBlock(bfd, data, length)) {
          berrno be;
@@ -505,7 +515,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          }
          total += wsize;
          Dmsg2(8, "Write %u bytes, total=%u\n", wsize, total);
-         store_data(&bfd, wbuf, wsize);
+         store_data(rec->Stream, &bfd, wbuf, wsize);
          fileAddr += wsize;
       }
       break;
@@ -556,7 +566,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          }
 
          Dmsg2(100, "Write uncompressed %d bytes, total before write=%d\n", compress_len, total);
-         store_data(&bfd, compress_buf, compress_len);
+         store_data(rec->Stream, &bfd, compress_buf, compress_len);
          total += compress_len;
          fileAddr += compress_len;
          Dmsg2(100, "Compress len=%d uncompressed=%d\n", rec->data_len,
@@ -653,7 +663,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
                   goto bail_out;
                }
                Dmsg2(100, "Write uncompressed %d bytes, total before write=%d\n", compress_len, total);
-               store_data(&bfd, compress_buf, compress_len);
+               store_data(rec->Stream, &bfd, compress_buf, compress_len);
                total += compress_len;
                fileAddr += compress_len;
                Dmsg2(100, "Compress len=%d uncompressed=%d\n", rec->data_len, compress_len);
