@@ -752,7 +752,7 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
 
          /* Move PluginObjects */
-         Mmsg(query, "UPDATE PluginObject SET JobId=%s WHERE JobId=%s",
+         Mmsg(query, "UPDATE Object SET JobId=%s WHERE JobId=%s",
            new_jobid, old_jobid);
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
 
