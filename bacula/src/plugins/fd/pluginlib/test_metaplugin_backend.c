@@ -35,6 +35,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 
 
 #ifndef LOGDIR
@@ -74,7 +75,7 @@ bool regress_cancel_restore = false;
 
 
 #define BUFLEN             4096
-#define BIGBUFLEN          65536
+#define BIGBUFLEN          131072
 
 /**
  * @brief saves the log text to logfile
@@ -110,9 +111,9 @@ void LOG(const char *txt)
  */
 int read_plugin(char * buf)
 {
-   int len;
-   int nread;
-   int size;
+   size_t len;
+   size_t nread;
+   size_t size;
    char header[8];
 
    len = read(STDIN_FILENO, &header, 8);
@@ -130,26 +131,36 @@ int read_plugin(char * buf)
       close(logfd);
       exit(EXIT_SUCCESS);
    }
-   size = atoi(header+1);
-   if (size > BIGBUFLEN){
-      LOG("#> Err: message too long");
-      close(logfd);
-      exit(EXIT_BACKEND_MESSAGE_TOOLONG);
-   }
+   size = atoi(header + 1);
 
    if (header[0] == 'C'){
+      if (size > BIGBUFLEN){
+         LOG("#> Err: message too long");
+         close(logfd);
+         exit(EXIT_BACKEND_MESSAGE_TOOLONG);
+      }
       len = read(STDIN_FILENO, buf, size);
       buf[len] = 0;
       snprintf(buflog, BUFLEN, "> %s", buf);
       LOG(buflog);
    } else {
-      snprintf(buflog, BUFLEN, "> Data:%i", size);
+      snprintf(buflog, BUFLEN, "> Data:%lu", size);
       LOG(buflog);
       len = 0;
-      while (len < size){
-         nread = read(STDIN_FILENO, buf, size - len);
+      while (len < size) {
+         int nbytes;
+         ioctl(STDIN_FILENO, FIONREAD, &nbytes);
+         snprintf(buflog, BUFLEN, ">> FIONREAD:%i", nbytes);
+         LOG(buflog);
+         if (nbytes < size){
+            ioctl(STDIN_FILENO, FIONREAD, &nbytes);
+            snprintf(buflog, BUFLEN, ">> Second FIONREAD:%i", nbytes);
+            LOG(buflog);
+         }
+         size_t bufread = size - len > BIGBUFLEN ? BIGBUFLEN : size - len;
+         nread = read(STDIN_FILENO, buf, bufread);
          len += nread;
-         snprintf(buflog, BUFLEN, "> Dataread:%i", nread);
+         snprintf(buflog, BUFLEN, ">> Dataread:%lu", nread);
          LOG(buflog);
       }
    }
@@ -738,6 +749,19 @@ void perform_backup()
       snprintf(buf, BIGBUFLEN, "RESTOREOBJ_LEN:%lu\n", strlen(r_data) + 1);
       write_plugin('C', buf);
       write_plugin('D', r_data);
+      signal_eod();
+
+      // long restore object
+      snprintf(buf, BIGBUFLEN, "RESTOREOBJ:LongObject%d\n", mypid);
+      write_plugin('C', buf);
+      const size_t longobject_num = 6;
+      snprintf(buf, BIGBUFLEN, "RESTOREOBJ_LEN:%lu\n", BIGBUFLEN * longobject_num);
+      write_plugin('C', buf);
+      memset(buf, 'A', BIGBUFLEN);
+      for (size_t a = 0; a < longobject_num; a++)
+      {
+         write_plugin_bin((unsigned char*)buf, BIGBUFLEN);
+      }
       signal_eod();
 
       // next file
@@ -1433,6 +1457,10 @@ int main(int argc, char** argv) {
       exit(EXIT_BACKEND_LOGFILE_ERROR);
    }
    //sleep(30);
+
+   int pipesize = fcntl(STDIN_FILENO, F_GETPIPE_SZ);
+   snprintf(buflog, BUFLEN, "#> F_GETPIPE_SZ:%i", pipesize);
+   LOG(buflog);
 
    /* handshake (1) */
    len = read_plugin(buf);

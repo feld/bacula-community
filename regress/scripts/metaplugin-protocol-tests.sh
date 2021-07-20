@@ -560,7 +560,7 @@ fi
 RET=$(grep "jobstatus:" ${cwd}/tmp/rlog6.out | tail -1 | awk '{print $2}')
 REND=$(grep -w -c "TESTEND" ${cwd}/tmp/rlog6.out)
 RRO=$(grep -c "TEST6R" ${cwd}/tmp/rlog6.out)
-if [ "x$RET" != "xT" ] || [ "$REND" -ne 2 ] || [ "$RRO" -ne 2 ]
+if [ "x$RET" != "xT" ] || [ "$REND" -ne 2 ] || [ "$RRO" -ne 3 ]
 then
    echo "rlog6" "$RET" "$REND" "$RRO"
    rstat=6
