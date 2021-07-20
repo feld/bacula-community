@@ -89,7 +89,7 @@ private:
 
 protected:
    bool recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes);
-   bool sendbackend_data(bpContext *ctx, char *buf, int32_t nbytes);
+   bool sendbackend_data(bpContext *ctx, const char *buf, int32_t nbytes);
 
    int32_t recvbackend_header(bpContext *ctx, char *cmd, bool any=false);
    int32_t handle_read_header(bpContext *ctx, char *cmd, bool any=false);
@@ -98,7 +98,7 @@ protected:
    int32_t recvbackend(bpContext *ctx, char *cmd, POOL_MEM &buf, bool any=false);
    int32_t recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t bufsize);
 
-   int32_t sendbackend(bpContext *ctx, char cmd, const char *buf, int32_t len);
+   bool sendbackend(bpContext *ctx, char cmd, const POOLMEM *buf, int32_t len);
 
 public:
    PTCOMM(const char * command = NULL) :
@@ -130,7 +130,7 @@ public:
    int32_t read_data(bpContext *ctx, POOL_MEM &buf);
    int32_t read_data_fixed(bpContext *ctx, char *buf, int32_t len);
 
-   int32_t write_command(bpContext *ctx, const char *buf);
+   bool write_command(bpContext *ctx, const char *buf);
 
    bRC send_data(bpContext *ctx, const char *buf, int32_t len);
    bRC recv_data(bpContext *ctx, POOL_MEM &buf, int32_t *recv_len=NULL);
@@ -152,17 +152,15 @@ public:
 
    /**
     * @brief Signals en error to the backend.
+    *    The buf, when not NULL, can hold an error string sent do the backend.
     *
-    * The buf, when not NULL, can hold an error string sent do the backend.
-    *
-    * @param ctx - for Bacula debug and jobinfo messages
-    * @param buf - when not NULL should consist of an error string
-    *            - when NULL, no error string sent to the backend
-    * @return int32_t
-    *            -1 - when encountered any error
-    *            <n> - the number of bytes sent, success
+    * @param ctx for Bacula debug and jobinfo messages
+    * @param buf when not NULL should consist of an error string
+    *            when NULL, no error string sent to the backend
+    * @return true success
+    * @return false when encountered any error
     */
-   inline int32_t signal_error(bpContext *ctx, POOLMEM *buf)
+   inline bool signal_error(bpContext *ctx, const POOLMEM *buf)
    {
       int32_t len = buf ? strlen(buf) : 0;
       return sendbackend(ctx, 'E', buf, len);
@@ -174,22 +172,20 @@ public:
     * @brief Signals EOD to backend.
     *
     * @param ctx bpContext - for Bacula debug and jobinfo messages
-    * @return int32_t
-    *    -1 - when encountered any error
-    *    <n> - the number of bytes sent, success
+    * @return true success
+    * @return false when encountered any error
     */
-   inline int32_t signal_eod(bpContext *ctx) { return sendbackend(ctx, 'F', NULL, 0); }
+   inline bool signal_eod(bpContext *ctx) { return sendbackend(ctx, 'F', NULL, 0); }
 
    /**
     * @brief Signal end of communication to the backend.
     *    The backend should close the connection after receiving this packet.
     *
     * @param ctx bpContext - for Bacula debug and jobinfo messages
-    * @return int32_t
-    *    -1 - when encountered any error
-    *    <n> - the number of bytes sent, success
+    * @return true success
+    * @return false when encountered any error
     */
-   inline int32_t signal_term(bpContext *ctx) { return sendbackend(ctx, 'T', NULL, 0); }
+   inline bool signal_term(bpContext *ctx) { return sendbackend(ctx, 'T', NULL, 0); }
 
    void terminate(bpContext *ctx);
 

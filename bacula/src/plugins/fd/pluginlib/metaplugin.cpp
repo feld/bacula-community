@@ -39,7 +39,6 @@
 #ifdef sscanf
 #undef sscanf
 #endif
-#define NEED_REVIEW
 
 #define pluginclass(ctx)     (METAPLUGIN*)ctx->pContext;
 

@@ -39,7 +39,8 @@
 #ifdef sscanf
 #undef sscanf
 #endif
-// #define NEED_REVIEW
+
+#define SINGLE_SENDDATA
 
 /*
  * Closes external pipe if available (opened).
@@ -202,7 +203,7 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
  * @return true
  * @return false
  */
-bool PTCOMM::sendbackend_data(bpContext *ctx, POOLMEM *buf, int32_t nbytes)
+bool PTCOMM::sendbackend_data(bpContext *ctx, const char *buf, int32_t nbytes)
 {
    int status;
    int wbytes = 0;
@@ -221,8 +222,7 @@ bool PTCOMM::sendbackend_data(bpContext *ctx, POOLMEM *buf, int32_t nbytes)
       FD_SET(wfd, &wfds);
 
       status = select(maxfd, &rfds, &wfds, NULL, &_timeout);
-      if (status == 0)
-      {
+      if (status == 0) {
          // this means timeout waiting
          f_error = true;
          DMSG1(ctx, DERROR, "BPIPE write timeout=%d.\n", _timeout.tv_sec);
@@ -231,13 +231,11 @@ bool PTCOMM::sendbackend_data(bpContext *ctx, POOLMEM *buf, int32_t nbytes)
       }
 
       // check if any data on error channel
-      if (FD_ISSET(efd, &rfds))
-      {
+      if (FD_ISSET(efd, &rfds)) {
          // do read of error channel
          f_error = true;
          status = read(efd, errmsg.c_str(), errmsg.size());
-         if (status < 0)
-         {
+         if (status < 0) {
             /* show any error during message read */
             berrno be;
             DMSG(ctx, DERROR, "BPIPE read error on error channel: ERR=%s\n", be.bstrerror());
@@ -250,12 +248,10 @@ bool PTCOMM::sendbackend_data(bpContext *ctx, POOLMEM *buf, int32_t nbytes)
       }
 
       // check if data descriptor is ready
-      if (FD_ISSET(wfd, &wfds))
-      {
+      if (FD_ISSET(wfd, &wfds)) {
          // do write of data
          status = write(wfd, buf + wbytes, nbytes);
-         if (status < 0)
-         {
+         if (status < 0) {
             /* show any error during data write */
             berrno be;
             f_error = true;
@@ -568,46 +564,44 @@ int32_t PTCOMM::recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t b
    return 0;
 }
 
-/*
- * Sends packet to the backend.
+/**
+ * @brief Sends packet to the backend.
  *    The protocol allows sending no more than 999999 bytes of data in one packet.
  *    If you require to send more data you have to split it in more packages, and
  *    backend has to assemble it into a larger chunk of data.
  *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- *    cmd - the packet status to send
- *    buf - the packet contents
- *    len - the length of the contents
- * out:
- *    -1 - when encountered any error
- *    <n> - the number of bytes sent, success
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param cmd the packet status to send
+ * @param buf the packet contents
+ * @param len the length of the contents
+ * @return true success
+ * @return false when encountered any error
  */
-int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, const char *buf, int32_t len)
+bool PTCOMM::sendbackend(bpContext *ctx, char cmd, const POOLMEM *buf, int32_t len)
 {
-   int status;
    PTHEADER *header;
    PTHEADER myheader;
 
    if (is_closed()){
       DMSG0(ctx, DERROR, "BPIPE to backend is closed, cannot send data.\n");
       JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "BPIPE to backend is closed, cannot send data.\n");
-      return -1;
+      return false;
    }
 
    if (len > PTCOMM_MAX_PACKET_SIZE){
       /* message length too long, cannot send it */
       DMSG(ctx, DERROR, "Message length %i too long, cannot send data.\n", len);
       JMSG(ctx, M_FATAL, "Message length %i too long, cannot send data.\n", len);
-      return -1;
+      return false;
    }
 
-#ifdef NEED_REVIEW
-   // The code at NEED_REVIEW uses POOLMEM abufhead reserved space for
+#ifdef SINGLE_SENDDATA
+   // The code at SINGLE_SENDDATA uses POOLMEM abufhead reserved space for
    // packet header rendering in the same way as bsock.c do. The code was tested
    // and is working fine. No memory leakage or corruption encountered.
-   // The only pros for this code is a single fwrite call for a whole message
-   // instead of two fwrites (header + data) for a standard method.
+   // The only pros for this code is a single sendbackend_data call for a whole
+   // message instead of two sendbackend_data callse (header + data) for a standard
+   // method.
    if (buf){
       // we will prepare POOLMEM for sending data so we can render header here
       header = (PTHEADER*) (buf - sizeof(PTHEADER));
@@ -624,7 +618,7 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, const char *buf, int32_t l
       /* problem rendering packet header */
       DMSG0(ctx, DERROR, "Problem rendering packet header for command.\n");
       JMSG0(ctx, M_FATAL, "Problem rendering packet header for command.\n");
-      return -1;
+      return false;
    }
    header->length[6] = '\n';
 
@@ -632,30 +626,19 @@ int32_t PTCOMM::sendbackend(bpContext *ctx, char cmd, const char *buf, int32_t l
    char bindata[17];
    DMSG2(ctx, DDEBUG, "SENT: %s %s\n", asciidump((char*)header, sizeof(PTHEADER), hlendata, sizeof(hlendata)), asciidump(buf, len, bindata, sizeof(bindata)));
 
-#ifdef NEED_REVIEW
-   status = sendbackend_data(ctx, (char*)header, len + sizeof(PTHEADER));
-   status -= sizeof(PTHEADER);
+#ifdef SINGLE_SENDDATA
+   if (!sendbackend_data(ctx, (char*)header, len + sizeof(PTHEADER))){
 #else
-   status = write(wfd, header, sizeof(PTHEADER));
-   if (buf){
-      /* we have some data or command to send */
-      status = write(wfd, buf, len);
-   }
+   if (!sendbackend_data(ctx, (char*)header, sizeof(PTHEADER)) || !sendbackend_data(ctx, buf, len)){
 #endif
-   if (status < 0){
       // error
       DMSG0(ctx, DERROR, "PTCOMM cannot write packet to backend.\n");
       JMSG0(ctx, is_fatal() ? M_FATAL : M_ERROR, "PTCOMM cannot write packet to backend.\n");
       f_eod = f_error = f_fatal = true;
-      return -1;
+      return false;
    }
 
-#ifdef NEED_REVIEW
-   // correct real payload data size
-   status -= sizeof(PTHEADER);
-#endif
-
-   return status;
+   return true;
 }
 
 /**
@@ -806,10 +789,9 @@ bool PTCOMM::read_ack(bpContext *ctx)
  *    -1 - when encountered any error
  *    <n> - the number of bytes sent, success
  */
-int32_t PTCOMM::write_command(bpContext *ctx, const char *buf)
+bool PTCOMM::write_command(bpContext *ctx, const char *buf)
 {
-   int32_t len;
-   len = buf ? strlen(buf) : 0;
+   int32_t len = buf ? strlen(buf) : 0;
    return sendbackend(ctx, 'C', buf, len);
 }
 
@@ -832,7 +814,10 @@ int32_t PTCOMM::write_data(bpContext *ctx, const char *buf, int32_t len)
    if (extpipe > 0){
       status = write(extpipe, buf, len);
    } else {
-      status = sendbackend(ctx, 'D', buf, len);
+      status = len;
+      if (!sendbackend(ctx, 'D', buf, len)){
+         status = -1;
+      }
    }
    return status;
 }
@@ -854,7 +839,7 @@ bool PTCOMM::send_ack(bpContext *ctx)
 {
    POOL_MEM buf(PM_FNAME);
 
-   if (signal_eod(ctx) < 0){
+   if (!signal_eod(ctx)){
       // error
       return false;
    }
