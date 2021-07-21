@@ -24,7 +24,9 @@ rm -f ${cwd}/build/sparsefile
 change_jobname NightlySave $JobName
 start_test
 
-#$bperl -e "add_attribute('$conf/bacula-dir.conf', 'VerifyJob', '$JobName', 'Job', 'VerifyVolume')"
+# Create list of files being backed up and verified to compare afterwards
+files_listing=${cwd}/tmp/files
+find ${cwd}/build -print > ${files_listing}
 
 cat <<END_OF_DATA >tmp/bconcmds
 @output /dev/null
@@ -68,8 +70,29 @@ END_OF_DATA
 
 run_bacula
 
+while IFS= read -r line <&3; do
+   grep "Veryfying: ${line}" tmp/log2.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_debug "Did not found ${line} file in verified files log!"
+      print_debug "see: ${cwd}/tmp/log2.out"
+   fi
+   grep "Veryfying: ${line}" tmp/log3.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_debug "Did not found ${line} file in verified files log!"
+      print_debug "see: ${cwd}/tmp/log3.out"
+   fi
+   grep "Veryfying: ${line}" tmp/log4.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_debug "Did not found ${line} file in verified files log!"
+      print_debug "see: ${cwd}/tmp/log4.out"
+   fi
+done 3< ${files_listing}
+
 sleep 2
-check_for_zombie_jobs storage=File 
+check_for_zombie_jobs storage=File
 stop_bacula
 
 grep "^  Termination: *Backup OK" tmp/log1.out 2>&1 >/dev/null
@@ -86,4 +109,56 @@ if [ $? != 0 ]; then
     rstat=1
 fi
 dstat=0
+
+# Turn off verbose file listing, rerun verify jobs and check if files are not listed as expected
+sed -i '/console =*/ s/$/, !verified/g' bin/bacula-dir.conf | grep verified
+sed -i '/director =*/ s/$/, !verified/g' bin/bacula-fd.conf | grep verified
+
+cat <<END_OF_DATA >tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log5.out
+reload
+setdebug level=200 dir tags=sql trace=1
+run job=VerifyVolume yes
+wait
+messages
+@$out ${cwd}/tmp/log6.out
+run job=VerifyVolume level=DiskToCatalog jobid=1
+yes
+wait
+messages
+@$out ${cwd}/tmp/log7.out
+run job=VerifyDiskToCatalog yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+while IFS= read -r line <&3; do
+   grep "Veryfying: ${line}" tmp/log5.out > /dev/null
+   if [ $? -eq 0 ]; then
+      estat=1
+      print_debug "Found ${line} file in verified files log, no files should be listed now!"
+      print_debug "see: ${cwd}/tmp/log5.out"
+   fi
+   grep "Veryfying: ${line}" tmp/log6.out > /dev/null
+   if [ $? -eq 0 ]; then
+      estat=1
+      print_debug "Found ${line} file in verified files log, no files should be listed now!"
+      print_debug "see: ${cwd}/tmp/log6.out"
+   fi
+   grep "Veryfying: ${line}" tmp/log7.out > /dev/null
+   if [ $? -eq 0 ]; then
+      estat=1
+      print_debug "Found ${line} file in verified files log, no files should be listed now!"
+      print_debug "see: ${cwd}/tmp/log7.out"
+   fi
+done 3< ${files_listing}
+
+check_for_zombie_jobs storage=File
+stop_bacula
+
 end_test
