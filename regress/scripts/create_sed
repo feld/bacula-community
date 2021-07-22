@@ -89,6 +89,10 @@ echo "s%@win32_file@%${WIN32_FILE}%g" >>${out}
 echo "s%@win32_wsep_file@%${win32_wsep_file}%g" >>${out}
 echo "s%@win32_port@%${WIN32_PORT}%g" >>${out}
 echo "s%@win32_password@%${WIN32_PASSWORD}%g" >>${out}
+echo "s%@win32_hv_vm@%${WIN32_HV_VM}%g" >>${out}
+echo "s%@win32_hv_working_dir@%${WIN32_HV_WORKING_DIR}%g" >>${out}
+echo "s%@win32_sp_site@%${WIN32_SP_SITE}%g" >>${out}
+echo "s%@win32_sp_working_dir@%${WIN32_SP_WORKING_DIR}%g" >>${out}
 echo "s%@db_name@%${db_name}%g" >>${out}
 echo "s%@db_user@%${db_user}%g" >>${out}
 echo "s%@db_password@%${db_password}%g" >>${out}
