@@ -1,0 +1,85 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory then copy it
+#   to another device.
+# Send mail from copy job with variables for old jobid, mac jobid and new jobid,
+# verify them with job log.
+#
+TestName="copy-job-mail-test"
+JobName=CopyJobSave
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-migration-confs
+
+echo "${cwd}/build" >${cwd}/tmp/file-list
+sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
+sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
+change_jobname NightlySave $JobName
+
+# Add messsage resource with mac variables
+cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Messages {
+  Name = CopyMsg
+  mailcommand = "${bin}/bsmtp job: %j old_id=%m mac_id=%i new_id=%I"
+  mail = mrakow@localhost.com =  all
+  console = all
+
+}
+END_OF_DATA
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Messages", "CopyMsg", "Job", "copy-job")'
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File volume=FileVolume001 Pool=Default
+label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
+label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
+run job=$JobName yes
+wait
+messages
+@$out ${cwd}/tmp/log2.out
+run job=copy-job yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+# Parse logs to get ids from job message and from mail sent
+old_jobid=`cat ${cwd}/tmp/log2.out| grep 'Prev Backup JobId:' | cut -d':' -f 2 | tr -d ' '`
+mac_jobid=`cat ${cwd}/tmp/log2.out| grep 'Current JobId:' | cut -d':' -f 2 | tr -d ' '`
+new_jobid=`cat ${cwd}/tmp/log2.out| grep 'New Backup JobId:' | cut -d':' -f 2 | tr -d ' '`
+mail_old_jobid=`cat tmp/dummy_bsmtp.out | cut -d'=' -f2 | cut -d' ' -f1`
+mail_mac_jobid=`cat tmp/dummy_bsmtp.out | cut -d'=' -f3 | cut -d' ' -f1`
+mail_new_jobid=`cat tmp/dummy_bsmtp.out | cut -d'=' -f4 | cut -d' ' -f1`
+
+if [ $old_jobid -ne $mail_old_jobid ]; then
+   estat=1
+   print_debug "Wrong previous Backup JobId in mail: ${mail_old_jobid}"
+   print_debug "    see ${cwd}/tmp/dummy_bsmtp.out"
+fi
+
+if [ $mac_jobid -ne $mail_mac_jobid ]; then
+   estat=1
+   print_debug "Wrong Copy JobId in mail: ${mail_copy_jobid}"
+   print_debug "    see ${cwd}/tmp/dummy_bsmtp.out"
+fi
+
+if [ $new_jobid -ne $mail_new_jobid ]; then
+   estat=1
+   print_debug "Wrong New Backup JobId in mail: ${mail_new_jobid}"
+   print_debug "    see ${cwd}/tmp/dummy_bsmtp.out"
+fi
+
+check_for_zombie_jobs storage=File
+stop_bacula
+end_test
