@@ -2754,6 +2754,12 @@ extern "C" char *job_code_callback_director(JCR *jcr, const char* param, char *b
    static char no[] = "no";
    ASSERTD(buflen > 255, "buflen must be long enough to hold an ip address");
 
+   if (!jcr) {
+      /* Guard in case when user wants to use some per-job variable in the daemon's messages */
+      Dmsg1(400, "Got null jcr in the callback for param: %s!\n", param);
+      return NULL;
+   }
+
    switch (param[0]) {
       case 'f':
          if (jcr->fileset) {
@@ -2765,6 +2771,11 @@ extern "C" char *job_code_callback_director(JCR *jcr, const char* param, char *b
             POOL_MEM tmp;
             get_client_address(jcr, jcr->client, tmp.addr());
             return bstrncpy(buf, tmp.c_str(), buflen);
+         }
+         break;
+      case 'm':
+         if (jcr->previous_jr.JobId) {
+            return edit_uint64(jcr->previous_jr.JobId, buf);
          }
          break;
       case 'p':

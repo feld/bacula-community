@@ -842,6 +842,7 @@ void decode_session_key(char *decode, char *session, char *key, int maxlen)
  *  %j = Unique Job id
  *  %l = job level
  *  %n = Unadorned Job name
+ *  %m = Previous JobId for job being copied/migrated
  *  %o = Job Priority
  *  %p = Pool name (Director)
  *  %P = Process PID
