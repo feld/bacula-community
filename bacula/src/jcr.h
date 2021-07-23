@@ -230,6 +230,7 @@ public:
    void my_thread_send_signal(int sig);   /* in lib/jcr.c */
    void set_killable(bool killable);      /* in lib/jcr.c */
    bool is_killable() const { return my_thread_killable; };
+   job_code_callback_t job_code_callback; /* Callback sending messages defined by the user */
 
    /* Global part of JCR common to all daemons */
    dlink link;                        /* JCR chain link */

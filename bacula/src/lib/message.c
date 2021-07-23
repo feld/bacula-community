@@ -66,7 +66,6 @@ brwlock_t con_lock;                   /* Console lock structure */
 bool dbg_timestamp = false;           /* print timestamp in debug output */
 bool dbg_thread = false;              /* add thread_id to details */
 bool prt_kaboom = false;              /* Print kaboom output */
-job_code_callback_t message_job_code_callback = NULL;   /* Job code callback. Only used by director. */
 
 /* Forward referenced functions */
 
@@ -363,7 +362,9 @@ init_msg(JCR *jcr, MSGS *msg, job_code_callback_t job_code_callback)
       set_jcr_in_tsd(INVALID_JCR);
    }
 
-   message_job_code_callback = job_code_callback;
+   if (jcr) {
+      jcr->job_code_callback = job_code_callback;
+   }
 
 #if !defined(HAVE_WIN32)
    /*
@@ -574,7 +575,7 @@ static BPIPE *open_mail_pipe(JCR *jcr, POOLMEM *&cmd, DEST *d)
    BPIPE *bpipe;
 
    if (d->mail_cmd) {
-      cmd = edit_job_codes(jcr, cmd, d->mail_cmd, d->where, message_job_code_callback);
+      cmd = edit_job_codes(jcr, cmd, d->mail_cmd, d->where, jcr ? jcr->job_code_callback : NULL);
    } else {
       Mmsg(cmd, "/usr/lib/sendmail -F Bacula %s", d->where);
    }
