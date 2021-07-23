@@ -473,7 +473,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1022 ] ; then
-    if sqlite3 -f - -d ${db_name} $* <<END-OF-DATA
+    if sqlite3 $* ${db_name}.db <<END-OF-DATA
 begin;
 ALTER TABLE Object ADD COLUMN ObjectCategory text not null;
 create index object_category_idx on Object  (ObjectCategory);
@@ -492,7 +492,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1023 ] ; then
-    if sqlite3 -f - -d ${db_name} $* <<END-OF-DATA
+    if sqlite3 $* ${db_name}.db <<END-OF-DATA
 begin;
 ALTER TABLE Object ADD COLUMN ObjectStatus char(1) default 'U';
 ALTER TABLE Object ADD COLUMN ObjectCount integer default 1;
