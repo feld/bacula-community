@@ -1317,9 +1317,9 @@ bool cloud_dev::wait_one_transfer(DCR *dcr, char *VolName, uint32_t part)
       dcr->jcr->setJobStatus(JS_Running);
 
       if (!ok) {
-         Qmsg2(dcr->jcr, M_FATAL, 0,
-               _("Unable to download Volume=\"%s\"%s.\n"), VolName,
-               (part==1)?" label":"");
+         Qmsg3(dcr->jcr, M_FATAL, 0,
+               _("Unable to download Volume=\"%s\"%s. %s\n"), VolName,
+               (part == 1) ? " label" : "", item->m_message ? item->m_message:"");
       }
       return ok;
    } else {
