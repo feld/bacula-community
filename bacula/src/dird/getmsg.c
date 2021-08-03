@@ -283,11 +283,6 @@ int bget_dirmsg(BSOCK *bs)
          }
          continue;
       }
-      if (bs->msg[0] == 'M') {        /* Mount request */
-         Dmsg1(900, "Mount req: %s", bs->msg);
-         mount_request(jcr, bs, msg);
-         continue;
-      }
       /* Get Progress: files, bytes, bytes/sec */
       if (bs->msg[0] == 'P') {       /* Progress report */
          uint32_t files, bps;

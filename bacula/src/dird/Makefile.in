@@ -38,7 +38,7 @@ SVRSRCS = dird.c admin.c authenticate.c \
 	  dird_conf.c expand.c \
 	  fd_cmds.c getmsg.c inc_conf.c job.c \
 	  jobq.c mac.c mac_sql.c \
-	  mountreq.c msgchan.c next_vol.c newvol.c \
+	  msgchan.c next_vol.c newvol.c \
 	  recycle.c restore.c run_conf.c \
 	  scheduler.c store_mngr.c \
 	  ua_acl.c ua_cmds.c ua_dotcmds.c \

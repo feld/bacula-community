@@ -49,7 +49,6 @@ DIRD_OBJS = \
 	$(OBJDIR)/inc_conf.o \
 	$(OBJDIR)/job.o \
 	$(OBJDIR)/jobq.o \
-	$(OBJDIR)/mountreq.o \
 	$(OBJDIR)/msgchan.o \
 	$(OBJDIR)/newvol.o \
 	$(OBJDIR)/next_vol.o \

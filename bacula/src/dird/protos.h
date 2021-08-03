@@ -162,9 +162,6 @@ extern bool set_mac_wstorage(UAContext *ua, JCR *jcr, POOL *pool,
                POOL *next_pool, const char *source);
 
 
-/* mountreq.c */
-extern void mount_request(JCR *jcr, BSOCK *bs, char *buf);
-
 /* msgchan.c */
 extern BSOCK *open_sd_bsock(UAContext *ua);
 extern void close_sd_bsock(UAContext *ua);
