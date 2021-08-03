@@ -180,18 +180,6 @@ bool AskDirHandler::dir_get_volume_info(DCR *dcr, const char *VolumeName, enum g
 }
 
 /**
- * Send current JobStatus to Director
- */
-bool dir_send_job_status(JCR *jcr)
-{
-   if (askdir_handler) {
-      return askdir_handler->dir_send_job_status(jcr);
-   }
-
-   return jcr->sendJobStatus();
-}
-
-/**
  * Common routine for:
  *   dir_get_volume_info()
  * and

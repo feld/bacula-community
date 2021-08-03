@@ -48,7 +48,6 @@ bool    dir_update_volume_info(DCR *dcr, bool label, bool update_LastWritten,
 bool    dir_ask_sysop_to_create_appendable_volume(DCR *dcr);
 bool    dir_ask_sysop_to_mount_volume(DCR *dcr, bool read_access);
 bool    dir_update_file_attributes(DCR *dcr, DEV_RECORD *rec);
-bool    dir_send_job_status(JCR *jcr);
 bool    dir_create_jobmedia_record(DCR *dcr, bool zero=false);
 void    create_jobmedia_queue(JCR *jcr);
 bool    flush_jobmedia_queue(JCR *jcr);
@@ -75,7 +74,6 @@ public:
    virtual bool flush_jobmedia_queue(JCR *jcr) { return true; }
    virtual bool dir_ask_sysop_to_create_appendable_volume(DCR *dcr) { return 1; }
    virtual bool dir_update_file_attributes(DCR *dcr, DEV_RECORD *rec) { return 1;}
-   virtual bool dir_send_job_status(JCR *jcr) {return 1;}
    virtual bool dir_ask_sysop_to_mount_volume(DCR *dcr, bool writing);
    virtual bool dir_get_volume_info(DCR *dcr, const char *VolumeName, enum get_vol_info_rw writing);
 };
