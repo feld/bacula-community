@@ -180,7 +180,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
       memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
    }
    Dmsg1(100, ">filed: %s", fd->msg);
-   if (bget_dirmsg(fd) > 0) {
+   if (bget_dirmsg(jcr, fd, BSOCK_TYPE_FD) > 0) {
        Dmsg1(110, "<filed: %s", fd->msg);
        if (strncmp(fd->msg, OKjob, strlen(OKjob)) != 0) {
           Jmsg(jcr, M_FATAL, 0, _("File daemon \"%s\" rejected Job command: %s\n"),
@@ -407,7 +407,7 @@ static void send_since_time(JCR *jcr)
    stime = str_to_utime(jcr->stime);
    fd->fsend(levelcmd, "", NT_("since_utime "), edit_uint64(stime, ed1), 0,
              NT_("prev_job="), jcr->PrevJob);
-   while (bget_dirmsg(fd) >= 0) {  /* allow him to poll us to sync clocks */
+   while (bget_dirmsg(jcr, fd, BSOCK_TYPE_FD) >= 0) {  /* allow him to poll us to sync clocks */
       Jmsg(jcr, M_INFO, 0, "%s\n", fd->msg);
    }
 }
@@ -417,7 +417,7 @@ bool send_bwlimit(JCR *jcr, const char *Job)
    BSOCK *fd = jcr->file_bsock;
    if (jcr->FDVersion >= 4) {
       fd->fsend(bandwidthcmd, jcr->max_bandwidth, Job);
-      if (!response(jcr, fd, OKBandwidth, "Bandwidth", DISPLAY_ERROR)) {
+      if (!response(jcr, fd, BSOCK_TYPE_FD, OKBandwidth, "Bandwidth", DISPLAY_ERROR)) {
          jcr->max_bandwidth = 0;      /* can't set bandwidth limit */
          return false;
       }
@@ -462,7 +462,7 @@ bool send_level_command(JCR *jcr)
       return 0;
    }
    Dmsg1(120, ">filed: %s", fd->msg);
-   if (!response(jcr, fd, OKlevel, "Level", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKlevel, "Level", DISPLAY_ERROR)) {
       return false;
    }
    return true;
@@ -613,7 +613,7 @@ static bool send_fileset(JCR *jcr)
    }
 
    fd->signal(BNET_EOD);              /* end of data */
-   if (!response(jcr, fd, OKinc, "Include", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKinc, "Include", DISPLAY_ERROR)) {
       goto bail_out;
    }
    return true;
@@ -730,7 +730,7 @@ bool send_ls_plugin_fileset(JCR *jcr, const char *plugin, const char *path)
    fd->fsend("N\n");
    fd->signal(BNET_EOD);              /* end of data */
 
-   if (!response(jcr, fd, OKinc, "Include", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKinc, "Include", DISPLAY_ERROR)) {
       return false;
    }
    return true;
@@ -751,7 +751,7 @@ bool send_ls_fileset(JCR *jcr, const char *path)
    fd->fsend("N\n");
    fd->signal(BNET_EOD);              /* end of data */
 
-   if (!response(jcr, fd, OKinc, "Include", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKinc, "Include", DISPLAY_ERROR)) {
       return false;
    }
    return true;
@@ -781,10 +781,10 @@ int send_runscript_with_old_proto(JCR *jcr, int when, POOLMEM *msg)
    Dmsg1(120, "bdird: sending old runcommand to fd '%s'\n",msg);
    if (when & SCRIPT_Before) {
       jcr->file_bsock->fsend(runbefore, msg);
-      ret = response(jcr, jcr->file_bsock, OKRunBefore, "ClientRunBeforeJob", DISPLAY_ERROR);
+      ret = response(jcr, jcr->file_bsock, BSOCK_TYPE_FD, OKRunBefore, "ClientRunBeforeJob", DISPLAY_ERROR);
    } else {
       jcr->file_bsock->fsend(runafter, msg);
-      ret = response(jcr, jcr->file_bsock, OKRunAfter, "ClientRunAfterJob", DISPLAY_ERROR);
+      ret = response(jcr, jcr->file_bsock, BSOCK_TYPE_FD, OKRunAfter, "ClientRunAfterJob", DISPLAY_ERROR);
    }
    return ret;
 } /* END OF TODO */
@@ -830,7 +830,7 @@ int send_runscripts_commands(JCR *jcr)
                                     cmd->when,
                                     msg);
 
-               result = response(jcr, fd, OKRunScript, "RunScript", DISPLAY_ERROR);
+               result = response(jcr, fd, BSOCK_TYPE_FD, OKRunScript, "RunScript", DISPLAY_ERROR);
                launch_before_cmd = true;
             }
 
@@ -850,7 +850,7 @@ int send_runscripts_commands(JCR *jcr)
    /* Tell the FD to execute the ClientRunBeforeJob */
    if (launch_before_cmd) {
       fd->fsend(runbeforenow);
-      if (!response(jcr, fd, OKRunBeforeNow, "RunBeforeNow", DISPLAY_ERROR)) {
+      if (!response(jcr, fd, BSOCK_TYPE_FD, OKRunBeforeNow, "RunBeforeNow", DISPLAY_ERROR)) {
         goto bail_out;
       }
    }
@@ -1010,7 +1010,7 @@ static bool get_plugin_features(JCR *jcr, PluginFeatures **ret)
     */
    fd->fsend("PluginFeatures\n");
 
-   while (bget_dirmsg(fd) > 0) {
+   while (bget_dirmsg(jcr, fd, BSOCK_TYPE_FD) > 0) {
       buf.check_size(fd->msglen+1);
       if (sscanf(fd->msg, "2000 plugin=%127s features=%s", ed1, buf.c_str()) == 2) {
          /* We have buf=feature1,feature2,feature3 */
@@ -1094,7 +1094,7 @@ bool send_restore_objects(JCR *jcr)
    if (octx.count > 0) {
       fd = jcr->file_bsock;
       fd->fsend("restoreobject end\n");
-      if (!response(jcr, fd, OKRestoreObject, "RestoreObject", DISPLAY_ERROR)) {
+      if (!response(jcr, fd, BSOCK_TYPE_FD, OKRestoreObject, "RestoreObject", DISPLAY_ERROR)) {
          Jmsg(jcr, M_FATAL, 0, _("RestoreObject failed.\n"));
          return false;
       }
@@ -1131,7 +1131,7 @@ bool send_component_info(JCR *jcr)
       Dmsg1(050, "Send component_info to FD: %s\n", buf);
    }
    fd->signal(BNET_EOD);
-   if (!response(jcr, fd, OKComponentInfo, "ComponentInfo", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKComponentInfo, "ComponentInfo", DISPLAY_ERROR)) {
       Jmsg(jcr, M_FATAL, 0, _("ComponentInfo failed.\n"));
       ok = false;
    }
@@ -1164,7 +1164,7 @@ int get_attributes_and_put_in_catalog(JCR *jcr)
 
    Dmsg0(120, "bdird: waiting to receive file attributes\n");
    /* Pickup file attributes and digest */
-   while (!fd->errors && (n = bget_dirmsg(fd)) > 0) {
+   while (!fd->errors && (n = bget_dirmsg(jcr, fd, BSOCK_TYPE_FD)) > 0) {
       int32_t file_index;
       int stream, len;
       char *p, *fn;

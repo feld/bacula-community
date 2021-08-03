@@ -138,7 +138,7 @@ bool send_snapshot_retention(JCR *jcr, utime_t val)
    char ed1[50];
    if (val > 0 && jcr->FDVersion >= 13) {
       fd->fsend(snapretentioncmd, edit_uint64(val, ed1));
-      if (!response(jcr, fd, (char*)"2000 Snapshot retention\n", "set Snapshot Retention", DISPLAY_ERROR)) {
+      if (!response(jcr, fd, BSOCK_TYPE_FD, "2000 Snapshot retention\n", "set Snapshot Retention", DISPLAY_ERROR)) {
          jcr->snapshot_retention = 0;      /* can't set snapshot retention */
          return false;
       }

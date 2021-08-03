@@ -365,7 +365,7 @@ bool send_store_addr_to_fd(JCR *jcr, STORE *store,
     * Send Storage address to the FD
     */
    jcr->file_bsock->fsend(storaddr, store_address, store_port, tls_need);
-   if (!response(jcr, jcr->file_bsock, OKstore, "Storage", DISPLAY_ERROR)) {
+   if (!response(jcr, jcr->file_bsock, BSOCK_TYPE_FD, OKstore, "Storage", DISPLAY_ERROR)) {
       return false;
    }
    return true;
@@ -390,7 +390,7 @@ bool send_client_addr_to_sd(JCR *jcr)
     * Send Client address to the SD
     */
    sd->fsend(clientaddr, get_client_address(jcr, jcr->client, buf.addr()), jcr->client->FDport, tls_need);
-   if (!response(jcr, sd, OKclient, "Client", DISPLAY_ERROR)) {
+   if (!response(jcr, sd, BSOCK_TYPE_SD, OKclient, "Client", DISPLAY_ERROR)) {
       return false;
    }
    return true;
@@ -734,7 +734,7 @@ bool do_backup(JCR *jcr)
    /* Send backup command */
    fd->fsend(backupcmd, jcr->JobFiles);
    Dmsg1(100, ">filed: %s", fd->msg);
-   if (!response(jcr, fd, OKbackup, "backup", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKbackup, "backup", DISPLAY_ERROR)) {
       goto bail_out;
    }
 
@@ -791,7 +791,7 @@ int wait_for_job_termination(JCR *jcr, int timeout)
          tid = start_bsock_timer(fd, timeout); /* TODO: New timeout directive??? */
       }
       /* Wait for Client to terminate */
-      while ((n = bget_dirmsg(fd)) >= 0) {
+      while ((n = bget_dirmsg(jcr, fd, BSOCK_TYPE_FD)) >= 0) {
          if (!fd_ok &&
              (sscanf(fd->msg, newEndJob, &jcr->FDJobStatus, &JobFiles,
                      &ReadBytes, &JobBytes, &JobErrors, &VSS, &Encrypt,

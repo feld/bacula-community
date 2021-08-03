@@ -179,7 +179,7 @@ bool update_device_res(JCR *jcr, DEVICE *dev)
    sd->fsend(query_device, device_name.c_str());
    Dmsg1(100, ">stored: %s\n", sd->msg);
    /* The data is returned through Device_update */
-   if (bget_dirmsg(sd) <= 0) {
+   if (bget_dirmsg(jcr, sd, BSOCK_TYPE_SD) <= 0) {
       return false;
    }
    return true;
@@ -252,7 +252,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
 
    Dmsg1(100, ">stored: %s", sd->msg);
    Dmsg2(100, "=== rstore=%p wstore=%p\n", rstore, wstore);
-   if (bget_dirmsg(sd) > 0) {
+   if (bget_dirmsg(jcr, sd, BSOCK_TYPE_SD) > 0) {
        Dmsg1(100, "<stored: %s", sd->msg);
        if (sscanf(sd->msg, OKjob, &jcr->VolSessionId,
                   &jcr->VolSessionTime, &sd_auth_key) != 3) {
@@ -271,7 +271,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
    }
 
    if (send_bsr && (!send_bootstrap_file(jcr, sd) ||
-       !response(jcr, sd, OKbootstrap, "Bootstrap", DISPLAY_ERROR))) {
+       !response(jcr, sd, BSOCK_TYPE_SD, OKbootstrap, "Bootstrap", DISPLAY_ERROR))) {
       return false;
    }
 
@@ -321,7 +321,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
          sd->signal(BNET_EOD);           /* end of Devices */
       }
       sd->signal(BNET_EOD);              /* end of Storages */
-      if (bget_dirmsg(sd) > 0) {
+      if (bget_dirmsg(jcr, sd, BSOCK_TYPE_SD) > 0) {
          Dmsg1(100, "<stored: %s", sd->msg);
          ok = sscanf(sd->msg, OK_device, device_name.c_str()) == 1;
       } else {
@@ -360,7 +360,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
          sd->signal(BNET_EOD);           /* end of Devices */
       }
       sd->signal(BNET_EOD);              /* end of Storages */
-      if (bget_dirmsg(sd) > 0) {
+      if (bget_dirmsg(jcr, sd, BSOCK_TYPE_SD) > 0) {
          Dmsg1(100, "<stored: %s", sd->msg);
          ok = sscanf(sd->msg, OK_device, device_name.c_str()) == 1;
       } else {
@@ -455,7 +455,7 @@ extern "C" void *msg_thread(void *arg)
     */
    Dmsg0(100, "Start msg_thread loop\n");
    n = 0;
-   while (!job_canceled(jcr) && (n=bget_dirmsg(sd)) >= 0) {
+   while (!job_canceled(jcr) && (n=bget_dirmsg(jcr, sd, BSOCK_TYPE_SD)) >= 0) {
       Dmsg1(400, "<stored: %s", sd->msg);
       if (sscanf(sd->msg, Job_start, Job) == 1) {
          continue;

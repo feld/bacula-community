@@ -2574,7 +2574,7 @@ int cloud_volumes_cmd(UAContext *ua, const char *cmd, const char *mode)
       unbash_spaces(truncate_option);
 
       /* Check for valid response */
-      while (bget_dirmsg(sd) >= 0) {
+      while (bget_dirmsg(ua->jcr, sd, BSOCK_TYPE_SD) >= 0) {
          if (strncmp(sd->msg, "3000 OK truncate cache", 22) == 0) {
             ua->send_msg("%s", sd->msg);
             ok = true;

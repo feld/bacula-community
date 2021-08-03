@@ -420,7 +420,7 @@ bool restore_bootstrap(JCR *jcr)
        * Send the bootstrap file -- what Volumes/files to restore
        */
       if (!send_bootstrap_file(jcr, sd, info) ||
-          !response(jcr, sd, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
+          !response(jcr, sd, BSOCK_TYPE_SD, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
          goto bail_out;
       }
 
@@ -481,7 +481,7 @@ bool restore_bootstrap(JCR *jcr)
       fd->fsend(storaddr, store_address, store_port, tls_need, jcr->sd_auth_key);
       memset(jcr->sd_auth_key, 0, strlen(jcr->sd_auth_key));
       Dmsg1(6, "dird>filed: %s\n", fd->msg);
-      if (!response(jcr, fd, OKstore, "Storage", DISPLAY_ERROR)) {
+      if (!response(jcr, fd, BSOCK_TYPE_FD, OKstore, "Storage", DISPLAY_ERROR)) {
          goto bail_out;
       }
 
@@ -511,14 +511,14 @@ bool restore_bootstrap(JCR *jcr)
       }
 
       fd->fsend("%s", restore_cmd.c_str());
-      if (!response(jcr, fd, OKrestore, "Restore", DISPLAY_ERROR)) {
+      if (!response(jcr, fd, BSOCK_TYPE_FD, OKrestore, "Restore", DISPLAY_ERROR)) {
          goto bail_out;
       }
 
       if (jcr->FDVersion < 2) { /* Old FD */
          break;                 /* we do only one loop */
       } else {
-         if (!response(jcr, fd, OKstoreend, "Store end", DISPLAY_ERROR)) {
+         if (!response(jcr, fd, BSOCK_TYPE_FD, OKstoreend, "Store end", DISPLAY_ERROR)) {
             goto bail_out;
          }
          wait_for_storage_daemon_termination(jcr);

@@ -267,7 +267,7 @@ bool do_verify(JCR *jcr)
        * Send the bootstrap file -- what Volumes/files to restore
        */
       if (!send_bootstrap_file(jcr, sd) ||
-          !response(jcr, sd, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
+          !response(jcr, sd, BSOCK_TYPE_SD, OKbootstrap, "Bootstrap", DISPLAY_ERROR)) {
          goto bail_out;
       }
       if (!jcr->sd_calls_client) {
@@ -373,7 +373,7 @@ bool do_verify(JCR *jcr)
     * Send verify command/level to File daemon
     */
    fd->fsend(verifycmd, level);
-   if (!response(jcr, fd, OKverify, "Verify", DISPLAY_ERROR)) {
+   if (!response(jcr, fd, BSOCK_TYPE_FD, OKverify, "Verify", DISPLAY_ERROR)) {
       goto bail_out;
    }
 
@@ -415,7 +415,7 @@ bool do_verify(JCR *jcr)
 
    case L_VERIFY_DATA:
       /* Nothing special to do */
-      bget_dirmsg(fd);          /* eat EOD */
+      bget_dirmsg(jcr, fd, BSOCK_TYPE_FD);          /* eat EOD */
       break;
    default:
       Jmsg1(jcr, M_FATAL, 0, _("Unimplemented verify level %d\n"), jcr->getJobLevel());
@@ -623,7 +623,7 @@ void get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
     *   Attributes
     *   Link name  ???
     */
-   while ((n=bget_dirmsg(fd)) >= 0 && !job_canceled(jcr)) {
+   while ((n=bget_dirmsg(jcr, fd, BSOCK_TYPE_FD)) >= 0 && !job_canceled(jcr)) {
       int32_t stream, full_stream;
       char *attr, *p, *fn;
       char Opts_Digest[MAXSTRING];        /* Verify Opts or MD5/SHA1 digest */

@@ -134,8 +134,11 @@ static bool is_msgid(char *msg)
  *    *System* for the Job name, and hence no JCR is obtained. This
  *    is a *rare* case where a jcr is not really needed.
  *
+ *  role is the role of component at the other side of the BSOCK
+ *  BSOCK_TYPE_FD for a file daemon (that cannot update the catalog)
+ *  BSOCK_TYPE_SD for a storage daemon
  */
-int bget_dirmsg(BSOCK *bs)
+int bget_dirmsg(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role)
 {
    int32_t n = BNET_TERMINATE;
    char Job[MAX_NAME_LENGTH];
@@ -143,7 +146,6 @@ int bget_dirmsg(BSOCK *bs)
    char MsgType[20];
    int type;
    utime_t mtime;                     /* message time */
-   JCR *jcr = bs->jcr();
    char *msg;
 
    for ( ; !bs->is_stop() && !bs->is_timed_out(); ) {
@@ -253,21 +255,25 @@ int bget_dirmsg(BSOCK *bs)
          dispatch_message(jcr, type, mtime, msg);
          continue;
       }
+
       /*
-       * Here we expact a CatReq message
-       *   CatReq JobId=nn Catalog-Request-Message
+       * Here we expect a catalog request message from the SD
+       *   CatReq JobId=nn .....
+       *   UpdCat JobId=nn ......
+       *   BlastAttr JobId=nn ....
+       *
        */
-      if (bs->msg[0] == 'C') {        /* Catalog request */
+      if (role==BSOCK_TYPE_SD && bs->msg[0] == 'C') {        /* Catalog request */
          Dmsg2(900, "Catalog req jcr=%p: %s", jcr, bs->msg);
          catalog_request(jcr, bs);
          continue;
       }
-      if (bs->msg[0] == 'U') {        /* SD sending attributes */
+      if (role==BSOCK_TYPE_SD && bs->msg[0] == 'U') {        /* SD sending attributes */
          Dmsg2(900, "Catalog upd jcr=%p: %s", jcr, bs->msg);
          catalog_update(jcr, bs);
          continue;
       }
-      if (bs->msg[0] == 'B') {        /* SD sending file spool attributes */
+      if (role==BSOCK_TYPE_SD && bs->msg[0] == 'B') {        /* SD sending file spool attributes */
          Dmsg2(100, "Blast attributes jcr=%p: %s", jcr, bs->msg);
          char filename[256];
          if (sscanf(bs->msg, "BlastAttr JobId=%ld File=%255s",
@@ -284,7 +290,7 @@ int bget_dirmsg(BSOCK *bs)
          continue;
       }
       /* Get Progress: files, bytes, bytes/sec */
-      if (bs->msg[0] == 'P') {       /* Progress report */
+      if (role==BSOCK_TYPE_FD && bs->msg[0] == 'P') {       /* Progress report */
          uint32_t files, bps;
          uint64_t bytes;
          if ((sscanf(bs->msg, "Progress JobId=%ld files=%ld bytes=%lld bps=%ld\n",
@@ -303,7 +309,7 @@ int bget_dirmsg(BSOCK *bs)
          }
          continue;
       }
-      if (bs->msg[0] == 'S') {       /* Status change */
+      if (role==BSOCK_TYPE_SD && bs->msg[0] == 'S') {       /* Status change */
          int JobStatus;
          if (sscanf(bs->msg, Job_status, &JobId, &JobStatus) == 2) {
             set_jcr_sd_job_status(jcr, JobStatus); /* current status */
@@ -314,7 +320,7 @@ int bget_dirmsg(BSOCK *bs)
       }
 #ifdef needed
       /* No JCR for Device Updates! */
-      if (bs->msg[0] = 'D') {         /* Device update */
+      if (role==BSOCK_TYPE_SD && bs->msg[0] = 'D') {         /* Device update */
          DEVICE *dev;
          POOL_MEM dev_name, changer_name, media_type, volume_name;
          int dev_open, dev_append, dev_read, dev_labeled;
@@ -394,14 +400,14 @@ static char *find_msg_start(char *msg)
  *  Returns: false on failure
  *           true  on success
  */
-bool response(JCR *jcr, BSOCK *bs, char *resp, const char *cmd, e_prtmsg prtmsg)
+bool response(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role, const char *resp, const char *cmd, e_prtmsg prtmsg)
 {
    int n;
 
    if (bs->is_error()) {
       return false;
    }
-   if ((n = bget_dirmsg(bs)) >= 0) {
+   if ((n = bget_dirmsg(jcr, bs, role)) >= 0) {
       if (strcmp(bs->msg, resp) == 0) {
          return true;
       }

@@ -340,7 +340,7 @@ static bool send_store_addr_to_sd(JCR *jcr, char *Job, char *sd_auth_key,
    Dmsg2(200, "=== Job=%s sd auth key=%s\n", Job, sd_auth_key);
    jcr->store_bsock->fsend(storaddr, store_address, store_port,
       tls_need, Job, sd_auth_key);
-   if (!response(jcr, jcr->store_bsock, OKstore, "Storage", DISPLAY_ERROR)) {
+   if (!response(jcr, jcr->store_bsock, BSOCK_TYPE_SD, OKstore, "Storage", DISPLAY_ERROR)) {
       Dmsg4(050, "Response fail for: JobId=%d storeaddr=%s:%d Job=%s\n",
            jcr->JobId, store_address, store_port, Job);
       Jmsg3(jcr, M_FATAL, 0, "Response failure: storeddr=%s:%d Job=%s\n",

@@ -44,6 +44,14 @@
 
 #define BSOCK_TIMEOUT  3600 * 24 * 200;  /* default 200 days */
 
+/* Type of bsock connection (to sd, to fd, to console, to dir...) */
+typedef enum {
+ BSOCK_TYPE_UNKN,
+ BSOCK_TYPE_FD,                 // Connected to FD
+ BSOCK_TYPE_SD,                 // Connected to DIR
+ BSOCK_TYPE_CONS                // Connected to console
+} BSOCK_CLIENT_TYPE;
+
 class BSOCK: public BSOCKCORE {
 public:
    FILE *m_spool_fd;                  /* spooling file */

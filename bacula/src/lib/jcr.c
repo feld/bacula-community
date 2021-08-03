@@ -80,7 +80,6 @@ pthread_once_t key_once = PTHREAD_ONCE_INIT;
 
 static char Job_status[] = "Status JobId=%ld JobStatus=%d\n";
 
-
 void lock_jobs()
 {
    P(job_start_mutex);
@@ -893,6 +892,7 @@ static int get_status_priority(int JobStatus)
 
 /*
  * Send Job status to Director
+ * ATTN: Only the SD like components are expected to send there job status
  */
 bool JCR::sendJobStatus()
 {
@@ -904,6 +904,7 @@ bool JCR::sendJobStatus()
 
 /*
  * Set and send Job status to Director
+ * ATTN: Only the SD like components are expected to send there job status
  */
 bool JCR::sendJobStatus(int aJobStatus)
 {

@@ -651,7 +651,7 @@ static void truncate_volume(UAContext *ua, MEDIA_DBR *mr,
    /* Check for valid response. With cloud volumes, the upload of the part.1 can
     * generate a dir_update_volume_info() message that is handled by bget_dirmsg()
     */
-   while (bget_dirmsg(sd) >= 0) {
+   while (bget_dirmsg(ua->jcr, sd, BSOCK_TYPE_SD) >= 0) {
       ua->send_msg("%s", sd->msg);
       if (sscanf(sd->msg, "3000 OK label. VolBytes=%llu VolABytes=%lld VolType=%d ",
                  &VolBytes, &VolABytes, &VolType) == 3) {

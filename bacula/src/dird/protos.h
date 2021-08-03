@@ -117,7 +117,7 @@ enum e_prtmsg {
    DISPLAY_ERROR,
    NO_DISPLAY
 };
-extern bool response(JCR *jcr, BSOCK *fd, char *resp, const char *cmd, e_prtmsg prtmsg);
+extern bool response(JCR *jcr, BSOCK *fd, BSOCK_CLIENT_TYPE role, const char *resp, const char *cmd, e_prtmsg prtmsg);
 
 /* job.c */
 extern bool allow_duplicate_job(JCR *jcr);
@@ -170,7 +170,7 @@ extern bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
 extern bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
               bool send_bsr=false);
 extern bool start_storage_daemon_message_thread(JCR *jcr);
-extern int bget_dirmsg(BSOCK *bs);
+extern int bget_dirmsg(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role);
 extern void wait_for_storage_daemon_termination(JCR *jcr);
 extern bool send_bootstrap_file(JCR *jcr, BSOCK *sd);
 
