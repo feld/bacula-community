@@ -502,7 +502,7 @@ commit;
 END-OF-DATA
     then
 	echo "Update of Bacula SQLite3 tables 1023 to 1024 succeeded."
-	DBVERSION=1023
+	DBVERSION=1024
     else
 	echo "Update of Bacula SQLite3 tables 1023 to 1024 failed."
 	exit 1
