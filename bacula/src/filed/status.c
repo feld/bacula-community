@@ -79,6 +79,7 @@ static void api_list_status_header(STATUS_PKT *sp)
    char *p;
    char buf[300];
    const char *cipher=NULL, *digest=NULL;
+   alist tlist(10, not_owned_by_alist);
    OutputWriter wt(sp->api_opts);
    *buf = 0;
 
@@ -115,6 +116,7 @@ static void api_list_status_header(STATUS_PKT *sp)
       OT_STRING, "winver",      buf,
       OT_INT64,  "debug",       debug_level,
       OT_INT,    "trace",       get_trace(),
+      OT_ALIST_STR, "tags",     debug_get_tags_list(&tlist, debug_level_tags),
       OT_INT64,  "bwlimit",     me->max_bandwidth_per_job,
       OT_PLUGINS, "plugins",    b_plugin_list,
       OT_INT,     "pkiencryption", (int)me->pki_encrypt,

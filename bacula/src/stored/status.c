@@ -539,6 +539,7 @@ static void api_list_sd_status_header(STATUS_PKT *sp)
 {
    char *p;
    alist drivers(10, not_owned_by_alist);
+   alist tlist(10, not_owned_by_alist);
    OutputWriter wt(sp->api_opts);
 
    sd_list_loaded_drivers(&drivers);
@@ -557,6 +558,9 @@ static void api_list_sd_status_header(STATUS_PKT *sp)
       OT_ALIST_STR, "drivers",  &drivers,
       OT_INT32,   "fips",       (int32_t)crypto_get_fips(),
       OT_STRING,   "openssl",   crypto_get_version(),
+      OT_INT64,  "debug",       debug_level,
+      OT_INT,    "trace",       get_trace(),
+      OT_ALIST_STR, "tags",     debug_get_tags_list(&tlist, debug_level_tags),
       OT_END);
    p = wt.end_group();
    sendit(p, strlen(p), sp);

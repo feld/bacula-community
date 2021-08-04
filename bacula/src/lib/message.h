@@ -183,6 +183,8 @@ const char conn_info_wo_name[] = "Connected to %s at %s:%d %s\n";
 const char *debug_get_tag(uint32_t pos, const char **desc);
 bool debug_find_tag(const char *tagname, bool add, int64_t *current_level);
 bool debug_parse_tags(const char *options, int64_t *current_level);
+alist *debug_get_tags_list(alist *options, int64_t current_level);
+char *debug_get_tags(POOLMEM **options, int64_t current_level);
 
 class MSGS;
 MSGS *get_current_MSGS(JCR *jcr);

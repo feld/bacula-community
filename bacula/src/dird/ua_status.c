@@ -436,6 +436,7 @@ static void do_all_status(UAContext *ua)
 
 static void api_list_dir_status_header(UAContext *ua)
 {
+   alist tlist(10, not_owned_by_alist);
    OutputWriter wt(ua->api_opts);
    wt.start_group("header");
    wt.get_output(
@@ -456,6 +457,9 @@ static void api_list_dir_status_header(UAContext *ua)
       OT_PLUGINS,"plugins",     b_plugin_list,
       OT_INT32,  "fips",        crypto_get_fips(),
       OT_STRING, "crypto",      crypto_get_version(),
+      OT_INT64,  "debug",       debug_level,
+      OT_INT,    "trace",       get_trace(),
+      OT_ALIST_STR, "tags",     debug_get_tags_list(&tlist, debug_level_tags),
       OT_END);
 
    ua->send_msg("%s", wt.end_group());

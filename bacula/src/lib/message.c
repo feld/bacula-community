@@ -2031,6 +2031,35 @@ bool debug_find_tag(const char *tagname, bool add, int64_t *current_level)
    return false;
 }
 
+/* Convert back tag bits to a string */
+char *debug_get_tags(POOLMEM **options, int64_t current_level)
+{
+   bool first=true;
+
+   pm_strcpy(options, "");
+   for (int i = 0; debug_tags[i].tag; i++) {
+      if ((debug_tags[i].bit & current_level) == debug_tags[i].bit) {
+         if (!first) {
+            pm_strcat(options, ",");
+         }
+         pm_strcat(options, debug_tags[i].tag);
+         first=false;
+      }
+   }
+   return *options;
+}
+
+/* Convert back tag bits to a list (not_owned_by_alist) */
+alist *debug_get_tags_list(alist *options, int64_t current_level)
+{
+   for (int i = 0; debug_tags[i].tag; i++) {
+      if ((debug_tags[i].bit & current_level) == debug_tags[i].bit) {
+         options->append((char *)debug_tags[i].tag);
+      }
+   }
+   return options;
+}
+
 bool debug_parse_tags(const char *options, int64_t *current_level)
 {
    bool operation;              /* + => true, - false */
