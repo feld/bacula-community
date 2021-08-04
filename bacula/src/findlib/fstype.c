@@ -108,12 +108,16 @@ void add_mtab_item(void *user_ctx, struct stat *st, const char *fstype,
 /*
  * simple return fs type magic number or zero when error
  */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    struct statfs st;
 
    if (statfs(fname, &st) == 0) {
+#if defined (HAVE_OPENBSD_OS)
+      return (((uint64_t)st.f_fsid.val[0])<<32) | st.f_fsid.val[1];
+#else
       return st.f_type;
+#endif
    }
    return 0;
 }
@@ -150,7 +154,7 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
 /*
  * simple return fs type magic number or zero when error
  */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    struct statvfs st;
 
@@ -193,7 +197,7 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
 /*
  * simple return fs type magic number or zero when error
  */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    struct statfs st;
 
@@ -232,7 +236,7 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
 /*
  * simple return fs type magic number or zero when error
  */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    struct statfs st;
 
@@ -390,7 +394,7 @@ bool fstype(FF_PKT *ff_pkt, char *fs, int fslen)
 /*
  * simple return fs type magic number
  */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    struct statvfs st;
 
@@ -424,7 +428,7 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
 /*
  * simple return fs type magic number
  */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    struct statfs st;
 
@@ -496,7 +500,7 @@ bool fstype(FF_PKT *ff_pkt, char *fs, int fslen)
 }
 
 /* Not implemented for windows, used in ACL code */
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    return 0;
 }
@@ -505,7 +509,7 @@ uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
 
 #else    /* No recognised OS */
 
-uint32_t fstypeid(char *fname, FF_PKT *ff_pkt)
+static uint64_t fstypeid(char *fname, FF_PKT *ff_pkt)
 {
    Dmsg0(10, "!!! fstypeid() not implemented for this OS. !!!\n");
    return 0;
@@ -635,9 +639,9 @@ bool check_current_fs(char *fname, FF_PKT *ff, const char *fstype_name)
 /*
  * compares current fstype from FF_PKT for required fstype_magic
  */
-bool check_current_fs(char *fname, FF_PKT *ff, uint32_t fstype_magic)
+bool check_current_fs(char *fname, FF_PKT *ff, uint64_t fstype_magic)
 {
-   uint32_t fsid;
+   uint64_t fsid;
 
    if (fstype_magic > 0){
       // get fsid for file
