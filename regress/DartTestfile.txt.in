@@ -14,6 +14,7 @@ ADD_TEST(aligned:aligned-bug-1919-test "@regressdir@/tests/aligned-bug-1919-test
 ADD_TEST(aligned:offset-test "@regressdir@/tests/offset-test")
 
 ADD_TEST(unittests:alist-unittests "@regressdir@/tests/alist-unittests")
+ADD_TEST(unittests:debug-tags-test "@regressdir@/tests/debug-tags-test")
 ADD_TEST(unittests:ilist-unittests "@regressdir@/tests/ilist-unittests")
 ADD_TEST(unittests:dlist-unittests "@regressdir@/tests/dlist-unittests")
 ADD_TEST(unittests:edit-unittests "@regressdir@/tests/edit-unittests")
