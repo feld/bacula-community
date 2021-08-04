@@ -67,6 +67,10 @@ all: Makefile $(TOOLS) gigaslam grow
 test-cpp: test-cpp.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ test-cpp.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 
+debug-tags_test: debug-tags.o ../lib/unittests.o
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ debug-tags.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
+	$(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+
 fs-io-error: fs-io-error.c
 	$(CXX) -Wall fs-io-error.c -D_FILE_OFFSET_BITS=64 -lfuse  -o fs-io-error
 
