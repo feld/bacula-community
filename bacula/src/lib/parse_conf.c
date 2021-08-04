@@ -153,6 +153,7 @@ s_kw msg_types[] = {
    {"Alert",         M_ALERT},
    {"VolMgmt",       M_VOLMGMT},
    {"ErrorTerm",     M_ERROR_TERM},
+   {"Verified",      M_VERIFIED},
    {"All",           M_MAX+1},
    {NULL,            0}
 };

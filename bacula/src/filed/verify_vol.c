@@ -357,6 +357,8 @@ void do_verify_volume(JCR *jcr)
          attr->data_stream = decode_stat(attr->attr, &attr->statp,
                                          sizeof(attr->statp), &attr->LinkFI);
 
+         Jmsg(jcr, M_VERIFIED, 0, "Veryfying: %s\n", attr->fname);
+
          jcr->lock();
          jcr->JobFiles++;
          jcr->num_files_examined++;

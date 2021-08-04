@@ -83,6 +83,8 @@ static int verify_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       return 0;
    }
 
+   Jmsg(jcr, M_VERIFIED, 0, "Veryfying: %s\n", ff_pkt->fname);
+
    dir = jcr->dir_bsock;
    jcr->num_files_examined++;         /* bump total file count */
 

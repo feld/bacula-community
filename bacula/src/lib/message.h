@@ -94,10 +94,11 @@ enum {
    M_RESTORED,                        /* ls -l of restored files */
    M_SECURITY,                        /* security violation */
    M_ALERT,                           /* tape alert messages */
-   M_VOLMGMT                          /* Volume management messages */
+   M_VOLMGMT,                         /* Volume management messages */
+   M_VERIFIED                         /* Verify job messages */
 };
 
-#define M_MAX      M_VOLMGMT          /* keep this updated ! */
+#define M_MAX      M_VERIFIED         /* keep this updated ! */
 #define M_ALL      M_MAX+1
 
 /* We cannot store more than this amount of custom events */
