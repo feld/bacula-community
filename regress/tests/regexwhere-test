@@ -316,4 +316,6 @@ else
 
 fi
 
+rm -f $cwd/build/po/*old*
+
 end_test
