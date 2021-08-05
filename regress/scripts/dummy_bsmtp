@@ -5,12 +5,11 @@
 #
 . scripts/functions
 
-while test 1 ; do
-  read a
-  echo "${a}" >> $tmp/dummy_bsmtp.out
-  if test $? != 0; then
-    exit 0
-  fi
+if [ $# -ne 0 ]; then
+   echo "$@" >> $tmp/dummy_bsmtp.out
+fi
+while read line ; do
+   echo "${line}" >> $tmp/dummy_bsmtp.out
 done
 
 exit 0
