@@ -803,8 +803,9 @@ cleanup:
 /* Handle signal when reading from a pipe, functions based on
  * fread doesn't work very well.
  */
-static int32_t full_read(int in, char *buf, int32_t nbytes)  {
-   ssize_t  nleft, nread;
+static int32_t full_read(int in, char *buf, uint32_t nbytes)  {
+   size_t  nleft;
+   ssize_t nread;
    nleft = nbytes;
 
    while (nleft > 0) {
@@ -831,10 +832,12 @@ static int32_t full_read(int in, char *buf, int32_t nbytes)  {
 #endif
 
 #ifdef USE_FULL_WRITE
-static int32_t full_write(int fd, const char *ptr, int32_t nbytes, bool *canceled=NULL)
+static int32_t full_write(int fd, const char *ptr, uint32_t nbytes, bool *canceled=NULL)
 {
-   ssize_t nleft, nwritten;
+   size_t nleft;
+   ssize_t nwritten;
    nleft = nbytes;
+
    while (nleft > 0 && (canceled == NULL || *canceled == false)) {
       do {
          errno = 0;
