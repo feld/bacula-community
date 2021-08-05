@@ -21,6 +21,7 @@ Job {
   Storage = File1
   Pool = Default
   Maximum Concurrent Jobs = 10
+  ClientRunBeforeJob="sleep 5"
 }
 Job {
   Name = "StoreGroupJob"
