@@ -24,7 +24,7 @@ change_jobname NightlySave $JobName
 cat <<END_OF_DATA >> $bin/bacula-dir.conf
 Messages {
   Name = CopyMsg
-  mailcommand = "${bin}/bsmtp job: %j old_id=%m mac_id=%i new_id=%I"
+  mailcommand = "${bin}/bsmtp job_header: %j old_id=%m mac_id=%i new_id=%I"
   mail = mrakow@localhost.com =  all
   console = all
 
@@ -58,9 +58,9 @@ run_bacula
 old_jobid=`cat ${cwd}/tmp/log2.out| grep 'Prev Backup JobId:' | cut -d':' -f 2 | tr -d ' '`
 mac_jobid=`cat ${cwd}/tmp/log2.out| grep 'Current JobId:' | cut -d':' -f 2 | tr -d ' '`
 new_jobid=`cat ${cwd}/tmp/log2.out| grep 'New Backup JobId:' | cut -d':' -f 2 | tr -d ' '`
-mail_old_jobid=`cat tmp/dummy_bsmtp.out | cut -d'=' -f2 | cut -d' ' -f1`
-mail_mac_jobid=`cat tmp/dummy_bsmtp.out | cut -d'=' -f3 | cut -d' ' -f1`
-mail_new_jobid=`cat tmp/dummy_bsmtp.out | cut -d'=' -f4 | cut -d' ' -f1`
+mail_old_jobid=`cat ${cwd}/tmp/dummy_bsmtp.out | grep job_header | cut -d'=' -f2 | cut -d' ' -f1`
+mail_mac_jobid=`cat ${cwd}/tmp/dummy_bsmtp.out | grep job_header | cut -d'=' -f3 | cut -d' ' -f1`
+mail_new_jobid=`cat ${cwd}/tmp/dummy_bsmtp.out | grep job_header | cut -d'=' -f4 | cut -d' ' -f1`
 
 if [ $old_jobid -ne $mail_old_jobid ]; then
    estat=1
