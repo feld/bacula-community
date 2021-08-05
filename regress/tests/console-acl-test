@@ -403,8 +403,8 @@ echo 2 > $tmp/$i-target/nb-list-joblog.out
 echo 2 > $tmp/$i-target/nb-llist-joblog.out
 echo 2 > $tmp/$i-target/nb-list-jobmedia.out
 echo 2 > $tmp/$i-target/nb-llist-jobmedia.out
-echo 2 > $tmp/$i-target/nb-list-jobmedia1.out
-echo 2 > $tmp/$i-target/nb-llist-jobmedia1.out
+echo 1 > $tmp/$i-target/nb-list-jobmedia1.out
+echo 1 > $tmp/$i-target/nb-llist-jobmedia1.out
 echo 1 > $tmp/$i-target/nb-list-files.out
 echo 1 > $tmp/$i-target/nb-llist-files.out
 
@@ -432,8 +432,8 @@ echo 3 > $tmp/$i-target/nb-list-joblog.out
 echo 3 > $tmp/$i-target/nb-llist-joblog.out
 echo 6 > $tmp/$i-target/nb-list-jobmedia.out
 echo 6 > $tmp/$i-target/nb-llist-jobmedia.out
-echo 2 > $tmp/$i-target/nb-list-jobmedia1.out
-echo 2 > $tmp/$i-target/nb-llist-jobmedia1.out
+echo 1 > $tmp/$i-target/nb-list-jobmedia1.out
+echo 1 > $tmp/$i-target/nb-llist-jobmedia1.out
 echo 1 > $tmp/$i-target/nb-list-files.out
 echo 1 > $tmp/$i-target/nb-llist-files.out
 
@@ -459,8 +459,8 @@ echo 3 > $tmp/$i-target/nb-list-joblog.out
 echo 3 > $tmp/$i-target/nb-llist-joblog.out
 echo 4 > $tmp/$i-target/nb-list-jobmedia.out
 echo 4 > $tmp/$i-target/nb-llist-jobmedia.out
-echo 2 > $tmp/$i-target/nb-list-jobmedia1.out
-echo 2 > $tmp/$i-target/nb-llist-jobmedia1.out
+echo 1 > $tmp/$i-target/nb-list-jobmedia1.out
+echo 1 > $tmp/$i-target/nb-llist-jobmedia1.out
 echo 1 > $tmp/$i-target/nb-list-files.out
 echo 1 > $tmp/$i-target/nb-llist-files.out
 
