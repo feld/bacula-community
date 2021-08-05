@@ -5,5 +5,11 @@
 #
 # This is an alist unit test
 #
-. scripts/regress-utils.sh
-do_regress_unittest "edit_test" "src/lib"
+
+TestName="edit_test"
+. scripts/functions
+make -C $src/src/lib $TestName
+
+$bin/$TestName
+exit $?
+
