@@ -43,5 +43,5 @@ Director {
 # Send all messages except skipped files back to Director
 Messages {
   Name = Standard
-  director = @director_name@ = all, !skipped, !restored
+  director = @director_name@ = all, !skipped, !restored, !verified
 }
