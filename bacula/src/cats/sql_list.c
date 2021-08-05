@@ -399,12 +399,10 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
    /* Get some extra SQL parameters if needed */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_POOL)    |
                                 DB_ACL_BIT(DB_ACL_CLIENT), (JobId == 0 || volume != NULL));
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
-                                                   DB_ACL_BIT(DB_ACL_POOL)    |
                                                    DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
    if (JobId) {
