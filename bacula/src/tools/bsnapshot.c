@@ -1682,7 +1682,8 @@ public:
 
             /* It might be a size */
             if (size_to_uint64(p+1, strlen(p+1), &s)) {
-               Dmsg(10, "Found size %lld\n", s);
+               char ed1[50];
+               Dmsg(10, "Found size %s\n", edit_uint64(s, ed1));
                return s;
             }
             Dmsg(10, "Unable to use %s\n", tmp);
@@ -1693,6 +1694,7 @@ public:
    };
 
    int create() {
+      char ed1[50], ed2[50];
       char   *name, *ts, buf[128], *lvname;
       int64_t size, ssize, maxsize;
       if (!snapshot::create()) {
@@ -1735,7 +1737,7 @@ public:
 
       lvname = get_lv_value(arg->device, "Path");
       maxsize = get_space_available(lvname);
-      Dmsg(10, "maxsize=%lld size=%lld\n", maxsize, size);
+      Dmsg(10, "maxsize=%s size=%s\n", edit_int64(maxsize, ed1), edit_int64(size, ed2));
 
       if (maxsize < 0) {
          printf("status=%d error=\"Unable to detect maxsize\" type=lvm\n",
@@ -1744,7 +1746,6 @@ public:
       }
 
       if (size > maxsize) {
-         char ed1[50], ed2[50];
          printf("status=%d error=\"Not enough space left on VG %sB, "
                 "%sB is required\" type=lvm\n",
                 get_error_code(),
