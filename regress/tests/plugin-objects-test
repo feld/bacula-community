@@ -47,37 +47,37 @@ run_bacula
 objects_lines=`cat ${cwd}/tmp/log2.out | grep 'VMWare' | wc -l`
 if [ ${objects_lines} -ne 2 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 2"
+   print_debug "ERROR: Wrong plugin objects count found in output $tmp/log2.out: ${objects_lines}, expected 2"
 fi
 
 objects_lines=`cat ${cwd}/tmp/log2.out | grep 'PostgreSQL' | wc -l`
 if [ ${objects_lines} -ne 4 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 4"
+   print_debug "ERROR: Wrong plugin objects count found in output $tmp/log2.out: ${objects_lines}, expected 4"
 fi
 
 id_vmware_obj=`cat $tmp/log2.out | grep 'VMWare' | head -n 1 | awk  '/VMWare/ {print $2 }'`
 if [ "$id_vmware_obj" = "" ]; then
-    print_debug "ERROR: Should find any ID for VMWare Object in restore menu"
+    print_debug "ERROR: Should find any ID for VMWare Object in restore menu in $tmp/log2.out"
     estat=1
 fi
 
 id_postgres_obj=`cat $tmp/log2.out | grep 'PostgreSQL' | head -n 1 | awk  '/PostgreSQL/ {print $2 }'`
 if [ "$id_postgres_obj" = "" ]; then
-   print_debug "ERROR: Should find any ID for PostgreSQL Object in restore menu"
+   print_debug "ERROR: Should find any ID for PostgreSQL Object in restore menu $tmp/log2.out"
     estat=1
 fi
 
-n_OK=`cat ${cwd}/tmp/log3.out | grep "status: T" | wc -l`
+n_OK=`cat ${cwd}/tmp/log3.out | grep -i "status: T" | wc -l`
 if [ ${n_OK} -ne 2 ]; then
    estat=1
-   print_debug "Wrong count of \'T\' status for objects, expected 2, got: ${n_OK}"
+   print_debug "ERROR: Wrong count of \'T\' status for objects in $tmp/log3.out, expected 2, got: ${n_OK}"
 fi
 
-n_UNSET=`cat ${cwd}/tmp/log3.out | grep "status: U" | wc -l`
+n_UNSET=`cat ${cwd}/tmp/log3.out | grep -i "status: U" | wc -l`
 if [ ${n_UNSET} -ne 4 ]; then
    estat=1
-   print_debug "Wrong count of \'U\' status for objects, expected 4, got: ${n_UNSET}"
+   print_debug "ERROR: Wrong count of \'U\' status for objects in $tmp/log3.out, expected 4, got: ${n_UNSET}"
 fi
 
 
@@ -95,13 +95,13 @@ run_bconsole
 
 id_vmware_menu=`cat $tmp/log4.out | grep 'VMWare' | head -n 1 | awk  '/VMWare/ {print $1 }'`
 if [ "$id_vmware_menu" = "" ]; then
-    print_debug "ERROR: Did not find any ID for VMWare Object in restore menu"
+    print_debug "ERROR: Did not find any ID for VMWare Object in restore menu in $tmp/log4.out"
     estat=1
 fi
 
 id_postgres_menu=`cat $tmp/log4.out | grep 'PostgreSQL' | head -n 1 | awk  '/PostgreSQL/ {print $1 }'`
 if [ "$id_postgres_menu" = "" ]; then
-    print_debug "ERROR: Did not find any ID for PostgreSQL Object in restore menu"
+    print_debug "ERROR: Did not find any ID for PostgreSQL Object in restore menu in $tmp/log4.out"
     estat=1
 fi
 
@@ -128,7 +128,7 @@ run_bconsole
 
 cat $tmp/log5.out | grep "Restore OK"
 if [ $? -ne 0 ]; then
-    print_debug "Restore failed"
+    print_debug "ERROR: Restore failed in $tmp/log5.out"
     estat=1
 fi
 
@@ -150,9 +150,9 @@ END_OF_DATA
 
 run_bconsole
 
-postgres_id=`cat $tmp/log6.out | cat tmp/log6.out | grep "test db"  | tail -n 1 | awk '/test db/ {print $2}'`
+postgres_id=`cat $tmp/log6.out | grep "test db"  | tail -n 1 | awk '/test db/ {print $2}'`
 if [ "$postgres_id" = "" ]; then
-    print_debug "ERROR: Did not find any ID for PostgreSQL Object in restore menu"
+    print_debug "ERROR: Did not find any ID for PostgreSQL Object in restore menu ($tmp/log6.out)"
     estat=1
 fi
 
@@ -175,7 +175,7 @@ run_bconsole
 
 cat $tmp/log7.out | grep "Restore OK"
 if [ $? -ne 0 ]; then
-    print_debug "Restore failed"
+    print_debug "ERROR: Restore failed in $tmp/log7.out"
     estat=1
 fi
 
@@ -229,13 +229,13 @@ run_bconsole
 objects_lines=`cat ${cwd}/tmp/log10.out | grep 'VMWare' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+   print_debug "ERROR: Wrong plugin objects count found in output $tmp/log10.out: ${objects_lines}, expected 0"
 fi
 
 objects_lines=`cat ${cwd}/tmp/log11.out | grep 'PostgreSQL' | wc -l`
 if [ ${objects_lines} -ne 0 ]; then
    estat=1
-   print_debug "Wrong plugin objects count found in output: ${objects_lines}, expected 0"
+   print_debug "ERROR: Wrong plugin objects count found in output $tmp/log11.out: ${objects_lines}, expected 0"
 fi
 
 stop_bacula
