@@ -30,7 +30,7 @@ storage::storage() {
    list_str = get_pool_memory(PM_MESSAGE);
    *source = 0;
    store = NULL;
-   mutex = PTHREAD_MUTEX_INITIALIZER;
+   pthread_mutex_init(&mutex, NULL);
 }
 
 storage::~storage() {
@@ -49,6 +49,8 @@ storage::~storage() {
    if (list_str) {
       free_and_null_pool_memory(list_str);
    }
+
+   pthread_mutex_destroy(&mutex);
 }
 
 void storage::set_rw(bool write) {
