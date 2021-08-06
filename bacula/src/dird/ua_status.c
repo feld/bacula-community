@@ -1183,7 +1183,7 @@ static void list_scheduled_jobs(UAContext *ua)
          sp->pool = run->pool;
          get_job_storage(&store, job, run);
          sp->store = store.store;
-         Dmsg3(250, "job=%s store=%s MediaType=%s\n", job->name(), sp->store->name(), sp->store->media_type);
+//         Dmsg3(250, "job=%s store=%s MediaType=%s\n", job->name(), sp->store->name(), sp->store->media_type);
          sched.binary_insert_multiple(sp, my_compare);
          num_jobs++;
       }
