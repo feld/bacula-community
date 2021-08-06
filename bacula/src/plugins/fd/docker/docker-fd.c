@@ -107,6 +107,13 @@ bRC DLL_IMP_EXP loadPlugin(bInfo *lbinfo, bFuncs *lbfuncs, pInfo ** pinfo, pFunc
 {
    bfuncs = lbfuncs;               /* set Bacula function pointers */
    binfo = lbinfo;
+   
+   /* we are very paranoid here to double check it */
+   if (access(DOCKER_CMD, X_OK) < 0){
+      berrno be;
+      Dmsg2(DERROR, "Unable to use command tool: %s Err=%s\n", DOCKER_CMD, be.bstrerror());
+      return bRC_Error;
+   }
 
    Dmsg3(DINFO, "%s Plugin version %s %s (c) 2020 by Inteos\n",
       PLUGINNAME, DOCKER_VERSION, DOCKER_DATE);
@@ -1860,14 +1867,6 @@ static bRC newPlugin(bpContext *ctx)
 
    getBaculaVar(bVarJobId, (void *)&JobId);
    DMSG(ctx, DINFO, "newPlugin JobId=%d\n", JobId);
-
-   /* we are very paranoid here to double check it */
-   if (access(DOCKER_CMD, X_OK) < 0){
-      berrno be;
-      DMSG2(ctx, DERROR, "Unable to use command tool: %s Err=%s\n", DOCKER_CMD, be.bstrerror());
-      JMSG2(ctx, M_FATAL, "Unable to use command tool: %s Err=%s\n", DOCKER_CMD, be.bstrerror());
-      return bRC_Error;
-   }
 
    /* get dynamic working directory from file daemon */
    getBaculaVar(bVarWorkingDir, (void *)&workdir);
