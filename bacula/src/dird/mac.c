@@ -83,16 +83,17 @@ bool do_mac_init(JCR *jcr)
 {
    POOL *pool = NULL;
    JOB *job, *prev_job;
-   JCR *wjcr;                     /* jcr of writing job */
+   JCR *wjcr = NULL;    /* jcr of writing job */
    int count;
    CLIENT_DBR cr;
    FILESET_DBR fr;
+   bool ret = false;
 
    jcr->jr.PoolId = get_or_create_pool_record(jcr, jcr->pool->name());
    if (jcr->jr.PoolId == 0) {
       Dmsg1(dbglevel, "JobId=%d no PoolId\n", (int)jcr->JobId);
       Jmsg(jcr, M_FATAL, 0, _("Could not get or create a Pool record.\n"));
-      return false;
+      goto bail_out;
    }
    /*
     * Note, at this point, pool is the pool for this job.  We
@@ -107,21 +108,22 @@ bool do_mac_init(JCR *jcr)
    if (!get_or_create_fileset_record(jcr)) {
       Dmsg1(dbglevel, "JobId=%d no FileSet\n", (int)jcr->JobId);
       Jmsg(jcr, M_FATAL, 0, _("Could not get or create the FileSet record.\n"));
-      return false;
+      goto bail_out;
    }
 
    if (!allow_duplicate_job(jcr)) {
-      return false;
+      goto bail_out;
    }
 
    /* If we find a job or jobs to migrate it is previous_jr.JobId */
    count = getJob_to_migrate(jcr);
    if (count < 0) {
-      return false;
+      goto bail_out;
    }
    if (count == 0) {
       set_mac_next_pool(jcr, &pool);
-      return true;                    /* no work */
+      ret = true;                    /* no work */
+      goto bail_out;
    }
 
    Dmsg1(dbglevel, "Back from getJob_to_migrate JobId=%d\n", (int)jcr->JobId);
@@ -130,12 +132,13 @@ bool do_mac_init(JCR *jcr)
       Dmsg1(dbglevel, "JobId=%d no previous JobId\n", (int)jcr->JobId);
       Jmsg(jcr, M_INFO, 0, _("No previous Job found to %s.\n"), jcr->get_ActionName(0));
       set_mac_next_pool(jcr, &pool);
-      return true;                    /* no work */
+      ret = true;                    /* no work */
+      goto bail_out;
    }
 
    if (create_restore_bootstrap_file(jcr) < 0) {
       Jmsg(jcr, M_FATAL, 0, _("Create bootstrap file failed.\n"));
-      return false;
+      goto bail_out;
    }
 
    if (jcr->previous_jr.JobId == 0 || jcr->ExpectedFiles == 0) {
@@ -147,7 +150,8 @@ bool do_mac_init(JCR *jcr)
          Jmsg(jcr, M_INFO, 0, _("Previous Job has no data to %s.\n"), jcr->get_ActionName(0));
       }
       set_mac_next_pool(jcr, &pool);
-      return true;                    /* no work */
+      ret = true;                    /* no work */
+      goto bail_out;
    }
 
 
@@ -162,12 +166,12 @@ bool do_mac_init(JCR *jcr)
    UnlockRes();
    if (!job) {
       Jmsg(jcr, M_FATAL, 0, _("Job resource not found for \"%s\".\n"), jcr->jr.Name);
-      return false;
+      goto bail_out;
    }
    if (!prev_job) {
       Jmsg(jcr, M_FATAL, 0, _("Previous Job resource not found for \"%s\".\n"),
            jcr->previous_jr.Name);
-      return false;
+      goto bail_out;
    }
 
    /* Check for bug #7552 - to be sure that user is doing the right thing */
@@ -176,11 +180,11 @@ bool do_mac_init(JCR *jcr)
        prev_job->JobType != JT_MIGRATED_JOB) {
       Jmsg(jcr, M_FATAL, 0, _("Unexpected type ('%c') of job to copy:\"%s\".\n"),
            prev_job->JobType, jcr->previous_jr.Name);
-      return false;
+      goto bail_out;
    }
 
    /* Create a write jcr */
-   wjcr = jcr->wjcr = new_jcr(sizeof(JCR), dird_free_jcr);
+   wjcr = new_jcr(sizeof(JCR), dird_free_jcr);
    memcpy(&wjcr->previous_jr, &jcr->previous_jr, sizeof(wjcr->previous_jr));
 
    /*
@@ -203,7 +207,7 @@ bool do_mac_init(JCR *jcr)
    if (!db_get_client_record(jcr, jcr->db, &cr)) {
       Jmsg(jcr, M_FATAL, 0, _("Could not get the client record for clientId %d.\n"),
             (int)wjcr->previous_jr.ClientId);
-      return false;
+      goto bail_out;
    }
    if (!wjcr->client_name) {
       wjcr->client_name = get_pool_memory(PM_NAME);
@@ -212,7 +216,7 @@ bool do_mac_init(JCR *jcr)
    wjcr->client = GetClientResWithName(cr.Name);
    if (!wjcr->client) {
       Jmsg(jcr, M_FATAL, 0, _("Client resource not found for \"%s\".\n"), cr.Name);
-      return false;
+      goto bail_out;
    }
    // Look for the FileSet from the Job Record
    bmemset(&fr, 0, sizeof(fr));
@@ -220,12 +224,12 @@ bool do_mac_init(JCR *jcr)
    if (!db_get_fileset_record(jcr, jcr->db, &fr)) {
       Jmsg(jcr, M_FATAL, 0, _("Could not get the FileSet record for FileSetId %d.\n"),
             (int)wjcr->previous_jr.FileSetId);
-      return false;
+      goto bail_out;
    }
    wjcr->fileset = GetFileSetResWithName(fr.FileSet);
    if (!wjcr->fileset) {
       Jmsg(jcr, M_FATAL, 0, _("FileSet resource not found for \"%s\".\n"), fr.FileSet);
-      return false;
+      goto bail_out;
    }
 
    /* fix MA 987 cannot copy/migrate jobs with a Level=VF in the job resource
@@ -243,7 +247,7 @@ bool do_mac_init(JCR *jcr)
 
    if (!setup_job(wjcr)) {
       Jmsg(jcr, M_FATAL, 0, _("setup job failed.\n"));
-      return false;
+      goto bail_out;
    }
 
    /* Now reset the job record from the previous job */
@@ -272,7 +276,20 @@ bool do_mac_init(JCR *jcr)
       wjcr->jr.PoolId = jcr->jr.PoolId;
    }
 
-   return true;
+   /* wjcr is all set right now, can be assigned to the original jcr so that it can be used
+    * later (even in the error handlig/cleanup) */
+   jcr->wjcr = wjcr;
+
+   ret = true;
+
+bail_out:
+   if (!jcr->wjcr && wjcr) {
+      /* We get here if wjcr was allocated, but not fully prepared to be assinged to the parent jcr,
+       * it has to be freed now so that it is not used during cleanup reporting */
+      free_jcr(wjcr);
+   }
+
+   return ret;
 }
 
 /*
