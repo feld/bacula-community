@@ -54,6 +54,8 @@
 #endif
 
 int bvsnprintf(char *buffer, int32_t maxlen, const char *format, va_list args);
+static int32_t fmthex(char *buffer, int32_t currlen, int32_t maxlen,
+                   const char *value, int flags, int min, int max);
 static int32_t fmtstr(char *buffer, int32_t currlen, int32_t maxlen,
                    const char *value, int flags, int min, int max);
 static int32_t fmtwstr(char *buffer, int32_t currlen, int32_t maxlen,
@@ -352,6 +354,16 @@ int bvsnprintf(char *buffer, int32_t maxlen, const char *format, va_list args)
               currlen = fmtwstr(buffer, currlen, maxlen, wstrvalue, flags, min, max);
             }
             break;
+         case 'W':
+            /* hexadump of the length given by min */
+            strvalue = va_arg(args, char *);
+            if (!strvalue) {
+               strvalue = (char *)"<NULL>";
+               currlen = fmtstr(buffer, currlen, maxlen, strvalue, flags, min, max);
+            } else {
+               currlen = fmthex(buffer, currlen, maxlen, strvalue, flags, min, max);
+            }
+            break;
          case 'p':
             flags |= DP_F_UNSIGNED;
             if (sizeof(char *) == 4) {
@@ -412,6 +424,24 @@ int bvsnprintf(char *buffer, int32_t maxlen, const char *format, va_list args)
       buffer[currlen] = '\0';
    } else {
       buffer[maxlen - 1] = '\0';
+   }
+   return currlen;
+}
+
+static char hexatable[]="0123456789abcdef";
+static int32_t fmthex(char *buffer, int32_t currlen, int32_t maxlen,
+                   const char *value, int flags, int min, int max)
+{
+   int i = 0;
+
+   /* max is ignored for now */
+   if (min <= 0) {
+      return 0; /* min is mandatory */
+   }
+   while (i < min) {
+      outch(hexatable[(value[i]&0xF0)>>4]);
+      outch(hexatable[value[i]&0x0F]);
+      i++;
    }
    return currlen;
 }
