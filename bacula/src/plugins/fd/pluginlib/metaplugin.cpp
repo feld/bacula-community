@@ -479,7 +479,7 @@ bRC backendctx_finish_func(PTCOMM *ptcomm, void *cp)
    POOL_MEM cmd(PM_FNAME);
    pm_strcpy(cmd, "FINISH\n");
 
-   if (ptcomm->write_command(ctx, cmd.addr()) < 0){
+   if (!ptcomm->write_command(ctx, cmd.addr())){
       status = bRC_Error;
    }
    if (!ptcomm->read_ack(ctx)){
@@ -522,7 +522,7 @@ bRC send_endjob(bpContext *ctx, PTCOMM *ptcomm)
    POOL_MEM cmd(PM_FNAME);
    pm_strcpy(cmd, "END\n");
 
-   if (ptcomm->write_command(ctx, cmd.c_str()) < 0){
+   if (!ptcomm->write_command(ctx, cmd.c_str())){
       /* error */
       status = bRC_Error;
    } else {
@@ -1692,11 +1692,11 @@ bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, const xacl_pkt* xacl)
  *    bRC_OK - when plugin read the command, dispatched a work and setup flags
  *    bRC_Error - on any error during backup
  */
-bRC METAPLUGIN::perform_read_metadata(bpContext *ctx)
+bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
 {
    POOL_MEM cmd(PM_FNAME);
 
-   DMSG0(ctx, DDEBUG, "perform_read_metadata()\n");
+   DMSG0(ctx, DDEBUG, "perform_read_metacommands()\n");
    // setup flags
    nextfile = readacl = readxattr = false;
    objectsent = false;
@@ -2012,7 +2012,7 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
             case BACKUP_FULL:
             case BACKUP_INCR:
             case BACKUP_DIFF:
-               return perform_read_metadata(ctx);
+               return perform_read_metacommands(ctx);
             default:
                return bRC_Error;
          }
@@ -2090,7 +2090,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    // check if this is the first file from backend to backup
    if (!nextfile){
       // so read FNAME or EOD/Error
-      if (perform_read_metadata(ctx) != bRC_OK){
+      if (perform_read_metacommands(ctx) != bRC_OK){
          // signal error
          return bRC_Error;
       }
@@ -2301,7 +2301,7 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
    if (!openerror) {
       if (estimate || objectsent) {
          objectsent = false;
-         if (perform_read_metadata(ctx) != bRC_OK) {
+         if (perform_read_metacommands(ctx) != bRC_OK) {
             /* signal error */
             return bRC_Error;
          }
@@ -2332,14 +2332,13 @@ bRC METAPLUGIN::startRestoreFile(bpContext *ctx, const char *cmd)
             DMSG1(ctx, DINFO, "%s", backcmd.c_str());
             ropclass->sent = true;
 
-            if (backend.ctx->write_command(ctx, backcmd.c_str()) < 0)
-            {
+            if (!backend.ctx->write_command(ctx, backcmd.c_str())) {
                DMSG0(ctx, DERROR, "Error sending RESTOREOBJ command\n");
                return bRC_Error;
             }
 
             Mmsg(backcmd, "RESTOREOBJ_LEN:%d\n", ropclass->length);
-            if (backend.ctx->write_command(ctx, backcmd.c_str()) < 0) {
+            if (!backend.ctx->write_command(ctx, backcmd.c_str())) {
                DMSG0(ctx, DERROR, "Error sending RESTOREOBJ_LEN command\n");
                return bRC_Error;
             }

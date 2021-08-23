@@ -264,7 +264,7 @@ private:
    bRC perform_read_data(bpContext *ctx, struct io_pkt *io);
    bRC perform_write_data(bpContext *ctx, struct io_pkt *io);
    bRC perform_write_end(bpContext *ctx, struct io_pkt *io);
-   bRC perform_read_metadata(bpContext *ctx);
+   bRC perform_read_metacommands(bpContext *ctx);
    bRC perform_read_fstatdata(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_restoreobject(bpContext *ctx, struct save_pkt *sp);
