@@ -27,7 +27,7 @@
  *
  * - The progress object can be created an passed to function/objects to monitor
  *   the progress from another function.
- * - For exemple a progress object is passed to any function involved in the
+ * - For example a progress object is passed to any function involved in the
  *   dedup vacuum and used by "dedup usage" to report the vacuum progress or
  *   "dedup vacuum cancel" to cancel the vacuum.
  * - You must initialize the "goal" at the beginning of every part and maintain
@@ -40,26 +40,74 @@
  *   or with "intermediate_t" when using "state"
  */
 class ProgressCounter {
+   struct accounting {
+      int state;
+      int64_t start_t, end_t;
+   };
+
+   int acc_capacity;
+   int acc_n;
+   struct accounting *accountings;
+
+   int find_accounting(int state) {
+      for (int i=0; i<acc_n; i++) {
+         if (accountings[i].state==state) {
+            return i;
+         }
+      }
+      return -1;
+   }
+
 public:
    int state;
    int64_t goal, current;
    bool cancel;
    int64_t start_t, end_t, intermediate_t, last_t;
 
-   ProgressCounter() { reset(); };
+   ProgressCounter(int acc_capacity=0):
+      acc_capacity(acc_capacity), acc_n(0), accountings(NULL)
+   {
+      if (acc_capacity > 0) {
+         accountings = (struct accounting *)malloc(acc_capacity * sizeof(struct accounting));
+      }
+      reset();
+   };
    ~ProgressCounter() {};
-   void reset(int new_state = 0, int64_t new_goal = 0, int64_t start = 0) { state = new_state; goal = new_goal; current = start; cancel=false; start_t=intermediate_t=last_t=time(NULL); end_t = 0; };
+   void reset(int new_state = 0, int64_t new_goal = 0, int64_t start = 0)
+   {
+     acc_n = 0; state = new_state; goal = new_goal; current = start;
+     cancel=false; start_t=intermediate_t=last_t=time(NULL); end_t = 0;
+   };
    void change_state(int new_state, int64_t new_goal, int64_t start = 0)
-     { state = new_state; goal = new_goal; current = start; intermediate_t=time(NULL); };
+   {
+      state = new_state; goal = new_goal; current = start; intermediate_t=time(NULL);
+Tmsg3(0, "ASX change_state %c acc_n=%d acc_capacity=%d\n", new_state, acc_n, acc_capacity);
+      if (acc_capacity > 0 && acc_n < acc_capacity) {
+         accountings[acc_n].state = new_state;
+         accountings[acc_n].start_t = intermediate_t;
+         accountings[acc_n].end_t = intermediate_t;
+         acc_n++;
+      }
+   };
 //   void set_state(int new_state) { state = new_state; intermediate_t=last_t=time(NULL); };
    void set_goal(int64_t new_goal) { goal = new_goal; };
-   void set_progress(int64_t val) { current = val; last_t = time(NULL); };
-   void inc_progress(int64_t inc) { current += inc; last_t = time(NULL); };
+   void set_progress(int64_t val) { current = val; last_t = time(NULL); if (acc_n>0) {accountings[acc_n-1].end_t = last_t; } };
+   void inc_progress(int64_t inc) { current += inc; last_t = time(NULL); if (acc_n>0) {accountings[acc_n-1].end_t = last_t; } };
    void get_progress(int64_t &g, int64_t &c) { g = goal; c = current; };
    void get_progress(int &s, int64_t &g, int64_t &c, int64_t &delta) { s = state; g = goal; c = current; delta = last_t - intermediate_t; };
    bool is_canceled() { return cancel; };
    void set_cancel(bool new_cancel = true) { cancel = new_cancel; }
-   void done(int new_state = 0) { state = new_state; end_t = time(NULL); };
+   void done(int new_state = 0) { state = new_state; end_t = time(NULL); if (acc_n>0) {accountings[acc_n-1].end_t = end_t; } };
+   bool find_accounting(int state, int64_t *start_t, int64_t *end_t) {
+      int i = find_accounting(state);
+      if (i == -1) {
+         return false; // not found
+      }
+      *start_t = accountings[i].start_t;
+      *end_t = accountings[i].end_t;
+      return true;
+   }
+
 };
 
 #endif /* !__PROGRESS_H */
