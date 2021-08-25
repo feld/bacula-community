@@ -42,6 +42,7 @@ Job {
   Name = "PluginK8STestProtocol1"
   JobDefs = "BackupJob"
   FileSet="TestPluginK8SSetProtocol1"
+  Accurate = Yes
 }
 
 FileSet {
