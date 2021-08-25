@@ -27,7 +27,9 @@ PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
 COMMCTXSRC = commctx.h
 SMARTALISTSRC = smartalist.h
 SMARTPTRSRC = smartptr.h
-METAPLUGINSRC = metaplugin.cpp metaplugin.h
+SMARTMUTEXSRC = smartmutex.h
+SMARTLOCKSRC = smartlock.h
+METAPLUGINSRC = metaplugin.cpp metaplugin.h metaplugin_attributes.cpp metaplugin_attributes.h $(SMARTMUTEXSRC) $(SMARTLOCKSRC) $(COMMCTXSRC)
 METAPLUGINOBJ = $(filter %.lo,$(METAPLUGINSRC:.cpp=.lo))
 
 PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)

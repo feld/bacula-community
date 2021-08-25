@@ -98,7 +98,7 @@ protected:
    int32_t recvbackend(bpContext *ctx, char *cmd, POOL_MEM &buf, bool any=false);
    int32_t recvbackend_fixed(bpContext *ctx, char cmd, char *buf, int32_t bufsize);
 
-   bool sendbackend(bpContext *ctx, char cmd, const POOLMEM *buf, int32_t len);
+   bool sendbackend(bpContext *ctx, char cmd, const POOLMEM *buf, int32_t len, bool _single_senddata = true);
 
 public:
    PTCOMM(const char * command = NULL) :
@@ -130,9 +130,11 @@ public:
    int32_t read_data(bpContext *ctx, POOL_MEM &buf);
    int32_t read_data_fixed(bpContext *ctx, char *buf, int32_t len);
 
-   bool write_command(bpContext *ctx, const char *buf);
+   // we have to force non-optimized sendbackend path as origin of `*buf` is unknown
+   bool write_command(bpContext *ctx, const char *buf, bool _single_senddata = false);
 
-   bRC send_data(bpContext *ctx, const char *buf, int32_t len);
+   bRC send_data(bpContext *ctx, const char *buf, int32_t len, bool _single_senddata = false);
+   bRC send_data(bpContext *ctx, POOL_MEM &buf, int32_t len) { return send_data(ctx, buf.addr(), true); }
    bRC recv_data(bpContext *ctx, POOL_MEM &buf, int32_t *recv_len=NULL);
 
    /**
@@ -144,8 +146,8 @@ public:
     *    -1 - when encountered any error
     *    <n> - the number of bytes sent, success
     */
-   int32_t write_command(bpContext *ctx, POOL_MEM &buf) { return write_command(ctx, buf.addr()); }
-   int32_t write_data(bpContext *ctx, const char *buf, int32_t len);
+   int32_t write_command(bpContext *ctx, POOL_MEM &buf) { return write_command(ctx, buf.addr(), true); }
+   int32_t write_data(bpContext *ctx, const char *buf, int32_t len, bool _single_senddata = false);
 
    bool read_ack(bpContext *ctx);
    bool send_ack(bpContext *ctx);

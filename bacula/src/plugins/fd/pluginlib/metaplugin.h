@@ -143,6 +143,8 @@ public:
                   JobId(0),
                   JobName(NULL),
                   since(0),
+                  accurate_mode(0),
+                  accurate_mode_err(false),
                   where(NULL),
                   regexwhere(NULL),
                   replace(0),
@@ -206,6 +208,8 @@ private:
    int JobId;                    // Job ID
    char *JobName;                // Job name
    time_t since;                 // Job since parameter
+   int accurate_mode;            // if the job is accurate
+   bool accurate_mode_err;       // if true then no more errors about lack of accurate mode required
    char *where;                  // the Where variable for restore job if set by user
    char *regexwhere;             // the RegexWhere variable for restore job if set by user
    char replace;                 // the replace variable for restore job
@@ -274,6 +278,7 @@ private:
    bRC perform_write_xattr(bpContext *ctx, const xacl_pkt * xacl);
    bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
    bRC perform_file_index_query(bpContext *ctx);
+   bRC perform_accurate_check(bpContext *ctx);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
    metadata_type scan_metadata_type(bpContext *ctx, const POOL_MEM &cmd);
    const char *prepare_metadata_type(metadata_type type);

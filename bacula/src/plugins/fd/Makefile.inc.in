@@ -38,7 +38,7 @@ PLUGINLIBDIR = $(FDPLUGDIR)/pluginlib
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
 LIBBACOBJ = $(LIBDIR)/libbac.la
 PLUGINLIBOBJ = $(PLUGINLIBDIR)/pluginlib.lo
-METAPLUGINOBJ = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo $(PLUGINLIBDIR)/metaplugin_stat.lo
+METAPLUGINOBJ = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo $(PLUGINLIBDIR)/metaplugin_attributes.lo
 
 .SUFFIXES:    .c .cpp   .lo
 
@@ -60,8 +60,8 @@ $(PLUGINLIBDIR)/ptcomm.lo: $(PLUGINLIBDIR)/ptcomm.cpp $(PLUGINLIBDIR)/ptcomm.h
 $(PLUGINLIBDIR)/metaplugin.lo: $(PLUGINLIBDIR)/metaplugin.cpp $(PLUGINLIBDIR)/metaplugin.h
 	$(MAKE) -C $(PLUGINLIBDIR) metaplugin.lo
 
-$(PLUGINLIBDIR)/metaplugin_stat.lo: $(PLUGINLIBDIR)/metaplugin_stat.cpp $(PLUGINLIBDIR)/metaplugin_stat.h
-	$(MAKE) -C $(PLUGINLIBDIR) metaplugin_stat.lo
+$(PLUGINLIBDIR)/metaplugin_attributes.lo: $(PLUGINLIBDIR)/metaplugin_attributes.cpp $(PLUGINLIBDIR)/metaplugin_attributes.h
+	$(MAKE) -C $(PLUGINLIBDIR) metaplugin_attributes.lo
 
 $(PLUGINLIBDIR)/iso8601.lo: $(PLUGINLIBDIR)/iso8601.cpp $(PLUGINLIBDIR)/iso8601.h
 	$(MAKE) -C $(PLUGINLIBDIR) iso8601.lo

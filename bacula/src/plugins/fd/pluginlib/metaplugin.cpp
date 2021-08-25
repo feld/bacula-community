@@ -27,6 +27,7 @@
  */
 
 #include "metaplugin.h"
+#include "metaplugin_attributes.h"
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/select.h>
@@ -1261,6 +1262,7 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    /* Plugin command e.g. plugin = <plugin-name>:parameters */
    case bEventPluginCommand:
       DMSG(ctx, D2, "bEventPluginCommand value=%s\n", NPRT((char *)value));
+      getBaculaVar(bVarAccurate, (void *)&accurate_mode);
       if (isourplugincommand(PLUGINPREFIX, (char*)value) && !backend_available)
       {
          DMSG2(ctx, DERROR, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), backend_error.c_str());
@@ -1726,6 +1728,11 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
             // restoreobject = true;
             return bRC_OK;
          }
+         if (scan_parameter_str(cmd, "CHECK:", fname)){
+            /* got accurate check query */
+            perform_accurate_check(ctx);
+            continue;
+         }
          if (bstrcmp(cmd.c_str(), "ACL")){
             /* got ACL header */
             perform_read_acl(ctx);
@@ -1761,6 +1768,12 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
    return bRC_Error;
 }
 
+/**
+ * @brief Respond to the file index query command from backend.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK when success, bRC_Error if not
+ */
 bRC METAPLUGIN::perform_file_index_query(bpContext *ctx)
 {
    POOL_MEM cmd(PM_FNAME);
@@ -1774,6 +1787,90 @@ bRC METAPLUGIN::perform_file_index_query(bpContext *ctx)
    }
 
    return bRC_OK;
+}
+
+/**
+ * @brief
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK when success, bRC_Error if not
+ */
+bRC METAPLUGIN::perform_accurate_check(bpContext *ctx)
+{
+   if (strlen(fname.c_str()) == 0){
+      // input variable is not valid
+      return bRC_Error;
+   }
+
+   DMSG0(ctx, DDEBUG, "perform_accurate_check()\n");
+
+   POOL_MEM cmd(PM_FNAME);
+#if __cplusplus >= 201103L
+   struct save_pkt sp {0};
+#else
+   struct save_pkt sp;
+   memset(sp, 0, sizeof(sp));
+#endif
+
+   // supported sequence is `STAT` followed by `TSTAMP`
+   if (backend.ctx->read_command(ctx, cmd) < 0) {
+      // error
+      return bRC_Error;
+   }
+
+   metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, &sp);
+   if (status == metaplugin::attributes::Status_OK) {
+      if (backend.ctx->read_command(ctx, cmd) < 0) {
+         // error
+         return bRC_Error;
+      }
+
+      status = metaplugin::attributes::read_scan_tstamp_command(ctx, cmd, &sp);
+      if (status == metaplugin::attributes::Status_OK) {
+         // success we can perform accurate check for stat packet
+         bRC rc = bRC_OK;  // return 'OK' as a default
+         if (accurate_mode) {
+            sp.fname = fname.c_str();
+            rc = checkChanges(&sp);
+         } else {
+            if (!accurate_mode_err) {
+               DMSG0(ctx, DERROR, "Backend CHECK command require accurate mode on!\n");
+               JMSG0(ctx, M_ERROR, "Backend CHECK command require accurate mode on!\n");
+               accurate_mode_err = true;
+            }
+         }
+
+         POOL_MEM checkstatus(PM_NAME);
+         Mmsg(checkstatus, "%s\n", rc == bRC_Seen ? "SEEN" : "OK");
+         DMSG1(ctx, DINFO, "perform_accurate_check(): %s", checkstatus.c_str());
+
+         if (!backend.ctx->write_command(ctx, checkstatus)) {
+            DMSG0(ctx, DERROR, "Cannot send checkChanges() response to backend\n");
+            JMSG0(ctx, backend.ctx->jmsg_err_level(), "Cannot send checkChanges() response to backend\n");
+            return bRC_Error;
+         }
+
+         return bRC_OK;
+      }
+   } else {
+      // check possible errors
+      switch (status)
+      {
+      case metaplugin::attributes::Invalid_File_Type:
+         JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", sp.type, fname.c_str());
+         return bRC_Error;
+
+      case metaplugin::attributes::Invalid_Stat_Packet:
+         JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid stat packet: %s\n", cmd.c_str());
+         return bRC_Error;
+      default:
+         break;
+      }
+      // future extension for `ATTR` command
+      // ...
+   }
+
+   return bRC_Error;
 }
 
 /**
@@ -2059,20 +2156,10 @@ bRC METAPLUGIN::setPluginValue(bpContext *ctx, pVariable var, void *value)
 bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
 {
    POOL_MEM cmd(PM_FNAME);
-   char type;
-   size_t size;
-   int uid, gid;
-   uint perms;
-   int nlinks;
-   int32_t nfi;
    int reqparams = 2;
 
-   {
-      // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
-      if (job_cancelled) {
-         return bRC_Error;
-      }
+   if (job_cancelled) {
+      return bRC_Error;
    }
 
    /* The first file in Full backup, is the RestoreObject */
@@ -2115,7 +2202,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       }
       sp->restore_obj.object_name = fname.c_str();
       sp->type = FT_RESTORE_FIRST;
-      size = sp->restore_obj.object_len;
+      sp->statp.st_size = sp->restore_obj.object_len;
       sp->statp.st_mode = 0700 | S_IFREG;
       {
          time_t now = time(NULL);
@@ -2131,7 +2218,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
          return bRC_Error;
       }
       sp->type = FT_PLUGIN_OBJECT;
-      size = sp->plugin_obj.object_size;
+      sp->statp.st_size = sp->plugin_obj.object_size;
       break;
    default:
       // here we handle standard file metadata information
@@ -2145,57 +2232,32 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       while (backend.ctx->read_command(ctx, cmd) > 0)
       {
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
-         // int nrscan = sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d", &type, &size, &uid, &gid, &perms, &nlinks);
-         nfi = -1;
-         int nrscan = sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d %d", &type, &size, &uid, &gid, &perms, &nlinks, &nfi);
-         DMSG1(ctx, DVDEBUG, "read_command-nrscan: %d\n", nrscan);
-         if (nrscan >= 6)
+         metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, sp);
+         switch (status)
          {
-            sp->statp.st_size = size;
-            sp->statp.st_nlink = nlinks;
-            sp->statp.st_uid = uid;
-            sp->statp.st_gid = gid;
-            sp->statp.st_mode = perms;
-            switch (type)
-            {
-            case 'F':
-               sp->type = FT_REG;
-               break;
-            case 'E':
-               sp->type = FT_REGE;
-               break;
-            case 'D':
-               sp->type = FT_DIREND;
-               sp->link = sp->fname;
-               break;
-            case 'S':
-               sp->type = FT_LNK;
-               reqparams++;
-               break;
-            case 'L':
-               if (nrscan > 6){
-                  sp->type = FT_LNKSAVED;
-                  sp->LinkFI = nfi;
-               } else {
-                  DMSG1(ctx, DERROR, "Invalid stat packet: %s\n", cmd.c_str());
-                  JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid stat packet: %s\n", cmd.c_str());
-                  return bRC_Error;
-               }
-               break;
-            default:
-               /* we need to signal error */
-               sp->type = FT_REG;
-               DMSG2(ctx, DERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
-               JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", type, fname.c_str());
+         case metaplugin::attributes::Invalid_File_Type:
+            JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", sp->type, fname.c_str());
+            return bRC_Error;
+
+         case metaplugin::attributes::Invalid_Stat_Packet:
+            JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid stat packet: %s\n", cmd.c_str());
+            return bRC_Error;
+
+         case metaplugin::attributes::Status_OK:
+            if (sp->type != FT_LNK) {
+               reqparams--;
             }
-            DMSG4(ctx, DINFO, "STAT:%c size:%lld uid:%d gid:%d\n", type, size, uid, gid);
-            DMSG3(ctx, DINFO, " mode:%06o nl:%d fi:%d\n", perms, nlinks, nfi);
-            reqparams--;
             continue;
+         default:
+            break;
          }
-         if (bsscanf(cmd.c_str(), "TSTAMP:%ld %ld %ld", &sp->statp.st_atime, &sp->statp.st_mtime, &sp->statp.st_ctime) == 3){
-            DMSG3(ctx, DINFO, "TSTAMP:%ld(at) %ld(mt) %ld(ct)\n", sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
+         status = metaplugin::attributes::read_scan_tstamp_command(ctx, cmd, sp);
+         switch (status)
+         {
+         case metaplugin::attributes::Status_OK:
             continue;
+         default:
+            break;
          }
          if (scan_parameter_str(cmd, "LSTAT:", lname) == 1) {
             sp->link = lname.c_str();
@@ -2256,9 +2318,10 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
 
    sp->portable = true;
    sp->statp.st_blksize = 4096;
-   sp->statp.st_blocks = size / 4096 + 1;
+   sp->statp.st_blocks = sp->statp.st_size / 4096 + 1;
 
-   // DMSG1(ctx, DVDEBUG, "sp->plug_meta = %p\n", sp->plug_meta);
+   DMSG3(ctx, DINFO, "TSDebug: %ld(at) %ld(mt) %ld(ct)\n",
+         sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
 
    return bRC_OK;
 }
@@ -2344,7 +2407,7 @@ bRC METAPLUGIN::startRestoreFile(bpContext *ctx, const char *cmd)
             }
 
             /* send data */
-            if (backend.ctx->send_data(ctx, ropclass->data.c_str(), ropclass->length) != bRC_OK) {
+            if (backend.ctx->send_data(ctx, ropclass->data, ropclass->length) != bRC_OK) {
                DMSG0(ctx, DERROR, "Error sending RestoreObject data\n");
                return bRC_Error;
             }
@@ -2381,7 +2444,7 @@ bRC METAPLUGIN::endRestoreFile(bpContext *ctx)
 bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
 {
    POOL_MEM cmd(PM_FNAME);
-   char type;
+   // char type;
 
    {
       // synchronie access to job_cancelled variable
@@ -2402,44 +2465,26 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
       Mmsg(cmd, "FNAME:%s\n", rp->ofname);
       backend.ctx->write_command(ctx, cmd);
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
+
       /* STAT:... */
-      switch (rp->type)
-      {
-      case FT_REGE:
-         type = 'E';
-         break;
-      case FT_DIREND:
-         type = 'D';
-         break;
-      case FT_LNK:
-         type = 'S';
-         break;
-      case FT_LNKSAVED:
-         type = 'L';
-         break;
-      case FT_REG:
-      default:
-         type = 'F';
-         break;
-      }
-      last_type = rp->type;
-      Mmsg(cmd, "STAT:%c %lld %d %d %06o %d %d\n",
-           type, rp->statp.st_size, rp->statp.st_uid, rp->statp.st_gid,
-           rp->statp.st_mode, (int)rp->statp.st_nlink, rp->LinkFI);
+      metaplugin::attributes::make_stat_command(ctx, cmd, rp);
       backend.ctx->write_command(ctx, cmd);
+      last_type = rp->type;
       DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
+
       /* TSTAMP:... */
-      if (rp->statp.st_atime || rp->statp.st_mtime || rp->statp.st_ctime){
-         Mmsg(cmd, "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
+      if (metaplugin::attributes::make_tstamp_command(ctx, cmd, rp) == metaplugin::attributes::Status_OK) {
          backend.ctx->write_command(ctx, cmd);
          DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
       }
+
       /* LSTAT:$link$ */
-      if (type == 'S' && rp->olname != NULL){
+      if (rp->type == FT_LNK && rp->olname != NULL){
          Mmsg(cmd, "LSTAT:%s\n", rp->olname);
          backend.ctx->write_command(ctx, cmd);
          DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
       }
+
       backend.ctx->signal_eod(ctx);
 
       /* check if backend accepted the file */
