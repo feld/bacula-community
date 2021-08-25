@@ -205,7 +205,7 @@ run job=$JobBackup1 level=incremental yes
 wait
 status client=$CLIENT
 messages
-llist job=$JobBackup1
+llist jobid=8
 @output
 quit
 END_OF_DATA
@@ -522,6 +522,14 @@ if [ "$EFILE1" -ne 2 ] || [ "$EFILE2" -ne 1 ] || [ "$EFILE3" -ne 1 ] || [ "$EFIL
 then
    echo "log3" "$EFILE1" "$EFILE2" "$EFILE3"
    estat=1
+fi
+
+RET=$(grep "jobstatus:" ${cwd}/tmp/log10.out | awk '{print $2}')
+SEEN=$(grep -c "SEEN" ${cwd}/tmp/log10.out)
+if [ "x$RET" != "xT" ] || [ "$SEEN" -ne 1 ]
+then
+   echo "log10" "$RET" "$SEEN"
+   bstat=$((bstat+512))
 fi
 
 LFILE1=$(grep "drwxr-xr-x" ${cwd}/tmp/llog1.out | grep -c containers)
