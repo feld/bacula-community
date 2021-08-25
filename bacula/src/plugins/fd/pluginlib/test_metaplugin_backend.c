@@ -73,6 +73,7 @@ bool regress_standard_error_backup = false;
 bool regress_cancel_backup = false;
 bool regress_cancel_restore = false;
 
+bool Job_Level_Incremental = false;
 
 #define BUFLEN             4096
 #define BIGBUFLEN          131072
@@ -782,6 +783,32 @@ void perform_backup()
       signal_eod();
    }
 
+   bool seen = false;
+   if (Job_Level_Incremental) {
+      // we can accurateCheck query
+      write_plugin('C', "CHECK:/etc/passwd\n");
+      write_plugin('C', "STAT:F 37 0 0 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      read_plugin(buf);
+      write_plugin('I', "TEST CHECK Response");
+      write_plugin('I', buf);
+      if (strncmp(buf, "SEEN", 4) == 0) {
+         seen = true;
+      }
+   }
+
+   // backup if full or not seen
+   if (!Job_Level_Incremental || !seen) {
+      write_plugin('C', "FNAME:/etc/passwd\n");
+      write_plugin('C', "STAT:F 37 0 0 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      signal_eod();
+      /* here comes a file data contents */
+      write_plugin('C', "DATA\n");
+      write_plugin('D', "/* here comes a file data contents */");
+      signal_eod();
+   }
+
    // next file
    write_plugin('I', "TEST8");
    snprintf(buf, BIGBUFLEN, "FNAME:%s/bucket/%d/SHELL\n", PLUGINPREFIX, mypid);
@@ -1472,7 +1499,14 @@ int main(int argc, char** argv) {
 #endif
 
    /* Job Info (2) */
-   while ((len = read_plugin(buf)) > 0);
+   while ((len = read_plugin(buf)) > 0)
+   {
+      if (strcmp(buf, "Level=I\n") == 0) {
+         Job_Level_Incremental = true;
+         continue;
+      }
+   }
+
    write_plugin('I', "TEST2");
    signal_eod();
 

@@ -191,6 +191,27 @@ END_OF_DATA
 
 run_bconsole
 
+# now do an incremental backup job
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@#
+@# Backup incremental
+@#
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log10.out
+status client=$CLIENT
+setdebug level=500 client=$CLIENT trace=1
+run job=$JobBackup1 level=incremental yes
+wait
+status client=$CLIENT
+messages
+llist job=$JobBackup1
+@output
+quit
+END_OF_DATA
+
+run_bconsole
+
 
 # now test estimate job
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
