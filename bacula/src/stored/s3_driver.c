@@ -580,7 +580,7 @@ bool s3_driver::move_cloud_part(const char *VolumeName, uint32_t apart, const ch
    make_cloud_filename(cloud_fname, VolumeName, apart);
    POOLMEM *dest_cloud_fname = get_pool_memory(PM_FNAME);
    dest_cloud_fname[0] = 0;
-   add_vol_and_part(dest_cloud_fname, VolumeName, to, apart);
+   add_vol_and_part(dest_cloud_fname, VolumeName, to);
    int64_t lastModifiedReturn=0LL;
    bacula_ctx ctx(err);
    ctx.caller = "S3_copy_object";
