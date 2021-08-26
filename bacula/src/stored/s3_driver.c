@@ -350,9 +350,9 @@ static void responseCompleteCallback(
    }
    if ((status != S3StatusOK) && ctx->errMsg) 
    {
-      POOL_MEM msg;
-      Mmsg(msg, " %s ERR=%s", ctx->caller, msg);
-      pm_strcat(ctx->errMsg, msg);
+      POOL_MEM tmp;
+      Mmsg(tmp, " %s ERR=%s", ctx->caller, msg);
+      pm_strcat(ctx->errMsg, tmp);
       if (oops->furtherDetails) {
          pm_strcat(ctx->errMsg, " ");
          pm_strcat(ctx->errMsg, oops->furtherDetails);
