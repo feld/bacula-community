@@ -350,7 +350,9 @@ static void responseCompleteCallback(
    }
    if ((status != S3StatusOK) && ctx->errMsg) 
    {
-      Mmsg(ctx->errMsg, "%s ERR=%s", ctx->caller, msg);
+      POOL_MEM msg;
+      Mmsg(msg, " %s ERR=%s", ctx->caller, msg);
+      pm_strcat(ctx->errMsg, msg);
       if (oops->furtherDetails) {
          pm_strcat(ctx->errMsg, " ");
          pm_strcat(ctx->errMsg, oops->furtherDetails);
@@ -386,7 +388,9 @@ static int putObjectCallback(int buf_len, char *buf, void *callbackCtx)
    int read_len;
 
    if (ctx->xfer->is_canceled()) {
-      Mmsg(ctx->errMsg, _("Job cancelled.\n"));
+      POOL_MEM msg;
+      Mmsg(msg, _("Job cancelled.\n"));
+      pm_strcat(ctx->errMsg, msg);
       return -1;
    }
    if (ctx->obj_len) {
@@ -396,8 +400,10 @@ static int putObjectCallback(int buf_len, char *buf, void *callbackCtx)
              ctx->caller, ctx->xfer->m_part, pthread_self(), rbytes, buf_len, ctx->obj_len);
       if (rbytes <= 0) {
          berrno be;
-         Mmsg(ctx->errMsg, "%s Error reading input file: ERR=%s\n",
+         POOL_MEM msg;
+         Mmsg(msg, "%s Error reading input file: ERR=%s\n",
             ctx->caller, be.bstrerror());
+         pm_strcat(ctx->errMsg, msg);
          goto get_out;
       }
       ctx->obj_len -= rbytes;
@@ -479,15 +485,19 @@ static S3Status getObjectDataCallback(int buf_len, const char *buf,
 
    Enter(dbglvl);
    if (ctx->xfer->is_canceled()) {
-       Mmsg(ctx->errMsg, _("Job cancelled.\n"));
-       return S3StatusAbortedByCallback;
+      POOL_MEM msg;
+      Mmsg(msg, _("Job cancelled.\n"));
+      pm_strcat(ctx->errMsg, msg);
+      return S3StatusAbortedByCallback;
    }
    /* Write buffer to output file */
    wbytes = fwrite(buf, 1, buf_len, ctx->outfile);
    if (wbytes < 0) {
       berrno be;
-      Mmsg(ctx->errMsg, "%s Error writing output file: ERR=%s\n",
+      POOL_MEM msg;
+      Mmsg(msg, "%s Error writing output file: ERR=%s\n",
          ctx->caller, be.bstrerror());
+      pm_strcat(ctx->errMsg, msg);
       return S3StatusAbortedByCallback;
    }
    ctx->xfer->increment_processed_size(wbytes);
@@ -628,7 +638,9 @@ static S3Status partsAndCopieslistBucketCallback(
       }
 
       if (ctx->cancel_cb && ctx->cancel_cb->fct && ctx->cancel_cb->fct(ctx->cancel_cb->arg)) {
-         Mmsg(ctx->errMsg, _("Job cancelled.\n"));
+         POOL_MEM msg;
+         Mmsg(msg, _("Job cancelled.\n"));
+         pm_strcat(ctx->errMsg, msg);
          return S3StatusAbortedByCallback;
       }
    }
@@ -926,7 +938,9 @@ static S3Status partslistBucketCallback(
 
    Leave(dbglvl);
    if (ctx->cancel_cb && ctx->cancel_cb->fct && ctx->cancel_cb->fct(ctx->cancel_cb->arg)) {
-      Mmsg(ctx->errMsg, _("Job cancelled.\n"));
+      POOL_MEM msg;
+      Mmsg(msg, _("Job cancelled.\n"));
+      pm_strcat(ctx->errMsg, msg);
       return S3StatusAbortedByCallback;
    }
    return S3StatusOK;
@@ -1026,7 +1040,9 @@ static S3Status volumeslistBucketCallback(
 
    Leave(dbglvl);
    if (ctx->cancel_cb && ctx->cancel_cb->fct && ctx->cancel_cb->fct(ctx->cancel_cb->arg)) {
-      Mmsg(ctx->errMsg, _("Job cancelled.\n"));
+      POOL_MEM msg;
+      Mmsg(msg, _("Job cancelled.\n"));
+      pm_strcat(ctx->errMsg, msg);
       return S3StatusAbortedByCallback;
    }
    return S3StatusOK;
