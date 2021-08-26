@@ -603,6 +603,18 @@ bool s3_driver::move_cloud_part(const char *VolumeName, uint32_t apart, const ch
    if (ctx.status == S3StatusOK) {
       exists = true;
       Mmsg(err, "%s", to);
+
+      /* remove source part */
+      Dmsg3(dbglvl, "%s move sucessful trying to unlink %s", ctx.caller, cloud_fname, dest_cloud_fname);
+      ctx.caller = "S3_delete_object";
+      S3_delete_object(&s3ctx, cloud_fname, NULL, 0, &responseHandler, &ctx);
+      if (ctx.status != S3StatusOK) {
+         /* error message should have been filled within response cb */
+         return false;
+      } else {
+         Dmsg1(dbglvl, "move_cloud_part: Unlink sucessful for file %s.\n", cloud_fname);
+      }
+
       return true;
    } else if (ctx.status == S3StatusXmlParseFailure) {
       /* source doesn't exist. OK. */

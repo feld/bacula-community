@@ -484,6 +484,7 @@ bool release_device(DCR *dcr)
    bool ok = true;
    char tbuf[100];
    bsteal_lock_t holder;
+   bool read_dev;
 
    dev->Lock();
    if (!obtain_device_block(dev,
@@ -499,7 +500,8 @@ bool release_device(DCR *dcr)
    /* if device is reserved, job never started, so release the reserve here */
    dcr->clear_reserved();
 
-   if (dev->can_read()) {
+   read_dev = dev->can_read();
+   if (read_dev) {
       VOLUME_CAT_INFO *vol = &dev->VolCatInfo;
       generate_plugin_event(jcr, bsdEventDeviceClose, dcr);
       dev->clear_read();              /* clear read bit */
@@ -602,6 +604,9 @@ bool release_device(DCR *dcr)
       dev->detach_dcr_from_dev(dcr);
    } else {
       free_dcr(dcr);
+      if (read_dev) {
+         dev->term(NULL);
+      }
    }
    Dmsg2(100, "Device %s released by JobId=%u\n", dev->print_name(),
          (uint32_t)jcr->JobId);
