@@ -98,13 +98,18 @@ Tmsg3(0, "ASX change_state %c acc_n=%d acc_capacity=%d\n", new_state, acc_n, acc
    bool is_canceled() { return cancel; };
    void set_cancel(bool new_cancel = true) { cancel = new_cancel; }
    void done(int new_state = 0) { state = new_state; end_t = time(NULL); if (acc_n>0) {accountings[acc_n-1].end_t = end_t; } };
-   bool find_accounting(int state, int64_t *start_t, int64_t *end_t) {
+   bool find_accounting(int state, int64_t *start, int64_t *end) {
+      if (state == 0) {
+         *start = start_t;
+         *end = end_t;
+         return true;
+      }
       int i = find_accounting(state);
       if (i == -1) {
          return false; // not found
       }
-      *start_t = accountings[i].start_t;
-      *end_t = accountings[i].end_t;
+      *start = accountings[i].start_t;
+      *end = accountings[i].end_t;
       return true;
    }
 
