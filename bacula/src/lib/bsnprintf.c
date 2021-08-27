@@ -438,7 +438,7 @@ static int32_t fmthex(char *buffer, int32_t currlen, int32_t maxlen,
    if (min <= 0) {
       return 0; /* min is mandatory */
    }
-   while (i < min) {
+   while (2*i+1 < min) { // every single input char generate 2 digits to output
       outch(hexatable[(value[i]&0xF0)>>4]);
       outch(hexatable[value[i]&0x0F]);
       i++;
