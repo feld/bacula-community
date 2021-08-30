@@ -150,69 +150,82 @@ bool storage::set_current_storage(STORE *storage) {
    return false;
 }
 
-bool storage::inc_rstores(JCR *jcr) {
-   lock_guard lg(mutex);
-
-   if (list->empty()) {
-      return true;
-   }
-
-   int num = store->getNumConcurrentJobs();
-   int numread = store->getNumConcurrentReadJobs();
-   int maxread = store->MaxConcurrentReadJobs;
-   if (num < store->MaxConcurrentJobs &&
-         (jcr->getJobType() == JT_RESTORE ||
-          numread == 0     ||
-          maxread == 0     ||     /* No limit set */
-          numread < maxread))     /* Below the limit */
-   {
-      numread = store->incNumConcurrentReadJobs(1);
-      num = store->incNumConcurrentJobs(1);
-      Dmsg2(dbglvl, "Store: %s Inc rncj=%d\n", store->name(), num);
+/* Returns true if it was possible to increment Storage's write counter,
+ * returns false otherwise */
+static bool inc_wstore(STORE *wstore) {
+   Dmsg1(dbglvl, "Wstore=%s\n", wstore->name());
+   int num = wstore->getNumConcurrentJobs();
+   if (num < wstore->MaxConcurrentJobs) {
+      num = wstore->incNumConcurrentJobs(1);
+      Dmsg2(dbglvl, "Store: %s Inc wncj=%d\n", wstore->name(), num);
       return true;
    }
 
    return false;
 }
 
-bool storage::inc_wstores(JCR *jcr) {
-   STORE *store;
-   bool ret;
+/* Returns true if it was possible to increment Storage's read counter,
+ * returns false otherwise */
+static bool inc_rstore(JCR *jcr, STORE *rstore) {
+   int num = rstore->getNumConcurrentJobs();
+   int numread = rstore->getNumConcurrentReadJobs();
+   int maxread = rstore->MaxConcurrentReadJobs;
+   if (num < rstore->MaxConcurrentJobs &&
+         (jcr->getJobType() == JT_RESTORE ||
+          numread == 0     ||
+          maxread == 0     ||     /* No limit set */
+          numread < maxread))     /* Below the limit */
+   {
+      numread = rstore->incNumConcurrentReadJobs(1);
+      num = rstore->incNumConcurrentJobs(1);
+      Dmsg3(dbglvl, "Store: %s Inc ncj= %d rncj=%d\n", rstore->name(), num, numread);
+      return true;
+   }
+
+   return false;
+}
+
+bool storage::inc_stores(JCR *jcr) {
    lock_guard lg(mutex);
+   STORE *tmp_store;
+   bool ret = false; /* Set if any of the storages in the list was incremented */
 
    if (list->empty()) {
       return true;
    }
 
-   /* Create a temp copy of wstore list */
+   /* Create a temp copy of the store list */
    alist *tmp_list = New(alist(10, not_owned_by_alist));
    if (!tmp_list) {
       Dmsg1(dbglvl, "Failed to allocate tmp list for jobid: %d\n", jcr->JobId);
       return false;
    }
 
-   foreach_alist(store, list) {
-      tmp_list->append(store);
+   foreach_alist(tmp_store, list) {
+      tmp_list->append(tmp_store);
    }
 
-   /* Reset write list */
+   /* Reset list */
    list->destroy();
    list->init(10, not_owned_by_alist);
 
-   foreach_alist(store, tmp_list) {
-      Dmsg1(dbglvl, "Wstore=%s\n", store->name());
-      int num = store->getNumConcurrentJobs();
-      if (num < store->MaxConcurrentJobs) {
-         num = store->incNumConcurrentJobs(1);
-         Dmsg2(dbglvl, "Store: %s Inc wncj=%d\n", store->name(), num);
-         list->append(store);
+   foreach_alist(tmp_store, tmp_list) {
+      if (write) {
+         if (inc_wstore(tmp_store)) {
+            /* Counter incremented, can be added to list */
+            list->append(tmp_store);
+         }
+      } else if (inc_rstore(jcr, tmp_store)) {
+         /* Counter incremented, can be added to list */
+         list->append(tmp_store);
       }
    }
 
    if (!list->empty()) {
+      /* We were able to increment at least 1 storage from the list */
       ret = true;
    } else {
-      /* Failed to increment counter in at least one storage */
+      /* Failed to increment counter for at least one storage */
       ret = false;
    }
 
@@ -226,14 +239,6 @@ bool storage::inc_wstores(JCR *jcr) {
    }
 
    return ret;
-}
-
-bool storage::inc_stores(JCR *jcr) {
-   if (write) {
-      return inc_wstores(jcr);
-   } else {
-      return inc_rstores(jcr);
-   }
 }
 
 void storage::dec_stores() {
