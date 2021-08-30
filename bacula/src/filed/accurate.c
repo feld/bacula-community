@@ -265,6 +265,39 @@ static bool accurate_add_file(JCR *jcr, uint32_t len,
    return ret;
 }
 
+bool accurate_get_file_attribs(JCR *jcr, accurate_attribs_pkt * att)
+{
+   CurFile elt;
+   struct stat statc;
+   int32_t LinkFIc;
+
+   if (att == NULL || !jcr->accurate || !jcr->file_list) {
+      return false;
+   }
+
+   if (att->fname == NULL) {
+      return false;
+   }
+
+   if (!accurate_lookup(jcr, att->fname, &elt)) {
+      Dmsg1(dbglvl, "accurate %s (not found)\n", att->fname);
+      return false;
+   }
+
+   // decode catalog stat
+   decode_stat(elt.lstat, &statc, sizeof(statc), &LinkFIc);
+
+   // populate response data
+   memcpy(&att->statp, &statc, sizeof(statc));
+   if (elt.chksum && *elt.chksum) {
+      att->chksum = bstrdup(elt.chksum);
+   }
+   att->delta_seq = elt.delta_seq;
+   att->seen = elt.seen;
+
+   return true;
+}
+
 bool accurate_check_file(JCR *jcr, ATTR *attr, char *digest)
 {
    struct stat statc;

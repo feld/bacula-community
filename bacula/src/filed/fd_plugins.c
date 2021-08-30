@@ -74,6 +74,7 @@ static bool is_plugin_compatible(Plugin *plugin);
 static bool get_plugin_name(JCR *jcr, char *cmd, int *ret);
 static bRC baculaCheckChanges(bpContext *ctx, struct save_pkt *sp);
 static bRC baculaAcceptFile(bpContext *ctx, struct save_pkt *sp);
+static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att);
 
 /*
  * These will be plugged into the global pointer structure for
@@ -112,7 +113,8 @@ static bFuncs bfuncs = {
    baculaNewInclude,
    baculaNewPreInclude,
    baculaCheckChanges,
-   baculaAcceptFile
+   baculaAcceptFile,
+   baculaAccurateAttribs,
 };
 
 /*
@@ -2491,6 +2493,32 @@ bool plugin_get_features(JCR *jcr, alist *ret)
       }
    }
    return true;
+}
+
+/**
+ * @brief Bacula Callback to get accurate data from the table.
+ *
+ * @param ctx Bacula plugin context
+ * @param att the in/out query parameter and data response; the input is att->fname
+ * @return bRC when bRC_Seen then query was success and found some data,
+ *             bRC_OK when no data found or no accurate data is available
+ *             bRC_Error on any error found
+ */
+static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att)
+{
+   JCR *jcr;
+   bacula_ctx *bctx;
+
+   Dsm_check(999);
+   if (!is_ctx_good(ctx, jcr, bctx) || att == NULL) {
+      return bRC_Error;
+   }
+
+   if (accurate_get_file_attribs(jcr, att)) {
+      return bRC_Seen;
+   }
+
+   return bRC_OK;
 }
 
 #ifdef TEST_PROGRAM

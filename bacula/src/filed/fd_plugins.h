@@ -378,12 +378,22 @@ enum {
     BXATTR_RESTORE = 4
 };
 
-struct xacl_pkt {
-    int32_t pkt_size;                  /* Size of this packet */
-    int32_t func;                      /* Function code */
-    int32_t count;                     /* read/write count */
-    char *content;                     /* read/write buffer */
-    int32_t pkt_end;                   /* end packet sentinel */
+struct xacl_pkt
+{
+   int32_t pkt_size;                // Size of this packet
+   int32_t func;                    // Function code
+   int32_t count;                   // read/write count
+   char *content;                   // read/write buffer
+   int32_t pkt_end;                 // end packet sentinel
+};
+
+struct accurate_attribs_pkt
+{
+   char *fname;                     // file name to lookup
+   struct stat statp;               // decoded stat packet
+   char *chksum;                    // file checksum
+   int32_t delta_seq;               // delta seq
+   bool seen;                       // if the file was seen before
 };
 
 /****************************************************************************
@@ -535,6 +545,7 @@ typedef struct s_baculaFuncs {
    bRC (*NewPreInclude)(bpContext *ctx);
    bRC (*checkChanges)(bpContext *ctx, struct save_pkt *sp);
    bRC (*AcceptFile)(bpContext *ctx, struct save_pkt *sp); /* Need fname and statp */
+   bRC (*getAccurateAttribs)(bpContext *ctx, accurate_attribs_pkt *att);
 } bFuncs;
 
 

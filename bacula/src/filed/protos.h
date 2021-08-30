@@ -87,6 +87,7 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt);
 bool accurate_mark_file_as_seen(JCR *jcr, char *fname);
 void accurate_free(JCR *jcr);
 bool accurate_check_file(JCR *jcr, ATTR *attr, char *digest);
+bool accurate_get_file_attribs(JCR *jcr, accurate_attribs_pkt *att);
 
 /* from backup.c */
 void strip_path(FF_PKT *ff_pkt);
