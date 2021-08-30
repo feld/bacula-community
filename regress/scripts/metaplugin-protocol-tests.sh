@@ -526,9 +526,10 @@ fi
 
 RET=$(grep "jobstatus:" ${cwd}/tmp/log10.out | awk '{print $2}')
 SEEN=$(grep -c "SEEN" ${cwd}/tmp/log10.out)
-if [ "x$RET" != "xT" ] || [ "$SEEN" -ne 1 ]
+NONEXIST=$(grep -c "nonexistentok" ${cwd}/tmp/log10.out)
+if [ "x$RET" != "xT" ] || [ "$SEEN" -ne 1 ] || [ "$NONEXIST" -ne 2 ]
 then
-   echo "log10" "$RET" "$SEEN"
+   echo "log10" "$RET" "$SEEN" "$NONEXIST"
    bstat=$((bstat+512))
 fi
 

@@ -795,6 +795,33 @@ void perform_backup()
       if (strncmp(buf, "SEEN", 4) == 0) {
          seen = true;
       }
+
+      // accurate check nonexistent file
+      snprintf(buf, BIGBUFLEN, "CHECK:%s/nonexistent/%d/file\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      write_plugin('C', "STAT:F 0 0 0 100640 1\n");
+      write_plugin('C', "TSTAMP:0 0 0\n");
+      read_plugin(buf);
+      if (strncmp(buf, "SEEN", 4) != 0) {
+         write_plugin('I', "TEST CHECK nonexistentok");
+      }
+
+      // now accurateGet query
+      write_plugin('C', "CHECKGET:/etc/passwd\n");
+      read_plugin(buf);
+      if (strncmp(buf, "STAT", 4) == 0) {
+         // yes, the data is available
+         read_plugin(buf);
+         write_plugin('I', "TEST CHECKGET");
+      }
+
+      // accurate check nonexistent file
+      snprintf(buf, BIGBUFLEN, "CHECKGET:%s/nonexistent/%d/file\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      read_plugin(buf);
+      if (strncmp(buf, "UNAVAIL", 7) == 0) {
+         write_plugin('I', "TEST CHECK nonexistentok");
+      }
    }
 
    // backup if full or not seen
