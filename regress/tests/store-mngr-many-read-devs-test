@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for #8098
+# Run MAC job with 'Pool' defined with many read storages defined.
+
+#
+TestName="store-mngr-many-read-devs-test"
+JobName=MigrationJobSave
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-migration-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+change_jobname NightlySave $JobName
+start_test
+
+# We first backup into Pool Default,
+# then Migrate into Pool Full.
+#      Pool Default uses Storage=File,DiskChanger
+#      Pool Full    uses Storage=File
+
+# Add 'DiskChanger' device for the 'read' pool to be the second Storage in the group
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Storage" , "File,DiskChanger", "Pool", "Default")'
+
+# Write out bconsole commands
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label storage=File volume=FileVolume001 Pool=Full
+label storage=File volume=FileVolume002 Pool=Default
+label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
+label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log2.out
+run job=migrate-job yes
+wait
+messages
+@$out $tmp/log3.out
+run job=migrate-job yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+# Check if first migration job succeeded
+n=`grep "Migration OK" $tmp/log2.out | wc -l`
+if [ ${n} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Migration job failed, see $tmp/log2.out"
+fi
+
+# Second migration job should do nothing, proper result should be printed
+n=`grep "Migration -- no files to migrate" $tmp/log3.out | wc -l`
+if [ ${n} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Incorrect migration job status, see $tmp/log3.out"
+fi
+
+check_for_zombie_jobs storage=File
+stop_bacula
+
+end_test
