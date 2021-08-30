@@ -90,8 +90,9 @@ extern const char *PLUGINNAME;
 #define D4  800                  /* debug for detailed information only */
 #define DVDEBUG D4
 
-#define getBaculaVar(bvar,val)  bfuncs->getBaculaValue(ctx, bvar, val);
-#define checkChanges(sp)   bfuncs->checkChanges(ctx, sp);
+#define getBaculaVar(bvar,val)   bfuncs->getBaculaValue(ctx, bvar, val);
+#define checkChanges(sp)         bfuncs->checkChanges(ctx, sp);
+#define getAccurateAttribs(att)  bfuncs->getAccurateAttribs(ctx, att);
 
 /* used for sanity check in plugin functions */
 #define ASSERT_CTX \

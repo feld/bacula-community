@@ -126,7 +126,7 @@ namespace attributes
       return Not_Command;
    }
 
-   Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, struct restore_pkt *rp)
+   Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp)
    {
       /* STAT:... */
       char type;
@@ -145,6 +145,9 @@ namespace attributes
       case FT_LNKSAVED:
          type = 'L';
          break;
+      case FT_MASK:     // This is a special metaplugin protocol hack
+         type = 'X';    // as the accurate code does not know this exact value
+         break;
       case FT_REG:
       default:
          type = 'F';
@@ -158,16 +161,13 @@ namespace attributes
       return Status_OK;
    }
 
-   Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, struct restore_pkt *rp)
+   Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp)
    {
       /* TSTAMP:... */
-      pm_strcpy(cmd, NULL);
-      if (rp->statp.st_atime || rp->statp.st_mtime || rp->statp.st_ctime) {
-         Mmsg(cmd, "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
-         DMSG(ctx, DDEBUG, "make_tstamp_command:%s", cmd.c_str());
-         return Status_OK;
-      }
-      return Not_Command;
+      Mmsg(cmd, "TSTAMP:%ld %ld %ld\n", rp->statp.st_atime, rp->statp.st_mtime, rp->statp.st_ctime);
+      DMSG(ctx, DDEBUG, "make_tstamp_command:%s", cmd.c_str());
+
+      return Status_OK;
    }
 }  // attributes
 }  // metaplugin

@@ -45,9 +45,9 @@ namespace attributes
    } Status;
 
    Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp);
-   Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, struct restore_pkt *rp);
+   Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp);
    Status read_scan_tstamp_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp);
-   Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, struct restore_pkt *rp);
+   Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp);
 }  // attributes
 }  // metaplugin
 

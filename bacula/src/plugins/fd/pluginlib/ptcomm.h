@@ -20,8 +20,8 @@
  * @file ptcomm.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a process communication lowlevel library for Bacula plugin.
- * @version 2.0.0
- * @date 2021-02-10
+ * @version 3.0.0
+ * @date 2021-08-20
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
@@ -146,7 +146,7 @@ public:
     *    -1 - when encountered any error
     *    <n> - the number of bytes sent, success
     */
-   int32_t write_command(bpContext *ctx, POOL_MEM &buf) { return write_command(ctx, buf.addr(), true); }
+   int32_t write_command(bpContext *ctx, POOL_MEM &buf) { return write_command(ctx, buf.c_str(), true); }
    int32_t write_data(bpContext *ctx, const char *buf, int32_t len, bool _single_senddata = false);
 
    bool read_ack(bpContext *ctx);
@@ -162,11 +162,12 @@ public:
     * @return true success
     * @return false when encountered any error
     */
-   inline bool signal_error(bpContext *ctx, const POOLMEM *buf)
+   inline bool signal_error(bpContext *ctx, const char * buf, bool _single_senddata = false)
    {
       int32_t len = buf ? strlen(buf) : 0;
-      return sendbackend(ctx, 'E', buf, len);
+      return sendbackend(ctx, 'E', buf, len, _single_senddata);
    }
+   inline bool signal_error(bpContext *ctx, const POOL_MEM &buf) { return signal_error(ctx, buf.c_str(), true); }
 
    POOLMEM *get_error(bpContext *ctx);
 

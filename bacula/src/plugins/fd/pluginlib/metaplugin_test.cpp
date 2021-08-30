@@ -43,7 +43,7 @@ const char *PLUGINPREFIX         = "metaplugin:";
 const char *PLUGINNAME           = "metaplugin";
 const char *PLUGINNAMESPACE      = "@metaplugin";
 const bool CUSTOMNAMESPACE       = true;
-const char *PLUGINAPI            = "3";
+const char *PLUGINAPI            = "4";
 const char *BACKEND_CMD          = "/bin/true";
 
 static bRC mycheckFile(bpContext *ctx, char *fname);

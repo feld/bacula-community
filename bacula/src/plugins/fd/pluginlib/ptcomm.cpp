@@ -790,6 +790,7 @@ bool PTCOMM::read_ack(bpContext *ctx)
  *
  * @param ctx for Bacula debug and jobinfo messages
  * @param buf a message buffer contains command to send
+ * @param _single_senddata when true then low-level driver will use POOLMEM reserved space for transfer
  * @return true success
  * @return false when encountered any error
  */

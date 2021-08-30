@@ -20,8 +20,8 @@
  * @file metaplugin.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula metaplugin interface.
- * @version 2.2.0
- * @date 2021-03-08
+ * @version 3.0.0
+ * @date 2021-08-20
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
@@ -59,14 +59,15 @@ extern const char *PLUGIN_VERSION;
 extern const char *PLUGIN_DESCRIPTION;
 
 // Plugin linking time variables
-extern const char *PLUGINPREFIX;          /// is used for prefixing every Job and Debug messages generted by a plugin
-extern const char *PLUGINNAME;            /// should match the backend $pluginname$ used for Handshake procedure
-extern const bool CUSTOMNAMESPACE;        /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
-extern const bool CUSTOMPREVJOBNAME;      /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
-extern const char *PLUGINNAMESPACE;       /// custom backend plugin namespace used as file name prefix
-extern const char *PLUGINAPI;             /// the plugin api string which should match backend expectations
-extern const char *BACKEND_CMD;           /// a backend execution command path
-extern const int32_t CUSTOMCANCELSLEEP;   /// custom wait time for backend between USR1 and terminate procedures
+extern const char *PLUGINPREFIX;             /// is used for prefixing every Job and Debug messages generted by a plugin
+extern const char *PLUGINNAME;               /// should match the backend $pluginname$ used for Handshake procedure
+extern const bool CUSTOMNAMESPACE;           /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
+extern const bool CUSTOMPREVJOBNAME;         /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
+extern const char *PLUGINNAMESPACE;          /// custom backend plugin namespace used as file name prefix
+extern const char *PLUGINAPI;                /// the plugin api string which should match backend expectations
+extern const char *BACKEND_CMD;              /// a backend execution command path
+extern const int32_t CUSTOMCANCELSLEEP;      /// custom wait time for backend between USR1 and terminate procedures
+extern const bool ACCURATEPLUGINPARAMETER;   /// accurate parameter for plugin parameter
 
 /// defines if metaplugin should handle local filesystem restore with Bacula Core functions
 /// `false` means metaplugin will redirect local restore to backend
@@ -250,7 +251,7 @@ private:
    // a list of received RO from bacula which we will use to feed into backend later
    smart_alist<restore_object_class> restoreobject_list;
 
-   bRC parse_plugin_command(bpContext *ctx, const char *command, alist *params);
+   bRC parse_plugin_command(bpContext *ctx, const char *command, smart_alist<POOL_MEM> &params);
    bRC handle_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop);
    bRC run_backend(bpContext *ctx);
    bRC send_parameters(bpContext *ctx, char *command);
@@ -279,6 +280,7 @@ private:
    bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
    bRC perform_file_index_query(bpContext *ctx);
    bRC perform_accurate_check(bpContext *ctx);
+   bRC perform_accurate_check_get(bpContext *ctx);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
    metadata_type scan_metadata_type(bpContext *ctx, const POOL_MEM &cmd);
    const char *prepare_metadata_type(metadata_type type);
@@ -291,7 +293,7 @@ private:
    bRC terminate_all_backends(bpContext *ctx);
    bRC cancel_all_backends(bpContext *ctx);
    bRC signal_finish_all_backends(bpContext *ctx);
-   bRC render_param(bpContext *ctx, POOLMEM *param, INI_ITEM_HANDLER *handler, char *key, item_value val);
+   bRC render_param(bpContext *ctx, POOL_MEM &param, INI_ITEM_HANDLER *handler, char *key, item_value val);
 };
 
 #endif   // PLUGINLIB_METAPLUGIN_H
