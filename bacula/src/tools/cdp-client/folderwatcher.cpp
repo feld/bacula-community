@@ -55,7 +55,7 @@ FolderWatcher::FolderWatcher(FileChangeHandler *handler)
 
 POOLMEM *FolderWatcher::watch(const char *folder)
 {
-   _fd = inotify_init();
+   _fd = inotify_init1(IN_CLOEXEC);
 
    if (_fd == -1) {
       POOLMEM *err_msg = get_pool_memory(PM_EMSG);
