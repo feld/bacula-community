@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Storage Manager test suite
+#
+echo " "
+echo " " >>test.out
+echo "Start Storage Manager tests "
+echo "Start Storage Manager tests" >>test.out
+
+#TODO enable when #7507 is fixed
+#./run tests/store-mngr-selection-test
+./run tests/store-mngr-busy-dev-test
+./run tests/store-mngr-leastused-test
+./run tests/store-mngr-invalid-dev-test
+./run tests/store-mngr-connection-err-test
+./run tests/store-mngr-many-read-devs-test
+
+echo "End Storage Manager tests "
+echo "End Storage Manager tests" >>test.out
