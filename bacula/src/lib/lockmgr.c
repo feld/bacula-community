@@ -1105,9 +1105,8 @@ int bthread_cond_timedwait_p(pthread_cond_t *cond,
 
 /*  Test if this mutex is locked by the current thread
  *  returns:
- *     0 - unlocked
- *     1 - locked by the current thread
- *     2 - locked by an other thread
+ *     0 - the mutex is not locked by the current thread, and maybe not locked at all
+ *     1 - the mutex is locked by the current thread
  */
 int lmgr_mutex_is_locked(void *m)
 {
