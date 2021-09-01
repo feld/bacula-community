@@ -1821,12 +1821,8 @@ bRC METAPLUGIN::perform_accurate_check(bpContext *ctx)
    DMSG0(ctx, DDEBUG, "perform_accurate_check()\n");
 
    POOL_MEM cmd(PM_FNAME);
-#if __cplusplus >= 201103L
-   struct save_pkt sp {0};
-#else
    struct save_pkt sp;
-   memset(sp, 0, sizeof(sp));
-#endif
+   memset(&sp, 0, sizeof(sp));
 
    // supported sequence is `STAT` followed by `TSTAMP`
    if (backend.ctx->read_command(ctx, cmd) < 0) {
@@ -1917,12 +1913,8 @@ bRC METAPLUGIN::perform_accurate_check_get(bpContext *ctx)
       return bRC_OK;
    }
 
-#if __cplusplus >= 201103L
-   accurate_attribs_pkt attribs {0};
-#else
    accurate_attribs_pkt attribs;
-   memset(attribs, 0, sizeof(attribs));
-#endif
+   memset(&attribs, 0, sizeof(attribs));
 
    attribs.fname = fname.c_str();
    bRC rc = getAccurateAttribs(&attribs);
