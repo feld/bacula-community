@@ -48,13 +48,13 @@ label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
 label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
 list volumes
 @#
-run job=$JobName level=full yes
+run job=$JobName yes
 @#run job=$JobName yes
 wait
 list volumes
 @#setdebug level=200 dir
 @# should migrate both Volumes
-run job=migrate-job level=full yes
+run job=migrate-job yes
 wait
 purge volume=FileVolume001
 purge volume=FileVolume002
@@ -66,7 +66,7 @@ wait
 @# now do a restore
 @#
 @$out ${cwd}/tmp/log2.out
-@#setdebug level=500 storage=File
+setdebug level=500 storage=File
 restore where=${cwd}/tmp/bacula-restores select storage=DiskChanger
 unmark *
 mark *

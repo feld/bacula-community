@@ -763,8 +763,7 @@ static int reserve_device(RCTX &rctx)
    if (rctx.store->append) {
       dcr = new_dcr(rctx.jcr, rctx.jcr->dcr, rctx.device->dev, SD_APPEND);
    } else {
-      DEVICE *dev = init_dev(rctx.jcr, rctx.device, /*adata*/false, /*statcollector*/0x0, /*clone*/true);
-      dcr = new_dcr(rctx.jcr, rctx.jcr->read_dcr, dev, SD_READ);
+      dcr = new_dcr(rctx.jcr, rctx.jcr->read_dcr, rctx.device->dev, SD_READ);
    }
    if (!dcr) {
       BSOCK *dir = rctx.jcr->dir_bsock;
