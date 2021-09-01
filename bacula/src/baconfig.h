@@ -539,6 +539,11 @@ int  Mmsg(POOL_MEM &msgbuf, const char *fmt,...);
    { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5); Dmsg1(level, "%s", msgbuf); }
 #define MmsgD6(level, msgbuf, fmt, a1, a2, a3, a4, a5, a6) \
    { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5, a6); Dmsg1(level, "%s", msgbuf); }
+#define MmsgD7(level, msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7) \
+   { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7); Dmsg1(level, "%s", msgbuf); }
+#define MmsgD8(level, msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7, a8) \
+   { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7, a8); Dmsg1(level, "%s", msgbuf); }
+
 
 #define MmsgT0(level, msgbuf, fmt) \
    { Mmsg(msgbuf, fmt); Tmsg1(level, "%s", msgbuf); }
