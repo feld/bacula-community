@@ -133,7 +133,7 @@ enum metadata_type {
  * This class is used to store single plugin's metadata packet along with providing some
  * helper methods (e.g. for serialization of the data so that it can be send to the sd).
 */
-class meta_pkt: public SMARTALLOC {
+struct meta_pkt: public SMARTALLOC {
    private:
       bool decoded;              /* Was metadata packed decoded from serialized stream or not */
 
