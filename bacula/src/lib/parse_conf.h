@@ -41,7 +41,7 @@ struct RES_ITEM1;                  /* Declare forward referenced structure */
 struct RES_ITEM2;                  /* Declare forward referenced structure */
 class RES;                         /* Declare forward referenced structure */
 struct HPKT;                       /* Declare forward referenced structure */
-struct STATUS_PKT;                 /* Declare forward referenced structure */
+class STATUS_PKT;                  /* Declare forward referenced structure */
 
 typedef void (RES_HANDLER)(HPKT &hpkt);
 typedef void (MSG_RES_HANDLER)(LEX *lc, RES_ITEM *item, int index, int pass);

@@ -25,10 +25,10 @@
  * Author: Radosław Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
  */
 
-#ifndef __BCOLLECTOR_H_
-#define __BCOLLECTOR_H_
+#ifndef BCOLLECTOR_H_
+#define BCOLLECTOR_H_
 
-struct STATUS_PKT; /* Forward declaration */
+class STATUS_PKT; /* Forward declaration */
 
 /* Supported backend types */
 enum {
@@ -86,4 +86,4 @@ void free_collector_resource(COLLECTOR &res_collector);
 int render_updcollector_status(POOL_MEM &buf);
 void api_render_updcollector_status(OutputWriter &ow);
 
-#endif /* __BCOLLECTOR_H_ */
+#endif /* BCOLLECTOR_H_ */

@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __STATUS_PKT_H_
-#define __STATUS_PKT_H_
+#ifndef STATUS_PKT_H_
+#define STATUS_PKT_H_
 
 /*
  * Packet to send to output_status()
@@ -37,11 +37,13 @@ public:
   BSOCK *bs;                       /* used on Unix machines */
   void *context;                   /* Win32 */
   void (*callback)(const char *msg, int len, void *context);  /* Win32 */
-  char api_opts[MAX_NAME_LENGTH];
   int  api;                        /* set if we want API output, with api level */
+  char api_opts[MAX_NAME_LENGTH];
 
   /* Methods */
-  STATUS_PKT() { memset(this, 0, sizeof(STATUS_PKT)); };
+  STATUS_PKT(): bs(NULL), callback(NULL), api(0) { 
+    *api_opts = 0;
+  };
   ~STATUS_PKT() { };
 };
 
