@@ -1022,9 +1022,9 @@ int bthread_mutex_unlock_p(bthread_mutex_t *m, const char *file, int line)
 int bthread_mutex_lock_p(pthread_mutex_t *m, const char *file, int line)
 {
    lmgr_thread_t *self = lmgr_get_thread_info();
-   self->pre_P(m, 0, file, line);
+   if (self) self->pre_P(m, 0, file, line);
    lmgr_p(m);
-   self->post_P();
+   if (self) self->post_P();
    return 0;
 }
 
@@ -1035,7 +1035,7 @@ int bthread_mutex_lock_p(pthread_mutex_t *m, const char *file, int line)
 int bthread_mutex_unlock_p(pthread_mutex_t *m, const char *file, int line)
 {
    lmgr_thread_t *self = lmgr_get_thread_info();
-   self->do_V(m, file, line);
+   if (self) self->do_V(m, file, line);
    lmgr_v(m);
    return 0;
 }
