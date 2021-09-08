@@ -2229,9 +2229,6 @@ static int delete_a_volume(UAContext *ua, MEDIA_DBR *mr)
       return 1;
    }
 
-   /* Keep track of this important event */
-   ua->send_events("DC0010", EVENTS_TYPE_COMMAND, "delete volume=%s", mr->VolumeName);
-
    /* If not purged, do it */
    if (strcmp(mr->VolStatus, "Purged") != 0) {
       if (!db_get_volume_jobids(ua->jcr, ua->db, mr, &lst)) {
@@ -2242,6 +2239,10 @@ static int delete_a_volume(UAContext *ua, MEDIA_DBR *mr)
          purge_jobs_from_catalog(ua, lst.list);
       }
    }
+
+   /* Keep track of this important event */
+   ua->send_events("DC0010", EVENTS_TYPE_COMMAND, "delete volume=%s", mr->VolumeName);
+
    db_delete_media_record(ua->jcr, ua->db, mr);
    return 1;
 }
