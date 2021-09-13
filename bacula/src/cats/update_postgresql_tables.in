@@ -11,7 +11,7 @@ echo " "
 echo "This script will update a Bacula PostgreSQL database"
 echo " from any from version 12-16 or 1014-$OLDVERSION to version $NEWVERSION"
 echo " which is needed to convert from any Bacula Enterprise"
-echo " version 4.0.x, 6.x.y, 8.x.y, 10.x.y to version 12.6.x"
+echo " version 4.0.x, 6.x.y, 8.x.y, 10.x.y to version 12.8.x"
 echo " "
 
 
