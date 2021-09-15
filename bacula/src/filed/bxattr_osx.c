@@ -204,7 +204,11 @@ bRC_BXATTR BXATTR_OSX::os_get_xattr_value (JCR *jcr, char * name, char ** pvalue
          break;
    }
 
-   if (len > 0){
+   if (len >= me->max_network_buffer_size) {
+      DMmsg2(100, jcr->errmsg, _("xattr maximum length %d is greater than MaximumNetworkBufferSize on file \"%s\"\n"), len, jcr->last_fname);
+      return bRC_BXATTR_error;
+
+   } else if (len > 0){
       /*
        * allocate memory for the extented attribute value
        * default size is a 256B for PM_MESSAGE, so we need to check required size
