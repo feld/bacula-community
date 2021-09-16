@@ -8,5 +8,6 @@ then
    then
       echo "$COMMIT"
    fi
+else
+   echo "Unknown"
 fi
-echo "Unknown"
