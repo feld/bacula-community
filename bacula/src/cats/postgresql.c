@@ -65,6 +65,7 @@
 /* List of open databases */
 static dlist *db_list = NULL; 
 
+/* Do not issue a Jmsg() call inside the P/V for this mutex */
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
 
 BDB_POSTGRESQL::BDB_POSTGRESQL(): BDB()
@@ -203,20 +204,22 @@ get_out:
 } 
   
  
-/* Check that the database corresponds to the encoding we want  */
-static bool pgsql_check_database_encoding(JCR *jcr, BDB_POSTGRESQL *mdb)
+/* Check that the database corresponds to the encoding we want
+ * return: 0 OK, M_ERROR, M_FATAL, M_WARNING to print errmsg
+ */
+static int pgsql_check_database_encoding(JCR *jcr, BDB_POSTGRESQL *mdb)
 {
    SQL_ROW row;
    int ret = false; 
 
    if (!mdb->sql_query("SELECT getdatabaseencoding()", QF_STORE_RESULT)) { 
-      Jmsg(jcr, M_ERROR, 0, "%s", mdb->errmsg);
-      return false; 
+      return M_ERROR;
    }
 
    if ((row = mdb->sql_fetch_row()) == NULL) { 
-      Mmsg1(mdb->errmsg, _("error fetching row: %s\n"), mdb->sql_strerror()); 
-      Jmsg(jcr, M_ERROR, 0, "Can't check database encoding %s", mdb->errmsg);
+      Mmsg1(mdb->errmsg, _("Can't check database encoding. Error fetching row: %s\n"), mdb->sql_strerror());
+      return M_ERROR;
+
    } else { 
       ret = bstrcmp(row[0], "SQL_ASCII");
 
@@ -229,11 +232,10 @@ static bool pgsql_check_database_encoding(JCR *jcr, BDB_POSTGRESQL *mdb)
          Mmsg(mdb->errmsg,
               _("Encoding error for database \"%s\". Wanted SQL_ASCII, got %s\n"),
               mdb->get_db_name(), row[0]); 
-         Jmsg(jcr, M_WARNING, 0, "%s", mdb->errmsg);
-         Dmsg1(dbglvl_err, "%s", mdb->errmsg);
+         return M_WARNING;
       }
    }
-   return ret;
+   return 0;
 }
 
 /*
@@ -248,6 +250,7 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
    int errstat;
    char buf[10], *port;
    BDB_POSTGRESQL *mdb = this;
+   int print_msg=0;             /* 1: warning, 2: error, 3 fatal */
 
    P(mutex);
    if (mdb->m_connected) {
@@ -338,10 +341,11 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
 
    mdb->m_connected = true;
    if (!bdb_check_version(jcr)) {
+      print_msg = M_FATAL;
       goto get_out;
    }
 
-   sql_query("SET datestyle TO 'ISO, YMD'"); 
+   sql_query("SET datestyle TO 'ISO, YMD'");
    sql_query("SET cursor_tuple_fraction=1");
    sql_query("SET client_min_messages TO WARNING");
 
@@ -352,12 +356,17 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
    sql_query("SET standard_conforming_strings=on"); 
  
    /* Check that encoding is SQL_ASCII */
-   pgsql_check_database_encoding(jcr, mdb);
- 
+   print_msg = pgsql_check_database_encoding(jcr, mdb);
    retval = true; 
 
 get_out:
    V(mutex);
+   /* We can use Jmsg() only outside of the P/V because it can try to write to
+    * the DB, we should even not issue a Jmsg here
+    */
+   if (print_msg) {
+      Jmsg(jcr, print_msg, 0, "%s", errmsg);
+   }
    return retval; 
 } 
 
@@ -447,11 +456,11 @@ void BDB_POSTGRESQL::bdb_escape_string(JCR *jcr, char *snew, char *old, int len)
 
    PQescapeStringConn(mdb->m_db_handle, snew, old, len, &failed);
    if (failed) {
-      Jmsg(jcr, M_FATAL, 0, _("PQescapeStringConn returned non-zero.\n")); 
+      Jmsg(jcr, M_FATAL, 0, _("PQescapeStringConn returned non-zero.\n"));
       /* failed on encoding, probably invalid multibyte encoding in the source string
          see PQescapeStringConn documentation for details. */
       Dmsg0(dbglvl_err, "PQescapeStringConn failed\n");
-   } 
+   }
 }
 
 /*
@@ -461,12 +470,12 @@ void BDB_POSTGRESQL::bdb_escape_string(JCR *jcr, char *snew, char *old, int len)
 char *BDB_POSTGRESQL::bdb_escape_object(JCR *jcr, char *old, int len)
 {
    size_t new_len;
-   unsigned char *obj; 
+   unsigned char *obj;
    BDB_POSTGRESQL *mdb = this;
 
    mdb->esc_obj[0] = 0;
    obj = PQescapeByteaConn(mdb->m_db_handle, (unsigned const char *)old, len, &new_len);
-   if (!obj) { 
+   if (!obj) {
       Jmsg(jcr, M_FATAL, 0, _("PQescapeByteaConn returned NULL.\n"));
    } else {
       mdb->esc_obj = check_pool_memory_size(mdb->esc_obj, new_len+1);

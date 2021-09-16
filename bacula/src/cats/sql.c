@@ -494,13 +494,11 @@ bool BDB::bdb_check_version(JCR *jcr)
  
    bacula_db_version = 0; 
    if (!bdb_sql_query(query, db_int_handler, (void *)&bacula_db_version)) { 
-      Jmsg(jcr, M_FATAL, 0, "%s", errmsg); 
       return false; 
    } 
    if (bacula_db_version != BDB_VERSION) { 
       Mmsg(errmsg, "Version error for database \"%s\". Wanted %d, got %d\n", 
           get_db_name(), BDB_VERSION, bacula_db_version); 
-      Jmsg(jcr, M_FATAL, 0, "%s", errmsg); 
       return false; 
    } 
    return true; 
