@@ -1605,7 +1605,9 @@ void dird_free_jcr(JCR *jcr)
 }
 
 /*
- * Override storage from run parameters if set.
+ *  The Job storage definition must be either in the Job record
+ *  or in the Pool record.  The Pool record overrides the Job
+ *  record.
  */
 void get_job_storage(USTORE *store, JOB *job, RUN *run)
 {
@@ -1618,6 +1620,17 @@ void get_job_storage(USTORE *store, JOB *job, RUN *run)
       store->store = run->storage;
       pm_strcpy(store->store_source, _("Run storage override"));
       return;
+   }
+
+   if (job) {
+      if (job->pool->storage) {
+         store->store = (STORE *)job->pool->storage->first();
+         pm_strcpy(store->store_source, _("Pool resource"));
+         return;
+      } else {
+         store->store = (STORE *)job->storage->first();
+         pm_strcpy(store->store_source, _("Job resource"));
+      }
    }
 }
 

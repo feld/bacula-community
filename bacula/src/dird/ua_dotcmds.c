@@ -2576,7 +2576,7 @@ static bool defaultscmd(UAContext *ua, const char *cmd)
          ua->send_msg("messages=%s", job->messages->name());
          ua->send_msg("client=%s", job->client?job->client->name():_("*None*"));
          get_job_storage(&store, job, NULL);
-         ua->send_msg("storage=%s", store.store->name());
+         ua->send_msg("storage=%s", store.store ? store.store->name() :_("*None*"));
          ua->send_msg("where=%s", job->RestoreWhere?job->RestoreWhere:"");
          ua->send_msg("level=%s", level_to_str(edl, sizeof(edl),job->JobLevel));
          ua->send_msg("type=%s", job_type_to_str(job->JobType));

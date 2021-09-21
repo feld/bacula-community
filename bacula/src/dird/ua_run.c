@@ -556,9 +556,6 @@ static bool get_storage(UAContext *ua, run_ctx &rc)
       }
    }
 
-   if (!rc.store->store) {
-      get_job_storage(rc.store, rc.job, NULL);      /* use default */
-   }
    if (rc.store->store && !acl_access_ok(ua, Storage_ACL, rc.store->store->name())) {
       ua->error_msg(_("No authorization. Storage \"%s\".\n"),
                rc.store->store->name());
