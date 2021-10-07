@@ -455,7 +455,7 @@ static void get_and_display_basejobs(UAContext *ua, RESTORE_CTX *rx)
       POOL_MEM q;
       Mmsg(q, uar_print_jobs, jobids.list);
       ua->send_msg(_("The restore will use the following job(s) as Base\n"));
-      db_list_sql_query(ua->jcr, ua->db, q.c_str(), prtit, ua, 1, HORZ_LIST);
+      db_list_sql_query(ua->jcr, ua->db, "basejobs", q.c_str(), prtit, ua, 1, HORZ_LIST);
    }
    pm_strcpy(rx->BaseJobIds, jobids.list);
 }
@@ -842,7 +842,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          }
          gui_save = ua->jcr->gui;
          ua->jcr->gui = true;
-         db_list_sql_query(ua->jcr, ua->db, uar_list_jobs, prtit, ua, 1, HORZ_LIST);
+         db_list_sql_query(ua->jcr, ua->db, "job", uar_list_jobs, prtit, ua, 1, HORZ_LIST);
          ua->jcr->gui = gui_save;
          done = false;
          break;
@@ -860,7 +860,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          free(fname);
          gui_save = ua->jcr->gui;
          ua->jcr->gui = true;
-         db_list_sql_query(ua->jcr, ua->db, rx->query, prtit, ua, 1, HORZ_LIST);
+         db_list_sql_query(ua->jcr, ua->db, "job", rx->query, prtit, ua, 1, HORZ_LIST);
          ua->jcr->gui = gui_save;
          done = false;
          break;
@@ -880,7 +880,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          }
          gui_save = ua->jcr->gui;
          ua->jcr->gui = true;
-         db_list_sql_query(ua->jcr, ua->db, ua->cmd, prtit, ua, 1, HORZ_LIST);
+         db_list_sql_query(ua->jcr, ua->db, "job", ua->cmd, prtit, ua, 1, HORZ_LIST);
          ua->jcr->gui = gui_save;
          done = false;
          break;
@@ -1104,7 +1104,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
                         "WHERE Object.ObjectName='%s' AND Object.ObjectCategory='%s' AND Object.ObjectType='%s'",
                  esc.c_str(), esc_cat.c_str(), esc_type.c_str());
 
-            if (!db_list_sql_query(ua->jcr, ua->db, query.c_str(), prtit, ua, 0, HORZ_LIST)) {
+            if (!db_list_sql_query(ua->jcr, ua->db, "object", query.c_str(), prtit, ua, 0, HORZ_LIST)) {
                ua->error_msg(_("SQL Query failed: %s\n"), db_strerror(ua->db));
                return 0;
             }
@@ -1858,7 +1858,7 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
 
    if (rx->JobIds[0] != 0) {
       /* Display a list of Jobs selected for this restore */
-      db_list_sql_query(ua->jcr, ua->db, uar_list_temp, prtit, ua, 1,HORZ_LIST);
+      db_list_sql_query(ua->jcr, ua->db, "job", uar_list_temp, prtit, ua, 1,HORZ_LIST);
       ok = true;
    } else {
       ua->warning_msg(_("No jobs found.\n"));

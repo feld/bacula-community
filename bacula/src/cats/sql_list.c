@@ -39,7 +39,7 @@
 /*
  * Submit general SQL query
  */
-int BDB::bdb_list_sql_query(JCR *jcr, const char *query, DB_LIST_HANDLER *sendit,
+int BDB::bdb_list_sql_query(JCR *jcr, const char *title, const char *query, DB_LIST_HANDLER *sendit,
                       void *ctx, int verbose, e_list_type type)
 {
    bdb_lock();
@@ -52,7 +52,7 @@ int BDB::bdb_list_sql_query(JCR *jcr, const char *query, DB_LIST_HANDLER *sendit
       return 0;
    }
 
-   list_result(jcr,this, sendit, ctx, type);
+   list_result(jcr,this, title, sendit, ctx, type);
    sql_free_result();
    bdb_unlock();
    return 1;
@@ -100,7 +100,7 @@ void BDB::bdb_list_pool_records(JCR *jcr, POOL_DBR *pdbr,
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "pool", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -122,7 +122,7 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "client", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -144,7 +144,7 @@ void BDB::bdb_list_plugin_object_types(JCR *jcr, DB_LIST_HANDLER *sendit, void *
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "objecttype", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -204,7 +204,7 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "object", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -244,7 +244,7 @@ void BDB::bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "object", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -296,7 +296,7 @@ void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *s
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "restoreobject", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -385,7 +385,7 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "media", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -442,7 +442,7 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "jobmedia", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -479,7 +479,7 @@ void BDB::bdb_list_filemedia_records(JCR *jcr, uint32_t JobId, uint32_t FileInde
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "filemedia", sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -525,7 +525,7 @@ void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
          sendit(ctx, _("The catalog contains copies as follows:\n"));
       }
 
-      list_result(jcr, this, sendit, ctx, type);
+      list_result(jcr, this, "copy", sendit, ctx, type);
    }
 
    sql_free_result();
@@ -627,7 +627,7 @@ void BDB::bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec,
    if (!QueryDB(jcr, cmd)) {
       goto bail_out;
    }
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "event", sendit, ctx, type);
 
 bail_out:
    bdb_unlock();
@@ -670,7 +670,7 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
       goto bail_out;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "joblog", sendit, ctx, type);
 
    sql_free_result();
 
@@ -818,7 +818,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
       }
    }
    sql_data_seek(0);
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "job", sendit, ctx, type);
    sql_free_result();
    bdb_unlock();
    return list;
@@ -827,6 +827,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
 /*
  * List Job totals
  *
+ * TODO: Adapt for JSON
  */
 void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, void *ctx)
 {
@@ -844,7 +845,7 @@ void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, vo
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, HORZ_LIST);
+   list_result(jcr, this, "jobtotal", sendit, ctx, HORZ_LIST);
 
    sql_free_result();
 
@@ -858,7 +859,7 @@ void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, vo
       return;
    }
 
-   list_result(jcr, this, sendit, ctx, HORZ_LIST);
+   list_result(jcr, this, "jobtotal", sendit, ctx, HORZ_LIST);
 
    sql_free_result();
    bdb_unlock();
@@ -1055,7 +1056,7 @@ void BDB::bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
       goto bail_out;
    }
 
-   list_result(jcr, this, sendit, ctx, type);
+   list_result(jcr, this, "snapshot", sendit, ctx, type);
 
 bail_out:
    sql_free_result();
@@ -1129,10 +1130,9 @@ void BDB::bdb_list_tag_records(JCR *jcr, TAG_DBR *tag, DB_LIST_HANDLER *result_h
          }
       }
       Dmsg1(DT_SQL|50, "q=%s\n", tmp.c_str());
-      bdb_list_sql_query(jcr, tmp.c_str(), result_handler, ctx, 0, type);
+      bdb_list_sql_query(jcr, "tag", tmp.c_str(), result_handler, ctx, 0, type);
    }
    bdb_unlock();
 }
-
 
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */

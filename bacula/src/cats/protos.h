@@ -81,6 +81,7 @@ BDB *db_init_database(JCR *jcr, const char *db_driver, const char *db_name,
         if (mdb)  mdb->bdb_thread_cleanup()
 
 /* sql.c */
+int db_mint64_handler(void *ctx, int num_fields, char **row);
 int db_int64_handler(void *ctx, int num_fields, char **row);
 int db_strtime_handler(void *ctx, int num_fields, char **row);
 int db_list_handler(void *ctx, int num_fields, char **row);
@@ -278,8 +279,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_filemedia_records(jcr, JobId, FI, sendit, ctx, type)
 #define db_list_joblog_records(jcr, mdb, JobId, sendit, ctx, type)      \
            mdb->bdb_list_joblog_records(jcr, JobId, sendit, ctx, type)
-#define db_list_sql_query(jcr, mdb, query, sendit, ctx, verbose, type) \
-           mdb->bdb_list_sql_query(jcr, query, sendit, ctx, verbose, type)
+#define db_list_sql_query(jcr, mdb, title, query, sendit, ctx, verbose, type) \
+           mdb->bdb_list_sql_query(jcr, title, query, sendit, ctx, verbose, type)
 #define db_list_client_records(jcr, mdb, sendit, ctx, type) \
            mdb->bdb_list_client_records(jcr, sendit, ctx, type)
 #define db_list_copies_records(jcr, mdb, limit, jobids, sendit, ctx, type) \

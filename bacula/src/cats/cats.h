@@ -723,8 +723,10 @@ public:
 
 
 /* Functions exported by sql.c for use within the cats directory. */
+void json_list_begin(void *vctx, const char *title);
+void json_list_end(void *vctx, int errcode, const char *errmsg);
 int list_result(void *vctx, int cols, char **row);
-int list_result(JCR *jcr, BDB *mdb, DB_LIST_HANDLER *send, void *ctx, e_list_type type);
+int list_result(JCR *jcr, BDB *mdb, const char *title, DB_LIST_HANDLER *send, void *ctx, e_list_type type);
 int get_sql_record_max(JCR *jcr, BDB *mdb);
 void list_dashes(BDB *mdb, DB_LIST_HANDLER *send, void *ctx);
 

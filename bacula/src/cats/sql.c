@@ -122,7 +122,24 @@ int db_int64_handler(void *ctx, int num_fields, char **row)
    } 
    return 0; 
 } 
- 
+
+/* 
+ * Called here to retrieve a 32/64 bit integer from the database. 
+ *   The returned integer will be extended to 64 bit. It can
+ * return multiple values, but the array has to match the number
+ * of fields to be returned.
+ */ 
+int db_mint64_handler(void *ctx, int num_fields, char **row)
+{
+   int64_t *tab = (int64_t *)ctx;
+   for (int i = 0; i < num_fields; i++) {
+      if (row[i]) {
+         tab[i] = str_to_int64(row[i]);
+      }
+   }
+   return 0;
+}
+
 /* 
  * Called here to retrieve a btime from the database. 
  *   The returned integer will be extended to 64 bit. 
@@ -740,7 +757,7 @@ static void last_line_handler(void *vctx, const char *str)
    LIST_CTX *ctx = (LIST_CTX *)vctx; 
    bstrncat(ctx->line, str, sizeof(ctx->line)); 
 } 
- 
+
 int list_result(void *vctx, int nb_col, char **row) 
 { 
    SQL_FIELD *field; 
@@ -844,7 +861,6 @@ int list_result(void *vctx, int nb_col, char **row)
    return 0; 
  
 vertical_list: 
- 
    Dmsg1(800, "list_result starts vertical list at %d fields\n", mdb->sql_num_fields()); 
    mdb->sql_field_seek(0); 
    for (i = 0; i < mdb->sql_num_fields(); i++) { 
@@ -908,27 +924,46 @@ json_list:
       send(ctx, tmp.c_str());
       first = false;
    }
-   send(ctx, "}\n");
+   send(ctx, "}");
    return 0;
 } 
- 
+
+/* Use this function to start a new JSON list */
+void json_list_begin(DB_LIST_HANDLER *send, void *ctx, const char *title)
+{
+   send(ctx, "{\"type\":\"");
+   send(ctx, title);
+   send(ctx, "\", \"data\":");
+}
+
+/* Use this function to end a JSON list */
+void json_list_end(DB_LIST_HANDLER *send, void *ctx, int errcode, const char *errmsg)
+{
+   send(ctx, ",\"error\":0, \"errmsg\":\"\"}\n");
+}
+
 /* 
  * If full_list is set, we list vertically, otherwise, we 
  *  list on one line horizontally. 
  * Return number of rows 
  */ 
 int 
-list_result(JCR *jcr, BDB *mdb, DB_LIST_HANDLER *send, void *ctx, e_list_type type) 
+list_result(JCR *jcr, BDB *mdb, const char *title, DB_LIST_HANDLER *send, void *ctx, e_list_type type) 
 { 
    SQL_FIELD *field; 
    SQL_ROW row; 
    int i, col_len, max_len = 0; 
    char buf[2000], ewc[30]; 
- 
+
+   if (type == JSON_LIST) {
+      json_list_begin(send, ctx, title);
+   }
+
    Dmsg0(800, "list_result starts\n"); 
    if (mdb->sql_num_rows() == 0) {
       if (type == JSON_LIST) {
-         send(ctx, "[]\n");
+         send(ctx, "[]");
+         json_list_end(send, ctx, 0, "");
       } else {
          send(ctx, _("No results to list.\n"));
       }
@@ -1090,7 +1125,8 @@ json_list:
       }
       send(ctx, "}");
    }
-   send(ctx, "]\n");
+   send(ctx, "]");
+   json_list_end(send, ctx, 0, "");
    return mdb->sql_num_rows();
 } 
  

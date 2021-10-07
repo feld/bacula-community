@@ -262,7 +262,7 @@ public:
    void bdb_list_jobmedia_records(JCR *jcr, JobId_t JobId, char *volume, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_filemedia_records(JCR *jcr, JobId_t JobId, uint32_t FileIndex, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_joblog_records(JCR *jcr, JobId_t JobId, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
-   int  bdb_list_sql_query(JCR *jcr, const char *query, DB_LIST_HANDLER *sendit, void *ctx, int verbose, e_list_type type);
+   int  bdb_list_sql_query(JCR *jcr, const char *title, const char *query, DB_LIST_HANDLER *sendit, void *ctx, int verbose, e_list_type type);
    void bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_copies_records(JCR *jcr, uint32_t limit, char *jobids, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
