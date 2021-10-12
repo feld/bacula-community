@@ -257,7 +257,7 @@ inline char *CAT::name() const { return hdr.name; }
 class CLIENT_GLOBALS {
 public:
    dlink link;                        /* double link */
-   char *name;                        /* resource name */
+   const char *name;                  /* resource name */
    int32_t NumConcurrentJobs;         /* number of concurrent jobs running */
    char *SetIPaddress;                /* address from SetIP command */
    int enabled;                       /* -1: not set, 0 disabled, 1 enabled */
@@ -320,7 +320,7 @@ inline char *CLIENT::name() const { return hdr.name; }
 class STORE_GLOBALS {
 public:
    dlink link;                        /* double link */
-   char *name;                        /* resource name */
+   const char *name;                  /* resource name */
    int32_t NumConcurrentJobs;         /* number of concurrent jobs running */
    int32_t NumConcurrentReadJobs;     /* number of concurrent read jobs running */
    int enabled;                       /* -1: not set, 0: disabled, 1: enabled */
@@ -424,7 +424,7 @@ inline void USTORE::set_source(const char *where)
 class JOB_GLOBALS {
 public:
    dlink link;                        /* double link */
-   char *name;                        /* resource name */
+   const char *name;                  /* resource name */
    int32_t NumConcurrentJobs;         /* number of concurrent jobs running */
    int enabled;                       /* -1: disabled, 0: disabled, 1: Enabled */
 };
@@ -629,7 +629,7 @@ inline char *FILESET::name() const { return hdr.name; }
 class SCHED_GLOBALS {
 public:
    dlink link;                        /* double link */
-   char *name;                        /* resource name */
+   const char *name;                  /* resource name */
    int enabled;                       /* -1: not set, 0: disabled, 1: Enabled */
 };
 
