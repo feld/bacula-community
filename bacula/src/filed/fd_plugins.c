@@ -1517,7 +1517,7 @@ bool plugin_query_parameter(JCR *jcr, char *param, char *command, void sendit(JC
 
    Dmsg0(dbglvl, "plugin_query\n");
 
-   if (!get_plugin_name(jcr, command, &len)) {
+   if (!b_plugin_list || !get_plugin_name(jcr, command, &len)) {
       goto bail_out;
    }
 
