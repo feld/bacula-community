@@ -1241,7 +1241,7 @@ bool plugin_backup_metadata(JCR *jcr, FF_PKT *ff_pkt)
    /* Backup metadata if provided */
    if (ff_pkt->plug_meta) {
       if (!metadata_save(jcr, ff_pkt->plug_meta)) {
-         Jmsg2(jcr, M_ERROR, 0, _("Failed to backup metadata for plugin: \"%s\" fname: %s"),
+         Jmsg2(jcr, M_ERROR, 0, _("Failed to backup metadata for plugin: \"%s\" fname: %s\n"),
                jcr->plugin->file, ff_pkt->fname);
          return false;
       }
