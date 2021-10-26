@@ -780,7 +780,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
            "Job.ClientId,Client.Name as ClientName,JobStatus,SchedTime,"
            "StartTime,EndTime,RealEndTime,JobTDate,"
            "VolSessionId,VolSessionTime,JobFiles,JobBytes,ReadBytes,JobErrors,"
-           "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,"
+           "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,PriorJob,"
            "Job.FileSetId,FileSet.FileSet,Job.HasCache,Comment,Reviewed "
            "FROM Job JOIN Client USING (ClientId) LEFT JOIN Pool USING (PoolId) "
            "LEFT JOIN FileSet USING (FileSetId) %s "
