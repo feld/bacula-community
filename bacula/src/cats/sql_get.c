@@ -251,30 +251,52 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
 
    bdb_lock();
    if (jr->JobId == 0) {
-      bdb_escape_string(jcr, esc, jr->Job, strlen(jr->Job));
-      Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
+      if (jr->Job[0]) {
+         bdb_escape_string(jcr, esc, jr->Job, strlen(jr->Job));
+         Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
 "Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
 "SchedTime,RealEndTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed "
 "FROM Job WHERE Job='%s'", esc);
-    } else {
+
+      } else if (jr->PriorJob[0]) {
+         bdb_escape_string(jcr, esc, jr->PriorJob, strlen(jr->PriorJob));
+         Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
+"PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
+"Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
+"SchedTime,RealEndTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed "
+"FROM Job WHERE PriorJob='%s' ORDER BY Type ASC LIMIT 1", esc);
+      } else {
+         Mmsg0(errmsg, _("No Job found\n"));
+         bdb_unlock();
+         return false;                   /* failed */
+      }
+
+   } else {
       Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
 "Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
 "SchedTime,RealEndTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed "
 "FROM Job WHERE JobId=%s",
           edit_int64(jr->JobId, ed1));
-    }
+   }
 
    if (!QueryDB(jcr, cmd)) {
       bdb_unlock();
       return false;                   /* failed */
    }
+
    if ((row = sql_fetch_row()) == NULL) {
       Mmsg1(errmsg, _("No Job found for JobId %s\n"), edit_int64(jr->JobId, ed1));
       sql_free_result();
       bdb_unlock();
-      return false;                   /* failed */
+
+      /* If a prior job is set, we can retry with it */
+      if (jr->Job[0] && jr->PriorJob[0]) {
+         jr->Job[0] = 0;
+         return bdb_get_job_record(jcr, jr);
+      }
+      return false;
    }
 
    jr->VolSessionId = str_to_uint64(row[0]);
