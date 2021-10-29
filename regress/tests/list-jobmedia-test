@@ -56,37 +56,37 @@ END_OF_DATA
 run_bacula
 stop_bacula
 
-grep '{' $tmp/log2.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j));'
+grep '{' $tmp/log2.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}));'
 if [ $? != 2 ]; then
     print_debug "ERROR: Should find two jobmedia in $tmp/log2.out"
     estat=1
 fi
 
-grep '{' $tmp/log3.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{jobid} == 2);'
+grep '{' $tmp/log3.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 1 && $j->{data}[0]->{jobid} == 2);'
 if [ $? != 1 ]; then
     print_debug "ERROR: Should find one jobmedia for jobid=2 in $tmp/log3.out"
     estat=1
 fi
 
-grep '{' $tmp/log4.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{volumename} == "TestVolume002");'
+grep '{' $tmp/log4.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 1 && $j->{data}[0]->{volumename} == "TestVolume002");'
 if [ $? != 1 ]; then
     print_debug "ERROR: Should find one jobmedia for volume=TestVolume002 in $tmp/log4.out"
     estat=1
 fi
 
-grep '\[' $tmp/log5.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 0);'
+grep '\[' $tmp/log5.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 0);'
 if [ $? != 1 ]; then
     print_debug "ERROR: Should find no jobmedia for volume=TestVolume001 and Jobid=2 in $tmp/log5.out"
     estat=1
 fi
 
-grep '{' $tmp/log6.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{volumename} == "TestVolume001");'
+grep '{' $tmp/log6.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 1 && $j->{data}[0]->{volumename} == "TestVolume001");'
 if [ $? != 1 ]; then
     print_debug "ERROR: Should find one jobmedia for volume=TestVolume001 and Jobid=1 in $tmp/log6.out"
     estat=1
 fi
 
-grep '{' $tmp/log7.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@$j) == 1 && $j->[0]->{volumename} == "TestVolume001");'
+grep '{' $tmp/log7.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 1 && $j->{data}[0]->{volumename} == "TestVolume001");'
 if [ $? != 1 ]; then
     print_debug "ERROR: Should find one jobmedia for volume=TestVolume001 and Jobid=1 in $tmp/log7.out"
     estat=1
