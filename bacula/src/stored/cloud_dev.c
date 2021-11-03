@@ -1792,16 +1792,6 @@ bool cloud_dev::truncate(DCR *dcr)
    dcr->VolCatInfo.VolLastPartBytes = 0;
    dcr->VolCatInfo.VolCatCloudParts = 0;
 
-   openmode = CREATE_READ_WRITE;
-   if (!open_next_part(dcr)) {
-      goto get_out;
-   }
-
-   /* check if the current volume is present in the proxy */
-   if (!probe_cloud_proxy(dcr, getVolCatName())) {
-      goto get_out;
-   }
-
    /* wrap the uploads in a parts ilist */
    transfer *tpkt;
    foreach_alist(tpkt, dcr->uploads) {
