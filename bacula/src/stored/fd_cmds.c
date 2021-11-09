@@ -237,13 +237,15 @@ void do_client_commands(JCR *jcr)
                /* Note fd->msg command may be destroyed by comm activity */
                if (!job_canceled(jcr) && !jcr->is_incomplete()) {
                   strip_trailing_junk(fd->msg);
+                  char buf[64];
                   if (jcr->errmsg[0]) {
                      strip_trailing_junk(jcr->errmsg);
                      Jmsg2(jcr, M_FATAL, 0, _("Command error with FD msg=\"%s\", SD hanging up. ERR=%s\n"),
-                           fd->msg, jcr->errmsg);
+                           asciidump(fd->msg, fd->msglen, buf, sizeof(buf)),
+                           jcr->errmsg);
                   } else {
                      Jmsg1(jcr, M_FATAL, 0, _("Command error with FD msg=\"%s\", SD hanging up.\n"),
-                        fd->msg);
+                           asciidump(fd->msg, fd->msglen, buf, sizeof(buf)));
                   }
                   jcr->setJobStatus(JS_ErrorTerminated);
                }
