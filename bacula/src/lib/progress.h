@@ -81,7 +81,6 @@ public:
    void change_state(int new_state, int64_t new_goal, int64_t start = 0)
    {
       state = new_state; goal = new_goal; current = start; intermediate_t=time(NULL);
-Tmsg3(0, "ASX change_state %c acc_n=%d acc_capacity=%d\n", new_state, acc_n, acc_capacity);
       if (acc_capacity > 0 && acc_n < acc_capacity) {
          accountings[acc_n].state = new_state;
          accountings[acc_n].start_t = intermediate_t;
