@@ -349,8 +349,6 @@ static int add_cmd(UAContext *ua, const char *cmd)
       return 1;
    }
 
-   bmemset(&pr, 0, sizeof(pr));
-
    if (!get_pool_dbr(ua, &pr)) {
       return 1;
    }
@@ -596,7 +594,6 @@ int update_pool_references(JCR *jcr, BDB *db, POOL *pool)
       return 1;
    }
 
-   bmemset(&pr, 0, sizeof(POOL_DBR));
    bstrncpy(pr.Name, pool->name(), sizeof(pr.Name));
 
    /* Don't compute NumVols here */
@@ -2623,8 +2620,7 @@ static int cloud_list_cmd(UAContext *ua, const char *cmd)
    bool first=true;
    uint32_t maxpart=0, part;
    uint64_t maxpart_size=0;
-   bmemset(&pr, 0, sizeof(pr));
-   bmemset(&mr, 0, sizeof(mr));
+   bmemset((void*)&mr, 0, sizeof(mr));
 
    /* Look at arguments */
    for (int i=1; i<ua->argc; i++) {
