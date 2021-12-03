@@ -114,12 +114,13 @@ public:
    char *dedup_dir;                   /* DEDUP directory */
    char *dedup_index_dir;             /* Directory for index (db) file */
    int64_t max_container_size;        /* Maximum container size then split */
+   int64_t max_index_memory_size;     /* Maximum memory usable for the dedup index */
    bool  dedup_check_hash;            /* Check Hash of each chunk after rehydration */
    int64_t dedup_scrub_max_bandwidth; /* Maximum disk bandwidth usable for scrub */
    uint32_t driver_type;              /* dedup driver type */
    DedupEngine *dedupengine;
    int dedupengine_use_count;
-   char *dedup_err_msg;                     /* is set for any error status */
+   char *dedup_err_msg;               /* is set for any error status */
 };
 
 /*
