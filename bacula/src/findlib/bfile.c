@@ -296,7 +296,7 @@ extern "C" HANDLE get_osfhandle(int fd);
 
 void binit(BFILE *bfd)
 {
-   memset((void *)bfd, 0, sizeof(BFILE));
+   bmemset((void *)bfd, 0, sizeof(BFILE));
    bfd->fid = -1;
    bfd->mode = BF_CLOSED;
    bfd->use_backup_api = have_win32_api();
