@@ -828,7 +828,7 @@ int plugin_estimate(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
          sp.portable = true;
          sp.flags = 0;
          sp.cmd = cmd;
-         Dmsg3(0, "startBackup st_size=%p st_blocks=%p sp=%p\n", &sp.statp.st_size, &sp.statp.st_blocks,
+         Dmsg3(dbglvl, "startBackup st_size=%p st_blocks=%p sp=%p\n", &sp.statp.st_size, &sp.statp.st_blocks,
                 &sp);
          /* Get the file save parameters. I.e. the stat pkt ... */
          if (plug_func(plugin)->startBackupFile(jcr->plugin_ctx, &sp) != bRC_OK) {
@@ -1871,7 +1871,7 @@ static ssize_t my_plugin_bwrite(BFILE *bfd, void *buf, size_t count)
    Dsm_check(999);
    Dmsg0(dbglvl2, "plugin_bwrite\n");
    if (!plugin || !jcr->plugin_ctx) {
-      Dmsg0(0, "No plugin context\n");
+      Dmsg0(dbglvl, "No plugin context\n");
       return 0;
    }
    io.pkt_size = sizeof(io);
