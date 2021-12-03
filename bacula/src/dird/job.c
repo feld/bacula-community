@@ -626,8 +626,8 @@ int cancel_inactive_job(UAContext *ua)
    CLIENT    *client;
    JCR       *jcr = new_jcr(sizeof(JCR), dird_free_jcr);
 
-   memset(&jr, 0, sizeof(jr));
-   memset(&cr, 0, sizeof(cr));
+   bmemset(&jr, 0, sizeof(jr));
+   bmemset(&cr, 0, sizeof(cr));
 
    if ((i = find_arg_with_value(ua, "jobid")) > 0) {
       jr.JobId = str_to_int64(ua->argv[i]);
@@ -1355,7 +1355,7 @@ bool get_or_create_client_record(JCR *jcr)
       Jmsg(jcr, M_FATAL, 0, _("No Client specified.\n"));
       return false;
    }
-   memset(&cr, 0, sizeof(cr));
+   bmemset(&cr, 0, sizeof(cr));
    bstrncpy(cr.Name, jcr->client->hdr.name, sizeof(cr.Name));
    cr.AutoPrune = jcr->client->AutoPrune;
    cr.FileRetention = jcr->client->FileRetention;
@@ -1388,7 +1388,7 @@ bool get_or_create_fileset_record(JCR *jcr)
 {
    FILESET_DBR fsr;
 
-   memset(&fsr, 0, sizeof(FILESET_DBR));
+   bmemset(&fsr, 0, sizeof(FILESET_DBR));
    bstrncpy(fsr.FileSet, jcr->fileset->hdr.name, sizeof(fsr.FileSet));
    if (jcr->fileset->have_MD5) {
       struct MD5Context md5c;
@@ -1874,7 +1874,7 @@ int create_restore_bootstrap_file(JCR *jcr, JobId_t jobid, int findex1, int find
    UAContext *ua;
    int files;
 
-   memset(&rx, 0, sizeof(rx));
+   bmemset(&rx, 0, sizeof(rx));
    rx.JobIds = (char *)"";
 
    rx.bsr_list = create_bsr_list(jobid, findex1, findex2);
