@@ -255,9 +255,8 @@ bool metadata_save(JCR *jcr, const plugin_metadata *plug_meta)
    for (uint32_t i=0; i<mp_count; i++) {
       meta_pkt *mp = plug_meta->get(i);
 
-      /*TODO add handling for meta size >64KB*/
-      if (mp->size() > 65536) {
-         Jmsg1(jcr, M_ERROR, 0, _("Metadata size (%ld) is bigger then currently supported one (64KB)\n"),
+      if (mp->size() > 3000000) {
+         Jmsg1(jcr, M_ERROR, 0, _("Metadata size (%ld) is bigger then currently supported one (3MB)\n"),
                                  mp->size());
          goto bail_out;
       }
