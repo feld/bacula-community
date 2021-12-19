@@ -587,7 +587,7 @@ bool tls_postconnect_verify_host(JCR *jcr, TLS_CONNECTION *tls, const char *host
             val = method->i2v(method, extstr, NULL);
 
             /* dNSName shortname is "DNS" */
-            Dmsg0(250, "Check DNS name\n");
+            Dmsg0(250, "Check DNS name / IP Address\n");
             for (j = 0; j < sk_CONF_VALUE_num(val); j++) {
                nval = sk_CONF_VALUE_value(val, j);
                if (strcmp(nval->name, "DNS") == 0) {
@@ -604,6 +604,12 @@ bool tls_postconnect_verify_host(JCR *jcr, TLS_CONNECTION *tls, const char *host
                      goto success;
                   }
                   Dmsg2(250, "No DNS name match. Host=%s cert=%s\n", host, nval->value);
+               } else if (strcmp(nval->name, "IP Address") == 0) {
+                  if (strcasecmp(nval->value, host) == 0) {
+                     auth_success = true;
+                     goto success;
+                  }
+                  Dmsg2(250, "No IP match. Host=%s cert=%s\n", host, nval->value);
                }
             }
          }
