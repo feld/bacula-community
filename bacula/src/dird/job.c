@@ -1195,14 +1195,15 @@ bool allow_duplicate_job(JCR *jcr)
          }
          if (cancel_dup || job->CancelRunningDuplicates) {
             /* Zap the duplicated job djcr */
-            UAContext *ua = new_ua_context(jcr);
             Jmsg(jcr, M_INFO, 0, _("Cancelling duplicate JobId=%d.\n"), djcr->JobId);
-            cancel_job(ua, djcr, 60);
-            bmicrosleep(0, 500000);
-            djcr->setJobStatus(JS_Canceled);
-            cancel_job(ua, djcr, 60);
-            free_ua_context(ua);
-            Dmsg2(800, "Cancel dup %p JobId=%d\n", djcr, djcr->JobId);
+            pthread_t thid;
+            int status;
+            djcr->inc_use_count(); // cancel_thread() calls free_jcr()
+            if ((status=pthread_create(&thid, NULL, cancel_thread, (void *)djcr)) != 0) {
+               berrno be;
+               Jmsg1(jcr, M_WARNING, 0, _("Cannot create cancel thread: ERR=%s\n"), be.bstrerror(status));
+               free_jcr(jcr);
+            }
          } else {
              /* Zap current job */
             jcr->setJobStatus(JS_Canceled);
