@@ -870,7 +870,7 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
       terminate_sd_msg_chan_thread(wjcr);
       break;
    default:
-      Mmsg(term_msg, _("Inappropriate %s term code"));
+      Mmsg(term_msg, _("Inappropriate %c term code"), jcr->JobStatus);
       break;
    }
 
