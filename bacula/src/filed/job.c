@@ -1258,7 +1258,7 @@ static int restore_object_cmd(JCR *jcr)
       return dir->fsend(OKRestoreObject);
    }
 
-   rop.plugin_name = (char *)malloc(dir->msglen);
+   rop.plugin_name = (char *)bmalloc(dir->msglen);
    *rop.plugin_name = 0;
 
    if (sscanf(dir->msg, restoreobjcmd, &rop.JobId, &rop.object_len,
@@ -1582,7 +1582,7 @@ int add_regex_to_fileset(JCR *jcr, const char *item, int type)
    int rc;
    char prbuf[500];
 
-   preg = (regex_t *)malloc(sizeof(regex_t));
+   preg = (regex_t *)bmalloc(sizeof(regex_t));
    if (current_opts->flags & FO_IGNORECASE) {
       rc = regcomp(preg, item, REG_EXTENDED|REG_ICASE);
    } else {
