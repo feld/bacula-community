@@ -559,6 +559,11 @@ int  Mmsg(POOL_MEM &msgbuf, const char *fmt,...);
    { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5); Tmsg1(level, "%s", msgbuf); }
 #define MmsgT6(level, msgbuf, fmt, a1, a2, a3, a4, a5, a6) \
    { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5, a6); Tmsg1(level, "%s", msgbuf); }
+#define MmsgT7(level, msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7) \
+   { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7); Tmsg1(level, "%s", msgbuf); }
+#define MmsgT8(level, msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7, a8) \
+   { Mmsg(msgbuf, fmt, a1, a2, a3, a4, a5, a6, a7, a8); Tmsg1(level, "%s", msgbuf); }
+
 
 class JCR;
 void d_msg(const char *file, int line, int64_t level, const char *fmt,...);
