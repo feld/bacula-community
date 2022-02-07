@@ -335,8 +335,6 @@ static int do_label(UAContext *ua, const char *cmd, int relabel)
       "barcodes",
       NULL};
 
-
-   bmemset(&pr, 0, sizeof(pr));
    if (!open_client_db(ua)) {
       return 1;
    }
@@ -1024,7 +1022,6 @@ static void content_send_info(UAContext *ua, char type, int Slot, char *vol_name
    if (is_volume_name_legal(NULL, vol_name)) {
       bstrncpy(mr.VolumeName, vol_name, sizeof(mr.VolumeName));
       if (db_get_media_record(ua->jcr, ua->db, &mr)) {
-         bmemset(&pr, 0, sizeof(POOL_DBR));
          pr.PoolId = mr.PoolId;
          if (!db_get_pool_record(ua->jcr, ua->db, &pr)) {
             strcpy(pr.Name, "?");
