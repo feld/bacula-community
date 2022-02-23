@@ -31,6 +31,8 @@
 
 static const int64_t dbglvl = DT_CLOUD|50;
 
+static const char *transfer_state_name[]  = {"created", "queued", "process", "done", "error"};
+
 /* constructor
    * size : the size in bytes of the transfer
    * funct : function to process
@@ -143,7 +145,7 @@ void transfer::proceed()
    if (transition(TRANS_STATE_PROCESSED)) {
          transfer_state state = m_funct(this);
          if (!transition(state)) {
-            Mmsg1(m_message, _("wrong transition to %s after proceed\n"), state);
+            Mmsg1(m_message, _("wrong transition to %s after proceed\n"), transfer_state_name[state]);
          }
    } else {
       Mmsg(m_message, _("wrong transition to TRANS_STATE_PROCESS in proceed review logic\n"));
@@ -209,14 +211,13 @@ uint32_t transfer::append_status(POOL_MEM& msg)
    POOLMEM *tmp_msg = get_pool_memory(PM_MESSAGE);
    char ec[50], ed1[50], ed2[50];
    uint32_t ret=0;
-   static const char *state[]  = {"created",  "queued",  "process", "done", "error"};
 
    lock_guard lg(m_stat_mutex);
    if (m_state > TRANS_STATE_PROCESSED) {
       if (m_hash64[0]||m_hash64[1]||m_hash64[2]||m_hash64[3]||m_hash64[4]||m_hash64[5]||m_hash64[6]||m_hash64[7]) {
          ret =  Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s %s%s%s%s size=%sB duration=%ds hash=%02x%02x%02x%02x%02x%02x%02x%02x%s%s\n"),
                      m_volume_name, m_part,
-                     state[m_state],
+                     transfer_state_name[m_state],
                      (m_retry != 0)?"retry=":"",
                      (m_retry != 0)?edit_uint64(m_retry, ed1):"",
                      (m_retry != 0)?"/":"",
@@ -229,7 +230,7 @@ uint32_t transfer::append_status(POOL_MEM& msg)
       } else {
          ret =  Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s %s%s%s%s size=%sB duration=%ds%s%s\n"),
                      m_volume_name, m_part,
-                     state[m_state],
+                     transfer_state_name[m_state],
                      (m_retry != 0)?"retry=":"",
                      (m_retry != 0)?edit_uint64(m_retry, ed1):"",
                      (m_retry != 0)?"/":"",
@@ -243,7 +244,7 @@ uint32_t transfer::append_status(POOL_MEM& msg)
    } else {
       ret = Mmsg(tmp_msg,_("%s/part.%-5d state=%-7s %s%s%s%s size=%sB eta=%ds%s%s\n"),
                   m_volume_name, m_part,
-                  state[m_state],
+                  transfer_state_name[m_state],
                   (m_retry != 0)?"retry=":"",
                   (m_retry != 0)?edit_uint64(m_retry, ed1):"",
                   (m_retry != 0)?"/":"",
@@ -260,8 +261,6 @@ uint32_t transfer::append_status(POOL_MEM& msg)
 
 void transfer::append_api_status(OutputWriter &ow)
 {
-   static const char *state[]  = {"created", "queued", "process", "done", "error"};
-
    lock_guard lg(m_stat_mutex);
    if (m_state > TRANS_STATE_PROCESSED) {
          ow.get_output(OT_START_OBJ,
@@ -269,7 +268,7 @@ void transfer::append_api_status(OutputWriter &ow)
                   OT_INT32, "part",                   m_part,
                   OT_INT32, "jobid",                  m_dcr ? (m_dcr->jcr ? m_dcr->jcr->JobId : 0) : 0,
                   OT_STRING,"state",                  (m_state == TRANS_STATE_QUEUED) ? 
-                                                         (m_wait_timeout_inc_insec == 0) ? "queued":"waiting" :state[m_state],
+                                                         (m_wait_timeout_inc_insec == 0) ? "queued":"waiting" :transfer_state_name[m_state],
                   OT_INT64, "size",                   m_stat_size,
                   OT_DURATION, "duration",            m_stat_duration/ONE_SEC,
                   OT_STRING,"message",                NPRTB(m_message),
@@ -281,7 +280,7 @@ void transfer::append_api_status(OutputWriter &ow)
                   OT_INT32, "part",                   m_part,
                   OT_INT32, "jobid",                  m_dcr ? (m_dcr->jcr ? m_dcr->jcr->JobId : 0) : 0,
                   OT_STRING,"state",                  (m_state == TRANS_STATE_QUEUED) ? 
-                                                         (m_wait_timeout_inc_insec == 0) ? "queued":"waiting" :state[m_state],
+                                                         (m_wait_timeout_inc_insec == 0) ? "queued":"waiting" :transfer_state_name[m_state],
                   OT_INT64, "size",                   m_stat_size,
                   OT_INT64, "processed_size",         m_stat_processed_size,
                   OT_DURATION, "eta",                 m_stat_eta/ONE_SEC,
