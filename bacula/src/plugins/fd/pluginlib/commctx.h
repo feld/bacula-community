@@ -69,7 +69,12 @@ public:
    bool check_command(const char *command);
    void foreach_command(void (*func)(T *, void *), void *param);
    bRC foreach_command_status(bRC (*func)(T *, void *), void *param);
+   bool is_ctx_null() { return ctx == NULL ; }
 
+   /* Shortcut that will blow up if ctx is not yet defined, use carefully
+    * The gdb backtrace is misleading, we see pluginctx->xxx while we
+    * do pluginctx.ctx->xxx
+    */
    T * operator->() { return ctx; }
 };
 
