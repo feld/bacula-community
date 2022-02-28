@@ -134,7 +134,7 @@ public:
    bool write_command(bpContext *ctx, const char *buf, bool _single_senddata = false);
 
    bRC send_data(bpContext *ctx, const char *buf, int32_t len, bool _single_senddata = false);
-   bRC send_data(bpContext *ctx, POOL_MEM &buf, int32_t len) { return send_data(ctx, buf.addr(), true); }
+   bRC send_data(bpContext *ctx, POOL_MEM &buf, int32_t len) { return send_data(ctx, buf.addr(), len, true); }
    bRC recv_data(bpContext *ctx, POOL_MEM &buf, int32_t *recv_len=NULL);
 
    /**

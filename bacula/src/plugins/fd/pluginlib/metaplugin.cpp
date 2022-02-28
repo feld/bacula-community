@@ -23,7 +23,8 @@
  * @version 2.1.0
  * @date 2020-12-23
  *
- * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved.
+ *            IP transferred to Bacula Systems according to agreement.
  */
 
 #include "metaplugin.h"
@@ -111,15 +112,6 @@ static pInfo pluginInfo = {
    PLUGIN_VERSION,
    PLUGIN_DESCRIPTION,
 };
-
-#define _STR(x) __STR(x)
-#define __STR(x) #x
-
-#ifdef VERSIONGIT
-   #define VERSIONGIT_STR  _STR(VERSIONGIT)
-#else
-   #define VERSIONGIT_STR  "/unknown"
-#endif
 
 /*
  * Plugin called here when it is first loaded

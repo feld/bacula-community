@@ -23,7 +23,9 @@
  * @version 2.2.0
  * @date 2021-04-26
  *
- * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * Common definitions and utility functions for Inteos plugins.
+ * Functions defines a common framework used in our utilities and plugins.
+ * Author: Radosław Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
  */
 
 #include "pluginlib.h"
@@ -421,6 +423,33 @@ bool render_param(bool &param, const char *pname, const char *name, const bool v
 }
 
 /**
+ * @brief Renders a parameter as a "key=value" string into a prepared buffer.
+ *
+ * @param param the place to render to
+ * @param handler the handler determines the value type
+ * @param key the "key" name
+ * @param val the "value" to render
+ * @return true if parameter rendering ok
+ * @return false on rendering error
+ */
+bool render_param(POOL_MEM &param, INI_ITEM_HANDLER *handler, char *key, item_value val)
+{
+   if (handler == ini_store_str){
+      Mmsg(param, "%s=%s\n", key, val.strval);
+   } else
+   if (handler == ini_store_int64){
+      Mmsg(param, "%s=%lld\n", key, val.int64val);
+   } else
+   if (handler == ini_store_bool){
+      Mmsg(param, "%s=%d\n", key, val.boolval ? 1 : 0);
+   } else {
+      DMsg1(DERROR, "Unsupported parameter handler for: %s\n", key);
+      return false;
+   }
+   return true;
+}
+
+/**
  * @brief Set the up param value
  *
  * @param param the param variable where we will setup a parameter
@@ -544,8 +573,9 @@ bool parse_param(int &param, const char *pname, const char *name, const char *va
 
    if (value && bstrcasecmp(name, pname)){
       /* convert str to integer */
-      param = strtol(value, NULL, 10);
-      if (param == LONG_MIN || param == LONG_MAX){
+      long outparam = strtol(value, NULL, 10);
+
+      if (outparam == LONG_MIN || outparam == LONG_MAX){
          // error in conversion?
          if (errno == ERANGE){
             // yes, error
@@ -555,6 +585,7 @@ bool parse_param(int &param, const char *pname, const char *name, const char *va
             return false;
          }
       }
+      param = outparam;
       DMsg2(DINFO, "%s parameter: %d\n", name, param);
 
       return true;

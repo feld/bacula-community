@@ -23,7 +23,6 @@
  * @version 2.1.1
  * @date 2021-03-10
  *
- * @copyright Copyright (c) 2020 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
 #include <stdio.h>
@@ -149,13 +148,13 @@ int read_plugin(char * buf)
       LOG(buflog);
       len = 0;
       while (len < size) {
-         int nbytes;
-         ioctl(STDIN_FILENO, FIONREAD, &nbytes);
-         snprintf(buflog, BUFLEN, ">> FIONREAD:%i", nbytes);
+         int32_t nbytes = 0;
+         int rc = ioctl(STDIN_FILENO, FIONREAD, &nbytes);
+         snprintf(buflog, BUFLEN, ">> FIONREAD:%d:%ld", rc, nbytes);
          LOG(buflog);
          if (nbytes < size){
-            ioctl(STDIN_FILENO, FIONREAD, &nbytes);
-            snprintf(buflog, BUFLEN, ">> Second FIONREAD:%i", nbytes);
+            rc = ioctl(STDIN_FILENO, FIONREAD, &nbytes);
+            snprintf(buflog, BUFLEN, ">> Second FIONREAD:%d:%ld", rc, nbytes);
             LOG(buflog);
          }
          size_t bufread = size - len > BIGBUFLEN ? BIGBUFLEN : size - len;
@@ -1512,9 +1511,11 @@ int main(int argc, char** argv) {
    }
    //sleep(30);
 
+#ifdef F_GETPIPE_SZ
    int pipesize = fcntl(STDIN_FILENO, F_GETPIPE_SZ);
    snprintf(buflog, BUFLEN, "#> F_GETPIPE_SZ:%i", pipesize);
    LOG(buflog);
+#endif
 
    /* handshake (1) */
    len = read_plugin(buf);

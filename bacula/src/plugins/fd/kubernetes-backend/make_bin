@@ -1,0 +1,15 @@
+#!/bin/bash
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+# We need to specify all .so file in the pyinstaller command
+OPT=`find build/lib.* -name *.so | while read a; do echo -n " -r $a"; done`
+
+PYTHONPATH=`./get_python PYTHONPATH`
+PYTHON_PREFIX=`./get_python PYTHON_PREFIX`
+export PYTHONPATH
+export PATH=$PATH:$PYTHON_PREFIX/bin
+echo $PYTHONPATH
+
+set -x
+pyinstaller -F $OPT build/scripts-*/k8s_backend

@@ -1,0 +1,19 @@
+This is a Kubernetes Backend for Bacula Enterprise
+
+
+Author: Radosław Korzeniewski (c) 2019,2020
+
+(c) Bacula Systems SA
+
+---------- Build and Installation ----------
+
+To build and install the project:
+
+$ python3 setup.py build
+$ python3 setup.py install
+
+(From the projects root folder)
+
+To run the project:
+
+$ k8s_backend

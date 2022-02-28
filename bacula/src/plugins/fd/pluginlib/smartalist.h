@@ -17,7 +17,7 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
 */
 /**
- * @file smartalist.h
+ * @file commctx.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a simple smart array list (alist) resource guard conceptually based on C++11 - RAII.
  * @version 1.1.0

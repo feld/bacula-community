@@ -1,0 +1,91 @@
+--- Test Execution
+
+In order to properly execute all the tests,
+some Environment Variables must be created:
+
+BE_PLUGIN_TYPE (Specifies which Plugin should be tested)
+
+BE_PLUGIN_VERSION (Specifies which Plugin Version should be tested)
+
+BE_PLUGIN_URL (Specifies the URL where the Plugins Data Source exists)
+
+BE_PLUGIN_USER (Specifies the username that should be used by the Plugin)
+
+BE_PLUGIN_PWD (Specifies the password that should be used by the Plugin)
+
+Example:
+
+export BE_PLUGIN_TYPE=swift
+
+export BE_PLUGIN_VERSION=1
+
+export BE_PLUGIN_URL=http://192.168.0.5:8080
+
+export BE_PLUGIN_USER=test:tester
+
+export BE_PLUGIN_PWD=testing
+
+
+To run the tests (from the projects root folder):
+
+python3 -m unittest discover tests/test_baculaswift
+
+
+For more information:
+
+https://docs.openstack.org/swift/latest/development_saio.html
+
+
+
+-- Manual Testing
+
+It is possible that Swift containers and objects might be needed
+to be created in order to do manual testing. In this case, the
+python-swiftclient should be accessed directly.
+
+The python-swiftclient (called "swift") tool is a command line utility
+for communicating with an OpenStack Object Storage (swift) environment.
+It allows one to perform several types of operations.
+
+In order for properly use this tool (with legacy authenticaton),
+four Environment Variables must be created
+
+ST_AUTH_VERSION
+ST_AUTH
+ST_USER
+ST_KEY
+
+Those values could be, for example (if you are using SAIO - Swift All in One):
+
+export ST_AUTH_VERSION=1.0
+export ST_AUTH=http://192.168.0.5:8080/auth/v1.0
+export ST_USER=test:tester
+export ST_KEY=testing
+
+The complete list of operations that this tool can perform is shown
+in this link:
+
+https://docs.openstack.org/python-swiftclient/latest/cli/index.html#examples
+
+-- Swift ACL
+
+On Swift, only Accounts and Containers (buckets) have Access Control Lists.
+In order to create ACLs on Containers with the "swift" command-line tool,
+please check this link:
+
+https://www.swiftstack.com/docs/cookbooks/swift_usage/container_acl.html
+
+-- Swift XATTRS
+
+On Swift, both Containers (buckets) and Objects (files) may have Extended Attributes.
+
+In order to create XATTRs on both with the "swift" command-line tool,
+please check this link:
+
+https://docs.openstack.org/python-swiftclient/latest/cli/index.html#swift-post
+
+
+
+
+
+

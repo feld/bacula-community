@@ -17,7 +17,7 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
 */
 /**
- * @file smartptr.h
+ * @file commctx.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a simple smart pointer guard conceptually based on C++11 smart pointers - unique_ptr.
  * @version 1.2.0

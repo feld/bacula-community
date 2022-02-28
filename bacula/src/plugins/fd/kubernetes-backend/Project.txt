@@ -1,0 +1,277 @@
+RD-Project-0001 Check List 1.0
+-------------------------------
+
+This checklist must be completed and stored in the SVN directory of the
+project.
+
+When an item is not relevant, N/A can be specified. When an item is not
+done, the line can stay empty. A percentage can also be specified when
+the item is not completely done. Yes/No/Done can be used for Boolean answers.
+
+A copy should be sent to the Project and the R&D manager.
+
+
+Project Name....: Swift Plugin
+Version.........: 1.0
+Authors.........: Henrique Medrado de Faria
+Completion%.....: 100%
+
+
+
+----------------------------------------------------------------
+--- Project Description
+
+Short Description:
+
+This project intents to create a Plugin for Backup and Restore of
+OpenStack Swift Storage objects, which is accessible via a REST API.
+It is used by Bacula C++ Plugin, and both comunicate through an ASCII
+protocol.
+
+
+Beta Testers....:
+Alpha Date......:
+Beta Date.......:
+Target Date.....:
+Release Date....:
+
+
+
+----------------------------------------------------------------
+--- Code
+
+-- What is the associated intranet web page name?
+
+
+
+-- Where is the associated SVN project directory?
+
+
+
+-- Where is the code (git, path, ...)?
+
+bsweb:swift
+
+-- What is the git branch name?
+
+master
+
+-- How to compile the code?
+
+The code is interpreted
+
+
+-- What are the command line options?
+
+At the moment, there are no command line options
+
+-- What are the tested platforms?
+
+
+
+-- What are the supported platforms?
+
+
+
+-- Who did the code review?
+
+Alain Spineux
+
+
+----------------------------------------------------------------
+--- Dependencies
+
+What is needed to run the code (dependencies)?
+
+
+
+What is the procedure to install dependencies?
+
+
+
+Is the dependency installation procedure implemented in a depkgs-xxx Makefile?
+
+
+
+Are the dependencies stored in bsweb:/home/src/depkgs as a depkgs-xxx file ?
+
+
+
+How to configure dependencies?
+
+
+
+What is the license for each dependency? Is it compatible with BEE license?
+
+
+
+Was an email sent to all developers with the documentation to install new dependencies?
+
+
+
+Can Bacula compile without the new dependencies?
+
+Yes.
+
+Should we update the configure.in for new libraries?
+
+
+
+----------------------------------------------------------------
+-- Coding Style
+
+Are all structures properly documented?
+
+Yes.
+
+
+Are all functions properly documented?
+
+Yes.
+
+
+Are all advanced algorithms documented?
+
+Yes.
+
+
+Is the copyright correct in all files?
+
+Yes.
+
+
+
+----------------------------------------------------------------
+-- Regression Testing
+
+
+-- What are the names of the regress tests that can be used?
+
+All tests are store inside the "tests" folder
+
+Unit Tests:
+
+tests/bacula_swift/test_io
+tests/bacula_swift/test_jobs
+tests/bacula_swift/test_services
+
+
+Integration Tests:
+
+tests/bacula_swift/test_plugins
+
+(Tests the integration with the Plugin Data Source, such as Swift Storage)
+
+
+System Tests:
+
+tests/bacula_swift/test_system
+
+(Tests the code as if it were used by the Bacula C++ Plugin)
+
+
+Exploratory Tests:
+
+Auxiliary Tests for developers to study and understand Data Sources
+
+
+Stress Tests:
+
+Tests to verify performance requirements
+
+
+
+-- What are the options or variables that can be used to configure the tests?
+
+
+In order to properly configure the tests,
+some Environment Variables must be created:
+
+BE_PLUGIN_TYPE (Specifies which Plugin should be tested)
+
+BE_PLUGIN_VERSION (Specifies which Plugin Version should be tested)
+
+BE_PLUGIN_URL (Specifies the URL where the Plugins Data Source exists)
+
+BE_PLUGIN_USER (Specifies the username that should be used by the Plugin)
+
+BE_PLUGIN_PWD (Specifies the password that should be used by the Plugin)
+
+Example:
+
+export BE_PLUGIN_TYPE=swift
+
+export BE_PLUGIN_VERSION=1
+
+export BE_PLUGIN_URL=http://192.168.0.5:8080
+
+export BE_PLUGIN_USER=test:tester
+
+export BE_PLUGIN_PWD=testing
+
+
+
+
+-- Have we some unit test procedures? How to run them?
+
+
+To run the tests (from the projects root folder):
+
+$ python3 -m unittest discover tests/test_baculaswift
+
+
+
+-- Who ran the regression tests?
+
+
+----------------------------------------------------------------
+--- Documentation
+
+Where is the documentation?
+
+
+
+Are the following subjects described in the documentation:
+   1- General overview
+   
+   2- Installation of the program
+   
+   3- Configuration of the program
+   
+   4- Limitations
+
+
+----------------------------------------------------------------
+--- Packaging
+
+Do we have a RPM spec file?
+
+No
+
+
+Do we have Debian debhelper files?
+
+No
+
+
+Do we have a Windows installer?
+
+No
+
+Will the spec or the debhelper scripts abort if dependencies are not found?
+
+
+----------------------------------------------------------------
+--- Support
+
+What is the Mantis category for bug reports?
+
+
+
+Who is the Support expert for the project?
+
+Henrique Medrado (hfaria020@gmail.com)
+
+
+
+

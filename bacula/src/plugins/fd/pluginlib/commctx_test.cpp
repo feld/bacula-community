@@ -40,7 +40,8 @@ struct testctx : public SMARTALLOC
 {
    const char * cmd;
    testctx(const char *command) : cmd(command) { referencenumber++; };
-   ~testctx() { referencenumber--; };;
+   ~testctx() { referencenumber--; };
+   bool meth() { return true; }
 };
 
 void do_something(testctx*, void*data)
@@ -66,7 +67,7 @@ bRC do_status(testctx*, void*data)
 
 int main()
 {
-   Unittests pluglib_test("commctx_test");
+   Unittests commctx_test("commctx_test");
 
    // Pmsg0(0, "Initialize tests ...\n");
 
@@ -121,6 +122,18 @@ int main()
 
       status = ctx.foreach_command_status(do_status, NULL);
       ok(status == bRC_Error, "do_status with NULL");
+   }
+
+   {
+      COMMCTX<testctx> ctx;
+      auto testctx1 = ctx.switch_command(TEST1);
+      ok(testctx1 != nullptr, "test switch command1");
+      auto cmd1 = ctx->cmd;
+      ok(strcmp(cmd1, TEST1) == 0, "test arrow operator variable");
+      auto testctx2 = ctx.switch_command(TEST2);
+      ok(testctx2 != nullptr, "test switch command2");
+      auto cmd2 = ctx->meth();
+      ok(cmd2, "test arrow operator method");
    }
 
    return report();

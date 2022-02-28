@@ -23,7 +23,9 @@
  * @version 2.2.0
  * @date 2021-04-26
  *
- * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * Common definitions and utility functions for Inteos plugins.
+ * Functions defines a common framework used in our utilities and plugins.
+ * Author: Radosław Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
  */
 
 #ifndef _PLUGINLIB_H_
@@ -34,6 +36,7 @@
 #include <ctype.h>
 
 #include "bacula.h"
+#include "lib/ini.h"
 #include "fd_plugins.h"
 
 /* Pointers to Bacula functions used in plugins */
@@ -47,6 +50,15 @@ extern const char *PLUGINNAME;
 /* module definition */
 #ifndef PLUGMODULE
 #define PLUGMODULE   "PluginLib::"
+#endif
+
+#define _STR(x) __STR(x)
+#define __STR(x) #x
+
+#ifdef VERSIONGIT
+   #define VERSIONGIT_STR  _STR(VERSIONGIT)
+#else
+   #define VERSIONGIT_STR  "/unknown"
 #endif
 
 /* size of different string or query buffers */
@@ -210,6 +222,7 @@ inline bool islocalpath(const char *path)
 bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const char *value);
 bool render_param(POOLMEM **param, const char *pname, const char *fmt, const char *name, const int value);
 bool render_param(bool &param, const char *pname, const char *name, const bool value);
+bool render_param(POOL_MEM &param, INI_ITEM_HANDLER *handler, char *key, item_value val);
 
 bool parse_param(bool &param, const char *pname, const char *name, const char *value);
 bool parse_param(int &param, const char *pname, const char *name, const char *value, bool *err = NULL);

@@ -20,10 +20,11 @@
  * @file commctx.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin command context switcher template.
- * @version 1.2.0
- * @date 2020-01-05
+ * @version 1.3.0
+ * @date 2020-09-13
  *
- * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved.
+ *            IP transferred to Bacula Systems according to agreement.
  */
 
 #ifndef PLUGINLIB_COMMCTX_H
@@ -68,6 +69,8 @@ public:
    bool check_command(const char *command);
    void foreach_command(void (*func)(T *, void *), void *param);
    bRC foreach_command_status(bRC (*func)(T *, void *), void *param);
+
+   T * operator->() { return ctx; }
 };
 
 

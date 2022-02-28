@@ -32,7 +32,7 @@
 #include "unittests.h"
 
 /* Plugin Info definitions */
-const char *PLUGIN_LICENSE       = "AGPLv3";
+const char *PLUGIN_LICENSE       = "Bacula AGPLv3";
 const char *PLUGIN_AUTHOR        = "Radoslaw Korzeniewski";
 const char *PLUGIN_DATE          = "April 2021";
 const char *PLUGIN_VERSION       = "1.0.0";

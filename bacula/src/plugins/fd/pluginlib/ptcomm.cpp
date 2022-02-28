@@ -15,11 +15,11 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
- */
+*/
 /**
  * @file ptcomm.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
- * @brief This is a process communication lowlevel library for Bacula plugin.
+ * @brief This is a Bacula plugin library for interfacing with Metaplugin backend.
  * @version 2.0.0
  * @date 2020-11-20
  *
@@ -209,7 +209,7 @@ bool PTCOMM::sendbackend_data(bpContext *ctx, const char *buf, int32_t nbytes)
    _timeout.tv_sec = PTCOMM_DEFAULT_TIMEOUT;
    _timeout.tv_usec = 0;
 
-   while (nbytes)
+   while (nbytes > 0)
    {
       fd_set rfds;
       fd_set wfds;
@@ -610,6 +610,7 @@ bool PTCOMM::sendbackend(bpContext *ctx, char cmd, const POOLMEM *buf, int32_t l
       } else {
          // we will send header only
          header = &myheader;
+         _single_senddata = false;
       }
    } else {
       header = &myheader;
@@ -722,11 +723,11 @@ int32_t PTCOMM::read_any(bpContext *ctx, char *cmd, POOL_MEM &buf)
 int32_t PTCOMM::read_data(bpContext *ctx, POOL_MEM &buf)
 {
    int32_t status;
-   char cmd = 'D';
 
    if (extpipe > 0) {
       status = read(extpipe, buf.c_str(), buf.size());
    } else {
+      char cmd = 'D';
       status = recvbackend(ctx, &cmd, buf, false);
    }
 

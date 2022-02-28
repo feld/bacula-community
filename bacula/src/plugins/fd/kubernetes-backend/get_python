@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+# Get some python environment variables
+
+if [ $# != 1 ]; then
+    echo "Usage: $0 [PYTHONPATH | PIP | PYTHON | PYTHON_PREFIX ]"
+    exit 1
+fi
+
+VERSION=
+for i in 13 12 11 10 9 8 7 6 5 4
+do
+    if which python3.$i &> /dev/null ; then
+        VERSION=3.$i
+        break
+    fi
+done
+
+if [ "$VERSION" = "" ]; then
+    echo "Unable to find python"
+    exit 1
+fi
+
+BASEDIR=$HOME/.local
+
+if [ $1 = "PYTHONPATH" ]; then
+    RES="$PYTHONPATH:${BASEDIR}/lib64/python${VERSION}/site-packages:${BASEDIR}/lib/python${VERSION}/site-packages:/usr/local/lib64/python${VERSION}/site-packages/:/usr/local/lib/python${VERSION}/site-packages/";
+    if [ -d $PWD/build/lib.linux-x86_64-${VERSION} ]; then
+        RES="$RES:$PWD/build/lib.linux-x86_64-${VERSION}"
+    fi
+    echo $RES
+
+elif [ $1 = "PIP" ]; then
+    if which pip$VERSION &> /dev/null
+    then
+        echo pip$VERSION        
+    else
+        echo pip3
+    fi
+
+elif [ $1 = "PYTHON" ]; then
+    echo python$VERSION
+
+elif [ $1 = "PYTHON_PREFIX" ]; then
+    echo $BASEDIR
+
+else
+    echo "Invalid parameter $1"
+    exit 1
+fi

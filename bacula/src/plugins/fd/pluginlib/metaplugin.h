@@ -23,7 +23,8 @@
  * @version 3.0.0
  * @date 2021-08-20
  *
- * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
+ * @copyright Copyright (c) 2021 All rights reserved.
+ *            IP transferred to Bacula Systems according to agreement.
  */
 
 #include "pluginlib.h"
