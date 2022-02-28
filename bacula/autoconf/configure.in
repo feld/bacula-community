@@ -3352,6 +3352,22 @@ if test x$support_docker = xyes -o x$support_docker = xauto; then
    fi
 fi
 
+dnl kubernetes Plugin
+support_k8s=auto
+AC_ARG_ENABLE(kubernetes-plugin,
+   AC_HELP_STRING([--disable-kubernetes-plugin], [disable Kubernetes plugin support @<:@default=auto@:>@]),
+   [
+      if test x$enableval = xyes; then
+         support_kubernetes=yes
+      elif test x$enableval = xno; then
+         support_kubernetes=disabled
+      fi
+   ]
+)
+if test x$support_kubernetes = xyes -o x$support_kubernetes = xauto; then
+      FD_PLUGIN_DIR="${FD_PLUGIN_DIR} src/plugins/fd/kubernetes-backend"
+fi
+
 AC_SUBST(FD_PLUGIN_DIR)
 
 dnl
@@ -3868,7 +3884,6 @@ AC_CONFIG_FILES([
    src/findlib/Makefile \
    src/tools/Makefile \
    src/plugins/fd/Makefile.inc \
-   src/plugins/fd/Makefile \
    src/plugins/sd/Makefile \
    src/plugins/dir/Makefile.inc \
    po/Makefile.in \
@@ -4079,6 +4094,7 @@ Configuration on `date`:
 
    Plugins:
    - Docker:                  ${support_docker}
+   - Kubernetes:              ${support_kubernetes}
    - LDAP BPAM:               ${support_ldap_bpam}
   " > config.out
 
