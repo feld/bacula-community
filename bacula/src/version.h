@@ -1,7 +1,7 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2020 Kern Sibbald
+   Copyright (C) 2000-2022 Kern Sibbald
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -30,8 +30,8 @@
 
 #define RELEASE 1   /* Use ONLY in rpms */
 
-#define PROG_COPYRIGHT "Copyright (C) %d-2020 Kern Sibbald.\n"
-#define BYEAR "2020"       /* year for copyright messages in progs */
+#define PROG_COPYRIGHT "Copyright (C) %d-2022 Kern Sibbald.\n"
+#define BYEAR "2022"       /* year for copyright messages in progs */
 
 /*
  * Versions of packages needed to build Bacula components
