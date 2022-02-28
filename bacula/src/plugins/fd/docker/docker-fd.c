@@ -15,14 +15,13 @@
    conveyed and/or propagated.
 
    Bacula(R) is a registered trademark of Kern Sibbald.
- */
+*/
 /**
  * @file docker-fd.c
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Radoslaw Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin for backup/restore Docker using native tools.
  * @version 1.2.1
  * @date 2020-01-05
- *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
@@ -80,7 +79,7 @@ static pFuncs pluginFuncs = {
    pluginIO,
    createFile,
    setFileAttributes,
-   NULL,
+   NULL,                   /* No checkFile */
    handleXACLdata
 };
 
@@ -1320,11 +1319,11 @@ bRC DOCKER::startBackupFile(bpContext *ctx, struct save_pkt *sp)
             switch (currdkinfo->type()){
                case DOCKER_CONTAINER:
                   Mmsg(fname, "%s%s/%s/%s.tar", PLUGINNAMESPACE, CONTAINERNAMESPACE,
-                        currdkinfo->name(), (char*)currdkinfo->id());
+                        currdkinfo->name(), (char*)*currdkinfo->id());
                   break;
                case DOCKER_IMAGE:
                   Mmsg(fname, "%s%s/%s/%s.tar", PLUGINNAMESPACE, IMAGENAMESPACE,
-                        currdkinfo->name(), (char*)currdkinfo->id());
+                        currdkinfo->name(), (char*)*currdkinfo->id());
                   break;
                case DOCKER_VOLUME:
                   Mmsg(fname, "%s%s/%s.tar", PLUGINNAMESPACE, VOLUMENAMESPACE,
@@ -1343,7 +1342,7 @@ bRC DOCKER::startBackupFile(bpContext *ctx, struct save_pkt *sp)
          case DOCKER_LISTING_IMAGE:
             sp->statp.st_mode = S_IFBLK | 0640;     // standard block device with 'brw-r----' permissions
          case DOCKER_LISTING_CONTAINER:
-            Mmsg(lname, "%s", param_notrunc?(char*)currdkinfo->id():currdkinfo->id()->digest_short());
+            Mmsg(lname, "%s", param_notrunc?(char*)*currdkinfo->id():currdkinfo->id()->digest_short());
             Mmsg(fname, "%s", currdkinfo->name());
             sp->link = lname;
             sp->type = FT_LNK;

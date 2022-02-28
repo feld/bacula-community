@@ -18,14 +18,13 @@
  */
 /**
  * @file docker-fd.h
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Radoslaw Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin for backup/restore Docker using native tools.
  * @version 1.2.1
  * @date 2020-01-05
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
-
 #ifndef _DOCKER_FD_H_
 #define _DOCKER_FD_H_
 
@@ -100,7 +99,7 @@ class DOCKER: public SMARTALLOC {
    bRC pluginIO(bpContext *ctx, struct io_pkt *io);
    bRC createFile(bpContext *ctx, struct restore_pkt *rp);
    bRC setFileAttributes(bpContext *ctx, struct restore_pkt *rp);
-// Not used!   bRC checkFile(bpContext *ctx, char *fname);
+// Not used!  bRC checkFile(bpContext *ctx, char *fname);
    bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
    void setworkingdir(char *workdir);
    DOCKER(bpContext *bpctx);
@@ -120,7 +119,7 @@ class DOCKER: public SMARTALLOC {
    bool accurate_warning;              /* for sending accurate mode warning once */
    bool local_restore;                 /* if where parameter is set to local path then make a local restore */
    bool backup_finish;                 /* the hack to force finish backup list */
-   bool unsupportedlevel;              /* this flag show if plugin should report unsupported backup level */
+   bool unsupportedlevel;              /* this flag show if plugin should report unsupported backup level*/
    bool param_notrunc;                 /* when "notrunc" option specified, used in listing mode only */
    bool errortar;                      /* show if container tar for volume archive had errors */
    bool volumewarning;                 /* when set then a warning about remote docker volume restore was sent to user */

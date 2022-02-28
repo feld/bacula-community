@@ -16,15 +16,14 @@
 
    Bacula(R) is a registered trademark of Kern Sibbald.
  */
+
 /**
  * @file dkinfo.c
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Radoslaw Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin for backup/restore Docker using native tools.
  * @version 1.2.1
  * @date 2020-01-05
- *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
- * TODO: add unittests
  */
 
 #include "dkinfo.h"

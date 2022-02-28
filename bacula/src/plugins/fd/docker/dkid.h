@@ -18,7 +18,7 @@
  */
 /**
  * @file dkid.h
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Radoslaw Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin for backup/restore Docker using native tools.
  * @version 1.2.1
  * @date 2020-01-05
@@ -52,19 +52,16 @@ public:
    ~DKID() {};
 #endif
 
-   inline int64_t id() { return ShortD; };
-   inline char *digest() { return Digest; };
-   inline char *digest_short() { return DigestShort; };
-   inline operator int64_t () { return ShortD; };
-   inline operator char* () { return Digest; };
+   inline int64_t id() { return ShortD; }
+   inline char *digest() { return Digest; }
+   inline char *digest_short() { return DigestShort; }
+   inline operator int64_t () { return ShortD; }
+   inline operator char* () { return Digest; }
    DKID& operator= (char *data);
    DKID& operator= (DKID &other);
    DKID& operator= (POOL_MEM &data);
    bool operator== (DKID &other);
    bool operator!= (DKID &other);
-#ifdef DEBUG
-   void dump();
-#endif
 
 private:
    int64_t ShortD; // default short digest on Docker is 48bits/6bytes/12hex chars

@@ -21,10 +21,11 @@
  */
 /**
  * @file dkid_test.c
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Radoslaw Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin for backup/restore Docker using native tools - unittest.
  * @version 1.2.1
  * @date 2020-01-05
+ * This is a Bacula plugin for backup/restore Docker using native tools.
  *
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */

@@ -18,7 +18,7 @@
  */
 /**
  * @file dkid.c
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Radoslaw Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula plugin for backup/restore Docker using native tools.
  * @version 1.2.1
  * @date 2020-01-05
@@ -27,6 +27,8 @@
  */
 
 #include "dkid.h"
+#include <string.h>
+#include <stdlib.h>
 
 /*
  * DKID class constructor, does default initialization.
@@ -34,8 +36,8 @@
 DKID::DKID() :
    ShortD(DKIDInvalid),
 #if __cplusplus > 201103L
-   Digest{0},
-   DigestShort{0},
+   Digest {0},
+   DigestShort {0},
 #endif
    shortonly(false)
 {
@@ -181,13 +183,3 @@ bool DKID::operator !=(DKID &other)
    }
    return false;
 }
-
-#ifdef DEBUG
-void DKID::dump()
-{
-   printf ("%p::ShortD: %ld\n", this, ShortD);
-   printf ("%p::Digest: %s\n", this, Digest);
-   printf ("%p::shortonly: %s\n", this, shortonly?"true":"false");
-   printf ("%p::DigestShort: %s\n", this, DigestShort);
-};
-#endif
