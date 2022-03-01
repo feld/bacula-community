@@ -4,14 +4,13 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 
-OLDVERSION=1023
+OLDVERSION=1022
 NEWVERSION=1024
 
 echo " "
 echo "This script will update a Bacula PostgreSQL database"
 echo " from any from version 12-16 or 1014-$OLDVERSION to version $NEWVERSION"
-echo " which is needed to convert from any Bacula Enterprise"
-echo " version 4.0.x, 6.x.y, 8.x.y, 10.x.y to version 12.8.x"
+echo " which is needed to convert from any Bacula Communty to version 11.4.x"
 echo " "
 
 

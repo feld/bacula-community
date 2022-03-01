@@ -5,13 +5,12 @@
 #
 # Shell script to update SQLite3 tables from Bacula
 #
-OLDVERSION=1023
+OLDVERSION=1022
 NEWVERSION=1024
 
 echo " "
 echo "This script will update a Bacula SQLite3 database from version 12-14,$OLDVERSION to $NEWVERSION"
-echo "	which is needed to convert from Bacula Enterprise version 4.0.x to 12.6.x"
-echo "	or Bacula Community version 5.0.x, 5.2.x, 7.0.x, 9.x to 11.4.x"
+echo "	which is needed to convert from Bacula Community version 5.0.x, 5.2.x, 7.0.x, 9.x to 11.4.x"
 echo " "
 
 bindir=@SQLITE_BINDIR@

@@ -3,18 +3,17 @@
 # Copyright (C) 2000-2022 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-# Shell script to update MySQL tables from Bacula Enterprise version from 4.0.x to 12.8.x
+# Shell script to update MySQL tables to Bacula version 11.4.x
 #
 
-OLDVERSION=1023
+OLDVERSION=1022
 NEWVERSION=1024
 
 echo " "
 echo "This script will update a Bacula MySQL database"
 echo " from any from version 12-15 or 1014-$OLDVERSION to version $NEWVERSION"
-echo " which is needed to convert from any Bacula Enterprise"
-echo " or Bacula Community versions 5.0.x, 5.2.x, 7.4.x, 9.x.x to"
-echo " Community version 11.2"
+echo " which is needed to convert from any Bacula Community "
+echo " versions 5.0.x, 5.2.x, 7.4.x, 9.x.x to Community version 11.4"
 echo " "
 echo "Depending on the current version of your catalog, you may"
 echo " have to run this script multiple times"
