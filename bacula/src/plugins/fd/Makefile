@@ -45,6 +45,21 @@ install-test-kubernetes: test_kubernetes_backend kubernetes-fd.la
 	$(NO_ECHO)$(RMF) $(DESTDIR)$(plugindir)/kubernetes-fd.la
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) test_kubernetes_backend $(DESTDIR)$(sbindir)/k8s_backend
 
+cdp: cdp-fd.la
+
+cdp-fd.lo: cdp-fd.c journal.h folder-record.h file-record.h settings-record.h ${FDDIR}/fd_plugins.h
+        $(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -Wno-unused-function -I../.. -I${FDDIR} -c cdp-fd.c
+
+journal.lo: journal.c journal.h folder-record.h file-record.h settings-record.h ${FDDIR}/fd_plugins.h
+        $(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -Wno-unused-function -I../.. -I${FDDIR} -c journal.c
+
+cdp-fd.la: Makefile cdp-fd$(DEFAULT_OBJECT_TYPE) journal.lo
+        $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared cdp-fd.lo journal.lo -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
+
+install-cdp: cdp-fd.la
+        $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) cdp-fd.la $(DESTDIR)$(plugindir)
+        $(RMF) $(DESTDIR)$(plugindir)/cdp-fd.la
+
 rot13: rot13-fd.la
 
 all: bpipe-fd.la test-plugin-fd.la test-deltaseq-fd.la
