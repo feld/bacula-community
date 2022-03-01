@@ -1792,6 +1792,10 @@ bool cloud_dev::truncate(DCR *dcr)
    dcr->VolCatInfo.VolLastPartBytes = 0;
    dcr->VolCatInfo.VolCatCloudParts = 0;
 
+   /* reset VolCatBytes to zero */
+   /* so dir_update_volume_info() will trigger update */
+   dcr->VolCatInfo.VolCatBytes = 0;
+
    /* wrap the uploads in a parts ilist */
    transfer *tpkt;
    foreach_alist(tpkt, dcr->uploads) {
