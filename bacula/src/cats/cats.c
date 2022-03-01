@@ -245,7 +245,8 @@ bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
    if (!tmp) {
       goto bail_out;
    }
-   ObjectCount = str_to_uint64(*obj_str);
+   val = str_to_uint64(tmp);
+   ObjectCount = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
 
    ret = true;
 
