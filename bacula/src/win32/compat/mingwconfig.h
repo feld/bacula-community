@@ -37,7 +37,7 @@
 #define USE_LOCKMGR 
 
 /* Define if you want SmartAlloc debug code enabled */
-#define SMARTALLOC 1
+#define SMARTALLOC SMARTALLOC
 
 /* Use EmptyWorkSet as malloc_trim emulation */
 #define HAVE_MALLOC_TRIM 1

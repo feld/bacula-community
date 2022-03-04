@@ -585,10 +585,7 @@ void t_msg(const char *file, int line, int64_t level, const char *fmt,...);
 /* #define strncpy bad_call_on_strncpy_use_bstrncpy */
 
 /** Use our strdup with smartalloc */
-#ifndef HAVE_WXCONSOLE
-#undef strdup
-#define strdup(buf) bad_call_on_strdup_use_bstrdup(buf)
-#else 
+#ifdef HAVE_WXCONSOLE
 /* Groan, WxWidgets has its own way of doing NLS so cleanup */
 #ifndef ENABLE_NLS
 #undef _

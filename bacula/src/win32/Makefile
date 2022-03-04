@@ -42,10 +42,10 @@ distclean: clean
 clean: $(DIRS) win32_installer win64_installer
 	$(MAKE) -C tools clean
 	$(ECHO_CMD)-rm -rf release32 release64
-	$(ECHO_CMD)-rm -rf ../qt-console/obj32 ../qt-console/obj64
-	$(ECHO_CMD)-rm -f ../qt-console/release/bat.exe ../qt-console/debug/bat.exe
-	$(ECHO_CMD)-rm -rf ../qt-console/tray-monitor/obj32 ../qt-console/tray-monitor/obj64
-	$(ECHO_CMD)-rm -f ../qt-console/tray-monitor/release/bacula-tray-monitor.exe ../qt-console/tray-monitor/debug/bacula-tray-monitor.exe
+	$(ECHO_CMD)-rm -rf ../qt-console/obj32 ../qt-console/obj64 ../qt-console/ui32 ../qt-console/ui64
+	$(ECHO_CMD)-rm -rf ../qt-console/release ../qt-console/debug
+	$(ECHO_CMD)-rm -rf ../qt-console/tray-monitor/obj32 ../qt-console/tray-monitor/obj64 ../qt-console/tray-monitor/ui32 ../qt-console/tray-monitor/ui64
+	$(ECHO_CMD)-rm -rf ../qt-console/tray-monitor/release ../qt-console/tray-monitor/debug
 
 is_depkgs_set:
 	@if test -z $${DEPKGS} ; then \
@@ -60,7 +60,7 @@ release32/bat.exe: is_depkgs_set
 	test -f release32/bacula-tray-monitor.exe
 	./sign-binaries release32/bat.exe release32/bacula-tray-monitor.exe release32/Qt*dll release32/q*.dll
 
-bat32: release32/bat.exe
+bat32: release32/bat.exe release32/bacula-tray-monitor.exe
 
 release64/bat.exe: is_depkgs_set
 	( cd ../qt-console; ./make-win32 "64" )
@@ -68,7 +68,7 @@ release64/bat.exe: is_depkgs_set
 	test -f release64/bacula-tray-monitor.exe
 	./sign-binaries release64/bat.exe release64/bacula-tray-monitor.exe release64/Qt*dll release64/q*.dll
 
-bat64: release64/bat.exe
+bat64: release64/bat.exe release64/bacula-tray-monitor.exe
 
 # a target that quickly build windows bacula-fd.exe
 winfiled:
@@ -186,3 +186,4 @@ Makefile.inc:
 		-e "s^@WIN32BINDIR@^$${BINDIR}^" \
 		-e "s^@WIN32INCDIR@^$${INCDIR}^" \
 		-e "s^@WIN32DLLDIR@^$${DLLDIR}^" < Makefile.inc.in > $@
+	@grep EXTRA ../../autoconf/Make.common >> $@
