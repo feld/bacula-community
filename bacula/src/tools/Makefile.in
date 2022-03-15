@@ -45,7 +45,7 @@ TOOLS = $(@DIR_TOOLS@)
 
 INSNODIRTOOLS = bsmtp
 INSDIRTOOLS = bsmtp dbcheck bwild bregex
-INSTOOLS = $(INS@DIR_TOOLS@)
+INSTOOLS = $(INS@DIR_TOOLS@) @TOOLS_INSTALL@
 INSTTESTS = breaddir_test bpipe_test tags_test xattr_append_test
 
 .SUFFIXES:	.c .o
@@ -239,6 +239,9 @@ installall:  $(TOOLS) timelimit
 	done
 #	chattr +i $(DESTDIR)$(sbindir)/bsmtp
 #	chmod 755 $(DESTDIR)$(sbindir)/bsmtp
+
+install-cdp:
+	$(MAKE) -C cdp-client install
 
 # Allow non-root execution of bsmtp for non-root Directors
 install: $(INSTOOLS)

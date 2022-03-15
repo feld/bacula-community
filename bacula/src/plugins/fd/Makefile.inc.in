@@ -26,6 +26,8 @@ LIBBACOBJ = $(LIBDIR)/libbac.la
 PLUGINLIBOBJ = $(PLUGINLIBDIR)/pluginlib.lo
 METAPLUGINOBJ = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo $(PLUGINLIBDIR)/metaplugin_attributes.lo
 
+EXTRA_INSTALL_TARGET = @FD_PLUGIN_INSTALL@
+
 .SUFFIXES:    .c .cpp   .lo
 
 $(UNITTESTSOBJ):

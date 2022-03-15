@@ -122,7 +122,7 @@ test_kubernetes_backend: Makefile $(TESTKUBEOBJ) $(PLUGINLIBDIR)/test_metaplugin
 	@echo "Building backend $@ ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) test_kubernetes_backend.lo $(PLUGINLIBDIR)/test_metaplugin_backend.lo -o $@
 
-install: all
+install: all $(EXTRA_INSTALL_TARGET)
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bpipe-fd.la $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bpipe-fd.la
