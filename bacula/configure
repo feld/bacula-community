@@ -917,6 +917,7 @@ LIBBACCATS_LT_RELEASE
 LIBBACSQL_LT_RELEASE
 LIBBACCFG_LT_RELEASE
 LIBBAC_LT_RELEASE
+KUBERNETES_IMAGE_VERSION
 LIBRSYNC_VERSION
 NDMP_VERSION
 JAVA_VERSION
@@ -3357,6 +3358,8 @@ VIX_VERSION=`sed -n -e 's/^#define VIX_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/ve
 JAVA_VERSION=`sed -n -e 's/^#define JAVA_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
 NDMP_VERSION=`sed -n -e 's/^#define NDMP_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
 LIBRSYNC_VERSION=`sed -n -e 's/^#define LIBRSYNC_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
+KUBERNETES_IMAGE_VERSION=`sed -n -e 's/^#define KUBERNETES_IMAGE_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
+
 
 
 LIBBAC_LT_RELEASE=`sed -n -e 's/^#.*LIBBAC_LT_RELEASE.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
