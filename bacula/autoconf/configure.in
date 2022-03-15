@@ -50,6 +50,7 @@ VIX_VERSION=`sed -n -e 's/^#define VIX_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/ve
 JAVA_VERSION=`sed -n -e 's/^#define JAVA_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
 NDMP_VERSION=`sed -n -e 's/^#define NDMP_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
 LIBRSYNC_VERSION=`sed -n -e 's/^#define LIBRSYNC_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
+KUBERNETES_IMAGE_VERSION=`sed -n -e 's/^#define KUBERNETES_IMAGE_VERSION.*"\(.*\)"$/\1/p' ${srcdir}/src/version.h`
 AC_SUBST(VERSION)dnl
 AC_SUBST(DATE)dnl
 AC_SUBST(LSMDATE)dnl
@@ -62,6 +63,8 @@ AC_SUBST(VIX_VERSION)dnl
 AC_SUBST(JAVA_VERSION)dnl
 AC_SUBST(NDMP_VERSION)dnl
 AC_SUBST(LIBRSYNC_VERSION)dnl
+AC_SUBST(KUBERNETES_IMAGE_VERSION)dnl
+
 
 
 dnl src/lib
