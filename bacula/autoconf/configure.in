@@ -3969,6 +3969,7 @@ AC_CONFIG_FILES([
    src/plugins/fd/Makefile.inc \
    src/plugins/sd/Makefile \
    src/plugins/dir/Makefile.inc \
+   src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py \
    po/Makefile.in \
    updatedb/update_mysql_tables \
    updatedb/update_sqlite3_tables \
