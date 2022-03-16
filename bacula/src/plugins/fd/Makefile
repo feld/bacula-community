@@ -13,7 +13,7 @@ include Makefile.inc
 
 KUBESRC = kubernetes-fd.c kubernetes-fd.h
 TESTKUBESRC = test_kubernetes_backend.c
-KUBEOBJ = $(KUBESRC:.c=.lo) $(PLUGINLIBOBJ)
+KUBEOBJ = $(KUBESRC:.c=.lo) $(METAPLUGINOBJ)
 TESTKUBEOBJ = $(TESTKUBESRC:.c=.lo)
 
 .SUFFIXES:    .c .lo
