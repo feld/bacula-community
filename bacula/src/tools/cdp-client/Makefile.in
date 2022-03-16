@@ -61,7 +61,7 @@ libtool-clean:
 	@$(RMF) -r .libs _libs
 
 clean:	libtool-clean
-	@$(RMF) core core.* a.out *.o *.bak *~ *.intpro *.extpro 1 2 3 fs-io-error
+	@$(RMF) core core.* a.out *.o *.lo
 	@$(RMF) $(DIRTOOLS)
 
 realclean: clean
@@ -77,14 +77,10 @@ devclean: realclean
 
 # Allow non-root execution of bsmtp for non-root Directors
 install: cdp-client
-	@for tool in cdp-client ; do \
-	   $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $$tool $(DESTDIR)$(sbindir)/$$tool ; \
-	done
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM_ALL) cdp-client $(DESTDIR)$(sbindir)/
 
 uninstall:
-	@for tool in cdp-client ; do \
-	   $(RMF) $(DESTDIR)$(sbindir)/$$tool ; \
-	done
+	$(RMF) $(DESTDIR)$(sbindir)/cdp-client
 
 
 
