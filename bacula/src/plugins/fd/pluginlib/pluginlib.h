@@ -163,7 +163,11 @@ bRC pluglib_mkpath(bpContext* ctx, char* path, bool isfatal);
 inline bool isourplugincommand(const char *pluginprefix, const char *command)
 {
    /* check if it is our Plugin command */
-   if (strncmp(pluginprefix, command, strlen(pluginprefix)) == 0){
+   int len = strlen(pluginprefix);
+   if (len > 0 && pluginprefix[len-1] == ':') {
+      len--;
+   }
+   if (strncmp(pluginprefix, command, len) == 0){
       /* it is our plugin prefix */
       return true;
    }
