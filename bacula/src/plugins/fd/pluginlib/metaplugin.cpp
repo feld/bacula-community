@@ -2229,6 +2229,10 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    POOL_MEM cmd(PM_FNAME);
    int reqparams = 2;
 
+   if (backend.is_ctx_null()) {
+      JMSG0(ctx, M_FATAL, "Unable to use the backend properly\n");
+      return bRC_Error;
+   }
    if (job_cancelled) {
       return bRC_Error;
    }
