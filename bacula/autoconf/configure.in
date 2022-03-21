@@ -3913,6 +3913,7 @@ AC_CONFIG_FILES([
    scripts/bat.desktop.consolehelper \
    scripts/bat.console_apps \
    scripts/bacula-tray-monitor.desktop \
+   scripts/kubernetes-bacula-backup/Dockerfile \
    src/Makefile \
    src/host.h \
    src/console/Makefile \
