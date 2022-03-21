@@ -1,0 +1,45 @@
+#
+# Bacula(R) - The Network Backup Solution
+#
+# Copyright (C) 2000-2022 Kern Sibbald
+#
+# The original author of Bacula is Kern Sibbald, with contributions
+# from many others, a complete list can be found in the file AUTHORS.
+#
+# You may use this file and others of this release according to the
+# license defined in the LICENSE file, which includes the Affero General
+# Public License, v3.0 ("AGPLv3") and some additional permissions and
+# terms pursuant to its AGPLv3 Section 7.
+#
+# This notice must be preserved when any source code is
+# conveyed and/or propagated.
+#
+# Bacula(R) is a registered trademark of Kern Sibbald.
+#
+#     Author: Radosław Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
+
+FROM python:3.8-slim AS build
+ADD requirements.txt /
+ADD baculatar.py /
+RUN apt-get update && apt-get -y install binutils upx && pip3 install -r requirements.txt
+RUN pyinstaller --onefile baculatar.py
+
+FROM python:3.8-slim
+ARG VERSION=@KUBERNETES_IMAGE_VERSION@
+LABEL maintainer="Radosław Korzeniewski <radoslaw@korzeniewski.net>"
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.description="This is a Bacula container for incluster Kubernetes Plugin backup."
+LABEL org.label-schema.vendor="Bacula"
+LABEL org.label-schema.version=$VERSION
+ENV PLUGINMODE 'backup'
+ENV PLUGINHOST 'localhost'
+ENV PLUGINPORT '9104'
+ENV PLUGINTOKEN ''
+ENV PLUGINJOB ''
+ENV PLUGINCONNRETRIES '600'
+ENV PLUGINCONNTIMEOUT '600'
+
+COPY --from=build /dist/baculatar /
+COPY tar /tar
+
+CMD ["/baculatar"]

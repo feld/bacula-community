@@ -1,0 +1,33 @@
+#!/bin/bash
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# copy the libraries needed for a binary into the
+# local directory
+
+mkdir -p $PWD/libs/usr/lib64
+
+function copylib
+{
+    file=$1
+    PWD=`pwd`
+    F=`dirname $file`
+    mkdir -p $PWD/libs/$F
+    cp -v $file $PWD/libs/$F
+}
+
+ldd $1 | awk '/=>/ { print $3 }' | while read file
+do
+    copylib $file
+done
+
+# We need to copy some common libraries used by libc
+file=`ldd $1 | awk '/ld-linux/ { print $1 }'`
+copylib $file
+
+file=`ldconfig -p | grep -v lib32 | awk '/libresolv\.so\./ { gsub(/.+=> /, ""); print $1 }'`
+copylib $file
+
+file=`ldconfig -p | grep -v lib32 | awk '/libnss_dns\.so\./ { gsub(/.+=> /, ""); print $1 }'`
+copylib $file
+

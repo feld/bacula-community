@@ -1,0 +1,7 @@
+# -*- coding: UTF-8 -*-
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#     Author: Radoslaw Korzeniewski, radekk@inteos.pl, Inteos Sp. z o.o.
+#
+pyinstaller
