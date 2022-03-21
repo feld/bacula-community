@@ -8,7 +8,7 @@
 #   file or directory names in the Include directive of the
 #   FileSet resource.
 #
-#  For Bacula release @VERSION@ (@DATE@) -- @DISTNAME@ @DISTVER@
+#  For Bacula Systems(R) release @VERSION@ (@DATE@) -- @DISTNAME@ @DISTVER@
 #
 #  You might also want to change the default email address
 #   from root to your address.  See the "mail" and "operator"

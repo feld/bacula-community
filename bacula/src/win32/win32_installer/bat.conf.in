@@ -1,8 +1,9 @@
 #
-# Bacula Administration Tool (bat) Configuration File
-#
 # Copyright (C) 2000-2022 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#
+# Bacula Systems(R) Administration Tool (bat) Configuration File
 #
 
 Director {

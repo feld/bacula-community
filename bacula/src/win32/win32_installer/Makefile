@@ -1,7 +1,6 @@
 #
-# Copyright (C) 2000-2018 Kern Sibbald
+# Copyright (C) 2000-2022 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
-#
 #
 # Makefile for win32 bacula executables
 # Using MinGW cross-compiler on GNU/Linux
@@ -20,8 +19,10 @@ DEFINES := \
 	-DVERSION=$(VERSION) \
 	-DOUT_DIR=$(BUILDDIR)/release32 \
 	-DSRC_DIR=release32 \
+	-DREGWIZ_SRC_DIR=$(DEPKGS)/release32 \
 	-DBUILD_TOOLS=MinGW32 \
 	-DWINVER=32 \
+	-DPRODUCT_PUBLISHER="Bacula Systems SA" \
 	-DBUILD_BAT=$(BUILD_BAT)
 
 INSTALL_EXE := $(BUILDDIR)/release32/winbacula-$(VERSION).exe
@@ -29,7 +30,6 @@ INSTALL_EXE := $(BUILDDIR)/release32/winbacula-$(VERSION).exe
 BACULABINARIES := \
 	bacula.dll \
 	alldrives-fd.dll \
-	exchange-fd.dll \
 	cdp-fd.dll \
 	cdp-client.exe \
 	bacula-fd.exe \
@@ -45,14 +45,9 @@ ifeq ($(bat),no)
 	BACULA_BINARIES=$(BACULABINARIES)
 	HELP=
 else
-	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe RegistrationWizard.exe
+	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe
 	HELP=help
 endif
-
-EXTRA=
-
-#	bacula-sd.exe \
-
 
 DEPKGS_BINARIES := \
 	libcrypto-1_1.dll \
@@ -70,7 +65,6 @@ DEPKGS_BINARIES := \
 	libwinpthread-1.dll \
 	libgcc_s_sjlj-1.dll \
 	libstdc++-6.dll
-#	libgcc_s_dw2-1.dll
 
 
 NONGCC_BINARIES := 
@@ -90,6 +84,13 @@ SSL_FILES := \
 
 LICENSE_FILES := \
 	LICENSE
+
+REGWIZARD_FILES := \
+	qwindows.dll \
+	Qt5Core.dll \
+	Qt5Gui.dll \
+	Qt5Network.dll \
+	Qt5Widgets.dll
 
 ##########################################################################
 

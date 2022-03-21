@@ -27,9 +27,6 @@ SET CATS_CATALOG=make_mysql_catalog_backup.cmd make_postgresql_catalog_backup.cm
 SET DIRD_FILES=query.sql
 SET SSL_FILES=openssl.cnf
 
-SET DOC_PDF_FILES=%DOCS_DIR%\bacula.pdf %DOCS_DIR%\bacula\*.html %DOCS_DIR%\bacula\*.png %DOCS_DIR%\bacula\*.css
-SET DOC_HTML_FILES=%DOCS_DIR%\bacula\*.html %DOCS_DIR%\bacula\*.png %DOCS_DIR%\bacula\*.css
-
 FOR %%i in ( %BACULA_DLLS% )     DO XCOPY %1%2\%%i %1installer\%2\ /y
 FOR %%i in ( %BACULA_EXES% )     DO XCOPY %1%2\%%i %1installer\%2\ /y
 FOR %%i in ( %BACULA_TOOLS% )    DO XCOPY %1%2\%%i %1installer\%2\ /y

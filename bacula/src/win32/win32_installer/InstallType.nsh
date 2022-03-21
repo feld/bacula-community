@@ -66,9 +66,6 @@ Function EnterInstallType
     ${If} ${FileExists} "$R1\bat.conf"
       IntOp $PreviousComponents $PreviousComponents | ${ComponentBatConsole}
     ${EndIf}
-    ${If} ${FileExists} "$R2\main.pdf"
-      IntOp $PreviousComponents $PreviousComponents | ${ComponentPDFDocs}
-    ${EndIf}
   ${EndIf}
 
   !InsertMacro MUI_HEADER_TEXT "$(TITLE_InstallType)" "$(SUBTITLE_InstallType)"

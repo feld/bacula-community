@@ -21,6 +21,7 @@ DEFINES := \
 	-DSRC32_DIR=$(BUILDDIR)/win32_installer/release32 \
 	-DWINVER=64 \
 	-DBUILD_TOOLS=MinGW64 \
+	-DPRODUCT_PUBLISHER="Bacula Systems SA" \
 	-DBUILD_BAT=$(BUILD_BAT)
 
 INSTALL_EXE := $(BUILDDIR)/release64/winbacula-$(VERSION).exe
@@ -28,7 +29,6 @@ INSTALL_EXE := $(BUILDDIR)/release64/winbacula-$(VERSION).exe
 BACULABINARIES := \
 	bacula.dll \
 	alldrives-fd.dll \
-	exchange-fd.dll \
 	cdp-fd.dll \
 	cdp-client.exe \
 	bsleep.exe \
@@ -55,7 +55,7 @@ DEPKGS_BINARIES := \
 	libstdc++-6.dll \
 	libcrypto-1_1-x64.dll \
 	libssl-1_1-x64.dll \
-	zlib1.dll \
+	zlib1.dll
 
 #	libgcc_s_dw2-1.dll
 
@@ -114,12 +114,10 @@ ifeq ($(bat),no)
 	BACULA_BINARIES=$(BACULABINARIES)
 	HELP=
 else
-	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe RegistrationWizard.exe
+	BACULA_BINARIES=$(BACULABINARIES) bat.exe bacula-tray-monitor.exe
 	HELP=help
 endif
 
-
-EXTRA=
 
 ##########################################################################
 
@@ -142,7 +140,6 @@ help:
 	rm -rf release64/help
 	mkdir -p release64/help
 	cp -f $(BINDIR)/help/* release64/help/
-
 
 #
 # Rules

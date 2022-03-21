@@ -69,11 +69,8 @@ Function EnterInstallType
     ${If} ${FileExists} "$R1\plugins\alldrives-fd.dll"
       IntOp $PreviousComponents $PreviousComponents | ${ComponentAllDrivesPlugin}
     ${EndIf}
-    ${If} ${FileExists} "$R1\plugins\exchange-fd.dll"
-      IntOp $PreviousComponents $PreviousComponents | ${ComponentOldExchangePlugin}
-    ${EndIf}
-    ${If} ${FileExists} "$R2\main.pdf"
-      IntOp $PreviousComponents $PreviousComponents | ${ComponentPDFDocs}
+    ${If} ${FileExists} "$R1\plugins\cdp-fd.dll"
+      IntOp $PreviousComponents $PreviousComponents | ${ComponentCDPPlugin}
     ${EndIf}
   ${EndIf}
 

@@ -1,10 +1,6 @@
-#
-# Copyright (C) 2000-2018 Kern Sibbald
-# License: BSD 2-Clause; see file LICENSE-FOSS
-#
 ##{{NSIS_PLUS_BEGIN_PROJECT_SETTINGS}}##
 #NAME "Release"
-#       CMD -DSRC_DIR=release64 -DSRC32_DIR=..\win32_installer\release32 -DSRC64_DIR=..\win64_installer\release64 -DOUT_DIR=release64 -DWINVER=64 -DVERSION=9.0.7 -DBUILD_TOOLS=NSIS-3.0b0
+#       CMD -DSRC_DIR=release64 -DSRC32_DIR=..\win32_installer\release32 -DSRC64_DIR=..\win64_installer\release64 -DOUT_DIR=release64 -DWINVER=64 -DVERSION=6.7.9 -DBUILD_TOOLS=NSIS-3.0b0
 #       EXE C:\Program Files (x86)\NSIS\makensis.exe
 #       FLAGS 2
 ##{{NSIS_PLUS_END_PROJECT_SETTINGS}}##
@@ -16,40 +12,14 @@
 ; Adapted by Kern Sibbald for native Win32 Bacula
 ;    added a number of elements from Christopher Hull's installer
 ;
-; D. Scott Barninger Nov 13 2004
-; added configuration editing for bconsole.conf and bwx-console.conf
-; better explanation in dialog boxes for editing config files
-; added Start Menu items
-; fix uninstall of config files to do all not just bacula-fd.conf
-;
-; D. Scott Barninger Dec 05 2004
-; added specification of default permissions for bacula-fd.conf
-;   - thanks to Jamie Ffolliott for pointing me at cacls
-; added removal of working-dir files if user selects to remove config
-; uninstall is now 100% clean
-;
 ; D. Scott Barninger Apr 17 2005
-; 1.36.3 release docs update
-; add pdf manual and menu shortcut
-;
 ; Robert Nelson May 15 2006
-; Added server installs and implemented Microsoft install locations
-; Use LogicLib.nsh
-; Added Bacula-SD and Bacula-DIR
-; Replaced ParameterGiven with standard GetOptions
-;
-; Kern Sibbald October 2008
-; Remove server installs
-; Install into single bacula directory
-;  (i.e. undo a large part of what Robert Nelson did)
-;
 ; Eric Bollengier March 2009
-; Updated to handle Win64 installation
 ;
-; Kern Sibbald April 2009
-; Correct some Win64 install problems
-; It is mind boggling how many lines of this insane scripting language
-;   have been written with absolutely no comments
+; Kern Sibbald October 2010
+; Remove server installs and
+;   install into a single bacula directory
+;
 ;
 ; Command line options:
 ;
@@ -76,22 +46,24 @@
 ;
 ; Basics
 ;
-Name "Bacula"
+; Name in Welcome screen
+Name "Bacula 64 bit"
 OutFile "${OUT_DIR}\bacula-win${WINVER}-${VERSION}.exe"
 SetCompressor lzma
-Caption "Bacula 64 bit Edition ${VERSION}"
+Caption "Bacula 64 bit ${VERSION}"
+;Caption "Bacula 64 bit Edition"
 VIProductVersion ${VERSION}.1
-VIAddVersionKey CompanyName "Bacula Project"
-VIAddVersionKey LegalCopyright "Kern Sibbald"
+VIAddVersionKey CompanyName "Bacula Systems SA"
+VIAddVersionKey LegalCopyright "Bacula Systems SA"
 VIAddVersionKey FileDescription "Bacula network backup and restore"
 VIAddVersionKey FileVersion win${WINVER}-${VERSION}
 VIAddVersionKey ProductVersion win${WINVER}-${VERSION}
-VIAddVersionKey ProductName "Bacula"
-VIAddVersionKey InternalName "Bacula"
-VIAddVersionKey LegalTrademarks "Bacula is a registered trademark of Kern Sibbald"
+VIAddVersionKey ProductName "Bacula Community Edition"
+VIAddVersionKey InternalName "Bacula Community Edition"
+VIAddVersionKey LegalTrademarks "Bacula is a registered trademark of Bacula Systems SA"
 VIAddVersionKey OriginalFilename "bacula.exe"
 
-InstallDir "C:\Program Files\Bacula"
+InstallDir "$PROGRAMFILES64\Bacula"
 InstallDirRegKey HKLM "Software\Bacula" "InstallLocation"
 
 InstType "Client"
@@ -114,6 +86,8 @@ ${StrTrimNewLines}
 !define      MUI_HEADERIMAGE
 !define      MUI_BGCOLOR                739AB9
 !define      MUI_HEADERIMAGE_BITMAP     "bacula-logo.bmp"
+!define      MUI_HEADERIMAGE_LEFT
+!define      MUI_HEADERIMAGE_BITMAP_NOSTRETCH
 
 !InsertMacro MUI_PAGE_WELCOME
 !InsertMacro MUI_PAGE_LICENSE "${SRC_DIR}\LICENSE"
@@ -126,8 +100,8 @@ Page custom EnterConfigPage1 LeaveConfigPage1
 Page custom EnterConfigPage2 LeaveConfigPage2
 !Define      MUI_PAGE_CUSTOMFUNCTION_LEAVE LeaveInstallPage
 !InsertMacro MUI_PAGE_INSTFILES
-Page custom EnterWriteTemplates
 !Define      MUI_FINISHPAGE_SHOWREADME $INSTDIR\Readme.txt
+!Define      MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !InsertMacro MUI_PAGE_FINISH
 
 !InsertMacro MUI_UNPAGE_WELCOME
@@ -215,9 +189,8 @@ Var TmpComponent
 ;     6 = Documentation (PDF)
 ;     7 = Documentation (HTML)
 ;     8 = alldrives Plugin
-;     9 = Old Exchange Plugin
+;     9 = CDP Plugin
 ;    10 = Tray Monitor
-;    11 = winbmr Plugin  (not implemented in community version)
 
 !define ComponentFile                   1
 !define ComponentStorage                2
@@ -227,8 +200,9 @@ Var TmpComponent
 !define ComponentGUIConsole             32
 !define ComponentPDFDocs                64
 !define ComponentHTMLDocs               128
+!define MUI_PAGE_LICENSE "${SRC_DIR}\INSTALL"
 !define ComponentAllDrivesPlugin        256
-!define ComponentOldExchangePlugin      512
+!define ComponentCDPPlugin              512
 !define ComponentTrayMonitor            1024
 
 !define ComponentsRequiringUserConfig           63
@@ -240,11 +214,20 @@ Var TmpComponent
 Var HDLG
 Var HCTL
 
+# detect if a process is running
+# usage: !insertmacro FindProc $R0 "bacula-tray-monitor.exe"
+# then if $R0 == 0 then the process is running, else it is not running or the
+# macro failed fo another raison
+!define FindProc_FOUND 0
+!macro FindProc result processName
+    # I tried to "protect" binaries path with ", but it is not working anymore
+    nsExec::Exec 'cmd /c %SystemRoot%\System32\tasklist.exe /NH /FI "IMAGENAME eq ${processName}" | %SystemRoot%\System32\find.exe /I "${processName}"'
+    Pop ${result} ; The exit code 0 -> Found
+!macroend
+
 Function .onInit
   Push $R0
   Push $R1
-
-  ;LogSet on
 
   ; Process Command Line Options
   StrCpy $OptService 1
@@ -272,6 +255,17 @@ Function .onInit
      MessageBox MB_OK "This is a 64 bit installer, but the OS is not an x64 -- Aborting ..." /SD IDOK
      Abort
   ${EndIf}
+
+  !insertmacro FindProc $R0 "bacula-tray-monitor.exe"
+  # if FindProc fail for any reason (like tasklisk.exe not found), FindProc return
+  # a return code != 0, and the installer will continue.
+  # if "bacula-tray-monitor.exe" is running the installer will faile later
+  IntCmp $R0 0 BaculaTrayMonitorFound BaculaTrayMonitorNotFound BaculaTrayMonitorNotFound
+  BaculaTrayMonitorFound:
+     IfSilent +2 0
+     MessageBox MB_OK|MB_ICONEXCLAMATION "bacula-tray-monitor.exe is running. Please close it first" /SD IDOK
+     Abort
+  BaculaTrayMonitorNotFound:
 
   ${GetOptions} $R0 "/noservice" $R1
   IfErrors +2
@@ -509,7 +503,7 @@ Section "-Initialize"
   Delete /REBOOTOK "$INSTDIR\License.txt"
 
 ; Output a series of SED commands to configure the .conf file(s)
-  FileOpen $R1 $INSTDIR\working\config.sed w
+  FileOpen $R1 $PLUGINSDIR\config.sed w
   FileWrite $R1 "s;@VERSION@;${VERSION};g$\r$\n"
   FileWrite $R1 "s;@DATE@;${__DATE__};g$\r$\n"
   FileWrite $R1 "s;@DISTNAME@;Windows;g$\r$\n"
@@ -524,11 +518,8 @@ Section "-Initialize"
 
   ${StrRep} $R2 "$INSTDIR\working" "\" "\\\\"
   FileWrite $R1 's;@working_dir@;$R2;g$\r$\n'
-
-  ${StrRep} $R2 "$INSTDIR" "\" "\\\\"
-  FileWrite $R1 's;@bin_dir@;$R2;g$\r$\n'
-  ${StrRep} $R2 "$INSTDIR" "\" "\\"
-  FileWrite $R1 's;@bin_dir_cmd@;$R2;g$\r$\n'
+;  ${StrRep} $R2 "$INSTDIR\working" "\" "\\"
+;  FileWrite $R1 's;@working_dir_cmd@;$R2;g$\r$\n'
 
   ${StrRep} $R2 "$INSTDIR\plugins" "\" "\\\\"
   FileWrite $R1 's;@fdplugins_dir@;$R2;g$\r$\n'
@@ -570,7 +561,6 @@ Section "-Initialize"
   ${If} ${FileExists} "$OldInstallDir\bin\bacula-sd.exe"
     nsExec::ExecToLog '"$OldInstallDir\bin\bacula-sd.exe" /kill'     ; Shutdown any bacula that could be running
     nsExec::ExecToLog '"$OldInstallDir\bin\bacula-sd.exe" /kill'     ; Shutdown any bacula that could be running
-    nsExec::Exec /TIMEOUT=200 'net stop bacula-sd'
     Sleep 1000
     nsExec::ExecToLog '"$OldInstallDir\bin\bacula-sd.exe" /remove'   ; Remove existing service
   ${EndIf}
@@ -592,8 +582,8 @@ Section "File Service" SecFileDaemon
   SetOutPath "$INSTDIR"
 
   File "${SRC_DIR}\bacula-fd.exe"
-  Delete "$INSTDIR\working\bacula-fd.conf.in"
-  File "/oname=$INSTDIR\working\bacula-fd.conf.in" "bacula-fd.conf.in"
+
+  File "/oname=$PLUGINSDIR\bacula-fd.conf" "bacula-fd.conf.in"
 
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bacula-fd.conf
@@ -614,7 +604,7 @@ SectionGroupEnd
 SectionGroup "Server" SecGroupServer
 
 Section "Storage Service" SecStorageDaemon
-  SectionIn 2 3
+  SectionIn 2
 
   SetOutPath "$INSTDIR"
 
@@ -623,7 +613,7 @@ Section "Storage Service" SecStorageDaemon
   File "${SRC_DIR}\bextract.exe"
   File "${SRC_DIR}\bls.exe"
 
-  File "/oname=$INSTDIR\working\bacula-sd.conf.in" "bacula-sd.conf.in"
+  File "/oname=$PLUGINSDIR\bacula-sd.conf" "bacula-sd.conf.in"
 
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bacula-sd.conf
@@ -640,13 +630,13 @@ Section "Storage Service" SecStorageDaemon
 # File "${SRC_DIR}\mkisofs.exe"
 # File "${SRC_DIR}\growisofs.exe"
 
-#  File "/oname=$INSTDIR\working\mtx-changer.cmd" "scripts\mtx-changer.cmd"
+#  File "/oname=$PLUGINSDIR\mtx-changer.cmd" "scripts\mtx-changer.cmd"
 
 #  StrCpy $0 "$INSTDIR\bin"
 #  StrCpy $1 mtx-changer.cmd
 #  Call ConfigEditAndCopy
 
-#  File "/oname=$INSTDIR\working\disk-changer.cmd" "scripts\disk-changer.cmd"
+#  File "/oname=$PLUGINSDIR\disk-changer.cmd" "scripts\disk-changer.cmd"
 
 #  StrCpy $0 "$INSTDIR"
 #  StrCpy $1 disk-changer.cmd
@@ -664,17 +654,18 @@ SectionEnd
 
 SectionGroupEnd
 
+
 SectionGroup "Consoles" SecGroupConsoles
 
 Section "Command Console" SecConsole
-  SectionIn 1 2 3
+  SectionIn 1 2
 
   SetOutPath "$INSTDIR"
 
   File "${SRC_DIR}\bconsole.exe"
   Call InstallCommonFiles
 
-  File "/oname=$INSTDIR\working\bconsole.conf.in" "bconsole.conf.in"
+  File "/oname=$PLUGINSDIR\bconsole.conf" "bconsole.conf.in"
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bconsole.conf
   Call ConfigEditAndCopy
@@ -685,7 +676,7 @@ Section "Command Console" SecConsole
 SectionEnd
 
 Section "Bat Console" SecBatConsole
-  SectionIn 1 2 3
+  ;SectionIn 1 2 3
 
   SetOutPath "$INSTDIR"
 
@@ -704,7 +695,7 @@ Section "Bat Console" SecBatConsole
   File "/oname=$INSTDIR\bacula.dll" "${SRC64_DIR}\bacula.dll"
   File "/oname=$INSTDIR\zlib1.dll" "${SRC64_DIR}\zlib1.dll"
 
-  File "/oname=$INSTDIR\working\bat.conf.in" "bat.conf.in"
+  File "/oname=$PLUGINSDIR\bat.conf" "bat.conf.in"
   StrCpy $0 "$INSTDIR"
   StrCpy $1 bat.conf
   Call ConfigEditAndCopy
@@ -726,7 +717,7 @@ Section "Bat Console" SecBatConsole
 SectionEnd
 
 Section "Tray Monitor" SecTrayMonitor
-  SectionIn 1 2 3
+  SectionIn 1 2
 
   SetOutPath "$INSTDIR"
 
@@ -761,12 +752,21 @@ Section "Tray Monitor" SecTrayMonitor
 
 SectionEnd
 
+; Deleted because wxconsole is deprecated
+;Section "Graphical Console" SecWxConsole
+;  SectionIn 1 2 3
+  
+;  SetOutPath "$INSTDIR"
+;
+;SectionEnd
+
 SectionGroupEnd
+
 
 SectionGroup "Plugins" SecGroupPlugins
 
 Section "alldrives Plugin" SecAllDrivesPlugin
-  SectionIn 1 2 3
+  ;SectionIn 1 2 3
 
   SetOutPath "$INSTDIR\plugins"
   File "${SRC_DIR}\alldrives-fd.dll"
@@ -774,17 +774,18 @@ Section "alldrives Plugin" SecAllDrivesPlugin
 
 SectionEnd
 
-Section "Old (deprecated) Exchange Plugin" SecOldExchangePlugin
+Section /o "CDP Plugin" SecCDPPlugin
   SectionIn 1 2 3
 
   SetOutPath "$INSTDIR\plugins"
-  File "${SRC_DIR}\exchange-fd.dll"
+  File "${SRC_DIR}\cdp-fd.dll"
   SetOutPath "$INSTDIR"
   File "${SRC_DIR}\cdp-client.exe"
 
 SectionEnd
 
 SectionGroupEnd
+
 
 Section "-Finish"
   Push $R0
@@ -796,7 +797,7 @@ Section "-Finish"
   ${EndIf}
 
   ; Write the uninstall keys for Windows & create Start Menu entry
-  WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "DisplayName" "Bacula"
+  WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "DisplayName" "Bacula (R) "
   WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "InstallLocation" "$INSTDIR"
   WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "DisplayVersion" "${VERSION}"
   ${StrTok} $R0 "${VERSION}" "." 0 0
@@ -807,7 +808,7 @@ Section "-Finish"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "NoRepair" 1
   WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "URLUpdateInfo" "http://www.bacula.org"
   WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "URLInfoAbout" "http://www.bacula.org"
-  WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "HelpLink" "http://www.bacula.org?page=support"
+  WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "HelpLink" "http://www.bacula.org"
   WriteRegStr   HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateShortCut "$SMPROGRAMS\Bacula\Uninstall Bacula.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0
@@ -825,14 +826,14 @@ SectionEnd
 
 ; Extra Page descriptions
 
-LangString DESC_SecFileDaemon ${LANG_ENGLISH} "Install Bacula 64 bit File Daemon on this system."
-LangString DESC_SecStorageDaemon ${LANG_ENGLISH} "Install Bacula 64 bit Storage Daemon on this system."
-LangString DESC_SecConsole ${LANG_ENGLISH} "Install command console program on this system."
+LangString DESC_SecFileDaemon ${LANG_ENGLISH} "Install Bacula (R) 64 bit File Daemon on this system."
+LangString DESC_SecStorageDaemon ${LANG_ENGLISH} "Install Bacula (R) 64 bit Storage Daemon on this system."
+LangString DESC_SecConsole ${LANG_ENGLISH} "Install bconsole program on this system."
 LangString DESC_SecBatConsole ${LANG_ENGLISH} "Install Bat graphical console program on this system."
 LangString DESC_SecTrayMonitor ${LANG_ENGLISH} "Install Tray Monitor graphical program on this system."
 LangString DESC_SecAllDrivesPlugin ${LANG_ENGLISH} "Install alldrives Plugin on this system."
-LangString DESC_SecOldExchangePlugin ${LANG_ENGLISH} "Install old (deprecated) Exchange Plugin on this system."
 LangString DESC_SecCDPPlugin ${LANG_ENGLISH} "Install CDP Plugin and CDP client on this system."
+
 
 LangString TITLE_ConfigPage1 ${LANG_ENGLISH} "Configuration"
 LangString SUBTITLE_ConfigPage1 ${LANG_ENGLISH} "Set installation configuration."
@@ -853,7 +854,6 @@ LangString SUBTITLE_WriteTemplates ${LANG_ENGLISH} "Create a resource template f
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecBatConsole} $(DESC_SecBatConsole)
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecTrayMonitor} $(DESC_SecTrayMonitor)
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecAllDrivesPlugin} $(DESC_SecAllDrivesPlugin)
-  !InsertMacro MUI_DESCRIPTION_TEXT ${SecOldExchangePlugin} $(DESC_SecOldExchangePlugin)
   !InsertMacro MUI_DESCRIPTION_TEXT ${SecCDPPlugin} $(DESC_SecCDPPlugin)
 !InsertMacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -867,7 +867,7 @@ Section "Uninstall"
   nsExec::Exec /TIMEOUT=200 'net stop bacula-fd'
   nsExec::ExecToLog '"$INSTDIR\bacula-sd.exe" /kill'
   nsExec::Exec /TIMEOUT=200 'net stop bacula-sd'
-  Sleep 3000
+  Sleep 1000
 
 ; ReadRegDWORD $R0 HKLM "Software\Bacula" "Service_Bacula-fd"
   ; Remove Bacula File Daemon service
@@ -876,8 +876,6 @@ Section "Uninstall"
 ; Remove Bacula Storage Daemon service
   nsExec::ExecToLog '"$INSTDIR\bacula-sd.exe" /remove'
 
-  nsExec::ExecToLog '"$INSTDIR\plugins\exchange-fd.dll" /remove'
-  
   ; remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Bacula"
   DeleteRegKey HKLM "Software\Bacula"
@@ -890,7 +888,10 @@ Section "Uninstall"
   ; remove files and uninstaller (preserving config for now)
   Delete /REBOOTOK "$INSTDIR\doc\*"
   Delete /REBOOTOK "$INSTDIR\help\*"
-  Delete /REBOOTOK "$INSTDIR\plugins\*"
+  Delete /REBOOTOK "$PLUGINSDIR\pw.txt"
+  Delete /REBOOTOK "$PLUGINSDIR\*.sed"
+  Delete /REBOOTOK "$PLUGINSDIR\*.cmd"
+  Delete /REBOOTOK "$PLUGINSDIR\*.sql"
   Delete /REBOOTOK "$INSTDIR\openssl.exe"
   Delete /REBOOTOK "$INSTDIR\bacula-fd.exe"
   Delete /REBOOTOK "$INSTDIR\bat.exe"
@@ -905,32 +906,29 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\Readme.txt"
   Delete /REBOOTOK "$INSTDIR\*.dll"
   Delete /REBOOTOK "$INSTDIR\plugins\alldrives-fd.dll"
-  Delete /REBOOTOK "$INSTDIR\plugins\exchange-fd.dll"
   Delete /REBOOTOK "$INSTDIR\plugins\cdp-fd.dll"
   Delete /REBOOTOK "$INSTDIR\cdp-client.exe"
 
   ; Check for existing installation
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-  "Would you like to delete the current configuration files and the working state file?" IDNO NoDel
+  IfSilent +2 0
+    MessageBox MB_YESNO|MB_ICONQUESTION "Would you like to delete the current configuration files and the working state file?" /SD IDNO IDNO NoDel
+
     Delete /REBOOTOK "$INSTDIR\*"
-    Delete /REBOOTOK "$INSTDIR\bin32\*"
     Delete /REBOOTOK "$INSTDIR\working\*"
-    Delete /REBOOTOK "$INSTDIR\plugins\*"
-    Delete /REBOOTOK "$INSTDIR\working\*"
-    Delete /REBOOTOK "$INSTDIR\*"
-    RMDir "$INSTDIR\plugins"
-    RMDir "$INSTDIR\working"
-    RMDir "$INSTDIR\bin32"
+    Delete /REBOOTOK "$INSTDIR\bat.conf"
+    Delete /REBOOTOK "$PLUGINSDIR\bacula-*.conf"
+    Delete /REBOOTOK "$PLUGINSDIR\*console.conf"
+    Delete /REBOOTOK "$PLUGINSDIR\*conf.in"
     RMDir /REBOOTOK "$INSTDIR\plugins"
     RMDir /REBOOTOK "$INSTDIR\working"
     RMDir /REBOOTOK "$INSTDIR"
 NoDel:
-
   ; remove directories used
   RMDir "$INSTDIR\plugins"
   RMDir "$INSTDIR\working"
   RMDir "$INSTDIR\doc"
   RMDir "$INSTDIR\help"
+  RMDir "$INSTDIR\platforms"
   RMDir "$INSTDIR"
 SectionEnd
 
@@ -950,7 +948,6 @@ Function InstallDaemon
     nsExec::Exec /TIMEOUT=200 'net stop bacula-fd'
     nsExec::ExecToLog '"$INSTDIR\bacula-sd.exe" /kill'
     nsExec::Exec /TIMEOUT=200 'net stop bacula-sd'
-    sleep 3000
     nsExec::ExecToLog '"$INSTDIR\$0.exe" /remove'
     nsExec::ExecToLog '"$INSTDIR\$0.exe" /install -c "$INSTDIR\$0.conf"'
 
@@ -959,18 +956,8 @@ Function InstallDaemon
       File "Stop.bat"
     ${EndIf}
 
-    ; Start the service?
-
-    ${If} $3 = 1  
-      ${If} $OsIsNT = 1
-        nsExec::ExecToLog 'net start $0'
-      ${Else}
-        Exec '"$INSTDIR\$0.exe" /service -c "$INSTDIR\$0.conf"'
-      ${EndIf}
-    ${EndIf}
-  ${Else}
-    CreateShortCut "$SMPROGRAMS\Bacula\Start $1.lnk" "$INSTDIR\$0.exe" '-c "$INSTDIR\$0.conf"' "$INSTDIR\$0.exe" 0
   ${EndIf}
+
 FunctionEnd
 
 Function GetComputerName
@@ -1060,8 +1047,8 @@ Function ConfigEditAndCopy
     StrCpy $R1 ""
   ${EndIf}
 
-  nsExec::ExecToLog '$INSTDIR\working\sed.exe -i.bak -f "$INSTDIR\working\config.sed" "$INSTDIR\working\$1.in"'
-  CopyFiles "$INSTDIR\working\$1.in" "$0\$1$R1"
+  nsExec::ExecToLog '$PLUGINSDIR\sed.exe -f "$PLUGINSDIR\config.sed" -i.bak "$PLUGINSDIR\$1"'
+  CopyFiles "$PLUGINSDIR\$1" "$0\$1$R1"
 
   Pop $R1
 FunctionEnd
@@ -1082,19 +1069,18 @@ Function GetSelectedComponents
     IntOp $R0 $R0 | ${ComponentBatConsole}
   ${EndIf}
   ${If} ${SectionIsSelected} ${SecTrayMonitor}
-    ;IntOp $R0 $R0 | ${ComponentTrayMonitor}
+    IntOp $R0 $R0 | ${ComponentTrayMonitor}
   ${EndIf}
   ${If} ${SectionIsSelected} ${SecAllDrivesPlugin}
     IntOp $R0 $R0 | ${ComponentAllDrivesPlugin}
   ${EndIf}
-  ${If} ${SectionIsSelected} ${SecOldExchangePlugin}
-    IntOp $R0 $R0 | ${ComponentOldExchangePlugin}
+  ${If} ${SectionIsSelected} ${SecCDPPlugin}
+    IntOp $R0 $R0 | ${ComponentCDPPlugin}
   ${EndIf}
   Exch $R0
 FunctionEnd
 
 Function PageComponentsShow
-
   Call SelectPreviousComponents
   Call UpdateComponentUI
 FunctionEnd
@@ -1117,7 +1103,6 @@ Function SilentSelectComponents
   ${GetOptions} $CMDLINE "-ComponentFile" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecFileDaemon}
-    !InsertMacro SetSectionFlag ${SecFileDaemon} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecFileDaemon}
     !InsertMacro ClearSectionFlag ${SecFileDaemon} ${SF_RO}
@@ -1126,7 +1111,6 @@ Function SilentSelectComponents
   ${GetOptions} $CMDLINE "-ComponentStorage" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecStorageDaemon}
-    !InsertMacro SetSectionFlag ${SecStorageDaemon} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecStorageDaemon}
     !InsertMacro ClearSectionFlag ${SecStorageDaemon} ${SF_RO}
@@ -1135,7 +1119,6 @@ Function SilentSelectComponents
   ${GetOptions} $CMDLINE "-ComponentTextConsole" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecConsole}
-    !InsertMacro SetSectionFlag ${SecConsole} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecConsole}
     !InsertMacro ClearSectionFlag ${SecConsole} ${SF_RO}
@@ -1144,7 +1127,6 @@ Function SilentSelectComponents
   ${GetOptions} $CMDLINE "-ComponentBatConsole" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecBatConsole}
-    !InsertMacro SetSectionFlag ${SecBatConsole} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecBatConsole}
     !InsertMacro ClearSectionFlag ${SecBatConsole} ${SF_RO}
@@ -1153,7 +1135,6 @@ Function SilentSelectComponents
   ${GetOptions} $CMDLINE "-ComponentTrayMonitor" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecTrayMonitor}
-    !InsertMacro SetSectionFlag ${SecTrayMonitor} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecTrayMonitor}
     !InsertMacro ClearSectionFlag ${SecTrayMonitor} ${SF_RO}
@@ -1162,25 +1143,14 @@ Function SilentSelectComponents
   ${GetOptions} $CMDLINE "-ComponentAllDrivesPlugin" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecAllDrivesPlugin}
-    !InsertMacro SetSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecAllDrivesPlugin}
     !InsertMacro ClearSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
   ${EndIf}
   ClearErrors
-  ${GetOptions} $CMDLINE "-ComponentWinBMRPlugin" $TmpComponent
-  ${IfNot} ${Errors}
-    !InsertMacro SelectSection ${SecWinBMRPlugin}
-    !InsertMacro SetSectionFlag ${SecWinBMRPlugin} ${SF_RO}
-  ${Else}
-    !InsertMacro UnselectSection ${SecWinBMRPlugin}
-    !InsertMacro ClearSectionFlag ${SecWinBMRPlugin} ${SF_RO}
-  ${EndIf}
-  ClearErrors
   ${GetOptions} $CMDLINE "-ComponentCDPPlugin" $TmpComponent
   ${IfNot} ${Errors}
     !InsertMacro SelectSection ${SecCDPPlugin}
-    !InsertMacro SetSectionFlag ${SecCDPPlugin} ${SF_RO}
   ${Else}
     !InsertMacro UnselectSection ${SecCDPPlugin}
     !InsertMacro ClearSectionFlag ${SecCDPPlugin} ${SF_RO}
@@ -1189,71 +1159,63 @@ Function SilentSelectComponents
 FunctionEnd
 
 Function SelectPreviousComponents
-  ${If} $InstallType <> ${NewInstall}
-    IntOp $R1 $PreviousComponents & ${ComponentFile}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecFileDaemon}
-      !InsertMacro SetSectionFlag ${SecFileDaemon} ${SF_RO}
+  IntOp $R1 $PreviousComponents & ${ComponentFile}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecFileDaemon}
+  ${Else}
+    !InsertMacro UnselectSection ${SecFileDaemon}
+    !InsertMacro ClearSectionFlag ${SecFileDaemon} ${SF_RO}
+  ${EndIf}
+  IntOp $R1 $PreviousComponents & ${ComponentStorage}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecStorageDaemon}
+  ${Else}
+    !InsertMacro UnselectSection ${SecStorageDaemon}
+    !InsertMacro ClearSectionFlag ${SecStorageDaemon} ${SF_RO}
+  ${EndIf}
+  IntOp $R1 $PreviousComponents & ${ComponentTextConsole}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecConsole}
+  ${Else}
+    !InsertMacro UnselectSection ${SecConsole}
+    !InsertMacro ClearSectionFlag ${SecConsole} ${SF_RO}
+  ${EndIf}
+  IntOp $R1 $PreviousComponents & ${ComponentBatConsole}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecBatConsole}
+  ${Else}
+    !InsertMacro UnselectSection ${SecBatConsole}
+    !InsertMacro ClearSectionFlag ${SecBatConsole} ${SF_RO}
+  ${EndIf}
+  IntOp $R1 $PreviousComponents & ${ComponentTrayMonitor}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecTrayMonitor}
+  ${Else}
+    !InsertMacro UnselectSection ${SecTrayMonitor}
+    !InsertMacro ClearSectionFlag ${SecTrayMonitor} ${SF_RO}
+  ${EndIf}
+  IntOp $R1 $PreviousComponents & ${ComponentAllDrivesPlugin}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecAllDrivesPlugin}
+  ${Else}
+    !InsertMacro UnselectSection ${SecAllDrivesPlugin}
+    !InsertMacro ClearSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
+  ${EndIf}
+  IntOp $R1 $PreviousComponents & ${ComponentCDPPlugin}
+  ${If} $R1 <> 0
+    !InsertMacro SelectSection ${SecCDPPlugin}
+  ${Else}
+    !InsertMacro UnselectSection ${SecCDPPlugin}
+    !InsertMacro ClearSectionFlag ${SecCDPPlugin} ${SF_RO}
+  ${EndIf}
+  ${If} $PreviousComponents = 0
+    ${If} $AutomaticInstall = 1
+      ;Client
+      SetCurInstType 0
     ${Else}
-      !InsertMacro UnselectSection ${SecFileDaemon}
-      !InsertMacro ClearSectionFlag ${SecFileDaemon} ${SF_RO}
+      ;Custom
+      SetCurInstType 3
     ${EndIf}
-    IntOp $R1 $PreviousComponents & ${ComponentStorage}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecStorageDaemon}
-      !InsertMacro SetSectionFlag ${SecStorageDaemon} ${SF_RO}
-    ${Else}
-      !InsertMacro UnselectSection ${SecStorageDaemon}
-      !InsertMacro ClearSectionFlag ${SecStorageDaemon} ${SF_RO}
-    ${EndIf}
-    IntOp $R1 $PreviousComponents & ${ComponentTextConsole}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecConsole}
-      !InsertMacro SetSectionFlag ${SecConsole} ${SF_RO}
-    ${Else}
-      !InsertMacro UnselectSection ${SecConsole}
-      !InsertMacro ClearSectionFlag ${SecConsole} ${SF_RO}
-    ${EndIf}
-    IntOp $R1 $PreviousComponents & ${ComponentBatConsole}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecBatConsole}
-      !InsertMacro SetSectionFlag ${SecBatConsole} ${SF_RO}
-    ${Else}
-      !InsertMacro UnselectSection ${SecBatConsole}
-      !InsertMacro ClearSectionFlag ${SecBatConsole} ${SF_RO}
-    ${EndIf}
-    IntOp $R1 $PreviousComponents & ${ComponentTrayMonitor}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecTrayMonitor}
-      ;!InsertMacro SetSectionFlag ${SecTrayMonitor} ${SF_RO}
-    ${Else}
-      !InsertMacro UnselectSection ${SecTrayMonitor}
-      !InsertMacro ClearSectionFlag ${SecTrayMonitor} ${SF_RO}
-    ${EndIf}
-    IntOp $R1 $PreviousComponents & ${ComponentAllDrivesPlugin}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecAllDrivesPlugin}
-      !InsertMacro SetSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
-    ${Else}
-      !InsertMacro UnselectSection ${SecAllDrivesPlugin}
-      !InsertMacro ClearSectionFlag ${SecAllDrivesPlugin} ${SF_RO}
-    ${EndIf}
-;    IntOp $R1 $PreviousComponents & ${ComponentWinBMRPlugin}
-;    ${If} $R1 <> 0
-;      !InsertMacro SelectSection ${SecWinBMRPlugin}
-;      !InsertMacro SetSectionFlag ${SecWinBMRPlugin} ${SF_RO}
-;    ${Else}
-;      !InsertMacro UnselectSection ${SecWinBMRPlugin}
-;      !InsertMacro ClearSectionFlag ${SecWinBMRPlugin} ${SF_RO}
-;    ${EndIf}
-;    IntOp $R1 $PreviousComponents & ${ComponentOldExchangePlugin}
-;    ${If} $R1 <> 0
-;      !InsertMacro SelectSection ${SecOldExchangePlugin}
-;      !InsertMacro SetSectionFlag ${SecOldExchangePlugin} ${SF_RO}
-;    ${Else}
-;      !InsertMacro UnselectSection ${SecOldExchangePlugin}
-;      !InsertMacro ClearSectionFlag ${SecOldExchangePlugin} ${SF_RO}
-;    ${EndIf}
   ${EndIf}
 FunctionEnd
 
@@ -1294,7 +1256,7 @@ Function UpdateComponentUI
     ${EndIf}
     IntOp $R1 $NewComponents & ${ComponentTrayMonitor}
     ${If} $R1 <> 0
-      ;!InsertMacro SetSectionFlag ${SecTrayMonitor} ${SF_BOLD}
+      !InsertMacro SetSectionFlag ${SecTrayMonitor} ${SF_BOLD}
     ${Else}
       !InsertMacro ClearSectionFlag ${SecTrayMonitor} ${SF_BOLD}
     ${EndIf}
@@ -1304,11 +1266,11 @@ Function UpdateComponentUI
     ${Else}
       !InsertMacro ClearSectionFlag ${SecAllDrivesPlugin} ${SF_BOLD}
     ${EndIf}
-    IntOp $R1 $NewComponents & ${ComponentOldExchangePlugin}
+    IntOp $R1 $NewComponents & ${ComponentCDPPlugin}
     ${If} $R1 <> 0
-      !InsertMacro SetSectionFlag ${SecOldExchangePlugin} ${SF_BOLD}
+      !InsertMacro SetSectionFlag ${SecCDPPlugin} ${SF_BOLD}
     ${Else}
-      !InsertMacro ClearSectionFlag ${SecOldExchangePlugin} ${SF_BOLD}
+      !InsertMacro ClearSectionFlag ${SecCDPPlugin} ${SF_BOLD}
     ${EndIf}
   ${EndIf}
 
