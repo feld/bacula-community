@@ -97,9 +97,9 @@ LICENSE_FILES := \
 
 .PHONY: all clean installer distclean
 
-all:	      $(HELP) docs $(INSTALL_EXE) $(EXTRA)
+all:	      $(HELP) $(INSTALL_EXE) $(EXTRA)
 
-installer:    $(HELP) docs $(INSTALL_EXE)
+installer:    $(HELP) $(INSTALL_EXE)
 
 distclean: clean
 
@@ -112,19 +112,6 @@ help:
 	rm -rf release32/help
 	mkdir -p release32/help
 	cp -f $(BINDIR)/help/* release32/help/
-
-docs:
-	rm -rf release32/docs
-	mkdir -p release32/docs/manuals/en/console
-	mkdir -p release32/docs/manuals/en/main
-	mkdir -p release32/docs/manuals/en/misc
-	mkdir -p release32/docs/manuals/en/problems
-	mkdir -p release32/docs/manuals/en/utility
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/console/console.pdf release32/docs/manuals/en/console/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/main/main.pdf release32/docs/manuals/en/main/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/misc/misc.pdf release32/docs/manuals/en/misc/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/problems/problems.pdf release32/docs/manuals/en/problems/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/utility/utility.pdf release32/docs/manuals/en/utility/
 
 #
 # Rules

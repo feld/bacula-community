@@ -127,9 +127,9 @@ EXTRA=
 
 .PHONY: all clean installer distclean
 
-all:		$(HELP) docs $(INSTALL_EXE) $(EXTRA)
+all:		$(HELP) $(INSTALL_EXE) $(EXTRA)
 
-installer:	$(HELP) docs $(INSTALL_EXE)
+installer:	$(HELP) $(INSTALL_EXE)
 
 distclean: clean
 
@@ -143,18 +143,6 @@ help:
 	mkdir -p release64/help
 	cp -f $(BINDIR)/help/* release64/help/
 
-docs:
-	rm -rf release64/docs
-	mkdir -p release64/docs/manuals/en/console
-	mkdir -p release64/docs/manuals/en/main
-	mkdir -p release64/docs/manuals/en/misc
-	mkdir -p release64/docs/manuals/en/problems
-	mkdir -p release64/docs/manuals/en/utility
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/console/console.pdf release64/docs/manuals/en/console/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/main/main.pdf release64/docs/manuals/en/main/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/misc/misc.pdf release64/docs/manuals/en/misc/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/problems/problems.pdf release64/docs/manuals/en/problems/
-	cp -f $(DOCDIR)/docs/manuals/en/pdf-and-html/utility/utility.pdf release64/docs/manuals/en/utility/
 
 #
 # Rules

@@ -1149,9 +1149,6 @@ Function GetSelectedComponents
   ${If} ${SectionIsSelected} ${SecOldExchangePlugin}
     IntOp $R0 $R0 | ${ComponentOldExchangePlugin}
   ${EndIf}
-  ${If} ${SectionIsSelected} ${SecDocPdf}
-    IntOp $R0 $R0 | ${ComponentPDFDocs}
-  ${EndIf}
   Exch $R0
 FunctionEnd
 
@@ -1315,14 +1312,6 @@ Function SelectPreviousComponents
       !InsertMacro UnselectSection ${SecOldExchangePlugin}
       !InsertMacro ClearSectionFlag ${SecOldExchangePlugin} ${SF_RO}
     ${EndIf}
-    IntOp $R1 $PreviousComponents & ${ComponentPDFDocs}
-    ${If} $R1 <> 0
-      !InsertMacro SelectSection ${SecDocPdf}
-      !InsertMacro SetSectionFlag ${SecDocPdf} ${SF_RO}
-    ${Else}
-      !InsertMacro UnselectSection ${SecDocPdf}
-      !InsertMacro ClearSectionFlag ${SecDocPdf} ${SF_RO}
-    ${EndIf}
   ${EndIf}
 FunctionEnd
 
@@ -1378,12 +1367,6 @@ Function UpdateComponentUI
       !InsertMacro SetSectionFlag ${SecOldExchangePlugin} ${SF_BOLD}
     ${Else}
       !InsertMacro ClearSectionFlag ${SecOldExchangePlugin} ${SF_BOLD}
-    ${EndIf}
-    IntOp $R1 $NewComponents & ${ComponentPDFDocs}
-    ${If} $R1 <> 0
-      !InsertMacro SetSectionFlag ${SecDocPdf} ${SF_BOLD}
-    ${Else}
-      !InsertMacro ClearSectionFlag ${SecDocPdf} ${SF_BOLD}
     ${EndIf}
   ${EndIf}
 
