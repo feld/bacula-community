@@ -1,4 +1,2341 @@
-              Changelog for version 9.6.3
+        Changelog for version 11.3.1
+
+22Mar22
+ - Set rpath on binaries when using libtool
+ - Help user to run the SQL scripts from scriptdir
+ - Install plugins with make install
+ - Add install-cdp rule to src/tools/cdp-client/Makefile
+ - WIP releasenotes
+
+21Mar22
+ - Add bacula-backup docker file to ./configure
+ - Add Kubernetes bacula-backup tool
+ - win32: Fix compilation
+ - win32: Do not include PDF in windows installer
+
+16Mar22
+ - Avoid segfault in metaplugin when the plugin command is simplified
+ - Enhance metaplugin to handle plugin command with or without :
+ - Fix kubernetes compilation
+ - Fix cdp-client Makefile install target
+
+15Mar22
+ - win32: Update to OpenSSL 1.1.1n
+ - Add missing .in in ./configure.in
+ - Add KUBERNETES_IMAGE_VERSION to ./configure.in
+ - Add new plugin targets to Makefiles
+ - Add new plugin targets to ./configure.in
+ - Fix Makefile
+
+10Mar22
+ - Add new tests to ./configure.in
+
+04Mar22
+ - fix windows compilation
+ - Disable bad_call_on_strncpy_use_bstrncpy
+
+01Mar22
+ - Fix plugin object count
+ - cloud: Fix #8866 reset VolCatBytes to 0 so it's updated with volume info
+ - Add back cdp-client to ./configure
+ - Add cdp to plugins/fd/Makefile
+ - Update copyright year
+ - Adjust catalog update files for community
+
+28Feb22
+ - Move Makefile.in to Makefile
+ - Add kubernetes Makefile to ./configure
+ - Add Kubernetes plugin
+ - Update docker plugin
+ - Update copyright year
+
+25Feb22
+ - metaplugin: Add function to determine if the plugin is ready to be used
+
+23Feb22
+ - cloud: Fix #8861 display the actual state name instead of state index to 
+  avoid segfault Refactorize transfer state names
+
+07Feb22
+ - Remove duplicate memset on POOL_DBR object
+ - Add MmsgT7() and MmsgT8()
+ - Add new autoconf macro
+ - Fix #2654 About compilation issue on Alpine Linux
+ - Add check for getpwent_r in ./configure
+ - Fix #2656 About segfault in XATTR code for FreeBSD
+
+03Feb22
+ - baculum: Fix displaying directive sections in resouce configuration
+ - baculum: Fix #2653 create new resource by copying configuration from other 
+  resource
+
+28Jan22
+ - baculum: Add capability to provide translated directive documentation file
+
+21Jan22
+ - Fix #8608 About segfault when starting with incorrect configuration file
+
+18Jan22
+ - Fix #8719 About segfault after an incorrect copy job
+
+13Jan22
+ - Fix issue with MySQL 8 in src/cats/grant_mysql_privileges
+
+29Dec21
+ - Fix #8576 Cancel duplicate self deadlock
+
+19Dec21
+ - Check for IP SANs when verifying TLS certs
+
+17Dec21
+ - test-plugin-fd: Send huge plugin metadata packet
+ - Allow plugin metadata with size >64KB
+
+03Dec21
+ - win32: update External-mingw*
+ - Fix compilation warning
+ - Replace a memset by bmemset in findlib/bfile.c
+ - BEE Backport filed/fd_plugins.c
+ - BEE Backport stored/stored_conf.h
+ - Backport dird/ua_cmds.c from Enterprise
+ - Use bmemset in dird/job.c
+
+18Nov21
+ - baculum: Enlarge boxes with resource count in status director - reported by 
+  Sergey Zhidkov
+
+17Nov21
+ - baculum: Update Portuguese translations
+
+16Nov21
+ - baculum: Update Russian translations
+ - baculum: Improve wizards view and responsivity
+
+15Nov21
+ - baculum: Update Russian translations
+
+14Nov21
+ - baculum: Add time range filters to job history page - idea proposed by Heitor 
+  Faria
+ - baculum: Add password generator to password fields
+
+12Nov21
+ - baculum: Add interface to manage API basic users from Web component side
+ - baculum: Add API endpoints for API basic user management
+ - baculum: Add capability to assign dedicated bconsole config file to API basic 
+  users
+
+10Nov21
+ - baculum: Reduce free spaces between interface elements - idea proposed by 
+  Sergey Zhidkov
+ - baculum: Add copy resource function to enable creating new resources based on 
+  others
+
+09Nov21
+ - baculum: Fix #2647 PHP warning about headers already sent on storage view 
+  page
+ - Fix #8343 About weird output characters after stopping job
+
+08Nov21
+ - baculum: Add option to enable/disable messages log window - idea proposed by 
+  Bill Arlofski
+ - baculum: Misc visual improvements
+
+07Nov21
+ - baculum: Unset default API host setting if default API host is no longer 
+  assigned to user
+ - baculum: Unify buttons view
+ - baculum: Add capability to close modal windows on clicking gray shadow
+
+06Nov21
+ - baculum: Visual improvements in interface
+ - baculum: Fix displaying documentation for jobdefs directives
+ - baculum: Add documentation for directives
+
+05Nov21
+ - baculum: Fix #2646 apply new user permissions immediately instead of after 
+  logging out and logging in
+
+03Nov21
+ - cloud: Fix #8265 Do not re-open part.1 during truncate
+
+01Nov21
+ - baculum: Fix undefined index error if user not use Bacula configuration 
+  function
+ - baculum: Update Russian translations
+
+31Oct21
+ - baculum: Move all external dependencies to vendor directory
+
+29Oct21
+ - baculum: Fix running job number on some pages
+ - baculum: Update Portuguese translations
+ - baculum: Loading pages optimization
+
+28Oct21
+ - baculum: Update Polish translations
+
+27Oct21
+ - baculum: Fix #2642 add tool to re-assigning volumes from one pool to another
+
+26Oct21
+ - Fix incorrect error message with metadata backup
+ - Change .bvfs_get_jobids() to use PriorJob
+ - Add PriorJob to llist job output
+ - Allow to use PriorJob in db_get_job_record() if the Job is not found
+
+23Oct21
+ - baculum: Add warning to running job status if job needs media
+
+21Oct21
+ - baculum: New migrate job wizard
+
+19Oct21
+ - Fix #8276 About segfault when plugins are not loaded
+
+12Oct21
+ - Use const in global names in dird_conf.h
+
+10Oct21
+ - baculum: Add capability to use pre-defined paths in API config wizard - idea 
+  proposed by Heitor Faria
+ - Remove debugging information
+ - Remove extraneous file committed in error
+ - Get regression testing working on FreeBSD
+
+28Sep21
+ - baculum: Improve sun icon for displaying job status weather - idea proposed 
+  by Heitor Faria
+
+21Sep21
+ - Fix #8167 About BAT tool crashing the dir
+
+18Sep21
+ - baculum: Do not require using some job resource values to ease using jobdefs 
+  - idea proposed by Heitor Faria
+
+16Sep21
+ - scripts: Fix git version script.
+ - Fix #8159 About a deadlock when starting the Director with a missconfigured 
+  catalog
+
+15Sep21
+ - Fix compilation on OSX
+ - Fix #8142 Skip XATTR larger than MaximumNetworkBuffer
+
+13Sep21
+ - Fix #8140 About wrong version mentioned in catalog update scripts
+
+08Sep21
+ - Move the delete volume event just before the actual deletion
+
+06Sep21
+ - Fix #8126 About strange ouput for the .status client command
+
+03Sep21
+ - Extend lockmgr to allow the use of destructor in pthread_key_create()
+
+02Sep21
+ - Fix compilation warning on STATUS_PKT
+
+01Sep21
+ - Fix incorrect patch merged with WIP work
+ - Fix compilation error on redhat7
+ - Add macro for MmsgD7-8
+ - Fix compilation warning on -Wmismatched-tags.
+
+31Aug21
+ - cdp: open the inotify stream using the CLOEXEC (close on exec) flag
+ - cloud: Fix #8101 Update S3 error list to match the libs3 index
+
+30Aug21
+ - Fix #8098 About director crash for Migration job
+ - metaplugin: Add accurate get feature for backends.
+ - Add getAccurateAttribs() FD Plugins callback.
+
+27Aug21
+ - ProgressCounter::find_accounting(state=0) return start_t & end_t
+ - fix the %W hexdump output size limit problem in bsnprintf
+
+26Aug21
+ - metaplugin: Add missing files.
+ - cloud: Fix destination name when moving part
+ - cloud: S3 delete parts once it's been renamed
+ - Fix compilation
+ - cloud: Fix S3 error msg generation during upload
+
+25Aug21
+ - metaplugin: Add accurate mode query.
+
+24Aug21
+ - pluginlib: Update general build.
+ - win32: Switch to OpenSSL 1.1.1l
+
+23Aug21
+ - Update general plugins build.
+ - metaplugin: Fix invalid constant comparision.
+
+20Aug21
+ - add built-in hexdump to bsnprintf()
+
+10Aug21
+ - Fix #7998 About dir crashing for client intiated backup
+ - Revert "Fix #7998 About dir crashing for client intiated backup"
+ - Fix org#2627 About DIR crashing for copy jobs and resource rename
+
+06Aug21
+ - Fix #7998 About dir crashing for client intiated backup
+ - Fix compilation warning in storage manager to get rid of 'initialzer lists' 
+  warning
+ - docker: Check the presence of the docker tools duing loadPlugins()
+ - Fix segfault with the status dir command and debug level 250
+ - Fix compilation warnings
+
+05Aug21
+ - Fix SQL query generated with ACLs
+ - Add !verified to default FD configuration files
+ - Map size_t/ssize_t read()/write() type to full_read()/full_write() in fd_common
+ - Fix incorrect prototype for check_current_fs() after OpenBSD fix
+
+04Aug21
+ - Fix #6119 About listing files being verified
+ - Add debug/trace/tags information to .status header
+ - Fix #7959 About OpenBSD compilation issue
+ - Fix 7891 About OpenBSD chio-changer script fix
+
+03Aug21
+ - Ensure that the DIR will reject catalog update from the FD
+ - remove dead code mount_request()
+ - Fix db version after sqlite catalog update
+
+02Aug21
+ - baculum: Update Portuguese translations
+ - baculum: Update Russian translations
+ - baculum: Update Polish translations
+
+31Jul21
+ - baculum: Fix displaying issue in restore browser - reported by Sergey Zhidkov
+ - baculum: Remove redundant statistics pages
+ - baculum: New advanced schedule settings
+ - baculum: Fix remove storage resource if autochanger directive is set
+ - baculum: Fix auto-scrolling in windows with configuration
+ - baculum: Fix error about expected port number when writing component main 
+  resource
+
+29Jul21
+ - cloud: Fix #7986 About incorrect message when wait_one_transfer fails
+
+23Jul21
+ - Fix #6986 About mail wariables not working after conf reload
+ - Fix #7985 About bug in update_sqlite3_tables
+
+22Jul21
+ - Fix #7600 About variable for PreviousJobId in mail messages
+
+20Jul21
+ - metaplugin: Update regression to check large RestoreObject.
+ - metaplugin: sendbackend() update.
+
+19Jul21
+ - Fix for the PluginObject table name for the MAC jobs
+
+16Jul21
+ - Add workaround to bextract in order to extract files generated by the VSS 
+  plugin
+
+15Jul21
+ - baculum: Update Portuguese translations
+ - baculum: Update Russian translations
+ - update autoconf for NODUMP flag check
+ - Add message about Device being used for read/write
+
+14Jul21
+ - baculum: Update Portuguese translations
+ - baculum: Update Russian translations
+ - baculum: Update Polish translations
+ - baculum: Fix table width on schedule list page
+ - Allow to restore VSS Plugin files on Linux
+
+13Jul21
+ - baculum: Update API documentation
+ - baculum: Backup job wizard improvements
+ - baculum: New copy job wizard
+ - baculum: Add to directive controls option to hide reset button and remove 
+  button
+ - baculum: Add to config API endpoint parameter to apply jobdefs in results
+ - metaplugin: Fix regression on restore options restore.
+ - metaplugin: Fix regression on pluginconf generation.
+ - rhv: Fix Makefile
+ - Fix compilation of the metaplugin
+ - Fix warning with scripts/getgitcommit when building outside of a git repo
+
+12Jul21
+ - baculum: Fix loading dashboard page if job status is created but not yet 
+  running
+ - Fix #7660 About respecting the 'nodump' flag in more OSes than BSD
+ - Revert bad commit for src/tools/cdp-client/folderwatcher.cpp
+ - Fix windows build
+ - win32: Fix #7939 Fix Port label indentation in windows installer
+ - Add list jobmedia volume=x option
+
+10Jul21
+ - baculum: Fix legend in job status pie chart on job view page
+ - baculum: Change buttons on dasboard page - reported by Sergey Zhidkov
+ - baculum: Add jump to previous/next error navigation in messages window
+
+09Jul21
+ - baculum: Move resource monitor and error message box to separate modules
+ - baculum: Make table texts translatable - reported by Sergey Zhidkov
+ - baculum: Make job status pie chart smaller - idea proposed by Sergey Zhidkov
+ - baculum: Reduce size of icons in run job window and on dashboard page
+
+08Jul21
+ - baculum: Make job status pie chart clickable and direct to job history page 
+  with filtered results - idea proposed by Bill Arlofski
+ - Fix #7914 About showing 'DirTLS' status for '.status client running' cmd
+
+07Jul21
+ - baculum: Fix opening job details in job table on main dashboard page - 
+  reported by Sergey Zhidkov
+ - baculum: Fix required fields in jobdefs forms
+
+06Jul21
+ - baculum: Update Portuguese translations
+ - baculum: Update Russian translations
+ - rhv: Rhv spec changed to Java 11. New regress tests finished
+ - snapshot: Ensure that the snapshotdb directory is correctly created
+ - Fix read_mtab() on MacOS
+
+05Jul21
+ - baculum: Remove old configure page
+ - baculum: Add console page to configure consoles
+ - rhv: Maven adaptation. Regress tests redone to reduced way with heper files
+ - osx: Add bsnapshot to the package
+
+04Jul21
+ - baculum: Update Russian translations
+ - baculum: New director page with graphical/text status and with configure 
+  director resources
+ - baculum: Add director show command API endpoint
+ - baculum: Improve checking director in status director API endpoint
+
+02Jul21
+ - baculum: Fixes to support PHP 8
+ - pluginlib: Update git version building.
+ - metaplugin: Fix compilation warnings.
+ - metaplugin: Add RestoreObject support.
+ - Add missing break for bscan's plugin metadata parsing
+ - snapshot: Add support for MacOS
+
+01Jul21
+ - Fix memory leak for Storage Manager
+
+30Jun21
+ - baculum: Apply PRADO framework patches to support PHP 8
+ - cloud: Fix #7888 Display retry count on upload
+
+29Jun21
+ - metaplugin: Extend query interface for unstructured data.
+ - Fix org#2623 About .ls/estimate command not printing files correctly
+
+28Jun21
+ - baculum: Fix problem with listing directories in restore wizard - reported by 
+  Tomasz Swiderski
+ - Fix #7671 About stopping job waiting for the device
+ - Slighly change SSL_shutdown() err handling
+ - Fix MySQL default connection in the grant_mysql_privileges script
+
+27Jun21
+ - baculum: Fix component autochanger schemas in OpenAPI documentation
+ - baculum: New delete volumes bulk action on volume list page
+ - baculum: Add to API deleting volume from the catalog
+ - baculum: Set responsive priority for job list table
+
+26Jun21
+ - baculum: Reorganize dasboard page - idea proposed by Sergey Zhidkov
+ - baculum: Fix missing texts in translation files - reported by Sergey Zhidkov
+ - baculum: Add new columns to job list page - idea proposed by Sergey Zhidkov
+ - baculum: Add JSON output parameter to show client(s), show job(s), show 
+  pool(s) API endpoints
+
+25Jun21
+ - Fix heartbeat segfault when the job is terminated very quickly
+
+24Jun21
+ - metaplugin - Remove locking on request.
+ - metaplugin: Update backend termination procedure on cancel.
+
+23Jun21
+ - metaplugin: Add a proper job cancel handling.
+ - Fix backward compatibility problem for plugin objects
+
+18Jun21
+ - pluginlib: Correct metaplugin build.
+ - mssql: Fix #7777 About 'Create database Plugin Object record' error
+
+17Jun21
+ - Update (un)escape_filename_pathsep for proper escape.
+
+16Jun21
+ - Fix db_get_accurate_jobids() with concurrent queries on the same jobs
+
+15Jun21
+ - Fix #7806 Add ':_-.' to allowed tag characters
+ - Adjust sample-query.sql file for new catalog schema
+
+14Jun21
+ - Fix #6001 About adding more logging for daemon<->daemon connection
+ - Fix org#2622 About incorrect behavior of the MaxDiffInterval directive
+
+11Jun21
+ - Fix problem with decrementing Read Storage
+ - metaplugin: Add PrevJobName parameter to JobInfo.
+
+10Jun21
+ - metaplugin: Add Error message tests to protocol.
+ - metaplugin: Add error messages handling regression tests.
+
+09Jun21
+ - Fix #7568 About wrong handling of copy and migration jobs error handlig
+ - Fix #7424 Count Plugin Object in verify data session
+ - Fix plugin Makefile.in install-test-plugin target
+
+08Jun21
+ - Fix #6631 About bconsole command to show client's config
+ - Fix #7776 About FD error not correctly reported in the job log
+ - Add test-handlexacl-plugin-fd.c
+ - Fix for plugin obects to properly decode object.
+
+07Jun21
+ - Update depkgs version to use latest libs3
+ - rpms: Fix libs3 installation path
+ - rpms: Do no build with tcp_wrapper on Fedora 31
+ - Make 'status client' print plugin version by default
+ - Fix #7770 About the full restore client name displayed in the restore job 
+  status
+
+05Jun21
+ - rpms: Remove tcp_wrappers for cloud-storage rpm
+ - rpms: Fix #2615 - Missing bacula-sd-cloud-s3-driver-<version>.so
+ - rpms: Fix mysql devel package dependency for rhel/centos 7
+ - rpms: Disable tcp_wrapper for rhel8 in bacula.spec.in
+ - rpms: Fix #2599 - bacula-postgresql conflicts with bacula-mysql
+
+04Jun21
+ - Omit logging info about StorageGroup when it contains only 1 item
+ - Fix #7739 About deleting running jobs
+
+02Jun21
+ - Sync update_mysql_database script with the community
+ - Handle new streams in filed/restore.c
+
+28May21
+ - Fix #7718 About not respecting StorageGroupPolicy set in JobDefs res
+ - Fix using proper StorageGroupPolicy defined in the Pool resource
+
+26May21
+ - baculum: Update script version
+ - Fix #7629 About not using other available storages
+
+24May21
+ - Allow to use 'StorageGroupPolicy' directive in Pool resource
+ - metaplugin: Fix #7678 About issue with queryParameter with an invalid plugin
+
+21May21
+ - Fix #7674 About more storage group messages changes
+
+20May21
+ - new ProgressCounter object to monitor progress, cancel and time
+ - Fix #7669 About 'cancel inactive' crashing director
+
+17May21
+ - Fix #7644 About Storage Groups messages changes
+ - Fix #7629 About empty group with storage selection
+ - Fix org#2427 About incorrect handling of empty files with Accurate=yes on 
+  Windows
+ - Fix org#2442 About the check of the Control Device during startup
+
+14May21
+ - Fix #7628 About 'reload' command crashing the director
+
+13May21
+ - Fix #7623 About wrong versions reported by updatedb scripts
+
+12May21
+ - Revert "Fix #7321 About issue when stopping jobs waiting for resources"
+
+10May21
+ - Fix #7604 About catalog update (v1023->v1024)
+
+07May21
+ - pluginlib: Implement scan_and_terminate_str.
+ - Fix stored/Makefile.in to install cloud driver object with cloud targets
+ - Fix various default permissions
+
+06May21
+ - Disable fix on bvfs_get_jobids() temporarily
+
+05May21
+ - metaplugin: Add large packet (>64k) tests.
+ - pluginlib: Update plugutil_str_split_to_alist.
+ - metaplugin: Fix regression in protocol handling.
+
+04May21
+ - Fix org#2610 About incorrect stopping of running job
+ - Fix org#2500 .bvfs_get_jobids jobid=X must return X in the list part2
+ - Fix regress test issue with lchmod() feature on symlinks
+
+30Apr21
+ - Fix org#2605 About incorrect message in restore command
+ - Fix of checking for job types for copy job
+ - Fix org#2605 About incorrect message in restore command
+
+29Apr21
+ - baculum: Update Russian translations
+ - baculum: Restore wizard improvements
+ - update ./configure.in
+
+28Apr21
+ - Introduce 'o' option for accurate backup
+
+26Apr21
+ - Add offset= parameter in the 'list events' command
+
+24Apr21
+ - baculum: Fix sub-tabs on client and on storage pages
+
+23Apr21
+ - Fix #7552 About running wrong jopy job
+ - Fix #7548 About wrong backup client displayed to the user
+ - pluginlib: Update smart_ptr class.
+ - Fix incorrect backport for patch #7451 about deleted files in virtualfull
+
+22Apr21
+ - Try to avoid segfault with heartbeat
+ - catalog: Change ObjectStatus when creating class object to '0'
+
+21Apr21
+ - Update plugin interface version
+ - Add BVarPluginDir variable to the plugin code
+ - Update stream handling for FD plugins.
+
+20Apr21
+ - baculum: Fix #2592 logout button on Safari web browser
+ - baculum: Add example working directory path in API install wizard
+ - baculum: Add component action (start/stop/restart) buttons to client and 
+  storage pages
+ - Fix #7530 About allpools keyword ignored in cloud truncate command
+
+19Apr21
+ - baculum: Update Portuguese translations
+
+18Apr21
+ - baculum: Add new device interface definition to Baculum OpenAPI documentation
+ - baculum: Fix double device error code number
+
+17Apr21
+ - baculum: Implement support for assigning multiple API hosts to one user
+ - baculum: Use catalog access in changer listall endpoint only if it is configured 
+  on API host
+
+16Apr21
+ - Fix #7375 About extending bls
+
+15Apr21
+ - baculum: Fix opening update slots window reported by Hector Barrera
+ - metaplugin: Update regress test.
+ - metaplugin: Correct XACL restore for FT_DIREND.
+
+14Apr21
+ - Fix #7448 About extending 'list jobs' with hours and days parameters
+ - Fix #7113 add timestamp to dedup messages in trace file
+
+13Apr21
+ - metaplugin: Update regression tests.
+ - metaplugin: Add proper skip handling to Bacula.
+
+12Apr21
+ - catalog: update to ver 1024
+ - metaplugin: Update regression test for restore with core.
+ - metaplugin: Add per file Core restore functionality.
+
+08Apr21
+ - baculum: Update Russian translations
+ - Add back bacula/src/plugins/fd/Makefile.in
+ - metaplugin: Add local restore with Core functions.
+ - Add UnixTime to JSON output of the .jlist events command
+
+07Apr21
+ - metaplugin: Add checkFile() callback.
+ - Fix upper camel case style for SdPacketCheck directive
+
+06Apr21
+ - baculum: Update Portuguese translations
+ - Add plugins/Makefile.inc into ./configure.in
+
+04Apr21
+ - baculum: Implement autochanger management
+
+02Apr21
+ - Add escape_filename_pathsep() function to lib
+ - metaplugin: Add support for FT_LNKSAVED at restore.
+ - Fix org#2604 About columns alignment of 'Terminated Jobs' section
+
+01Apr21
+ - Fix handling of plugin/restore objects in copy/migration jobs
+ - stored: add some more error handling in run_job()
+ - dird: fix calls to start_storage_daemon_job() after introducing Storage 
+  Manager
+ - Add new options to list events command
+
+31Mar21
+ - Add ObjectStatus and ObjectCount to Plugin Objects
+ - Ignore the case of characters Storage Policy (Pool/Job resource)
+ - Add bconsole .jlist command to get JSON output from regular list commands
+
+30Mar21
+ - Remove unused bsparse tool to avoid compilation error messages
+ - metaplugin: Fix PluginObject handling as last item
+ - Fix compilation for check_bacula.c reported by Dan
+
+29Mar21
+ - vsphere: Update VIX lib to 7.0.2
+ - Introduce Storage Manager and Storage Groups feature.
+
+26Mar21
+ - Fix #7465 About small change for 'status network' message
+
+25Mar21
+ - win32: Update openssl version to 1.1.1k
+ - Remove suspicious debug line on setdebug()
+ - win32: Fix error message when labeling volume on Windows SD
+ - Do not abort the job at a low level if the TCP connection is refused
+
+23Mar21
+ - metaplugin: Update debugging logs.
+ - Fix for copying pluginObject during copy jobs
+ - Add some more handling for STREAM_PLUGIN_META_*
+
+22Mar21
+ - metaplugin: Update and extend regression tests.
+ - metaplugin: Fix issue when got cancel on error.
+ - Update pluginlib, add bin data to display.
+ - Improve the FD cancel function while stopping the heartbeat process
+
+18Mar21
+ - Add support for store_alist_str() in plugin configuration items
+ - Fix FD crash when the SD disk is full introduced with SDPacketCheck feature
+ - Add functions to unittests library
+ - Fix check_bacula.c to ignore daemon events
+
+16Mar21
+ - Enhance bdelete_and_free() macro
+ - metaplugin: Add hardlink support to protocol.
+ - Fix ff_pkt->plug_meta handling.
+
+11Mar21
+ - win32: Fix #7373 About issue with the rc build
+ - win32: Fix compilation
+ - win32: Fill the version information as CFLAGS
+ - Add metadata support for metaplugin.
+
+10Mar21
+ - Add some auto-tuning to the SDPacketCheck feature
+
+09Mar21
+ - Fix #7449 About incorrect JSON output with TlsAllowedCn directive
+ - Fix #7451 About deleted files incorrectly kept in Virtual Full
+ - Fix for plugin file's metadata backing up flow
+
+07Mar21
+ - baculum: Use new APIv2 status client request on job history view page
+
+05Mar21
+ - baculum: Update Portuguese translations
+ - baculum: Unify /jobs/{jobid}/files endpoint output for detailed and normal 
+  modes
+ - Add SDPacketCheck in the FileDaemon resource to control the network flow
+
+04Mar21
+ - Update typeof() usage for configured TYPEOF_FUNC.
+ - Fix portability issue with typeof.
+
+03Mar21
+ - Fix #7396 grant command error in granting privileges script for MySQL
+ - Fix Bacula_11.0 build by inverting dependencies.
+ - Fix reload issue when a Job doesn't have a Pool defined
+ - Fix #7286 DIR segfault when doing a "dir" command in a restore
+ - Fix windows compilation issue
+ - console: Fix may be uninitialized in this function.
+ - tools: Fix may be uninitialized in this function.
+
+02Mar21
+ - Fix S3 compilation
+ - Possible fix for SD high memory usage problem
+ - Fix possible memory corruption in the label process
+ - Fix compilation issue of the cloud driver
+
+01Mar21
+ - Handle lin_tape end of device with new 'Use Lintape=yes' Device directive
+ - Fix "no new line at the end of the file".
+ - Enable CAPS between FD/SD
+ - Fix potential segfault in default bhash_info()
+
+28Feb21
+ - baculum: Update Polish translations
+ - baculum: Update Russian translations
+ - rpms: Fix bacula.spec for Fedora 31
+ - rpms: Fix bacula.spec for rhel8 / centos 8
+ - rpms: Update bacula.spec for rhel8
+ - Fix bug #2498 - Wrong mode for /etc/logrotate.d/bacula
+ - rpms: Fix missing query.sql
+
+27Feb21
+ - baculum: Implement API version 2
+
+25Feb21
+ - win32: Fix #7373 binaries are tagged with correct ressource
+
+24Feb21
+ - Fix #6817 About adding timestamps for dbcheck util
+
+23Feb21
+ - Fix Verify job issue with offset stream and compressed blocks
+
+22Feb21
+ - Update information message with 'purge jobs name=' command
+ - Update help command for the purge command
+ - Backport plugins/fd/fd_common.h
+ - Fix license 5c072145d94044b683caf3c6deead8e0a7977f26
+
+19Feb21
+ - baculum: Add Craig Holyoak to AUTHORS
+ - baculum: Fix #2597 LDAP login with LDAPS option
+ - Fix org#2500 .bvfs_get_jobids jobid=X must return X in the list
+ - Check if char **jobid parameter is NULL before to modify it in bvfs_parse_arg_version()
+ - build: Update Plugins build procedure.
+ - build: Regenerate configure.
+ - build: Update and fix build procedure.
+ - BPAM: move code to the proper location and correct regression build.
+ - build: Update Plugins build procedure.
+
+15Feb21
+ - Fix #6051 About adding 'name' arg for 'purge jobs' command
+
+14Feb21
+ - Fix #7319 Introduce 'du' command inside restore menu
+
+13Feb21
+ - baculum: Fix cancel button in new job wizard
+
+11Feb21
+ - build: Refactor FD Plugins build procedures.
+ - docker: Remove unused code moved to dkid_test.
+ - Update files license header.
+
+10Feb21
+ - build: Remove generated file from repository.
+ - Fix compilation of cloud driver
+ - docker: Fix build after pluginlib introduction.
+ - configure: Fix Pluginlib build.
+ - configure: Fix $PLUGCONFILES setup.
+ - configure: Fix small alignment problem.
+ - docker: Move dkid unittests to docker directory.
+
+08Feb21
+ - Fix windows compilation
+
+07Feb21
+ - baculum: Fix undefined property error in run job API endpoint if level value 
+  is not provided
+
+06Feb21
+ - baculum: Fix displaying warning messages in messages window
+ - baculum: Improve updating asset files after upgrade
+
+05Feb21
+ - Add comments to alist.c
+ - Split alist/ilist
+
+04Feb21
+ - Fix release/sign to use long key names
+ - Fix windows compilation
+
+03Feb21
+ - win32: Backport signing procedures to 11.0
+ - Fix copy/migration job selection
+
+02Feb21
+ - Use PKG_PROG_PKG_CONFIG macro to search for pkg-config. It is cross-compile 
+  safe.
+ - Fix configure.in
+ - Fix compilation with init_working_directory()
+ - update bgit.py
+ - Review bstrncpy() calls
+ - Add PGSQL detection for macOS and MacPorts.
+ - Remove deprecated sbrk in macOS and Windows.
+
+01Feb21
+ - Initialize StartTime in db_create_job_record()
+
+31Jan21
+ - baculum: Fix finding jobs by filename in restore wizard if filename contains 
+  whitespace characters
+ - baculum: Update spec files
+ - baculum: Update debian files to latest version
+ - baculum: Remove excanvas.js dependency
+
+30Jan21
+ - baculum: Add job status weather on job list page
+ - baculum: Add new icons for job status weather purpose
+ - baculum: Add capability to create filedaemon console and schedule on new 
+  resource page
+
+28Jan21
+ - baculum: Browser paths in restore browser using pathid
+ - baculum: Add to Bvfs lsdirs and lsfiles API endpoints pathid parameter
+
+27Jan21
+ - Allow to set 0 as Maximum Job Error Count
+
+26Jan21
+ - Fix #7222 About 'yes' parameter for 'label barcodes' command
+ - Fix #7262 About adding MaximumJobErrorCount FileDaemon directive
+
+24Jan21
+ - baculum: Add console messages log envelope
+ - baculum: Add console messages log API endpoint
+
+21Jan21
+ - baculum: Fix #2560 in restore wizard display names encoded in non-UTF encoding
+ - Fix #7261 About the director segfaulting due to too small msg buffer
+
+15Jan21
+ - Replace call .bvfs_ls_all_files with ".bvfs_lsfiles allfiles"
+ - win32: Fix conditional #define's
+ - bsmtp: Add the possibility to add emails separated with a comma as recipient 
+  list
+
+14Jan21
+ - docker: Move dkid unit tests to separate file.
+ - pluginlib: Fix linking problem.
+ - docker: Refactor POOLMEM variables for POOL_MEM class.
+ - Update pluginlib.
+
+13Jan21
+ - Add .bvfs_ls_all_files command
+ - Windows: Fix #7256 Update Windows version detection with latest versions 
+  (Windows 10).
+
+12Jan21
+ - Add bstrftime_gmt_iso8601() function
+
+11Jan21
+ - Take PluginObjects into account when copying a job
+
+08Jan21
+ - metaplugin: Fix prepare_backend regression.
+ - metaplugin: Add plugin command duplication check.
+ - metaplugin: Refactor simple sscanf.
+ - metaplugin: Correct error message format.
+ - Fix org#2579 About incorrect JSON generated from empty Messages resource
+
+07Jan21
+ - metaplugin: Fix regression at endjob procedure.
+
+06Jan21
+ - Fix org#2588 About incorrect Object/ObjectId type in update_postgresql_tables
+ - Fix org#2587 Improve btraceback output
+ - Fix org#2588 About incorrect Object/ObjectId type in update_postgresql_tables
+ - Fix #7247 About incorrect variable substitution with the query command
+
+05Jan21
+ - pluginlib: Update metaplugin to use commctx.
+ - pluginlib: Update commctx to handle foreach status.
+
+04Jan21
+ - pluginlib: PTCOMM allow to be used with CommCTX.
+
+31Dec20
+ - Add 'db_name_handler' for getting resource name from the catalog
+ - Fix #7214 Adapt mtx-changer.conf for GNU cpio mt version
+
+30Dec20
+ - Fix #7207 About 'dbcheck -n' not working properly
+
+28Dec20
+ - Fix #7164 About Director reload issue with missing Job's directive
+
+27Dec20
+ - Introduce metadata plugin Iface
+
+24Dec20
+ - alist: Fix for memory overflow access.
+
+23Dec20
+ - docker: Refactor to use new pluginlib.
+ - pluginlib: Refactoring PLUGINPREFIX to C++.
+ - Remove legacy pluginlib.
+ - docker: Refactor to use new pluginlib.
+ - pluginlib: Add command context switcher.
+ - pluginlib: Add smartptr template unittest.
+ - pluginlib: Add smartalist template unittest.
+ - pluginlib: Add common smart class templates.
+
+22Dec20
+ - ptcomm: Fix damaged buffer found in buffer resize.
+
+21Dec20
+ - Fix #7137 About checking for Storage being used for job restart/resume
+
+18Dec20
+ - Fix #7161 Add JobMedia::MediaId index to improve purge query
+
+16Dec20
+ - Fix #7141 rpm install try a "useradd root" instead of "useradd bacula"
+ - BEE Backport bacula/src/tools/dbcheck.c
+
+15Dec20
+ - Fix update_sqlite3_tables to upgrade from 9.6 to 11.0
+ - Fix MySQL update procedure with incorrect handling of the FileIndex type
+ - Fix #7168 About incorrect start time displayed for canceled jobs not yet 
+  running
+ - Fix compilation warnings with Solaris Studio
+ - baculum: Fix problem with setting hourly schedule - reported by Elias Pereira
+ - Fix MySQL update procedure with incorrect handling of the FileIndex type
+ - Fix update_sqlite3_tables to upgrade from 9.6 to 11.0
+
+10Dec20
+ - Fix #6637 About pool overriding for copy jobs
+ - Fix #7165 About incorrect JSON output for SHA256/SHA512 option
+
+09Dec20
+ - ptcomm: Correct and increase default bpipe timeout.
+ - win32: Update openssl for Windows to 1.1.1i
+
+08Dec20
+ - Change 'append_filter' sql helper to a function
+ - Introduce 'bdb_list_plugin_objects_ids' helper method
+
+07Dec20
+ - pluginlib: Update PTCOMM.
+ - ptcomm: Fix get_backend_pid regression.
+ - pluginlib: Update build rules to check for headers.
+ - Fix debug message
+ - Do not hardcode FD Caps
+
+04Dec20
+ - Fix MySQL update scripts for new MariaDB
+ - Fix warning in ./configure
+ - update po
+
+03Dec20
+ - win32: Fix #7095 File deamon and plugins are not selected by default anymore
+ - Introduce more filters for 'delete object' command
+ - Introduce 'get_plugin_objects_ids' method
+ - Add one missing use of O_CLOEXEC in vtape_dev.c
+ - Add error code to init_dev()
+ - Improve bscan so that it reinserts file records after prunning
+ - update branch name
+ - Restore custom permission of symlink on FreeBSD and MacOS
+ - Sync FD/SD Version with Enterprise
+ - Enable SD CAPS in hello()
+ - Fix tools/Makefile.in
+
+02Dec20
+ - Fix #7113 Enable timestamp in tracefile for SD
+ - Fix update_mysql_tables for UNSIGNED Ids
+ - Fix Id type in MySQL make/update script
+ - Fix Id type in MySQL make/update script
+
+01Dec20
+ - win32: Fix #7094 bypass random pwd generation when pwd is provided
+ - Fix bscan's flushing file records in batch
+ - Change plugin object-related logic in bscan to avoid duplicates
+ - Fix #7098 About bscan duplicating restore objects
+ - Fix org#2567 Device don't always get the right "capabilities"
+ - baculum: Update script version
+
+30Nov20
+ - Fix org#2568 About compilation issue on gcc10
+ - Fix org#2584 About inconsitancies in the make_mysql_tables script
+ - Fix org#2573 About Syntax error in granting privileges script with MySQL if 
+  --with-db-password parameter is used
+ - Fix org#2471 About deleted files are listed as being present in an accurate 
+  backup by various sample queries
+ - Fix org#2571 About errors in es_AR.po file
+ - Disable SSD Directory for community
+ - Fix memory small loss in SD
+ - Fix Cloud::Hostname configuration flag
+ - Fix bdirjson segfault when the Catalog resource is set
+
+28Nov20
+ - baculum: Fix English text noticed by Peter McDonald
+ - baculum: Prepare new FD scheduler support
+ - baculum: Add new directives support
+ - baculum: Adapt API part to new catalog format
+
+27Nov20
+ - Remove unused 'db_free_pluginobject_record' method
+
+26Nov20
+ - win32: Sign code when building it
+
+25Nov20
+ - Fix #7079 About a segfault in a copyjob when the fileset is no longer defined
+ - Fix 32/64bit issue with setdebug command
+
+24Nov20
+ - BEE Backport tray monitor images
+ - BEE Backport Android part
+ - Add missing files
+ - Add CDP to win32 Makefile
+ - BEE Backport CDP Plugin
+ - win32: Add cdp plugin
+ - Update copyrights
+ - pluginlib: Update test metaplugin backend.
+ - pluginlib: Update ptcomm.
+ - pluginlib: Extend scan_parameter_str for char*.
+ - dedup: Fix #7033 device not initialized when using legacy config format
+ - baculum: Update Russian translations
+
+23Nov20
+ - pluginlib: Add scan_parameter_str to replace some sscanf.
+ - pluginlib: Add common Metaplugin protocol test backend.
+ - Plugins: Add a common Bacula FD Plugin library.
+ - baculum: Update Portuguese translations
+
+22Nov20
+ - baculum: Implement graphical status storage
+ - baculum: Add gauge.js library
+ - baculum: Add json output option to show storages and show single storage 
+  endpoints
+
+17Nov20
+ - docker: Fix variable scope reduced.
+ - docker: Fix variable not initialized in the constructor.
+
+16Nov20
+ - Unify UA_VERSION for both Community and BEE.
+ - Fix restore objectid function (part2)
+ - Generate few more files with test-plugin-fd
+ - Fix restore objectid= command
+ - Fix bvfs_restore command with objectid and incremental jobs
+
+12Nov20
+ - Fix #6981 About more info during deleting plugin object
+ - Fix #6980 About lack of help for 'delete object' command
+ - Fix #6940 about bscan segfaulting
+
+11Nov20
+ - baculum: Add path field to restore wizard to narrow down search file results 
+  to specific path - idea proposed by Wanderlei Huttel
+ - baculum: Add path parameter to job files API endpoint
+
+10Nov20
+ - Fix bacula-fused hanging issue with the lock manager
+ - Fix Makefile for freebsd
+ - baculum: Fix #2565 status icon overlaps action buttons in API wizard
+ - baculum: Add Sergey Zhidkov to AUTHORS
+ - baculum: Add Russian translations
+
+09Nov20
+ - Allow passing empty arguments to bvfs_restore
+
+07Nov20
+ - baculum: Fix access to job resources if no job assigned to user
+
+06Nov20
+ - Fix unexpected connection event sent by the FD when the Message resource is 
+  not configured
+ - Add event with full restore command
+ - move 'append_filter' catalog helper to more common place
+
+05Nov20
+ - Add missing jcr's reference counter decrement in bscan.
+ - Add missing database closing in bscan
+ - Remove redundant 'db_close_database' define
+ - Avoid shadow parameter in BDB::bdb_create_log_record()
+ - baculum: Update Portuguese translations
+ - baculum: Ajax queue improvement in framework
+ - baculum: Fix renaming config resources
+
+04Nov20
+ - Add proper handling of batch SQL queries in bscan
+ - Fix #6932 Add comment to make_catalog_backup.pl on the $wd variable
+
+03Nov20
+ - Fix #6938 About segfault in .defaults command
+ - Fix #6711 About wrong error message in case of authentication problem
+ - Use LSMDATE rather than BDATE for startup/shutdown events
+ - Add VERSION/BDATE to daemon startup/shutdown events
+
+02Nov20
+ - Fix #2776 About specifying range in 'disable jobs' command
+
+01Nov20
+ - baculum: Add graphs to job view page
+
+30Oct20
+ - Fix #6920 About lack of filename logging in case of reading state_file 
+  err
+ - Add plugin object support to bvfs_restore command
+
+29Oct20
+ - Add event record at the end of the Catalog upgrade
+
+28Oct20
+ - baculum: Fix using offset in job file list query with MySQL catalog database
+ - baculum: Show more detailed job file list - idea proposed by Wanderlei 
+  Huttel
+ - baculum: Rework job file list API endpoint
+
+27Oct20
+ - Fix #6857 About logging of copy jobs upgraded to backup
+ - Fix incompatibility problem introduced with Plugin Object
+
+26Oct20
+ - Fix #6891 Handle empty PluginConfig files
+ - small fix for db_get_plugin_object_record
+ - Fix bvfs-restore-test on MySQL with many files
+
+25Oct20
+ - baculum: Add searching jobs by filename in restore wizard - idea proposed by 
+  Wanderlei Huttel
+ - baculum: Add job files API endpoint
+
+23Oct20
+ - Fix #6892 About issue in update_bacula_tables script
+ - fix SQL query for sqlite default_sql_bvfs_select (BMR restore fail)
+ - Add SHA256/SHA512 to Accurate job options
+
+22Oct20
+ - Fix #6099 About 'delete object' command
+
+20Oct20
+ - Add code to retry a MySQL query after a deadlock
+ - Fix #5013 About 'enable/disable jobs all' command
+
+19Oct20
+ - Fix #6860 DIR crash when VF are started from the scheduler
+ - Fix #6852 About 'restore copies'
+
+16Oct20
+ - rpms: Fix spec file with ldap auth plugin
+ - Fix compilation on plugins
+ - Fix win32 compilation with dedup
+ - Fix crash on get_plugin_object_record()
+ - Fix for update mysql script with ObjectCategory index
+ - Fix listing single object with specified objectid
+ - Add debug report when LDAP auth was success.
+ - Fix FD segfault after a hangup/blowup
+ - rpms: Add Director Authentication plugin to spec file
+ - Update catalog to 1023 in cats.h
+
+15Oct20
+ - BConsole add '-p' to avoid getpass for authenticate.
+ - Update catalog to version 1023
+ - Fix to avoid null pointers in plugin object struct parsing
+ - Update make_sqlite script with ObjectCategory
+ - Allow to list objects by category
+ - Terminate buffer in despool_attributes_from_file()
+ - Fix bug in the Object protocol
+ - bscan: Add Restore Object handling
+ - bscan: Add Plugin Object handling
+ - catalog: Add support for Object Management
+ - win32: Fix compilation
+
+14Oct20
+ - Update update_mysql_tables.in for MySQL cluster support
+ - dird: Add support for Object Management
+
+13Oct20
+ - Update error handling in BPAM framework.
+ - Add BConsole Authentication Plugin framework and a LDAP Plugin.
+ - Add support for SHA256/512 in Verify Jobs
+
+12Oct20
+ - win32: Move the MTab code to compat.cpp and use it with Plugins
+
+09Oct20
+ - Fix compilation for solaris
+ - Check tag format in bconsole tag command
+
+08Oct20
+ - Fix compilation windows with new Object code
+
+04Oct20
+ - baculum: Update Portuguese translations
+ - baculum: Add default days and limit values to status schedules API endpoint
+
+02Oct20
+ - win32: In silent mode, enable fd and plugins by default
+
+01Oct20
+ - Fix #6749 bextract crash at the end of a restore from dedup
+ - Fix #6790 About adding 'command help' form in bconsole
+
+30Sep20
+ - Fix bvfs-test after patch on restore menu 11
+ - Allows to "clone" a device for special purpose like vacuum & aligned
+ - Fix restore count issue with restore menu 11
+ - baculum: Fix displaying multitextbox and multicombobox directive controls
+ - baculum: Fix date filter on status schedule page
+ - baculum: Fix #2570 fileset excludes settings with PHP 7.4
+
+29Sep20
+ - Add -n option to dbcheck to adjust the number of changes done
+ - baculum: New features and improvements to multi-user interface and restricted 
+  access
+
+28Sep20
+ - Revert "Close the FD network link when we do a hangup on the storage side"
+
+25Sep20
+ - docker: Use the new RestoreObject interface
+ - Use const inside the restore_object and plugin_objec structure
+
+24Sep20
+ - Add LDAP lib detection to configure
+
+23Sep20
+ - win32: Update OpenSSL to 1.1.1f
+
+22Sep20
+ - Use seek() with FO_OFFSETS
+
+18Sep20
+ - win32: Add to silent installer the Component selection with cmdline
+ - Remove useless DISTINCT to basic queries and apply ACLs to .media command
+ - bscan: Use Job name instead of JobId in logging
+ - baculum: Fix displaying date and time on volume view page
+
+17Sep20
+ - Fix compilation warning
+ - bscan: Add Restore Object handling
+ - baculum: Fix #2564 changing volume status to Read-Only
+
+16Sep20
+ - test-plugin-fd: Add support for Plugin Objects
+ - bscan: Add Plugin Object handling
+ - test-plugin: Add Plugin Object handling and QueryInterface
+ - test-plugin: Update plugin with restore object struct
+
+15Sep20
+ - win32: Add options for Bacula silent installation
+
+11Sep20
+ - baculum: Fix saving multicombobox control values
+ - baculum: Fix multicombobox and multitextbox controls to work with PHP 7.4
+
+10Sep20
+ - baculum: Fix #2562 displaying date and time in tables on Safari
+
+09Sep20
+ - win32: Fix #6736 About SD, FD and DIR name length limit
+ - filed: Add support for Object Management
+ - plugins: Add Object Management handling
+ - catalog: Add initial Object Management code
+ - filed: Pack all restore object related fields into dedicated struct
+
+07Sep20
+ - Backport BEE scripts/btraceback.in
+ - Update copyrights
+
+04Sep20
+ - Backport BEE regress/scripts/tls-console.conf.in
+ - BEE Backport regress/scripts/setup
+ - BEE Backport regress/scripts/prepare-fake-autochanger.in
+ - BEE Backport regress/scripts/populate.py
+ - BEE Backport regress/scripts/plugin-handleXACL-test-bacula-dir.conf.in
+ - BEE Backport regress/scripts/find_bad_jobmedia.pl
+ - BEE Backport regress/scripts/diff.pl
+ - BEE Backport regress/scripts/create_sed
+ - BEE Backport regress/scripts/copy-tls-confs
+ - BEE Backport regress/scripts/copy-plugin-handleXACL-confs
+ - BEE Backport regress/scripts/copy-kubernetes-plugin-confs
+ - BEE Backport regress/scripts/collect-bacula-dir.conf.in
+ - BEE Backport regress/scripts/copy-cdp-plugin-confs
+ - BEE Backport regress/scripts/cdp-plugin-test-bacula-dir.conf.in
+ - BEE Backport regress/scripts/bpipe.sh
+ - BEE Backport regress/scripts/bpipe-error-restore.sh
+ - BEE Backport regress/scripts/blab.py
+ - BEE Backport regress/scripts/bconsole.py
+ - BEE Backport regress/scripts/functions
+ - BEE Backport from regress/scripts/bacula-sd-conf.vc.in
+ - BEE Backport from regress/scripts/bacula-sd-vtape.conf.in
+ - BEE Backport from regress/scripts/bacula-sd-tape.conf.in
+ - BEE Backport regress/scripts/bacula-dir.conf.vc.in
+ - Backport from BEE regress/scripts/bacula-dir.conf.maxruntime.in
+ - Backport from BEE regress/scripts/bacula-dir-fifo.conf.in
+ - BEE Backport regress/scripts/bacula-dir-migration.conf.in
+ - Backport from BEE regress/scripts/ansi-sd-tape.conf.in
+ - Backport from BEE regress/scripts/asyncregress.sh
+ - Backport from BEE regress/scripts/aligned-bacula-dir.conf.in
+ - Backport from BEE regress/scripts/aligned-bacula-sd.conf.in
+
+03Sep20
+ - BEE Backport ./bacula-sd-all.conf.in
+ - BEE Backport regress/scripts/do_sed
+ - Add back UserIdACL in dird_conf.c for regress tests
+
+02Sep20
+ - BEE Backport regress/tests/without-batch-insert-test
+ - BEE Backport regress/tests/weird-files2-test
+ - BEE Backport regress/tests/weird-files-test
+ - BEE Backport regress/tests/vtape-test2-changer
+ - BEE Backport regress/tests/vtape-maxconjob1-test
+ - BEE Backport regress/tests/vtape-get-stuck-1242
+ - BEE Backport regress/tests/vtape-bug-device-initialized
+ - BEE Backport regress/tests/vtape-autoselect2-changer
+ - BEE Backport regress/tests/vtape-autoselect-changer
+ - BEE Backport regress/tests/volume-not-found-bug
+ - BEE Backport regress/tests/virtualfull-pvf-test
+ - BEE Backport regress/tests/virtualfull-loop-verify-test
+ - BEE Backport regress/tests/virtualfull-heise-bug-test
+ - BEE Backport regress/tests/virtualfull-extreme-concurrency-bug-test
+ - BEE Backport regress/tests/virtualfull-concurrency-bug-test
+ - BEE Backport regress/tests/virtual-jobid-test
+ - BEE Backport regress/tests/virtual-deleted-files-test
+ - BEE Backport regress/tests/virtual-corruption-test
+ - BEE Backport regress/tests/virtual-changer-restore-test
+ - BEE Backport regress/tests/truncate-volume-unused-test
+ - BEE Backport regress/tests/truncate-race-bug-test
+ - BEE Backport regress/tests/tls-encryp-multi-test
+ - BEE Backport regress/tests/tls-check-test
+ - BEE Backport regress/tests/three-pool-recycle-test
+ - BEE Backport regress/tests/synconclose-test
+ - BEE Backport regress/tests/storage-bug-695
+ - BEE Backport regress/tests/status-network-test
+ - BEE Backport regress/tests/sqlite-test
+ - BEE Backport regress/tests/spool-attributes-test
+ - BEE Backport regress/tests/source-fd-storage-addr-test
+ - BEE Backport regress/tests/snapshot-zfs-test
+ - BEE Backport regress/tests/snapshot-mountopts-test
+ - BEE Backport regress/tests/snapshot-lvm-test
+ - BEE Backport regress/tests/snapshot-cmd-test
+ - BEE Backport regress/tests/snapshot-btrfs-test
+ - BEE Backport regress/tests/show-test
+ - BEE Backport regress/tests/show-acl-test
+ - BEE Backport regress/tests/short-test
+ - BEE Backport regress/tests/short-auto-label-test
+ - BEE Backport regress/tests/short-aligned-test
+ - BEE Backport regress/tests/shared-storage-test
+ - BEE Backport regress/tests/sha1-test
+ - BEE Backport regress/tests/sd-plugin-test
+ - BEE Backport regress/tests/schedule-test
+ - BEE Backport regress/tests/resume-job-test
+ - BEE Backport regress/tests/restore-stop-read6-test
+ - BEE Backport regress/tests/restore-stop-read5-test
+ - BEE Backport regress/tests/restore-stop-read4-test
+ - BEE Backport regress/tests/restore-stop-read3-test
+ - BEE Backport regress/tests/restore-replace-ifnewer-test
+ - BEE Backport regress/tests/restore-multi-version-test
+ - BEE Backport regress/tests/restart-sessiontime-test
+ - BEE Backport regress/tests/restart-job-virtual-full-test
+ - BEE Backport regress/tests/remote-fd-test
+ - BEE Backport regress/tests/remote-fd-plugin-test
+ - BEE Backport regress/tests/remote-fd-aligned-test
+ - BEE Backport regress/tests/reload-status-test
+ - BEE Backport regress/tests/reload-many-test
+ - BEE Backport regress/tests/reload-duplicate-test
+ - BEE Backport regress/tests/regress.py
+ - BEE Backport regress/tests/query-parameter-test
+ - BEE Backport regress/tests/py-sample-test.py
+ - BEE Backport regress/tests/plugin-handleXACL-test
+ - BEE Backport regress/tests/opt-plugin-test
+ - BEE Backport regress/tests/one-file-test
+ - BEE Backport regress/tests/offset-test
+ - BEE Backport regress/tests/noautoparent-test
+ - BEE Backport regress/tests/n-files-test
+ - BEE Backport regress/tests/migration-prevjob-test
+ - BEE Backport regress/tests/migration-job-bug-3913
+ - BEE Backport regress/tests/migration-heise-bug-test
+ - BEE Backport regress/tests/messages-reload-test
+ - BEE Backport regress/tests/maxuseduration-jobmedia-bug-test
+ - BEE Backport regress/tests/many-volumes-test
+ - BEE Backport regress/tests/many-jobs-test
+ - BEE Backport regress/tests/many-incremental-test
+ - BEE Backport regress/tests/lock-pid-test
+ - BEE Backport regress/tests/jobmedia-bug3-test
+ - BEE Backport regress/tests/inchanger-storageid-bug
+ - BEE Backport regress/tests/hdfull-test
+ - BEE Backport regress/tests/fdcallsdir-sched-test
+ - BEE Backport regress/tests/events-filter-test
+ - BEE Backport regress/tests/delete-pool-test
+ - BEE Backport regress/tests/crazy-volumes-test.py
+ - BEE Backport regress/tests/crazy-small-vol-test
+ - BEE Backport regress/tests/console-glob-acl-test
+ - BEE Backport regress/tests/console-delete-test
+ - BEE Backport regress/tests/cloud-truncate-many-parts-test
+ - BEE Backport regress/tests/cloud-recycle-test
+ - BEE Backport regress/tests/cloud-download-test
+ - BEE Backport regress/tests/cloud-MT4857-test
+ - BEE Backport regress/tests/backup-to-null-crc32
+ - BEE Backport regress/tests/fstype-test
+ - BEE Backport regress/tests/fileindex-test
+ - BEE Backport regress/tests/events-pruning-test
+ - BEE Backport regress/tests/director-autoprune-test
+ - BEE Backport regress/tests/crazy-small-volumes-test.py
+ - BEE Backport regress/tests/copy-prevjob-test
+ - BEE Backport regress/tests/console-acl-test
+ - BEE Backport regress/tests/cloud-xfer-test
+ - BEE Backport regress/tests/cloud-prune-test
+ - BEE Backport regress/tests/cloud-concurrent-jobs-test
+ - BEE Backport regress/tests/hardlink-vf-test
+ - BEE Backport regress/tests/fs-error-test
+ - BEE Backport regress/tests/fdcallsdir-test
+ - BEE Backport regress/tests/events-test
+ - BEE Backport regress/tests/encrypt-test
+ - BEE Backport regress/tests/hangup-blowup-test
+ - BEE Backport regress/tests/fileset-kw-test
+ - BEE Backport regress/tests/fdcallsdir-many-clients-test
+ - BEE Backport regress/tests/eighty-cancel-jobs-tape
+ - BEE Backport regress/tests/hdfull-aligned-test
+ - BEE Backport regress/tests/fileset-change-test
+ - BEE Backport regress/tests/fast-nodisk-test
+ - BEE Backport regress/tests/dynamic-client-address-test
+ - BEE Backport regress/tests/counter-test
+ - BEE Backport regress/tests/two-volume-changer
+ - BEE Backport regress/tests/maxuseduration-test
+ - BEE Backport regress/tests/four-concurrent-jobs-test
+ - BEE Backport regress/tests/verify-vol-test
+ - BEE Backport regress/tests/short-incremental-test
+ - BEE Backport regress/tests/slow-test
+ - BEE Backport regress/tests/truncate-test
+ - BEE Backport regress/tests/restart-base-job-test
+ - BEE Backport regress/tests/verify-data-test
+ - BEE Backport regress/tests/cloud-test
+ - BEE Backport regress/tests/aligned-and-normal-test
+ - BEE Backport regress/tests/resume-jobs-test
+ - BEE Backport regress/tests/aligned-multi-test
+ - BEE Backport regress/tests/multi2-storage-test
+ - BEE Backport regress/tests/maxruntime-test
+ - BEE Backport regress/tests/chmod-test
+ - BEE Backport regress/tests/monitoring-bacula-error-test
+ - BEE Backport regress/tests/tls-duplicate-job-test
+ - BEE Backport regress/tests/restart2-job-test
+ - BEE Backport regress/tests/restart2-base-job-test
+ - BEE Backport regress/tests/restart-jobmedia-test
+ - BEE Backport regress/tests/remote-console-test
+ - BEE Backport regress/tests/reload-client-address-test
+ - BEE Backport regress/tests/pool-attributes-test
+ - BEE Backport regress/tests/runscript-test
+ - BEE Backport regress/tests/tls-authenticate-test
+ - BEE Backport regress/tests/six-vol-test
+ - BEE Backport regress/tests/restart-reschedule-test
+ - BEE Backport regress/tests/prune-all-test
+ - BEE Backport regress/tests/aligned-bug-1919-test
+ - BEE Backport regress/tests/upgrade-to-full-test
+ - BEE Backport regress/tests/status-test
+ - BEE Backport regress/tests/migration-job-no-resource-test
+ - BEE Backport regress/tests/three-pool-test
+ - BEE Backport regress/tests/source-addr-test
+ - BEE Backport regress/tests/manual-two-vol-tape
+ - BEE Backport regress/tests/sd-sd-test
+ - BEE Backport regress/tests/incremental-changer
+ - BEE Backport regress/tests/mcj-test
+ - BEE Backport regress/tests/file-span-vol-test
+ - BEE Backport regress/tests/reload-test
+ - BEE Backport regress/tests/debug-settings-test
+ - BEE Backport regress/tests/debug-test
+ - BEE Backport regress/tests/multi-drive1-test
+ - BEE Backport regress/tests/prune-test
+ - BEE Backport regress/tests/cancel-multiple-test
+ - BEE Backport regress/tests/priority-test
+ - BEE Backport regress/tests/plugin-test
+ - BEE Backport regress/tests/maxbw-test
+ - BEE Backport regress/tests/multi-drive-test
+ - BEE Backport regress/tests/copy-uncopied-test
+ - BEE Backport regress/tests/lockmgr-test
+ - BEE Backport regress/tests/duplicate-job-test
+ - BEE Backport regress/tests/bvfs-restore-test
+ - BEE Backport regress/tests/bvfs-acl-test
+ - BEE Backport regress/tests/backup-win32-tape
+ - BEE Backport regress/tests/backup-bacula-test
+ - BEE Backport regress/tests/aligned-test
+ - BEE Backport regress/tests/exclude-dir-test
+ - BEE Backport regress/tests/concurrent-jobs-test
+ - BEE Backport regress/tests/acl-xattr-test
+ - BEE Backport regress/tests/accurate-test
+ - Backport regress scripts
+
+31Aug20
+ - Print events when the Director has fixed Job catalog records during startup
+
+28Aug20
+ - Add first support for tags in the Director
+ - Stop flooding the console with error message in unittests
+
+26Aug20
+ - Close the FD network link when we do a hangup on the storage side
+ - Add bEventIsCanceled interface for plugins
+
+25Aug20
+ - Fix #6531 About a crash when sending messages to the Director via a broken 
+  socket
+
+21Aug20
+ - Avoid segfault with address manipulation functions
+
+17Aug20
+ - Clarify SD vbackup device error message
+
+05Aug20
+ - Fix restore issue in community version reported by big-vol-test
+ - BEE Backport bacula/src/win32/filed/vss_generic.cpp
+ - BEE Backport bacula/src/win32/filed/vss.h
+ - BEE Backport bacula/src/win32/filed/vss.cpp
+ - BEE Backport bacula/src/win32/filed/Makefile
+ - BEE Backport bacula/src/win32/wx-console/Makefile
+ - BEE Backport bacula/src/win32/tools/Makefile
+ - BEE Backport bacula/src/win32/libwin32/main.cpp
+ - BEE Backport bacula/src/win32/libwin32/aboutDialog.cpp
+ - BEE Backport bacula/src/win32/libbac/Makefile
+ - BEE Backport bacula/src/win32/lib/make_def64
+ - BEE Backport bacula/src/win32/lib/make_def32
+ - BEE Backport bacula/src/win32/lib/Makefile
+ - BEE Backport bacula/src/win32/cats/Makefile
+ - BEE Backport ./make_def
+ - BEE Backport bacula/src/win32/dird/who.h
+ - BEE Backport bacula/src/win32/dird/service.cpp
+ - BEE Backport bacula/src/win32/dird/main.cpp
+ - BEE Backport bacula/src/win32/dird/Makefile
+ - BEE Backport bacula/src/win32/stored/who.h
+ - BEE Backport bacula/src/win32/stored/Makefile
+ - BEE Backport bacula/src/win32/stored/trayMonitor.cpp
+ - BEE Backport bacula/src/win32/stored/service.cpp
+ - BEE Backport bacula/src/win32/stored/main.cpp
+ - BEE Backport ./xwinconfig.h
+ - BEE Backport bacula/src/win32/compat/mingwconfig.h
+ - BEE Backport bacula/src/win32/compat/compat.cpp
+ - BEE Backport bacula/src/win32/compat/winapi.h
+ - BEE Backport bacula/src/win32/compat/compat.h
+
+03Aug20
+ - Add missing error handling in do_vbackup()
+ - BEE Backport regress/tests/restart-job-test
+ - BEE Backport regress/scripts/functions.pm
+ - BEE Backport regress/tests/maxtime-test regress/tests/restart-accurate-job-test
+ - BEE Backport regress/tests/hardlink-test
+ - BEE Backport regress/scripts/new-test-bacula-dir.conf.in
+ - Fix compilation
+ - Add EXTRA_XXX_SRCS to ./configure.in
+
+02Aug20
+ - mysql: add Primary Key for all fixed tables
+ - mysql: add Primary Key to each table created when sql_require_primary_key 
+  flag is turned on
+
+31Jul20
+ - Fix the jobLevel, fileSet and Client into Copy/Migrate-job
+
+30Jul20
+ - Remove duplicate code in setup_resume_job() about JobType and JobLevel
+
+28Jul20
+ - Fix accurate SQL query for SQLite, remove "()" around the query
+
+24Jul20
+ - Fix #6557 Suppress message "Error: bsock.c:394 Wrote 4 bytes" after a BNET_TERMINATE
+
+23Jul20
+ - Fix org#2551 About the 'show catalog' command that is truncating the db_driver
+
+22Jul20
+ - Reopen trace file after reload_config()
+ - Reopen trace file in WORKING dir after read of configuration file
+ - Revert PKEY-related part of commit bf9310c220
+
+21Jul20
+ - Add missing error handling for database queries
+ - Fix depend target in filed/Makefile.in
+ - Fix compilation with GPFS
+ - BEE Backport regress/scripts/async.sh
+ - BEE Backport regress scripts
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/src
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/make_release.sh
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/gradlew.bat
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/gradlew
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/gradle.properties
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/build.gradle
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/build-depkgs-android.sh
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/bacula-fd.conf
+ - BEE Backport bacula/src/qt-console/tray-monitor/android/AndroidManifest.xml
+
+20Jul20
+ - Fix windows compilation
+ - Fix compilation
+ - gpfs: Detect libgpfs.so in gpfsdir
+ - Fix compilation with GPFS
+ - Do not display NOTICE messages after PostgreSQL commands
+ - Use DROP TABLE IF EXISTS in cats library to avoid errors with missing tables
+ - gpfs: Add GPFS in status client output (debug level > 0)
+ - Display GPFS support in config.out
+
+17Jul20
+ - Fix #6602 About wrong message in case of setting '0' bandwidth limit
+ - Do not check for libgpfs in ./configure
+ - Fix #6573 copy-job ignores run spooldata=(yes/no) argument
+
+16Jul20
+ - Initialize the working_directory to a useful value until read from config 
+  file
+ - Allow backtrace to work before the load of the config file
+ - Fix #4053 About wrong error message during virtual backup
+ - Fix #6599 About a segfault in the Director with debuglevel >= 900
+
+15Jul20
+ - Fix mysql table creation issue with Events table
+ - rpms: Add GPFS support to Redhat/SLES
+ - Add possibility to express size/speed units in KiB, MiB, GiB and TiB
+ - Add GPFS configure code
+ - Add GPFS ACL/XATTR Support
+ - Fix update_mysql_tables_1021_to_1022 for debian
+ - Fix mysql table creation issue with Events table
+
+14Jul20
+ - Disable LOCK_GUARD macro
+
+13Jul20
+ - Fix #6575 add message during setting debug parameters for Director
+ - Quick fix for LOCK_GUARD macro for the release
+
+06Jul20
+ - Fix #6472 Create resource "globals" when loading a new resource, not at first 
+  use
+ - Release globals for the schedule in terminate_dird()
+ - Add LOCK_GUARD() macro that add _FILE_ & _LINE_ to the lock_guard class
+ - cloud: Fix build. Include correct class header.
+
+03Jul20
+ - cloud: Fix #6457 About segfault in glacier restore due to s3ctx initialization 
+  in s3_cloud_glacier
+
+01Jul20
+ - Fix bdirjson Autochanger display
+
+30Jun20
+ - Try to fix segfault in .status dir running command
+
+29Jun20
+ - Fix #6464 Add an event message when a volume is purged
+ - Allow some extra characters in EventsSource catalog field
+ - Eliminate compiler errors when smartalloc is turned off
+
+28Jun20
+ - baculum: Fix date formatter to work with PHP 7.4
+
+27Jun20
+ - baculum: Fix configure Bacula hosts page to work with PHP 7.4
+
+26Jun20
+ - Fix #6454 About bconsole complaining when dynamic configuration generates 
+  messages in STDERR
+
+25Jun20
+ - baculum: Update Portuguese translations
+
+24Jun20
+ - baculum: Change colours in table headers and borders
+
+23Jun20
+ - Fix #6413 Issue after incorrect password/director
+
+22Jun20
+ - Add new Object fields to the Object table
+
+20Jun20
+ - baculum: Add remove runscript button
+
+19Jun20
+ - baculum: Close modal windows on pressing ESC key
+ - baculum: Fix logout button on authorization failed page
+
+18Jun20
+ - baculum: Add local user authentication method support
+ - Fix #6366 About an issue with verify job level=DiskToCatalog
+
+17Jun20
+ - Add helpers for POOL_MEM objects
+
+16Jun20
+ - android: Added code to enforce Roboto font
+
+15Jun20
+ - android: Added 'Report' button on File Daemon screen, which redirects FD 
+  Trace data to a Mail App on the phone
+
+14Jun20
+ - baculum: Add date and time formatters - idea proposed by Wanderlei Huttel
+
+13Jun20
+ - baculum: Enable re-running jobs in async way and visual improvements
+
+12Jun20
+ - baculum: Change cursor over selectable table
+ - Fix #6360 About a crash with complex events
+ - Add simple bitmap class
+ - Fix #6359 About btraceback script issue during Bacula initialization
+
+11Jun20
+ - baculum: Improve restore wizard
+ - Fix build script copyright detection
+ - release: add code to detect Bacula Systems copyrights and fail release
+
+09Jun20
+ - Add configure variables to baculabackupreport. Patch from bug #2538
+
+08Jun20
+ - cloud: Fix org#2542 About potential thread concurrency issues
+ - Fix org#2484 Use message type to determine syslog message level
+ - Fix org#2487 Get working directory from dbcheck in make_catalog_backup.pl
+ - Disable VolCatCloudParts computation
+
+06Jun20
+ - Improve clarity of Cloud part mismatches and make it an INFO message rather 
+  than a WARNING since it corrects the catalog.
+
+05Jun20
+ - Fix #6280 About issue with AllowDuplicate on Copy/Migration jobs
+ - Add optimized version of the hardlink detection in BVFS
+
+04Jun20
+ - cloud: Always handle S3 driver in the device initialization
+ - Fix #6341 About improving BVFS support for hardlinks
+ - Fix compilation warning
+ - Use bstrncat() instead of strncat()
+ - Fix #6116 About restart/resume command is using original fileset/client 
+  resource to restart jobs
+
+03Jun20
+ - Avoid concurrent initialization of the same device in the Storage Daemon
+
+02Jun20
+ - Fix tray-monitor installation
+ - Add ./configure code to check for and enable/disable S3 support
+ - Fix tray-monitor installation
+ - Ensure cloud driver loaded when listing cloud volumes
+
+29May20
+ - baculum: Request #2546 support for full restore when file records for backup 
+  job are pruned
+
+25May20
+ - baculum: Fix problem with authorization error after upgrade
+ - baculum: Add UPGRADE file
+ - Fix #6298 about permission issue on the Object table sequence id
+
+24May20
+ - baculum: Fix returning value in TStyleDiff - generated notice with PHP 
+  7.4
+ - baculum: Remove execute bit for framework scripts
+
+22May20
+ - baculum: Fix displaying empty column button in table column visibility menu - 
+  reported by Wanderlei Huttel
+
+21May20
+ - baculum: Update Polish translations
+ - baculum: Update Portuguese translations
+
+20May20
+ - make_unique_filename() now use "const char *key"
+
+19May20
+ - baculum: New user management. LDAP support. Role-based access control.
+ - Update grant/drop SQL scripts for new tables
+ - Add new SQL tables for next features
+ - Fix BAT compilation
+
+18May20
+ - btraceback do a "bt full" of the faulty thread to get local variables
+
+16May20
+ - BEE Backport bacula/src/qt-console/tray-monitor/enterprise-tray-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/android.qrc
+ - BEE Backport bacula/src/qt-console/tray-monitor/JobListItem.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-monitor.pro.mingw64.in
+ - BEE Backport bacula/src/qt-console/tray-monitor/android-fd-service.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/FileSelectTab.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/runjob-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/TutorialPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/FileDaemonPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-ui.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-monitor.pro.mingw32.in
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-monitor.pro.in
+ - BEE Backport bacula/src/qt-console/tray-monitor/respanel-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/PulseLoader.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/respanel-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/runjobmodel.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/jobmodel.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/enterprise-tray-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/RunJobPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/resmodel.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/RestoreJobPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-monitor.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-monitor.android.pro.in
+ - BEE Backport bacula/src/qt-console/tray-monitor/task.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/task.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/resmodel.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/RestoreConfirmTab.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/runjobmodel.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/restorejobmodel.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/jobmodel.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/authenticate.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/MainMenuPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/restorejobmodel.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/resdetails-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/app-boot-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/JobSelectTab.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/resdetails-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/config-storage.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/ResourcePanel.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/restoreoptionswizardpage.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/app-boot-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/restore-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/ResourceStatusPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray_conf.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/make_debug_apk.sh.in
+ - BEE Backport bacula/src/qt-console/tray-monitor/config-storage.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/ResourceListPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/main.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/fd-config-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/JobListPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/fd-config-ui-controller.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/TrayUiPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/FileDaemonConfigPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/DesignDocument
+ - BEE Backport bacula/src/qt-console/tray-monitor/ConfigTutorialPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/tray_conf.cpp
+ - BEE Backport bacula/src/qt-console/tray-monitor/runjob-ui-controller.h
+ - BEE Backport bacula/src/qt-console/tray-monitor/ResourceListItem.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/FeaturesTutorialPage.qml
+ - BEE Backport bacula/src/qt-console/tray-monitor/make_release_apk.sh.in
+ - BEE Backport bacula/src/qt-console/win32/qmake.conf
+ - BEE Backport bacula/src/qt-console/restore/restoretree.cpp
+ - BEE Backport bacula/src/qt-console/bcomm/dircomm_auth.cpp
+ - BEE Backport bacula/src/qt-console/bcomm/dircomm.cpp
+ - BEE Backport bacula/src/qt-console/bat_conf.h
+ - BEE Backport bacula/src/qt-console/bat_conf.cpp
+ - BEE Backport bacula/src/qt-console/bat.pro.mingw64.in
+ - BEE Backport bacula/src/qt-console/bat.pro.mingw32.in
+ - BEE Backport bacula/src/qt-console/pages.h
+ - BEE Backport bacula/src/qt-console/bat.pro.in
+ - BEE Backport bacula/src/qt-console/main.qrc
+ - BEE Backport bacula/src/qt-console/bat.pro.android
+ - BEE Backport bacula/src/qt-console/make-win32
+
+13May20
+ - Fix #6270 About incorrect JobId displayed in "list joblog"
+
+12May20
+ - Fix compilation on Tru64
+ - Fix new compiler warnings + always use bstrncpy not strncpy to ensure EOS at 
+  end of string
+ - BEE Backport bacula/src/console/console_conf.c
+ - BEE Backport bacula/src/console/console_conf.h
+ - BEE Backport bacula/src/console/console.c
+ - BEE Backport bacula/src/console/bbconsjson.c
+ - BEE Backport bacula/src/console/authenticate.c
+ - BEE Backport bacula/src/version.h
+ - BEE Backport bacula/src/filetypes.h
+ - BEE Backport bacula/src/fileopts.h
+ - BEE Backport bacula/src/streams.h
+ - BEE Backport bacula/src/jcr.h
+ - BEE Backport bacula/src/bacula.h
+ - BEE Backport bacula/src/baconfig.h
+ - BEE Backport bacula/src/fileopts.h
+ - BEE Backport bacula/autoconf/config.h.in
+ - BEE Backport config.guess
+ - BEE Backport bacula/autoconf/bacula-macros/db.m4
+ - BEE Backport bacula/autoconf/Make.common.in
+ - Add BEEF to version.h
+ - BEE Backport bacula/src/lib/authenticatebase.h
+ - BEE Backport bacula/src/lib/bsock_meeting.c/h
+ - BEE Backport bacula/src/stored/vtape_dev.h
+ - BEE Backport bacula/src/stored/vtape_dev.c
+ - BEE Backport bacula/src/stored/vol_mgr.c
+ - BEE Backport bacula/src/stored/vbackup.c
+ - BEE Backport bacula/src/stored/tape_dev.h
+ - BEE Backport bacula/src/stored/tape_dev.c
+ - BEE Backport bacula/src/stored/stored_conf.h
+ - BEE Backport bacula/src/stored/stored_conf.c
+ - BEE Backport bacula/src/stored/stored.h
+ - BEE Backport bacula/src/stored/stored.c
+ - BEE Backport bacula/src/stored/status.c
+ - BEE Backport bacula/src/stored/protos.h
+ - BEE Backport bacula/src/stored/spool.c
+ - BEE Backport bacula/src/stored/sdcollect.c
+ - BEE Backport bacula/src/stored/sd_plugins.h
+ - BEE Backport bacula/src/stored/sd_plugins.c
+ - BEE Backport bacula/src/stored/s3_driver.h
+ - BEE Backport bacula/src/stored/s3_driver.c
+ - BEE Backport bacula/src/stored/reserve.c
+ - BEE Backport bacula/src/stored/record_write.c
+ - BEE Backport bacula/src/stored/record_util.c
+ - BEE Backport bacula/src/stored/record_read.c
+ - BEE Backport bacula/src/stored/record.h
+ - BEE Backport bacula/src/stored/read_records.c
+ - BEE Backport bacula/src/stored/read.c
+ - BEE Backport bacula/src/stored/protos.h
+ - BEE Backport bacula/src/stored/prepare.h
+ - BEE Backport bacula/src/stored/org_stored_prepare.c
+ - BEE Backport bacula/src/stored/org_stored_dedup.c
+ - BEE Backport bacula/src/stored/org_libsd_sir.c
+ - BEE Backport bacula/src/stored/org_libsd_quota.c
+ - BEE Backport bacula/src/stored/org_libsd_filemedia.c
+ - BEE Backport bacula/src/stored/null_dev.c
+ - BEE Backport bacula/src/stored/mount.c
+ - BEE Backport bacula/src/stored/match_bsr.c
+ - BEE Backport bacula/src/stored/lock.c
+ - BEE Backport bacula/src/stored/label.c
+ - BEE Backport bacula/src/stored/job.c
+ - BEE Backport bacula/src/stored/init_dev.c
+ - BEE Backport bacula/src/stored/hello.c
+ - BEE Backport bacula/src/stored/generic_driver.h
+ - BEE Backport bacula/src/stored/fifo_dev.c
+ - BEE Backport bacula/src/stored/autochanger.c
+ - BEE Backport bacula/src/stored/generic_driver.c
+ - BEE Backport bacula/src/stored/file_driver.h
+ - BEE Backport bacula/src/stored/file_driver.c
+ - BEE Backport bacula/src/stored/fd_cmds.c
+ - BEE Backport bacula/src/stored/dircmd.c
+ - BEE Backport bacula/src/stored/dev.h
+ - BEE Backport bacula/src/stored/dev.c
+ - BEE Backport bacula/src/stored/dedupstored.h
+ - BEE Backport bacula/src/stored/dedup_interface.h
+ - BEE Backport bacula/src/stored/dedup_dev.h
+ - BEE Backport bacula/src/stored/cloud_transfer_mgr.h
+ - BEE Backport bacula/src/stored/cloud_transfer_mgr.c
+ - BEE Backport bacula/src/stored/cloud_parts.h
+ - BEE Backport bacula/src/stored/cloud_parts.c
+ - BEE Backport bacula/src/stored/cloud_glacier.h
+ - BEE Backport bacula/src/stored/cloud_driver.h
+ - BEE Backport bacula/src/stored/cloud_dev.h
+ - BEE Backport bacula/src/stored/cloud_dev.c
+ - BEE Backport bacula/src/stored/butil.c
+ - BEE Backport bacula/src/stored/bsdjson.c
+ - BEE Backport bacula/src/stored/bscan.c
+ - BEE Backport bacula/src/stored/bls.c
+ - BEE Backport bacula/src/stored/block_util.c
+ - BEE Backport bacula/src/stored/block.h
+ - BEE Backport bacula/src/stored/block.c
+ - BEE Backport bacula/src/stored/bextract.c
+ - BEE Backport bacula/src/stored/bcopy.c
+ - BEE Backport bacula/src/stored/authenticate.c
+ - BEE Backport bacula/src/stored/askdir.c
+ - BEE Backport bacula/src/stored/append.c
+ - BEE Backport bacula/src/stored/aligned_dev.h
+ - BEE Backport bacula/src/stored/acquire.c
+ - BEE Backport bacula/src/stored/Makefile.in
+ - BEE Backport bacula/src/tools/test_tags.c
+ - BEE Backport bacula/src/tools/joblist.c
+ - BEE Backport bacula/src/tools/cdp-client
+ - BEE Backport bacula/src/tools/bwild.c
+ - BEE Backport bacula/src/tools/bsparse.c
+ - BEE Backport bacula/src/tools/bsock_meeting_test.c
+ - BEE Backport bacula/src/tools/bsnapshot.c
+ - BEE Backport bacula/src/tools/bsmtp.c
+ - BEE Backport bacula/src/tools/bregtest.c
+ - BEE Backport bacula/src/tools/bregex.c
+ - BEE Backport bacula/src/tools/Makefile.in
+ - Remove create_test_database
+ - BEE Backport bacula/src/cats/sql_list.c
+ - BEE Backport bacula/src/cats/drop_postgresql_tables.in
+ - BEE Backport bacula/src/cats/delete_catalog_backup.in
+ - BEE Backport bacula/src/lib/bcrc32.c
+
+11May20
+ - Return smartalloc buffers zeroed -- future performance improvement
+ - BEE Backport bacula/src/cats/update_sqlite3_tables.in
+ - BEE Backport bacula/src/cats/update_postgresql_tables.in
+ - BEE Backport bacula/src/cats/update_mysql_tables.in
+ - BEE Backport bacula/src/cats/sqlite.c
+ - BEE Backport bacula/src/cats/sql_update.c
+ - BEE Backport bacula/src/cats/sql_get.c
+ - BEE Backport bacula/src/cats/sql_find.c
+ - BEE Backport bacula/src/cats/sql_delete.c
+ - BEE Backport bacula/src/cats/sql_create.c
+ - BEE Backport bacula/src/cats/sql_cmds.h
+ - BEE Backport bacula/src/cats/sql_cmds.c
+ - BEE Backport bacula/src/cats/sql.c
+ - BEE Backport bacula/src/cats/protos.h
+ - BEE Backport bacula/src/cats/postgresql.c
+ - BEE Backport bacula/src/cats/mysql.c
+ - BEE Backport bacula/src/cats/make_sqlite3_tables.in
+ - BEE Backport bacula/src/cats/make_postgresql_tables.in
+ - BEE Backport bacula/src/cats/make_mysql_tables.in
+ - BEE Backport bacula/src/cats/make_catalog_backup.pl.in
+ - BEE Backport bacula/src/cats/grant_postgresql_privileges.in
+ - BEE Backport fix_postgresql_tables
+ - BEE Backport bacula/src/cats/drop_mysql_tables.in
+ - BEE Backport bacula/src/cats/cats.h
+ - BEE Backport bacula/src/cats/cats.c
+ - BEE Backport bacula/src/cats/bvfs.h
+ - BEE Backport bacula/src/cats/bvfs.c
+ - BEE Backport bacula/src/cats/bdb.h
+ - BEE Backport bacula/src/cats/Makefile.in
+
+10May20
+ - Improve scanning data/time, fixes bug #2472
+ - Make ABORT mention segfault to clarify non-bug #2528
+
+09May20
+ - baculum: Fix validators in run job modal window
+
+02May20
+ - Remove unused -t option in dbcheck.c -- fixes bug #2453
+
+01May20
+ - Fix bug #2534 possible double free in error case
+ - Fix bstat_test unittest
+ - Fix events scan function
+ - Fix possible sscanf overflows
+ - Fix overflow from malicious FD reported by Pasi Saarinen
+
+29Apr20
+ - Update SQL scripts for Events table. Catalog format 1022
+
+24Apr20
+ - Reliably log user activity in a way that satisfies auditors
+ - BEE Backport bacula/src/dird/verify.c
+ - BEE Backport bacula/src/dird/vbackup.c
+ - BEE Backport bacula/src/dird/ua_update.c
+ - BEE Backport bacula/src/dird/ua_tree.c
+ - BEE Backport bacula/src/dird/ua_status.c
+ - BEE Backport bacula/src/dird/ua_select.c
+ - BEE Backport bacula/src/dird/ua_run.c
+ - BEE Backport bacula/src/dird/ua_restore.c
+ - BEE Backport bacula/src/dird/ua_purge.c
+ - BEE Backport bacula/src/dird/ua_prune.c
+ - BEE Backport bacula/src/dird/ua_output.c
+ - BEE Backport bacula/src/dird/ua_label.c
+ - BEE Backport bacula/src/dird/ua_dotcmds.c
+ - BEE Backport bacula/src/dird/ua_collect.c
+ - BEE Backport bacula/src/dird/ua_cmds.c
+ - BEE Backport bacula/src/dird/ua_acl.c
+ - BEE Backport bacula/src/dird/ua.h
+ - BEE Backport bacula/src/dird/snapshot.c
+ - BEE Backport bacula/src/dird/run_conf.c
+ - BEE Backport bacula/src/dird/restore.c
+ - BEE Backport bacula/src/dird/query.sql
+ - BEE Backport bacula/src/dird/protos.h
+ - BEE Backport bacula/src/lib/org_dird_quota.c
+ - BEE Backport bacula/src/dird/next_vol.c
+ - BEE Backport bacula/src/dird/newvol.c
+ - BEE Backport bacula/src/dird/msgchan.c
+ - BEE Backport bacula/src/dird/mac_sql.c
+ - BEE Backport bacula/src/dird/job.c
+ - BEE Backport bacula/src/dird/inc_conf.c
+ - BEE Backport bacula/src/dird/fd_cmds.c
+ - BEE Backport bacula/src/dird/dird_conf.h
+ - BEE Backport bacula/src/dird/dird_conf.c
+ - BEE Backport bacula/src/dird/dird.c
+ - BEE Backport bacula/src/dird/dir_plugins.c
+ - BEE Backport bacula/src/dird/catreq.c
+ - BEE Backport bacula/src/dird/bsr.c
+ - BEE Backport bacula/src/dird/bdirjson.c
+ - BEE Backport bacula/src/dird/backup.c
+ - BEE Backport bacula/src/dird/autoprune.c
+ - BEE Backport bacula/src/dird/authenticate.c
+ - BEE Backport bacula/src/dird/admin.c
+ - BEE Backport bacula/src/dird/Makefile.in
+
+23Apr20
+ - BEE Backport bacula/src/lib/output.h
+ - BEE Backport bacula/src/lib/org_lib_fips.c
+ - BEE Backport bacula/src/lib/org_lib_dedup.h
+ - BEE Backport bacula/src/lib/org_lib_dedup.c
+ - BEE Backport bacula/src/lib/authenticatebase.cc
+ - BEE Backport bacula/src/lib/worker.c
+ - BEE Backport bacula/src/lib/util.c
+ - BEE Backport bacula/src/lib/unittests.h
+ - BEE Backport bacula/src/lib/unittests.c
+ - BEE Backport bacula/src/lib/tls.c
+ - BEE Backport bacula/src/lib/status.h
+ - BEE Backport bacula/src/lib/signal.c
+ - BEE Backport bacula/src/lib/scan.c
+ - BEE Backport bacula/src/lib/res.c
+ - BEE Backport bacula/src/lib/protos.h
+ - BEE Backport bacula/src/lib/plugins.h
+ - BEE Backport bacula/src/lib/plugins.c
+ - BEE Backport bacula/src/lib/parse_conf.h
+ - BEE Backport bacula/src/lib/parse_conf.c
+ - BEE Backport bacula/src/lib/output.c
+ - BEE Backport bacula/src/lib/openssl.c
+ - BEE Backport bacula/src/lib/openssl-compat.h
+ - BEE Backport bacula/src/lib/message.h
+ - BEE Backport bacula/src/lib/message.c
+ - Add POOL_MEM.handle() function to get POOLMEM** from POOL_MEM
+ - Add author note on lockmanager
+ - BEE Backport bacula/src/lib/lockmgr.c
+ - BEE Backport bacula/src/lib/lib.h
+ - Add jobuser/jobgroup restore options
+ - BEE Backport bacula/src/lib/edit.c
+ - BEE Backport bacula/src/lib/dlist.h
+ - BEE Backport bacula/src/lib/dlist.c
+ - Check that the digest is valid before to use it
+ - BEE Backport bacula/src/lib/cram-md5.c
+ - Remove crc32.c
+
+22Apr20
+ - Add %x to scan_string
+
+20Apr20
+ - bwlimit avoid sleep > 60s
+ - Add bstrftime_c() function
+ - BEE Backport bacula/src/lib/bsys.c
+ - BEE Backport bacula/src/lib/bsockcore.h
+ - BEE Backport bacula/src/lib/bsockcore.c
+ - BEE Backport bacula/src/lib/bsock.h
+ - BEE Backport bacula/src/lib/bsock.c
+ - Do not use tcp settings for unix pipes
+ - BEE Backport bacula/src/lib/bnet_server.c
+ - BEE Backport bacula/src/lib/bnet.c
+ - BEE Backport bacula/src/lib/bget_msg.h
+ - BEE Backport bacula/src/lib/address_conf.c
+ - BEE Backport bacula/src/lib/Makefile.in
+ - BEE Backport bacula/src/findlib/win32filter.h
+ - BEE Backport bacula/src/findlib/win32filter.c
+ - BEE Backport bacula/src/findlib/protos.h
+ - BEE Backport bacula/src/findlib/match.c
+ - BEE Backport bacula/src/findlib/fstype.c
+ - BEE Backport bacula/src/findlib/find_one.c
+ - BEE Backport bacula/src/findlib/find.h
+ - BEE Backport bacula/src/findlib/find.c
+ - BEE Backport bacula/src/findlib/create_file.c
+ - BEE Backport bacula/src/findlib/bfile.c
+ - BEE Backport bacula/src/findlib/attribs.c
+ - BEE Backport bacula/src/findlib/Makefile.in
+ - BEE Backport runres_conf.c and stub files
+ - BEE Backport bacula/src/filed/fdcallsdir.c
+ - BEE Backport bacula/src/filed/verify_vol.c
+ - BEE Backport bacula/src/filed/verify.c
+ - BEE Backport bacula/src/filed/status.c
+ - BEE Backport bacula/src/filed/restore.h
+ - BEE Backport bacula/src/filed/restore.c
+ - BEE Backport bacula/src/filed/protos.h
+ - BEE Backport bacula/src/filed/job.c
+ - BEE Backport bacula/src/filed/hello.c
+ - BEE Backport bacula/src/filed/heartbeat.c
+ - BEE Backport bacula/src/filed/filed_conf.h
+ - BEE Backport bacula/src/filed/filed_conf.c
+ - BEE Backport bacula/src/filed/filed.h
+ - BEE Backport bacula/src/filed/filed.c
+ - BEE Backport bacula/src/filed/fd_snapshot.h
+ - BEE Backport bacula/src/filed/fd_snapshot.c
+ - BEE Backport bacula/src/filed/fd_plugins.h
+ - BEE Backport bacula/src/filed/fd_plugins.c
+ - BEE Backport bacula/src/filed/crypto.c
+ - BEE Backport bacula/src/filed/bxattr_solaris.h
+ - BEE Backport bacula/src/filed/bxattr_solaris.c
+ - BEE Backport bacula/src/filed/bxattr_linux.c
+ - BEE Backport bacula/src/filed/bxattr.h
+ - BEE Backport bacula/src/filed/bxattr.c
+ - BEE Backport bacula/src/filed/bfdjson.c
+ - BEE Backport bacula/src/filed/bacula-fd.conf.in
+ - BEE Backport bacula/src/filed/bacl.h
+ - BEE Backport bacula/src/filed/bacl.c
+ - BEE Backport bacula/src/filed/backup.h
+ - BEE Backport bacula/src/filed/backup.c
+ - BEE Backport bacula/src/filed/authenticate.c
+ - BEE Backport bacula/src/filed/accurate.c
+ - BEE Backport bacula/src/filed/Makefile.in
+
+18Apr20
+ - baculum: Add option to show time in job log - idea proposed by Wanderlei 
+  Huttel
+ - baculum: Add show log time parameter to job log endpoint
+
+17Apr20
+ - Update copyright year
+
+16Apr20
+ - baculum: Add tip about using table row selection
+
+15Apr20
+ - fix bls arguments dedup & filter both static in bls.c
+
+03Apr20
+ - dedup: split more dedup1 & dedup2
+
+25Mar20
+ - Move dedup code into dedup1 directory
+
+19Mar20
+ - more work on QT5 for windows
+
+17Mar20
+ - Fix bug #2525 seg fault when doing estimate with accurate and MD5
+ - baculum: Fix issues with SELinux support reported by Neil MacGregor
+
+16Mar20
+ - Add support for QT5 in windows build
+ - Correct some copyrights
+
+09Mar20
+ - Add little bpipe_test in tools/
+ - Eliminate false error when droping postgres table MAC
+
+08Mar20
+ - Fix logic error in clearing bit on Windows
+
+07Mar20
+ - baculum: Update Portuguese translations
+ - baculum: Update Polish translations
+ - baculum: Add patch to PRADO framework 4.0.1 for supporting PostgreSQL 12 
+  catalog database
+ - baculum: Add support for PostgreSQL 12 catalog database
+ - Enhance failed bpipe to changer error message
+ - Clean up some incorrect copyrights
+ - Correct spelling errors in messages
+ - Add to plugins links
+ - Add Docker plugin rpm spec files
+
+28Feb20
+ - unittest fix gdb_print_local() used by _ok() to avoid "tail call"
+
+26Feb20
+ - unittest: new rok() is ok or display the label and "return 1;"
+
+08May19
+ - cdp-client: Add exe to installers. Modify tools makefile.
+
+26Mar18
+ - win32: Makefile add winfiled target + NOTPARALLEL
+
+28Oct17
+ - Mark Volume read-only only if no access rights or read-only partition
+
+23Oct17
+ - When read-only volume found mark it in catalog -- fixes bug #2337
+
+13Mar17
+ - Add support for Fujitsu Eternus LT under Solaris 11
+
+09Feb16
+ - Fix bug #2197 -- build failure with --disable-libtool
+
+Bugs fixed/closed since last release:
+
+2197 2337 2427 2442 2453 2471 2472 2484 2487 2498 2500 2525 2528
+2534 2538 2542 2546 2551 2560 2562 2564 2565 2567 2568 2570 2571
+2573 2579 2584 2587 2588 2592 2597 2599 2604 2605 2610 2615 2622
+2623 2627 2642 2646 2647 2653 2654 2656 2776 4053 5013 6001 6051
+6099 6116 6119 6270 6280 6298 6341 6359 6360 6366 6413 6454 6457
+6464 6472 6531 6557 6573 6575 6599 6602 6631 6637 6711 6736 6749
+6790 6817 6852 6857 6860 6891 6892 6920 6932 6938 6940 6980 6981
+6986 7033 7079 7094 7095 7098 7113 7137 7141 7161 7164 7165 7168
+7207 7214 7222 7247 7256 7261 7262 7286 7319 7321 7373 7375 7396
+7424 7448 7449 7451 7465 7530 7548 7552 7568 7600 7604 7623 7628
+7629 7644 7660 7669 7671 7674 7678 7718 7739 7770 7776 7777 7806
+7888 7914 7939 7959 7985 7986 7998 8098 8101 8126 8140 8142 8159
+8167 8265 8276 8343 8576 8608 8719 8861 8866
+
+        Changelog for version 9.6.3
 
 09Mar20
  - Eliminate false error when droping postgres table MAC

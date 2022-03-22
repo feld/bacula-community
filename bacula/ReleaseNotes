@@ -1,9 +1,9 @@
-               Release Notes for Bacula 11.0
+               Release Notes for Bacula 11.3
 
-This is a major new release with many new features and a number of
-changes. Please take care to test this code carefully before putting it into
-production.  Although the new features have been tested, they have not run in a
-production environment.
+This is a beta version of the new 13.0 major release with many new features and a
+number of changes. Please take care to test this code carefully before putting
+it into production.  Although the new features have been tested, they have not
+run in a production environment.
 
 Compatibility:
 --------------
@@ -11,20 +11,21 @@ As always, both the Director and Storage daemon(s) must be upgraded at
 the same time. Any File daemon running on the same machine as a Director
 or Storage daemon must be of the same version.
 
-Older File Daemons should be compatible with the 11.0.0 Director and Storage
+Older File Daemons should be compatible with the 11.3 Director and Storage
 daemons.  There should be no need to upgrade older File Daemons.
 
-New Catalog format in version 11.0.0 and greater
------------------------------------------------
+New Catalog format in version 11.3.0 and greater
+------------------------------------------------
 
 This release of Bacula uses a new catalog format.  We provide a set of scripts
-that permit conversion from 9.x and earlier versions to the new 11.0.0 format
-(1023).  Normally the conversion/upgrade is automatic, though there is a big
-change that takes longer than usual. The upgrade process will require about
-twice the disk space of the actual database.
+that permit conversion from 9.x and earlier versions to the new 11.3 format
+(1025).  Normally the conversion/upgrade is automatic, though there is a big
+change from 9.x to 11.0 that takes longer than usual, the upgrade process will
+require about twice the disk space of the actual database.
 
-This database upgrade should significantly increase performance when inserting
-a large number of Jobs with a lot of Files into the database catalog.
+The database upgrade introduced in 11.0 should significantly increase
+performance when inserting a large number of Jobs with a lot of Files into the
+database catalog.
 
 If you start from scratch, you don't need to run the update_bacula_tables
 script because the create_bacula_tables script automatically creates the new
@@ -37,6 +38,68 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
+Release 11.3.2 21 March 2022
+
+11.3.2 is a beta release.
+
+New Features:
+-------------
+ - Job Storage group support
+ - Kubernetes Plugin
+ - New Accurate Option to Save Only File's Metadata
+ - Windows CSV (Cluster Shared Volumes) support
+ - Adding more logging for daemon<->daemon connection in job output
+ - Tag support on catalog objects
+ - Support for SHA256 and SHA512 signatures in FileSet
+ - External LDAP Console Authentication
+
+Misc Features:
+ - Windows Installer Silent Mode options
+ - Add PriorJob to llist job output
+ - Check for IP SANs when verifying TLS certs
+ - Clarify SD vbackup device error message
+ - Remove deprecated sbrk in macOS and Windows
+ - Add bconsole .jlist command to get JSON output from regular list command
+ - Ensure that the DIR will reject catalog update from the FD
+ - Add variable for PreviousJobId in mail messages
+ - Respect the 'nodump' flag in more OSes than just BSD
+ - Add debug/trace/tags information to .status header
+ - Handle lin_tape end of device with the new 'Use Lintape=yes' Device directive
+ - Add MaximumJobErrorCount FileDaemon directive
+ - bsmtp: Add the possibility to add emails separated with a comma as recipient list
+ - SDPacketCheck FileDaemon used to control the network flow
+ - Add .bvfs_ls_all_files command
+
+Main Fixes:
+ - The presence of FileSet and Pool directives in the Job. Bug #2188
+ - Fix Director crash for client intiated backup
+ - Fix Director crash for Migration job
+ - Fix incorrect ouput for the .status client command
+ - Skip XATTR larger than MaximumNetworkBuffer
+ - Fix deadlock when starting the Director with a missconfigured catalog
+ - Fix BAT tool crashing the Director
+ - Fix org#2627 About DIR crashing for copy jobs and resource rename
+ - Move the delete volume event just before the actual deletion
+ - Fix mail variables not working after a conf reload
+ - Fix OpenBSD chio-changer script fix
+ - Fix SQL query generated with ACLs
+ - Fix heartbeat segfault when the job is terminated very quickly
+ - Fix About wrong backup client displayed to the user when the original client doesn't exist
+ - Fix org#2605 About incorrect message in restore command
+ - cdp: open the inotify stream using the CLOEXEC (close on exec) flag
+ - docker: Check the presence of the docker tools duing loadPlugins()
+ - Fix reload issue when a Job doesn't have a Pool defined
+ - Fix Copy job with SelectionType=PoolUncopiedJobs selects jobs from wrong pool
+ - Fix about checking for Storage being used for job restart/resume
+ - Fix about incorrect variable substitution with the query command
+ - Fix org#2579 About incorrect JSON generated from empty Messages resource
+ - alist: Fix for memory overflow access
+ 
+Please see the New Features chapter of the manual for documentation on
+the new features.
+
+----------------------------------------------------------------
+
 Release 11.0.6 10 March 2022
 
 11.0.6 is an important bug fix and security fix release.
