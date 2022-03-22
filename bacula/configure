@@ -16891,6 +16891,7 @@ if test x$use_libtool != xno; then
    QMAKE_LIBTOOL="${BUILD_DIR}/libtool"
    FD_PLUGIN_DIR="src/plugins/fd"
    DIR_PLUGIN_DIR="src/plugins/dir"
+   DLIB="-rpath \$(libdir)"
    have_plugins=yes
 else
    DEFAULT_OBJECT_TYPE=".o"
