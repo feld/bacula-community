@@ -134,7 +134,7 @@ installdirs:
 	   chgrp $(dir_group) $(DESTDIR)$(logdir); \
 	fi
 
-install: installdirs
+install: installdirs install-plugins
 	@for I in $(doc_files) ; do $(INSTALL_DATA) $$I $(DESTDIR)${docdir}; done
 	@for I in $(all_subdirs); do (cd $$I && $(MAKE) DESTDIR=$(DESTDIR) $@ || exit 1); done
 
