@@ -23,40 +23,26 @@ run job=BackupClient1 level=Full yes
 run job=BackupClient1 level=Full yes
 wait
 messages
+gui on
+@$out $tmp/log1.log
+.jlist events
+@$out $tmp/log2.log
+.jlist events limit=1
+@$out $tmp/log3.log
+.jlist jobs
+@$out $tmp/log4.log
+.jlist joblog jobid=1
 EOF
 
 run_bacula
 
-cat <<EOF > $tmp/bconcmds
-gui on
-.jlist events
-EOF
-
-run_bconsole | grep '^\[' > $tmp/log1.json
-
-cat <<EOF > $tmp/bconcmds
-gui on
-.jlist events limit=1
-EOF
-
-run_bconsole | grep '^\[' > $tmp/log2.json
-
-cat <<EOF > $tmp/bconcmds
-gui on
-.jlist jobs
-EOF
-
-run_bconsole | grep '^\[' > $tmp/log3.json
-
-cat <<EOF > $tmp/bconcmds
-gui on
-.jlist joblog jobid=1
-EOF
-
-run_bconsole | grep '^\[' > $tmp/log4.json
-
 for i in 1 2 3 4; do
+    grep '\[' $tmp/log$i.log > $tmp/log$i.json
     $bperl -e "check_json('$tmp/log$i.json')"
+    if [ $? != 0 ]; then
+        print_debug "ERROR: Unable to validate $tmp/log$i.log"
+        estat=1
+    fi
 done
 
 stop_bacula
