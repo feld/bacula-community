@@ -117,6 +117,7 @@ installdirs:
 	   chgrp $(dir_group) $(DESTDIR)$(sysconfdir); \
 	fi
 	$(MKDIR) $(DESTDIR)$(scriptdir)
+	chmod 771 $(DESTDIR)$(scriptdir)
 	$(MKDIR) $(DESTDIR)$(docdir)
 	$(MKDIR) $(DESTDIR)$(archivedir)
 	$(MKDIR) $(DESTDIR)$(bsrdir)
