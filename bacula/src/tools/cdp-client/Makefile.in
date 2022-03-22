@@ -76,6 +76,8 @@ devclean: realclean
 	(cd $(srcdir); $(RMF) Makefile)
 
 # Allow non-root execution of bsmtp for non-root Directors
+install-cdp: install
+
 install: cdp-client
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM_ALL) cdp-client $(DESTDIR)$(sbindir)/
 
