@@ -31,15 +31,6 @@ tests: $(DOCKERTESTS)
 	@echo "Pattern compiling $< ..."
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${FDDIR} -I${FDPLUGDIR} -I${LIBDIR} -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -c $(@:.lo=.c)
 
-$(PLUGINLIBDIR)/pluginlib.lo:
-	$(MAKE) -C $(PLUGINLIBDIR) pluginlib.lo
-
-$(UNITTESTSOBJ):
-	$(MAKE) -C $(LIBDIR) unittests.lo
-
-$(LIBBACOBJ):
-	$(MAKE) -C $(LIBDIR) libbac.la
-
 docker-fd.la: Makefile $(DOCKEROBJ) $(PLUGINLIBDIR)/pluginlib.lo $(DOCKERSRCH)
 	@echo "Linking $(@:.la=.so) ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
