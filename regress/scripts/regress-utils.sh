@@ -17,7 +17,7 @@
 #
 
  # now check if we are running under a proper shell
-if test "x/$(basename $0)" != "x/bash"
+if test "x/$(basename $SHELL)" != "x/bash"
 then
    echo "Regression script must use BASH for this utilities!"
    exit 1
