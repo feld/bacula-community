@@ -69,17 +69,19 @@ test-cpp: test-cpp.o ../lib/unittests.o
 
 debug-tags_test: debug-tags.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ debug-tags.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
-	$(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 fs-io-error: fs-io-error.c
 	$(CXX) -Wall fs-io-error.c -D_FILE_OFFSET_BITS=64 -lfuse  -o fs-io-error
 
 breaddir_test: breaddir.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ breaddir.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 joblist_test: joblist.o
 	make -C ../lib/ alist_test
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -L../findlib -o $@ joblist.o ../lib/unittests.o -lbac -lbacfind $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 bsock_meeting_test: bsock_meeting_test.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bsock_meeting_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
@@ -89,6 +91,7 @@ xattr_append_test: xattr_append_test.o ../lib/unittests.o
 
 bpipe_test: bpipe-test.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bpipe-test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 bsparse: bsparse.c
 	$(CXX) -Wall -o $@ bsparse.c
@@ -125,6 +128,7 @@ bnet_test: Makefile bnet_test.o ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../findlib/
 tags_test: Makefile test_tags.o ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L../lib -o $@ test_tags.o ../lib/unittests.o -lbac \
 	  $(DLIB) $(LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 drivetype: Makefile drivetype.o ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../findlib/libbacfind$(DEFAULT_ARCHIVE_TYPE)
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L../lib -L../findlib -o $@ drivetype.o -lbacfind -lbac -lm \
