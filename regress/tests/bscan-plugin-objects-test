@@ -145,7 +145,7 @@ run_bconsole
 
 # Check if there are no duplicates
 objs_after_bscan=`cat tmp/objs_count_double_bscan | grep '|' | cut -d'|' -f2 | tail -1`
-if [ ${objs_after_bscan} -ne ${objs_orig} ]; then
+if [ "${objs_after_bscan}" -ne "${objs_orig}" ]; then
     print_debug "ERROR: Running bscan twice produced some duplicates of plugin objects. \
                  Original count: ${objs_orig}, after second bscan: ${objs_after_bscan}"
     bstat=1
