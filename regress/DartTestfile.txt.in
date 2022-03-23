@@ -177,7 +177,8 @@ ADD_TEST(disk:jobmedia-bug-test "@regressdir@/tests/jobmedia-bug-test")
 ADD_TEST(disk:lzo-encrypt-test "@regressdir@/tests/lzo-encrypt-test")
 ADD_TEST(disk:lzo-test "@regressdir@/tests/lzo-test")
 ADD_TEST(disk:many-reload-test "@regressdir@/tests/many-reload-test")
-ADD_TEST(disk:maxbw-test "@regressdir@/tests/maxbw-test")
+# Broken
+#ADD_TEST(disk:maxbw-test "@regressdir@/tests/maxbw-test")
 ADD_TEST(disk:list-jobmedia-test "@regressdir@/tests/list-jobmedia-test")
 # Broken
 #ADD_TEST(disk:maxbw-test "@regressdir@/tests/maxbw-test")
