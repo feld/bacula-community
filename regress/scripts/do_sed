@@ -18,6 +18,7 @@ ${rscripts}/create_sed
 #sed -f ${out} ${rscripts}/bacula-sd.conf.in >${rscripts}/bacula-sd.conf
 #sed -f ${out} ${rscripts}/bconsole.conf.in >${rscripts}/bconsole.conf
 sed -f ${out} ${rscripts}/win32-bacula-dir.conf.in >${rscripts}/win32-bacula-dir.conf
+sed -f ${out} ${rscripts}/plugin-test-bacula-dir.conf.in >${rscripts}/plugin-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/plugin-handleXACL-test-bacula-dir.conf.in >${rscripts}/plugin-handleXACL-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/swift-plugin-test-bacula-dir.conf.in >${rscripts}/swift-plugin-test-bacula-dir.conf
 sed -f ${out} ${rscripts}/rhv-plugin-test-bacula-dir.conf.in >${rscripts}/rhv-plugin-test-bacula-dir.conf
