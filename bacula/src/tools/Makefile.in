@@ -89,8 +89,8 @@ bsock_meeting_test: bsock_meeting_test.o ../lib/unittests.o
 xattr_append_test: xattr_append_test.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ xattr_append_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 
-bpipe_test: bpipe-test.o ../lib/unittests.o
-	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bpipe-test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
+bpipe_test: bpipe_test.o ../lib/unittests.o
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bpipe_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 bsparse: bsparse.c
