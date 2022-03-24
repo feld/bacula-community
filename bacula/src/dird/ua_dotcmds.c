@@ -1480,6 +1480,34 @@ static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd)
       return true;
    }
 
+   if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
+      return true;
+   }
+
+   if (have_restricted_acl(ua, Client_ACL)) {
+      CLIENT_DBR cr;
+      cr.ClientId = jr.ClientId;
+      if (!db_get_client_record(ua->jcr, ua->db, &cr)) {
+         Dmsg1(10,_("Unable to get client record for job %d\n"), jr.JobId);
+         return true;
+      }
+      if (!acl_access_ok(ua, Client_ACL, cr.Name)) {
+         Dmsg1(10,_("Access to ClientId=%d not authorized.\n"), jr.ClientId);
+         return true;
+      }
+   }
+   if (have_restricted_acl(ua, Pool_ACL)) {
+      POOL_DBR pr;
+      pr.PoolId = jr.PoolId;
+      if (!db_get_pool_record(ua->jcr, ua->db, &pr)) {
+         Dmsg1(10,_("Unable to get pool record for job %d\n"), jr.JobId);
+         return true;
+      }
+      if (!acl_access_ok(ua, Pool_ACL, pr.Name)) {
+         Dmsg1(10,_("Access to PoolId=%d not authorized.\n"), jr.PoolId);
+         return true;
+      }
+   }
    /* Display only the requested jobid or
     * When in level base, we don't rely on any Full/Incr/Diff
     */
