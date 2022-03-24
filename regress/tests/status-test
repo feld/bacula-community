@@ -188,10 +188,10 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
-grep "DedupDirectory" $tmp/log8.out > /dev/null
-if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'DedupDirectory' in $tmp/log8.out"
-    estat=1
-fi
+# grep "DedupDirectory" $tmp/log8.out > /dev/null
+# if [ $? -ne 0 ]; then
+#     print_debug "ERROR: should find 'DedupDirectory' in $tmp/log8.out"
+#     estat=1
+# fi
 
 end_test
