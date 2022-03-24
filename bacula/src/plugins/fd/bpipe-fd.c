@@ -27,6 +27,7 @@
 #include "fd_common.h"
 #include "fd_plugins.h"
 #include "lib/ini.h"
+#include "fileopts.h"
 
 #undef malloc
 #undef free
@@ -44,7 +45,7 @@ static const int dbglvl = 150;
 #define PLUGIN_LICENSE      "AGPLv3"
 #define PLUGIN_AUTHOR       "Kern Sibbald"
 #define PLUGIN_DATE         "January 2008"
-#define PLUGIN_VERSION      "1"
+#define PLUGIN_VERSION      "2"
 #define PLUGIN_DESCRIPTION  "Bacula Pipe File Daemon Plugin"
 
 /* Forward referenced functions */
@@ -64,6 +65,7 @@ static bRC checkFile(bpContext *ctx, char *fname);
 static bRC handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl);
 
 static char *apply_rp_codes(struct plugin_ctx * p_ctx);
+static bool dump_restoreobject(bpContext *ctx, restore_object_pkt *rop);
 
 /* Pointers to Bacula functions */
 static bFuncs *bfuncs = NULL;
@@ -101,7 +103,7 @@ static pFuncs pluginFuncs = {
    setFileAttributes,
    checkFile,
    handleXACLdata,
-   NULL                          /* No checkStream */
+   NULL                               /* No checkStream */
 };
 
 /*
@@ -115,16 +117,19 @@ struct plugin_ctx {
    int  wfd;                          /* stdin */
    int  maxfd;                        /* max(stderr, stdout) */
    bool backup;                       /* set when the backup is done */
+   bool restore_object_sent;
    bool canceled;
    char *cmd;                         /* plugin command line */
    char *fname;                       /* filename to "backup/restore" */
    char *reader;                      /* reader program for backup */
    char *writer;                      /* writer program for backup */
+   alist *rop_writer;                 /* writer command set via restore object */
    char where[512];
    int replace;
    int job_level;
    int estimate_mode;
    int64_t total_bytes;         /* number of bytes read/write */
+   POOLMEM *restore_obj_buf;
 };
 
 /*
@@ -153,6 +158,21 @@ bRC unloadPlugin()
 // printf("bpipe-fd: Unloaded\n");
    return bRC_OK;
 }
+
+class restoreobj: public SMARTALLOC {
+public:
+   char *name;
+   char *writer;
+   restoreobj(char *n, char *w) {
+      name = bstrdup(n);
+      writer = bstrdup(w);
+   };
+   ~restoreobj() {
+      bfree(writer);
+      bfree(name);
+   };
+};
+
 
 /*
  * The following entry points are accessed through the function 
@@ -185,6 +205,14 @@ static bRC freePlugin(bpContext *ctx)
    if (p_ctx->cmd) {
       free(p_ctx->cmd);                  /* free any allocated command string */
    }
+   free_and_null_pool_memory(p_ctx->restore_obj_buf);
+   if (p_ctx->rop_writer) {
+      restoreobj *rop;
+      foreach_alist(rop, p_ctx->rop_writer) {
+         delete rop;
+      }
+      delete p_ctx->rop_writer;
+   }
    free(p_ctx);                          /* free our private context */
    p_ctx = NULL;
    return bRC_OK;
@@ -212,6 +240,7 @@ static bRC setPluginValue(bpContext *ctx, pVariable var, void *value)
 static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 {
    struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
+   restore_object_pkt *rop;
 
    if (!p_ctx) {
       return bRC_Error;
@@ -252,6 +281,16 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    case bEventSince:
 //    printf("bpipe-fd: since=%d\n", (int)value);
       break;
+   case bEventRestoreObject:
+      if (!value) {
+         break;
+      }
+      rop = (restore_object_pkt *)value;
+      if (!dump_restoreobject(ctx, rop)) {
+         return bRC_Error;
+      }
+      break;
+
    case bEventStartRestoreJob:
 //    printf("bpipe-fd: StartRestoreJob\n");
       break;
@@ -270,6 +309,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    case bEventBackupCommand:
       char *p;
       bfuncs->DebugMessage(ctx, fi, li, dbglvl, "bpipe-fd: pluginEvent cmd=%s\n", (char *)value);
+      p_ctx->restore_object_sent = false; /* Foreach command, we might have to send a specific restore object */
       p_ctx->backup = false;
       p_ctx->cmd = strdup((char *)value);
       p = strchr(p_ctx->cmd, ':');
@@ -294,6 +334,15 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       *p++ = 0;           /* terminate reader string */
       p_ctx->writer = p;
 
+      /* We may already have a writer command set via restore object */
+      if (p_ctx->rop_writer) {
+         restoreobj *rop;
+         foreach_alist(rop, p_ctx->rop_writer) {
+            if (!strcmp(rop->name, (char *)value)) {
+               p_ctx->writer = rop->writer;
+            }
+         }
+      }
 //    printf("bpipe-fd: plugin=%s fname=%s reader=%s writer=%s\n", 
 //         p_ctx->cmd, p_ctx->fname, p_ctx->reader, p_ctx->writer);
       break;
@@ -305,6 +354,55 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    return bRC_OK;
 }
 
+/* Configuration parameters for restore  */
+static struct ini_items my_items[] = {
+ // name                        handler         comment                 required   default
+ { "restore_command",          ini_store_str,  "Restore command to use",    0,    NULL},
+ { NULL,       NULL,           NULL,                                         0,    NULL}
+};
+
+static bool dump_restoreobject(bpContext *ctx, restore_object_pkt *rop)
+{
+   struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
+   if (!p_ctx) {
+      return false;
+   }
+
+   bfuncs->DebugMessage(ctx, fi, li, dbglvl, "Trying to dump restore object\n");
+
+   if (!strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME)) {
+      ConfigFile ini;
+
+      if (!ini.dump_string(rop->object, rop->object_len)) {
+         bfuncs->JobMessage(ctx, fi, li, M_FATAL, 0,
+                            "Unable to parse the User supplied restore options\n");
+         bfuncs->DebugMessage(ctx, fi, li, 0, "Can't parse configuration file\n");
+         return false;
+      }
+
+      ini.register_items(my_items, sizeof(struct ini_items)); 
+
+      if (ini.parse(ini.out_fname)) {
+         /* TODO: check parameters */
+         if (ini.items[0].found) {
+            if (!p_ctx->rop_writer) {
+               p_ctx->rop_writer = New(alist(5, not_owned_by_alist));
+            }
+            p_ctx->rop_writer->append(New(restoreobj(rop->plugin_name, ini.items[0].val.strval)));
+            bfuncs->JobMessage(ctx, fi, li, M_INFO, 0,
+                               _("Using user supplied restore command: \"%s\"\n"), ini.items[0].val.strval);
+         } else {
+            bfuncs->DebugMessage(ctx, fi, li, 0, "Options not set\n");
+         }
+      } else {
+         bfuncs->DebugMessage(ctx, fi, li, 0, "Can't parse configuration file\n");
+         bfuncs->JobMessage(ctx, fi, li, M_FATAL, 0,
+                            "User supplied restore options are not valid\n");
+         return false;
+      }
+   }
+   return true;
+}
 
 /* 
  * Start the backup of a specific file
@@ -314,6 +412,21 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
    struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
    if (!p_ctx) {
       return bRC_Error;
+   }
+
+   /* First step is to send config restoreobject if needed */
+   if (!p_ctx->restore_object_sent && p_ctx->job_level == 'F' && !p_ctx->estimate_mode)
+   {
+      ConfigFile ini;
+      POOLMEM *buf = get_pool_memory(PM_MESSAGE);
+      p_ctx->restore_object_sent = true;
+      ini.register_items(my_items, sizeof(struct ini_items));
+      sp->restore_obj.object_name = (char*)INI_RESTORE_OBJECT_NAME;
+      sp->restore_obj.object_len = ini.serialize(&buf);
+      sp->restore_obj.object = buf;
+      sp->type = FT_PLUGIN_CONFIG;
+      p_ctx->restore_obj_buf = buf;
+      return bRC_OK;
    }
 
    time_t now = time(NULL);
@@ -326,8 +439,10 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
    sp->statp.st_size = -1;
    sp->statp.st_blksize = 4096;
    sp->statp.st_blocks = 1;
+#ifdef TEST_BPIPE_OFFSET
+   sp->flags |= FO_OFFSETS;
+#endif
    p_ctx->backup = true;
-// printf("bpipe-fd: startBackupFile\n");
    return bRC_OK;
 }
 
@@ -345,7 +460,7 @@ static bRC endBackupFile(bpContext *ctx)
     * We would return bRC_More if we wanted startBackupFile to be
     * called again to backup another file
     */
-   if (!p_ctx->backup) {
+   if (!p_ctx->backup) {  /* We sent the RestoreObject, we need to send the data */
       return bRC_More;
    }
    return bRC_OK;
@@ -462,6 +577,7 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
                               p_ctx->total_bytes, (int)errno, be.bstrerror());
          return bRC_Error;
       }
+      io->offset = p_ctx->total_bytes;
       p_ctx->total_bytes += io->status;
       break;
 
