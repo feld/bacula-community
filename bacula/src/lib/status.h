@@ -37,6 +37,9 @@
 
 extern void output_status(STATUS_PKT *sp);
 
+#ifndef STATUS_FUNCTIONS
+#define STATUS_FUNCTIONS
+
 /*
  * Send to bsock (Director or Console)
  */
@@ -52,9 +55,6 @@ static void sendit(const char *msg, int len, STATUS_PKT *sp)
       sp->callback(msg, len, sp->context);
    }
 }
-
-#ifndef STATUS_FUNCTIONS
-#define STATUS_FUNCTIONS
 
 /* common to SD/FD */
 static void list_terminated_jobs(STATUS_PKT *sp)
