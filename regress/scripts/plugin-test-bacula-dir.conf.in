@@ -159,17 +159,6 @@ Job {
   Write Bootstrap = "@working_dir@/NightlySave.bsr"
 }
 
-Job {
-  Name = "DedupPluginTest"
-  Type = Backup
-  Client=@hostname@-fd
-  FileSet="DedupPluginSet"
-  Storage = File
-  Messages = Standard
-  Pool = Default
-  Write Bootstrap = "@working_dir@/NightlySave.bsr"
-}
-
 # Backup the catalog database (after the nightly save)
 Job {
   Name = "BackupCatalog"
