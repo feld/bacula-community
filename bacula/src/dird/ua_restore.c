@@ -140,7 +140,7 @@ int restore_cmd(UAContext *ua, const char *cmd)
    strip_prefix = add_prefix = add_suffix = regexp = NULL;
 
    new_rx(&rx);                 /* Initialize RESTORE_CTX */
-   
+
    if (!open_new_client_db(ua)) {
       goto bail_out;
    }
@@ -406,6 +406,9 @@ int restore_cmd(UAContext *ua, const char *cmd)
    rx.component_fname = NULL;
    jcr->component_fd = rx.component_fd;
    rx.component_fd = NULL;
+   if (jcr->bsr_list) {
+      free_bsr(jcr->bsr_list);
+   }
    /* The Client might request the file list */
    jcr->bsr_list = rx.bsr_list;
    rx.bsr_list = NULL;
