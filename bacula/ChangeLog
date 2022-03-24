@@ -1,6 +1,13 @@
-        Changelog for version 11.3.1
+        Changelog for version 11.3.2
+
+23Mar22
+ - Install test tools with libtool
+
+07Oct21
+ - Enhance JSON output for .jlist command with error, errmsg and type
 
 22Mar22
+ - Fix Makefile warnings
  - Set rpath on binaries when using libtool
  - Help user to run the SQL scripts from scriptdir
  - Install plugins with make install
@@ -55,6 +62,17 @@
 23Feb22
  - cloud: Fix #8861 display the actual state name instead of state index to 
   avoid segfault Refactorize transfer state names
+
+20Feb22
+ - baculum: Update Polish translations
+
+17Feb22
+ - baculum: Add option to set job age for job status summary graph on dashboard 
+  page
+
+14Feb22
+ - baculum: Fix file search for text that isn't lower-case in MySQL/MariaDB 
+  database
 
 07Feb22
  - Remove duplicate memset on POOL_DBR object
