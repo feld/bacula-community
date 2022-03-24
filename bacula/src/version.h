@@ -25,8 +25,8 @@
 
 /* Note: there can be only *one* VERSION in this file */
 #define VERSION "11.3.2"
-#define BDATE   "22 March 2022"
-#define LSMDATE "22Mar22"
+#define BDATE   "24 March 2022"
+#define LSMDATE "24Mar22"
 
 #define RELEASE 1   /* Use ONLY in rpms */
 
