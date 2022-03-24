@@ -372,6 +372,7 @@ collect_test: Makefile libbac.la collect.c unittests.o
 	$(RMF) collect.o
 	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE)  $(CFLAGS) collect.c
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ collect.o unittests.o $(DLIB) -lbac -lm $(LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 	$(RMF) collect.o
 	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) collect.c
 
