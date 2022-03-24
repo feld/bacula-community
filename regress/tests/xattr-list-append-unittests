@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2018 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# This is a unit test for xattr_list_append()
+#
+TestName="xattr_append_test"
+. scripts/functions
+make -C $src/src/tools install-unittests
+
+$bin/$TestName
+exit $?
