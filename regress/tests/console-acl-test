@@ -178,6 +178,7 @@ run job=Simple level=full pool=Test client=$HOST-fd yes
 run job=$JobName level=full client=$CLIENT yes
 wait
 messages
+quit
 EOF
 
 sed 's/Password.*/Password = xxx/' $conf/bconsole.conf >> $tmp/bconsole.conf2
@@ -248,6 +249,7 @@ mod
 6
 yes
 messages
+quit
 EOF
 run_bconsole
 
