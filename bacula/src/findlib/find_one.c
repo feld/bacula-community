@@ -269,9 +269,8 @@ bail_out:
            ff_pkt->fname);
       return true;                    /* do not backup this file */
    }
-#else
-   return false; /* do backup */
 #endif
+   return false; /* do backup */
 }
 
 /* check if a file have changed during backup and display an error */
