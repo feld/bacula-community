@@ -1807,11 +1807,7 @@ bool cloud_dev::truncate(DCR *dcr)
       part->index = tpkt->m_part;
       part->mtime = tpkt->m_res_mtime;
       part->size  = tpkt->m_res_size;
-      if (tpkt->m_hash64) {
-         memcpy(part->hash64, tpkt->m_hash64, 64);
-      } else {
-         bmemzero(part->hash64, 64);
-      }
+      memcpy(part->hash64, tpkt->m_hash64, 64);
       iuploads->put(part->index, part);
    }
    /* returns the list of items to truncate : cloud parts-uploads*/

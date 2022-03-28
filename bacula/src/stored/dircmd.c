@@ -849,11 +849,7 @@ static bool cloud_list_cmd(JCR *jcr)
       for (int i=1; i <= parts.last_index() ; i++) {
          cloud_part *p = (cloud_part *)parts.get(i);
          if (p) {
-            if (p->hash64) {
-               dir->fsend("part=%d size=%lld mtime=%lld hash=%s\n", i, p->size, p->mtime, p->hash64);
-            } else { 
-               dir->fsend("part=%d size=%lld mtime=%lld hash=%s\n", i, p->size, p->mtime);
-            }
+            dir->fsend("part=%d size=%lld mtime=%lld hash=%s\n", i, p->size, p->mtime, p->hash64);
             free(p);
          }
       }
