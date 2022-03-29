@@ -19,7 +19,7 @@ New Catalog format in version 11.3.0 and greater
 
 This release of Bacula uses a new catalog format.  We provide a set of scripts
 that permit conversion from 9.x and earlier versions to the new 11.3 format
-(1025).  Normally the conversion/upgrade is automatic, though there is a big
+(1024).  Normally the conversion/upgrade is automatic, though there is a big
 change from 9.x to 11.0 that takes longer than usual, the upgrade process will
 require about twice the disk space of the actual database.
 
