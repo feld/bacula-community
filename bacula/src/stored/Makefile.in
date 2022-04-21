@@ -199,7 +199,7 @@ libbacsd.la: Makefile $(LIBBACSD_LOBJS)
 
 drivers: bacula-sd-cloud-driver.la ${CLOUD_DRIVERS}
 
-s3-driver: bacula-sd-cloud-s3-driver.la bacula-sd-cloud-glacier-s3-driver.la
+s3-driver: bacula-sd-cloud-s3-driver.la
 
 generic-driver: bacula-sd-cloud-generic-driver.la
 
