@@ -687,6 +687,7 @@ mkdir -p $RPM_BUILD_ROOT%{logwatch_dir}/conf/services
 mkdir -p $RPM_BUILD_ROOT%{logwatch_dir}/scripts/services
 mkdir -p $RPM_BUILD_ROOT%{logwatch_dir}/scripts/shared
 mkdir -p $RPM_BUILD_ROOT%{script_dir}/updatedb
+mkdir -p $RPM_BUILD_ROOT%{log_dir}
 
 mkdir -p $RPM_BUILD_ROOT/etc/pam.d
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}
