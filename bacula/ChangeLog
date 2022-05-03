@@ -1,3 +1,36 @@
+        Changelog for version 11.3.3
+
+28Apr22
+ - baculum: Fix clearing OAuth2 properties after testing API connection on 
+  security page
+ - baculum: Fix directing to default page after log in for users with non-admin 
+  roles
+
+21Apr22
+ - Fix compilation on s3 driver
+ - rpms: Fix org#2633 about log directory not created on Centos7
+ - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and 
+  older Debian/Ubuntu
+
+20Apr22
+ - baculum: Fix #2661 required parameter PHP error on PHP 8.0
+
+29Mar22
+ - ReleaseNotes English review.
+ - Update updatedb scripts
+ - Fix SQLite update script and add upgrade event
+ - Fix ReleaseNotes about catalog version (1024)
+
+28Mar22
+ - cloud: remove useless hash checks
+ - baculum: Fix error calling method_exists() with non-objects on PHP 8
+
+25Mar22
+ - Fix warning on find_one.c
+
+Bugs fixed/closed since last release:
+2633 2661
+
         Changelog for version 11.3.2
 
 23Mar22

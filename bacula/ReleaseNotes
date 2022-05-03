@@ -37,6 +37,26 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
+Release 11.3.3 03 May 2022
+
+11.3.3 is a beta release.
+
+ - baculum: Fix clearing OAuth2 properties after testing API connection on security page
+ - baculum: Fix directing to default page after log in for users with non-admin roles
+ - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and 
+ - baculum: Fix #2661 required parameter PHP error on PHP 8.0
+ - baculum: Fix error calling method_exists() with non-objects on PHP 8
+
+ - rpms: Fix org#2633 about log directory not created on Centos7 
+ - Update updatedb scripts
+
+ - Fix SQLite update script and add upgrade event
+
+ - cloud: remove useless hash checks
+
+Bugs fixed/closed since last release:
+2633 2661
+
 Release 11.3.2 21 March 2022
 
 11.3.2 is a beta release.
