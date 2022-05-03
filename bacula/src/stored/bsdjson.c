@@ -589,7 +589,7 @@ static int check_resources()
       OK = false;
    }
 
-   if (!me->messages) {
+   if (me && !me->messages) {
       me->messages = (MSGS *)GetNextRes(R_MSGS, NULL);
       if (!me->messages) {
          Jmsg1(NULL, M_ERROR, 0, _("No Messages resource defined in %s. Cannot continue.\n"),
@@ -598,7 +598,7 @@ static int check_resources()
       }
    }
 
-   if (!me->working_directory) {
+   if (me && !me->working_directory) {
       Jmsg1(NULL, M_ERROR, 0, _("No Working Directory defined in %s. Cannot continue.\n"),
          configfile);
       OK = false;
