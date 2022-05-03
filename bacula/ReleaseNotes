@@ -43,7 +43,7 @@ Release 11.3.3 03 May 2022
 
  - baculum: Fix clearing OAuth2 properties after testing API connection on security page
  - baculum: Fix directing to default page after log in for users with non-admin roles
- - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and 
+ - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
  - baculum: Fix #2661 required parameter PHP error on PHP 8.0
  - baculum: Fix error calling method_exists() with non-objects on PHP 8
 
