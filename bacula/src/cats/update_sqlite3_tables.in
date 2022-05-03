@@ -23,7 +23,7 @@ SELECT VersionId FROM Version LIMIT 1;
 END
 `
 if [ "$DBVERSION" -ne $OLDVERSION ] ; then
-  if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt 14 ] ; then
+  if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt $NEWVERSION ] ; then
     echo " "
     echo "The existing database is version $DBVERSION !!"
     echo "This script can only update an existing version 12, 13, 14 or 1014-$OLDVERSION database to version $NEWVERSION."
