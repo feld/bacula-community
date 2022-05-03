@@ -250,10 +250,9 @@ install-cdp:
 # Allow non-root execution of bsmtp for non-root Directors
 install: $(INSTOOLS)
 	@for tool in ${INSTOOLS} ; do \
-	   $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $$tool $(DESTDIR)$(sbindir)/$$tool ; \
+	   $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM_ALL) $$tool $(DESTDIR)$(sbindir)/$$tool ; \
 	done
 #	chattr +i $(DESTDIR)$(sbindir)/bsmtp
-#	chmod 755 $(DESTDIR)$(sbindir)/bsmtp
 
 install-unittests: $(INSTTESTS)
 	@for tool in ${INSTTESTS} ; do \
