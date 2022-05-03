@@ -1,5 +1,10 @@
         Changelog for version 11.3.3
 
+03May22
+ - Fix org#2662 About SQLite migration script issue
+ - Fix org#2658 About segfault with bsdjson with incorrect parameters
+ - Fix org#2659 Install dbcheck and bsmtp in 755
+
 28Apr22
  - baculum: Fix clearing OAuth2 properties after testing API connection on 
   security page

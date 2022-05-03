@@ -51,6 +51,8 @@ Release 11.3.3 03 May 2022
  - Update updatedb scripts
 
  - Fix SQLite update script and add upgrade event
+ - Fix org#2658 About segfault with bsdjson with incorrect parameters
+ - Fix org#2659 Install dbcheck and bsmtp in 755
 
  - cloud: remove useless hash checks
 
