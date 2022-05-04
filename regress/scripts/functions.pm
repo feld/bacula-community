@@ -52,7 +52,7 @@ our @EXPORT = qw(update_some_files create_many_files check_multiple_copies
                   check_openfile check_cloud_hash check_bscan add_log_message compare_backup_content
                   check_tls_traces println add_virtual_changer check_events check_events_json
                   create_many_hardlinks check_dot_status parse_fuse_trace generate_random_seek
-                  check_storage_selection check_json
+                  check_storage_selection check_json get_perm
 );
 
 
@@ -2574,5 +2574,13 @@ sub check_json
         exit 1;
     }
     exit 0;
+}
+
+# Get the permission in octal for a file, equivalent to stat -c %a
+sub get_perm
+{
+    my ($file) = @_;
+    my $mode = (stat($file))[2];
+    printf "%04o\n", $mode & 07777;
 }
 1;
