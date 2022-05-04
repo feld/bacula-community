@@ -63,7 +63,7 @@ files_count=`find ${cwd}/build -type f | wc -l`
 find ${cwd}/build -type f -exec touch {} + > /dev/null
 # Change some properties of testfile
 chmod 740 ${cwd}/build/testfile
-perm_after=`stat -c %a ${cwd}/build/testfile`
+perm_after=`$bperl -e "get_perm('${cwd}/build/testfile')"`
 
 # Run backup for the second time, this time we expect that only metadata part for each file will be
 # backed up, so we expect the backup size to be much smaller than the first one.
@@ -90,7 +90,7 @@ if [ ${backup_files} -ne ${files_count} ]; then
 fi
 
 # Check if testfile's restored permission are correctly changed
-perm_restored=`stat -c %a ${cwd}/tmp/bacula-restores/${cwd}/build/testfile`
+perm_restored=`$bperl -e "get_perm('${cwd}/tmp/bacula-restores/${cwd}/build/testfile')"`
 if [ ${perm_after} -ne ${perm_restored} ]; then
    estat=1
    print_debug "Wrong permissions restored: ${perm_restored}, expected: ${perm_after}"

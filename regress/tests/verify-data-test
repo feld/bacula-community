@@ -49,7 +49,7 @@ messages
 @# now do a verify volume
 @#
 @$out ${cwd}/tmp/log2.out
-setdebug level=10 client
+setdebug level=10 client trace=1
 run job=VerifyData jobid=1 yes
 run job=VerifyData jobid=2 yes
 run job=VerifyData jobid=3 yes
@@ -98,9 +98,11 @@ nbok=2
 if [ x$FORCE_DEDUP = xyes -o x$FORCE_CLOUD = xyes ]; then
     nbok=6
 elif [ x$FORCE_ALIGNED = xyes ]; then
-    sed -i 's/DUALCASE/PUALCASE/g' $tmp/TestVolume001.add
+    sed 's/DUALCASE/PUALCASE/g' $tmp/TestVolume001.add > $tmp/1
+    mv $tmp/1 $tmp/TestVolume001.add
 else
-    sed -i 's/DUALCASE/PUALCASE/g' $tmp/TestVolume001
+    sed  's/DUALCASE/PUALCASE/g' $tmp/TestVolume001 > $tmp/1
+    mv $tmp/1 $tmp/TestVolume001
 fi
 
 cat <<END_OF_DATA >tmp/bconcmds
@@ -128,8 +130,11 @@ check_for_zombie_jobs storage=File
 stop_bacula
 
 # Turn off verbose file listing, rerun verify jobs and check if files are not listed as expected
-sed -i '/console =*/ s/$/, !verified/g' bin/bacula-dir.conf | grep verified
-sed -i '/director =*/ s/$/, !verified/g' bin/bacula-fd.conf | grep verified
+sed '/console =*/ s/$/, !verified/g' $conf/bacula-dir.conf > $tmp/1
+mv $tmp/1 $conf/bacula-dir.conf
+
+sed '/director =*/ s/$/, !verified/g' $conf/bacula-fd.conf > $tmp/1
+mv $tmp/1 $conf/bacula-fd.conf
 
 cat <<END_OF_DATA >tmp/bconcmds
 @output /dev/null

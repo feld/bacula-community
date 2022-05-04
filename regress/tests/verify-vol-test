@@ -111,8 +111,11 @@ fi
 dstat=0
 
 # Turn off verbose file listing, rerun verify jobs and check if files are not listed as expected
-sed -i '/console =*/ s/$/, !verified/g' bin/bacula-dir.conf | grep verified
-sed -i '/director =*/ s/$/, !verified/g' bin/bacula-fd.conf | grep verified
+sed '/console =*/ s/$/, !verified/g' $conf/bacula-dir.conf > $tmp/1
+mv $tmp/1 $conf/bacula-dir.conf
+
+sed '/director =*/ s/$/, !verified/g' $conf/bacula-fd.conf > $tmp/1
+mv $tmp/1 $conf/bacula-fd.conf
 
 cat <<END_OF_DATA >tmp/bconcmds
 @output /dev/null
