@@ -606,7 +606,7 @@ bool do_mac(JCR *jcr)
       if (store->SDDport == 0) {
          store->SDDport = store->SDport;
       }
-      store_address = get_storage_address(jcr->client, store);
+      store_address = get_storage_address(NULL, store); /* Ignore the client in a MAC */
       store_port = store->SDDport;
 
       /* Start read message thread */
