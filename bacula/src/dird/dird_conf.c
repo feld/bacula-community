@@ -136,6 +136,11 @@ BSOCK *CLIENT::getBSOCK(int timeout)
 
 bool CLIENT::getBSOCK_state(POOLMEM *&buf)
 {
+   /* Can be called at high level of debug when it is not yet initialized */
+   if (!globals) {
+      return false;
+   }
+
    P(globals_mutex);
    if (!globals->socket) {
       globals->socket = New(BsockMeeting());
