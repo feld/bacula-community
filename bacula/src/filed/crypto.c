@@ -258,10 +258,11 @@ bool crypto_terminate_digests(bctx_t &bctx)
       sd->msglen = size;
       sd->send();
       sd->signal(BNET_EOD);              /* end of checksum */
+
    }
 
    /** Terminate any digest and send it to Storage daemon */
-   if (bctx.digest) {
+   if (bctx.digest || ff_pkt->stat_update) {
       uint32_t size;
 
       sd->fsend("%ld %d 0", jcr->JobFiles, bctx.digest_stream);
@@ -274,9 +275,15 @@ bool crypto_terminate_digests(bctx_t &bctx)
          sd->msg = realloc_pool_memory(sd->msg, size);
       }
 
-      if (!crypto_digest_finalize(bctx.digest, (uint8_t *)sd->msg, &size)) {
-         Jmsg(jcr, M_FATAL, 0, _("An error occurred finalizing signing the stream.\n"));
-         return false;
+      if (ff_pkt->stat_update) {
+         /* The checksum comes from the accurate table and the format is in base64 */
+         size = base64_to_bin(sd->msg, sizeof_pool_memory(sd->msg), ff_pkt->accurate_chksum, strlen(ff_pkt->accurate_chksum));
+
+      } else {
+         if (!crypto_digest_finalize(bctx.digest, (uint8_t *)sd->msg, &size)) {
+            Jmsg(jcr, M_FATAL, 0, _("An error occurred finalizing signing the stream.\n"));
+            return false;
+         }
       }
 
       /* Keep the checksum if this file is a hardlink */
@@ -287,6 +294,7 @@ bool crypto_terminate_digests(bctx_t &bctx)
       sd->msglen = size;
       sd->send();
       sd->signal(BNET_EOD);              /* end of checksum */
+
    }
 
    /* Check if original file has a digest, and send it */

@@ -155,6 +155,8 @@ struct FF_PKT {
    char *link;                        /* link if file linked */
    char *plugin;                      /* Current Options{Plugin=} name */
 
+   char *accurate_chksum;             /* keep the checksum from the accurate database */
+   
    /* Specific snapshot part */
    char *volume_path;                 /* volume path */
    char *snapshot_path;               /* snapshot path */

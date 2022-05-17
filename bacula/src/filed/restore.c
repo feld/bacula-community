@@ -578,7 +578,12 @@ void do_restore(JCR *jcr)
           */
          jcr->num_files_examined++;
          rctx.extract = false;
+         rctx.update_attr = false;
          stat = CF_CORE;        /* By default, let Bacula's core handle it */
+
+         if (rctx.stream == STREAM_UNIX_ATTRIBUTE_UPDATE) {
+            rctx.update_attr = true; /* Some operations are possible, like ACL update */
+         }
 
          if (jcr->plugin) {
             stat = plugin_create_file(jcr, attr, &rctx.bfd, jcr->replace);
@@ -922,11 +927,13 @@ void do_restore(JCR *jcr)
          /*
           * Do not restore ACLs when
           * a) The current file is not extracted
-          * b)     and it is not a directory (they are never "extracted")
-          * c)     and it is not a symlink (they are never "extracted")
-          * d) or the file name is empty
+          * b)     and it is not updated (only attributes)
+          * c)     and it is not a directory (they are never "extracted")
+          * d)     and it is not a symlink (they are never "extracted")
+          * e) or the file name is empty
           */
          if ((!rctx.extract &&
+              !rctx.update_attr &&
               jcr->last_type != FT_DIREND &&
               jcr->last_type != FT_LNK) ||
              (*jcr->last_fname == 0)) {

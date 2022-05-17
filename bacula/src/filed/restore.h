@@ -58,6 +58,7 @@ struct r_ctx {
    int32_t type;                       /* file type FT_ */
    ATTR *attr;                         /* Pointer to attributes */
    bool extract;                       /* set when extracting */
+   bool update_attr;                   /* set when we update attributes, but no data */
    alist *delayed_streams;             /* streams that should be restored as last */
    worker *efs;                        /* Windows EFS worker thread */
    int32_t count;                      /* Debug count */

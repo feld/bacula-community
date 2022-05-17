@@ -523,9 +523,15 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
    }
 
    if (IS_FT_OBJECT(ff_pkt->type) || /* Meta data only for restore object */
-       ff_pkt->type == FT_DELETED || /* Meta data only for deleted files */
-       bctx.ff_pkt->stat_update) {   /* Only metadata changed for file */
+       ff_pkt->type == FT_DELETED){  /* Meta data only for deleted files */
       goto good_rtn;
+   }
+
+   /* If we have only to update attributes, we need to send the checksum to fill
+    * the catalog correctly for the next job
+    */
+   if (ff_pkt->stat_update) {
+      has_file_data = false;
    }
 
    /** Set up the encryption context and send the session data to the SD */
@@ -551,6 +557,13 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
               ff_pkt->type == FT_REPARSE || ff_pkt->type == FT_JUNCTION ||
          (!is_portable_backup(&ff_pkt->bfd) && ff_pkt->type == FT_DIREND)) {
       do_read = true;
+   }
+
+   /* If we have only to update attributes, we need to send the checksum to fill
+    * the catalog correctly for the next job
+    */
+   if (ff_pkt->stat_update) {
+      do_read = false;
    }
 
    if (ff_pkt->cmd_plugin && !ff_pkt->no_read) {
@@ -1215,7 +1228,8 @@ bool encode_and_send_attributes(bctx_t &bctx)
       unstrip_path(ff_pkt);
    }
 
-   Dmsg2(300, ">stored: attr len=%d: %s\n", sd->msglen, sd->msg);
+   char b[1024];
+   Dmsg2(300, ">stored: attr len=%d: %s\n", sd->msglen, asciidump(sd->msg, sd->msglen, b, sizeof(b)));
    if (!stat && !jcr->is_job_canceled()) {
       Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
             sd->bstrerror());

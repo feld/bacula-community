@@ -360,7 +360,7 @@ bail_out:
  */
 static int check_checksum_diff(JCR *jcr, FF_PKT *ff_pkt, CurFile *elt)
 {
-   int ret = 0;
+   int ret = -1;
    int digest_stream = STREAM_NONE;
    DIGEST *digest = NULL;
    char *fname;
@@ -383,7 +383,6 @@ static int check_checksum_diff(JCR *jcr, FF_PKT *ff_pkt, CurFile *elt)
       if (!*elt->chksum && !jcr->rerunning) {
          Jmsg(jcr, M_WARNING, 0, _("Cannot verify checksum for %s\n"),
                ff_pkt->fname);
-         ret = -1;
          goto bail_out;
       }
 
@@ -432,7 +431,6 @@ static int check_checksum_diff(JCR *jcr, FF_PKT *ff_pkt, CurFile *elt)
             digest_name = crypto_digest_name(digest);
 
             bin_to_base64(digest_buf, BASE64_SIZE(size), md, size, true);
-
             if (strcmp(digest_buf, elt->chksum)) {
                Dmsg4(dbglvl,"%s      %s chksum  diff. Cat: %s File: %s\n",
                      fname,
@@ -440,6 +438,9 @@ static int check_checksum_diff(JCR *jcr, FF_PKT *ff_pkt, CurFile *elt)
                      elt->chksum,
                      digest_buf);
                ret = 1;
+
+            } else {
+               ret = 0;
             }
             free(digest_buf);
          }
@@ -656,12 +657,15 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
             if (ret == 1) {
                // checksum has changed, backup file normally
                stat = true;
-            } else if (ret == -1){
+
+            } else if (ret == -1) {
                stat = false;
                goto bail_out;
+
             } else {
                /* Checksum hasn't changed, we can backup only meta */
                ff_pkt->stat_update = true;
+               ff_pkt->accurate_chksum = elt.chksum; /* record the checksum to send it */
             }
          }
       } else if (!only_changed && !stat) {

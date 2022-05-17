@@ -89,6 +89,8 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
       stream &= STREAMMASK_TYPE;
       /* Stream was negative => all are continuation items */
       switch (stream) {
+      case STREAM_UNIX_ATTRIBUTE_UPDATE:
+         return _("contUATTRU");
       case STREAM_UNIX_ATTRIBUTES:
          return "contUATTR";
       case STREAM_FILE_DATA:

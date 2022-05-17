@@ -86,6 +86,8 @@ const char *stream_to_ascii(int stream)
    switch (stream & STREAMMASK_TYPE) {
       case STREAM_UNIX_ATTRIBUTES:
          return _("Unix attributes");
+      case STREAM_UNIX_ATTRIBUTE_UPDATE:
+         return _("Unix attributes update");
       case STREAM_FILE_DATA:
          return _("File data");
       case STREAM_MD5_DIGEST:

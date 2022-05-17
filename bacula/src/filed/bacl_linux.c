@@ -170,8 +170,8 @@ bRC_BACL BACL_Linux::os_restore_acl (JCR *jcr, int stream, char *content, uint32
  *
  * in/out - check API at bacl.h
  */
-bRC_BACL BACL_Linux::os_get_acl(JCR *jcr, BACL_type bacltype){
-
+bRC_BACL BACL_Linux::os_get_acl(JCR *jcr, BACL_type bacltype)
+{
    acl_t acl;
    acl_type_t acltype;
    char *acltext;
