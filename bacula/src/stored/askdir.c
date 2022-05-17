@@ -317,8 +317,8 @@ bool dir_find_next_appendable_volume(DCR *dcr)
      */
     int nb_retry=((rblist *)res_head[R_DEVICE-r_first]->res_list)->size() + 30;
 
-    Dmsg2(dbglvl, "dir_find_next_appendable_volume: reserved=%d Vol=%s\n",
-       dcr->is_reserved(), dcr->VolumeName);
+    Dmsg3(dbglvl, "dir_find_next_appendable_volume: reserved=%d Vol=%s retry=%d\n",
+          dcr->is_reserved(), dcr->VolumeName, nb_retry);
     Mmsg(jcr->errmsg, "Unknown error\n");
 
     /*
