@@ -925,7 +925,7 @@ public:
    int del() {
       int ret = 0;
       arg_parser cmd;
-      if (!*Name || !*Volume || !created) {
+      if (!*Name || !*Volume) {
          goto bail_out;
       }
       ret = do_command("delete", &cmd);

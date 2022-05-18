@@ -143,8 +143,8 @@ static bool makedir(char *path)
 static char *strip_tz(char *line)
 {
    if (line) {
-      /* The format returned by LVM is 2022-05-18 09:17:41 +0000, we use TZ= to keep it UTC */
-      char *p = strstr(line, " +0000");
+      /* The format returned by LVM is 2022-05-18 09:17:41 +0000 */
+      char *p = strstr(line, " +");
       if (p) {
          *p = 0;
       }
@@ -1771,7 +1771,7 @@ public:
       /* TODO: Need to get the volume name and add the snapshot
        * name at the end 
        */
-      MmsgD5(10, cmd, "%s TZ= lvcreate -s -n \"%s_%s\" -L %lldb \"%s\"", 
+      MmsgD5(10, cmd, "%s lvcreate -s -n \"%s_%s\" -L %lldb \"%s\"", 
            arg->sudo, name, arg->name, size, arg->device);
       if (run_program(cmd, 60, errmsg)) {
          Dmsg(10, "Unable to create snapshot %s %s\n", arg->name, errmsg);
@@ -1798,8 +1798,8 @@ public:
       strip_tz(ts);
       t = str_to_utime(ts);
 
-      Dmsg(10, "status=1 volume=\"%s_%s\" createtdate=\"%s\" type=lvm\n",
-           arg->device, arg->name, edit_uint64(t, ed1));
+      Dmsg(10, "status=1 volume=\"%s_%s\" createtdate=\"%s\" createdate=\"%s\" type=lvm\n",
+           arg->device, arg->name, edit_uint64(t, ed1), ts);
       printf("status=1 volume=\"%s_%s\" createtdate=\"%s\" type=lvm\n",
              arg->device, arg->name, edit_uint64(t, ed1));
       return 1;
@@ -1990,7 +1990,7 @@ public:
    };
 
    bool parse_vgs_output() {
-      MmsgD1(10, cmd, "%s TZ= vgs -o vg_all --separator=; --units b --nosuffix", arg->sudo);
+      MmsgD1(10, cmd, "%s vgs -o vg_all --separator=; --units b --nosuffix", arg->sudo);
       if (vgs) {
          free_header(vgs, vgs_nbelt);
          vgs_nbelt=0;
@@ -2003,7 +2003,7 @@ public:
    };
 
    bool parse_lvs_output() {
-      MmsgD1(10, cmd, "%s TZ= lvs -o lv_all --separator=; --units b --nosuffix", arg->sudo);
+      MmsgD1(10, cmd, "%s lvs -o lv_all --separator=; --units b --nosuffix", arg->sudo);
       if (lvs) {
          free_header(lvs, lvs_nbelt);
          lvs_nbelt=0;
