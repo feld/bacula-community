@@ -523,6 +523,11 @@ static int list_client_snapshot(UAContext *ua, bool sync)
 /* Ask client to create/prune/delete a snapshot via the command line */
 int snapshot_cmd(UAContext *ua, const char *cmd)
 {
+   if (!open_client_db(ua)) {
+      Dmsg0(10, "Unable to open database\n");
+      return 0;
+   }
+
    SNAPSHOT_DBR snapdbr;
    for (int i=0; i<ua->argc; i++) {
       if (strcasecmp(ua->argk[i], NT_("purge")) == 0) {

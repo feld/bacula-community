@@ -121,9 +121,6 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
    return stat;
 }
 
-/* TODO: See if we want to let the FD do all kind
- *       of catalog request/update
- */
 void catalog_request(JCR *jcr, BSOCK *bs)
 {
    MEDIA_DBR mr, sdmr;

@@ -268,6 +268,11 @@ int bget_dirmsg(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role)
          catalog_request(jcr, bs);
          continue;
       }
+      /* Only the Snapshot commands are authorized for the FD */
+      if (role==BSOCK_TYPE_FD && bs->msg[0] == 'C') {
+         snapshot_catreq(jcr, bs);
+         continue;
+      }
       if (role==BSOCK_TYPE_SD && bs->msg[0] == 'U') {        /* SD sending attributes */
          Dmsg2(900, "Catalog upd jcr=%p: %s", jcr, bs->msg);
          catalog_update(jcr, bs);
