@@ -1034,7 +1034,7 @@ public:
             pm_strcpy(snap->Device, NPRTB(device));
             bstrncpy(snap->Name, NPRTB(name), sizeof(snap->Name));
             bstrncpy(snap->Type, cmd.argv[i], sizeof(snap->Type));
-            bstrncpy(snap->CreateDate, createdate, sizeof(snap->CreateDate));
+            bstrncpy(snap->CreateDate, NPRTB(createdate), sizeof(snap->CreateDate));
             pm_strcpy(snap->errmsg, NPRTB(error));
             snap->status = status;
             snap->CreateTDate = createtdate;

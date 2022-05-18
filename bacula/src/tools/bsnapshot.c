@@ -140,6 +140,19 @@ static bool makedir(char *path)
    return true;
 }
 
+static char *strip_tz(char *line)
+{
+   if (line) {
+      /* The format returned by LVM is 2022-05-18 09:17:41 +0000, we use TZ= to keep it UTC */
+      char *p = strstr(line, " +0000");
+      if (p) {
+         *p = 0;
+      }
+      /* str_to_utime() doesn't understand the +0000 extension */
+   }
+   return line;
+}
+
 /* Strip trailing junk and " */
 void strip_quotes(char *str)
 {
@@ -1697,6 +1710,7 @@ public:
       char ed1[50], ed2[50];
       char   *name, *ts, buf[128], *lvname;
       int64_t size, ssize, maxsize;
+      btime_t t;
       if (!snapshot::create()) {
          return 0;
       }
@@ -1757,7 +1771,7 @@ public:
       /* TODO: Need to get the volume name and add the snapshot
        * name at the end 
        */
-      MmsgD5(10, cmd, "%slvcreate -s -n \"%s_%s\" -L %lldb \"%s\"", 
+      MmsgD5(10, cmd, "%s TZ= lvcreate -s -n \"%s_%s\" -L %lldb \"%s\"", 
            arg->sudo, name, arg->name, size, arg->device);
       if (run_program(cmd, 60, errmsg)) {
          Dmsg(10, "Unable to create snapshot %s %s\n", arg->name, errmsg);
@@ -1772,16 +1786,22 @@ public:
       }
 
       Mmsg(cmd, "%s_%s", arg->device, arg->name);
-      ts = get_lv_value(cmd, "Time");
+      ts = get_lv_value(cmd, "CTime");
       if (!ts) {
-         Dmsg(10, "Unable to find snapshot in lvs output\n");
-         bstrftimes(buf, sizeof(buf), time(NULL));
-         ts = buf;
+         ts = get_lv_value(cmd, "Time");
+         if (!ts) {
+            Dmsg(10, "Unable to find snapshot time in lvs output\n");
+            bstrutime(buf, sizeof(buf), time(NULL));
+            ts = buf;
+         }
       }
-      Dmsg(10, "status=1 volume=\"%s_%s\" createdate=\"%s\" type=lvm\n",
-             arg->device, arg->name, ts);
-      printf("status=1 volume=\"%s_%s\" createdate=\"%s\" type=lvm\n",
-             arg->device, arg->name, ts);
+      strip_tz(ts);
+      t = str_to_utime(ts);
+
+      Dmsg(10, "status=1 volume=\"%s_%s\" createtdate=\"%s\" type=lvm\n",
+           arg->device, arg->name, edit_uint64(t, ed1));
+      printf("status=1 volume=\"%s_%s\" createtdate=\"%s\" type=lvm\n",
+             arg->device, arg->name, edit_uint64(t, ed1));
       return 1;
    };
 
@@ -1970,7 +1990,7 @@ public:
    };
 
    bool parse_vgs_output() {
-      MmsgD1(10, cmd, "%svgs -o vg_all --separator=; --units b --nosuffix", arg->sudo);
+      MmsgD1(10, cmd, "%s TZ= vgs -o vg_all --separator=; --units b --nosuffix", arg->sudo);
       if (vgs) {
          free_header(vgs, vgs_nbelt);
          vgs_nbelt=0;
@@ -1983,7 +2003,7 @@ public:
    };
 
    bool parse_lvs_output() {
-      MmsgD1(10, cmd, "%slvs -o lv_all --separator=; --units b --nosuffix", arg->sudo);
+      MmsgD1(10, cmd, "%s TZ= lvs -o lv_all --separator=; --units b --nosuffix", arg->sudo);
       if (lvs) {
          free_header(lvs, lvs_nbelt);
          lvs_nbelt=0;
@@ -2016,12 +2036,13 @@ public:
          if (*p == ';' || *p == '\n') {        /* We have a separator, handle current value */
             buf[i]=0;
             if (!header_done) {
-               Dmsg(150, "header=%s\n", buf);
+               Dmsg(300, "header=%s\n", buf);
                nbelt++; /* Keep the number of element in the line */
 
                /* Find if we need this value, and where to store it */
                for (int j=0; hdr[j].name ; j++) {
                   if (strcasecmp(buf, hdr[j].name) == 0) {
+                     Dmsg(150, "header[%d]=%s\n", pos, buf);
                      hdr[j].pos = pos;
                      break;
                   }
@@ -2050,7 +2071,7 @@ public:
 
          } else {
             Dmsg(10, "Output too big !!! %s\n", errmsg);
-            break;
+            return false;
          }
       }
       *ret_nbelt = nbelt;
@@ -2058,11 +2079,13 @@ public:
    };
 
    int list() {
-      char **elt, **elt2 = NULL;
+      char **elt, **elt2 = NULL, ed1[50];
       const char *err = NULL;
-      int    p_attr, p_path, p_origin, p_time, p_size;
+      int    p_attr, p_path, p_origin, p_time, p_ctime, p_size;
       POOLMEM *p, *f, *d;
       int    fnl, pnl, status;
+      btime_t t;
+      char *c_time=NULL;
 
       if (!snapshot::list()) {
          return false;
@@ -2075,10 +2098,15 @@ public:
       p_attr = get_value_pos(lvs_header, "Attr");
       p_path = get_value_pos(lvs_header, "Path");
       p_time = get_value_pos(lvs_header, "Time");
+      p_ctime = get_value_pos(lvs_header, "CTime");
       p_size = get_value_pos(lvs_header, "Snap%");
       p_origin = get_value_pos(lvs_header, "Origin");
 
-      if (p_time < 0 || p_origin < 0) {
+      if (p_time < 0 && p_ctime < 0) {
+         printf("status=1 error=\"Unable to get snapshot Time from lvs command\"\n");
+         return false;
+      }
+      if (p_origin < 0) {
          printf("status=1 error=\"Unable to get snapshot Origin from lvs command\"\n");
          return false;
       }
@@ -2119,9 +2147,18 @@ public:
                   pm_strcpy(f, elt[p_path] + strlen(p));/* test_MySnapshot_2020.. => MySnapshot_2020 */
                }
 
-               printf("volume=\"%s\" device=\"%s\" name=\"%s\" createdate=\"%s\" size=\"%s\" "
+               if (p_ctime > 0) {
+                  c_time = elt[p_ctime];
+
+               } else {
+                  c_time = elt[p_time];
+               }
+               strip_tz(c_time);
+               t = str_to_utime(c_time);
+
+               printf("volume=\"%s\" device=\"%s\" name=\"%s\" createtdate=\"%s\" size=\"%s\" "
                       "status=%d error=\"%s\" type=lvm\n",
-                      elt[p_path], d, f, elt[p_time], elt[p_size], status, err);
+                      elt[p_path], d, f, edit_uint64(t, ed1), elt[p_size], status, err);
             }
          }
       }
