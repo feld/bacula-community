@@ -12,6 +12,8 @@ TestName="snapshot-btrfs-test"
 JobName=Incremental
 . scripts/functions
 
+require_linux
+
 ${rscripts}/cleanup
 ${rscripts}/copy-test-confs
 
@@ -56,6 +58,7 @@ cd $cwd
 make -C $cwd/build/src/tools install-bsnapshot
 
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Enable Snapshot", "yes", "FileSet")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Snapshot Retention", "300", "Client")'
 
 change_jobname CompressedTest $JobName
 start_test
@@ -72,9 +75,67 @@ wait
 messages
 @output ${tmp}/list1
 list files jobid=1
+@$out ${tmp}/list1.snap_list
+.jlist snapshot
+@$out ${tmp}/list1.snap_listclient
+snapshot listclient
+@$out ${tmp}/list1.snap_update
+snapshot update client snapshotid=1 comment="test1"
+snapshot update client snapshotid=1 retention=3
+@$out ${tmp}/list1.snap_list2
+.jlist snapshot snapshotid=1
+@$out ${tmp}/list1.snap_list22
+.jlist snapshot snapshotid=3
+@$out ${tmp}/list1.snap_prune
+@sleep 4
+snapshot prune client yes
+@$out ${tmp}/list1.snap_list3
+.jlist snapshot
+@$out ${tmp}/list1.snap_listclient2
+snapshot listclient
+quit
 END_OF_DATA
 
 run_bacula
+
+grep '{' $tmp/list1.snap_list | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 1);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/list1.snap_list"
+    estat=1
+fi
+
+nb=`grep deleted $tmp/list1.snap_prune | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Should prune one snapshots"
+    estat=1
+fi
+
+# snapshot updated
+grep '{' $tmp/list1.snap_list2 | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 1 && $j->{data}->[0]->{comment} eq "test1" && $j->{data}->[0]->{retention} == 3);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/list1.snap_list2"
+    estat=1
+fi
+
+# One snapshot gone
+grep '{' $tmp/list1.snap_list3 | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 0);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/list1.snap_list3"
+    estat=1
+fi
+
 check_for_zombie_jobs storage=File
 
 cat <<END_OF_DATA >${tmp}/bconcmds
@@ -136,8 +197,11 @@ $USE_SUDO btrfs subvolume list $cwd/btrfs
 $USE_SUDO chown $USER:$GID $cwd/btrfs/subvol
 cp $cwd/build/README $cwd/btrfs/subvol
 
+sed -i "s/Snapshot Retention/#Snapshot Retention/" $conf/bacula-dir.conf
+
 cat <<END_OF_DATA >${tmp}/bconcmds
 @$out ${tmp}/log3.out
+reload
 setdebug level=20 tags=snapshot fd trace=1
 run level=full job=$JobName yes
 wait
@@ -152,10 +216,25 @@ restore where=${tmp}/bacula-restores4 storage=File select all yes done
 wait
 status client
 messages
+snapshot list
+snapshot listclient
+snapshot
+6
+7
+snapshot list
+sql
+update Snapshot SET Retention=1;
+
+snapshot prune client yes
+snapshot list
+snapshot listclient 
 quit
 END_OF_DATA
 
 run_bconsole
+
+echo pause
+read a
 
 cp $f $working/job3.trace
 
@@ -189,7 +268,7 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
-grep "fname=$cwd/btrfs/subvol/.snapshots/Incremental.*/README stripped=$cwd/btrfs/subvol/README link=$cwd/btrfs/subvol/README" $working/job3.trace > /dev/null
+grep "fname=$cwd/btrfs/subvol/README snap=$cwd/btrfs/subvol/.snapshots/Incremental.*/README link=$cwd/btrfs/subvol/README" $working/job3.trace > /dev/null
 if [ $? -ne 0 ]; then
     print_debug "ERROR: Should path convertion in FD $working/job3.trace trace file"
     estat=1
