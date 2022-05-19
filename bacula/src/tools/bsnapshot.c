@@ -1109,9 +1109,38 @@ public:
          printf("status=0 type=btrfs error=\"%s\"\n", errmsg);
          return 0;
       }
-
+/*
+ *  [eric@zog8 /tmp/regress]$ sudo btrfs sub show /tmp/regress/btrfs/
+ * /
+ *	Name: 			<FS_TREE>
+ *	UUID: 			7b715434-bb3c-44ce-abcb-803e6bfcf78a
+ *	Parent UUID: 		-
+ *	Received UUID: 		-
+ *	Creation time: 		2022-05-18 09:43:15 +0200
+ *	Subvolume ID: 		5
+ *	Generation: 		82
+ *	Gen at creation: 	0
+ *	Parent ID: 		0
+ *	Top level ID: 		0
+ *	Flags: 			-
+ *	Send transid: 		0
+ *	Send time: 		2022-05-18 09:43:15 +0200
+ *	Receive transid: 	0
+ *	Receive time: 		-
+ *	Snapshot(s):
+ */
       /* TODO: Very week way to analyse FS */
-      if (!strstr(errmsg, "is btrfs root")) {
+      char *p = strstr(errmsg, "Parent ID:");
+      if (p) {
+         p += strlen("Parent ID:");
+         skip_spaces(&p);
+         if (*p != '0') {
+            Dmsg(10, "%s Not btrfs root (Parent ID > 0)\n", arg->mountpoint);
+            printf("status=0 type=btrfs error=\"Not btrfs root fs\"\n");
+            return 0;
+         }
+      } else if (!strstr(errmsg, "is btrfs root")) {
+         Dmsg(10, "%s Not btrfs root\n", arg->mountpoint);
          printf("status=0 type=btrfs error=\"Not btrfs root fs\"\n");
          return 0;
       }
