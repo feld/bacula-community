@@ -231,7 +231,11 @@ static bool check_for_new_storage(JCR *jcr, bootstrap_info &info)
    if (ua->argc != 1) {
       return false;
    }
-   if (!strcasecmp(ua->argk[0], "Storage")) {
+   if (strcasecmp(ua->argk[0], "Storage") == 0) {
+      if (strcmp(ua->argv[0], "") == 0) {
+         /* It can happen after a bscan */
+         return false;
+      }
       /* Continue if this is a volume from the same storage. */
       if (is_on_same_storage(jcr, ua->argv[0])) {
          return false;
