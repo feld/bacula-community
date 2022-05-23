@@ -367,7 +367,9 @@ static uint32_t write_bsr_item(RBSR *bsr, UAContext *ua,
          find_storage_resource(ua, rx, bsr->VolParams[i].Storage,
                                        bsr->VolParams[i].MediaType);
       }
-      fprintf(fd, "Storage=\"%s\"\n", bsr->VolParams[i].Storage);
+      if (strcmp(bsr->VolParams[i].Storage, "") != 0) {
+         fprintf(fd, "Storage=\"%s\"\n", bsr->VolParams[i].Storage);
+      }
       fprintf(fd, "Volume=\"%s\"\n", bsr->VolParams[i].VolumeName);
       fprintf(fd, "MediaType=\"%s\"\n", bsr->VolParams[i].MediaType);
       if (bsr->fileregex) {
