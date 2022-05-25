@@ -101,7 +101,7 @@ grep "^  Termination: *Backup OK" ${cwd}/tmp/log1.out 2>&1 >/dev/null
 bstat=$?
 
 # Check if testfile's restored permission are correctly changed
-perm_restored=`$bperl -e "get_perm('${cwd}/tmp/bacula-restores/${cwd}/build/testfile')`
+perm_restored=`$bperl -e "get_perm('${cwd}/tmp/bacula-restores/${cwd}/build/testfile')"`
 if [ ${perm_after} -ne ${perm_restored} ]; then
    estat=1
    print_debug "Wrong permissions restored: ${perm_restored}, expected: ${perm_after}"
