@@ -262,7 +262,7 @@ bool crypto_terminate_digests(bctx_t &bctx)
    }
 
    /** Terminate any digest and send it to Storage daemon */
-   if (bctx.digest || ff_pkt->stat_update) {
+   if (bctx.digest || (ff_pkt->stat_update && ff_pkt->accurate_chksum)) {
       uint32_t size;
 
       sd->fsend("%ld %d 0", jcr->JobFiles, bctx.digest_stream);
@@ -275,7 +275,7 @@ bool crypto_terminate_digests(bctx_t &bctx)
          sd->msg = realloc_pool_memory(sd->msg, size);
       }
 
-      if (ff_pkt->stat_update) {
+      if (ff_pkt->stat_update && ff_pkt->accurate_chksum) {
          /* The checksum comes from the accurate table and the format is in base64 */
          size = base64_to_bin(sd->msg, sizeof_pool_memory(sd->msg), ff_pkt->accurate_chksum, strlen(ff_pkt->accurate_chksum));
 
