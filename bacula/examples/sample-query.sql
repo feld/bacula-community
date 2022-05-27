@@ -153,10 +153,12 @@ SELECT count(*) AS Jobs,sum(JobFiles) AS Files,sum(JobBytes) AS Bytes,Name AS Jo
 # 11
 :List total files/bytes by Volume
 SELECT count(*) AS Jobs,sum(JobFiles) AS Files,sum(JobBytes) AS Bytes,VolumeName
- FROM Job,JobMedia,Media
- WHERE JobMedia.JobId=Job.JobId
- AND JobMedia.MediaId=Media.MediaId
- GROUP by VolumeName;  
+FROM (SELECT DISTINCT JobMedia.JobId, JobFiles, JobBytes, VolumeName
+      FROM Job,JobMedia,Media
+      WHERE JobMedia.JobId=Job.JobId
+      AND JobMedia.MediaId=Media.MediaId) AS f
+GROUP BY VolumeName
+ORDER BY VolumeName;
 # 12
 :List Files for a selected JobId
 *Enter JobId:
