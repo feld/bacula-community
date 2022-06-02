@@ -1,9 +1,46 @@
         Changelog for version 11.3.3
 
+01Jun22
+ - win32: Update to OpenSSL 1.1.1o
+
+27May22
+ - Fix query SQL provided in sample-query.sql
+
+25May22
+ - Fix segfault with new update packet
+
+23May22
+ - Skip storage daemon detection if the information is not available in the 
+  BSR
+ - Do not add an empty Storage line when generating the BSR
+
+22May22
+ - baculum: Fix #2667 keep original fileset options order
+
+19May22
+ - snapshot: Adapt for BTRFS 5.17
+
+18May22
+ - snapshot: Fix snapshot delete/prune command
+ - snapshot: Fix #9143 About snapshot not properly stored in the catalog
+ - snapshot: Add support for new LVM 2.03.15
+ - Fix ./configure error with test-cpp.c
+
+17May22
+ - Fix #9127 About incorrect handling of the new Accurate 'o' option with 
+  multiple incremental jobs. Add support for ACL updates
+ - Add retry debug information to storage daemon find_next_volume process
+
+13May22
+ - Fix #9125 About issue with AllowFDConnections and very high debug level
+
+12May22
+ - Fix #9116: copy job missuses the client->FdStorageAddress directive
+
 03May22
- - Fix org#2662 About SQLite migration script issue
  - Fix org#2658 About segfault with bsdjson with incorrect parameters
  - Fix org#2659 Install dbcheck and bsmtp in 755
+ - Fix org#2662 About SQLite migration script issue
 
 28Apr22
  - baculum: Fix clearing OAuth2 properties after testing API connection on 
@@ -34,7 +71,7 @@
  - Fix warning on find_one.c
 
 Bugs fixed/closed since last release:
-2633 2661
+2633 2658 2659 2661 2662 2667 9116 9125 9127 9143
 
         Changelog for version 11.3.2
 
