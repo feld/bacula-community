@@ -37,6 +37,40 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
+Release 11.3.4 02 June 2022
+
+11.3.4 is a beta release.
+
+ - Fix #9127 About incorrect handling of the new Accurate 'o' option with 
+  multiple incremental jobs. Add support for ACL updates
+ - Fix #9116: copy job missuses the client->FdStorageAddress directive
+ - Fix org#2658 About segfault with bsdjson with incorrect parameters
+ - Skip storage daemon detection if the information is not available in the BSR
+
+ - snapshot: Adapt for BTRFS 5.17
+ - snapshot: Fix snapshot delete/prune command
+ - snapshot: Fix #9143 About snapshot not properly stored in the catalog
+ - snapshot: Add support for new LVM 2.03.15
+
+ - Fix org#2659 Install dbcheck and bsmtp in 755
+ - Fix org#2662 About SQLite migration script issue
+
+ - Fix query SQL provided in sample-query.sql
+ - Fix compilation on s3 driver
+ - Fix ./configure error with test-cpp.c
+ - win32: Update to OpenSSL 1.1.1o
+
+ - baculum: Fix clearing OAuth2 properties after testing API connection on security page
+ - baculum: Fix directing to default page after log in for users with non-admin roles
+ - baculum: Fix #2667 keep original fileset options order
+ - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
+ - baculum: Fix #2661 required parameter PHP error on PHP 8.0
+ - baculum: Fix error calling method_exists() with non-objects on PHP 8
+
+Bugs fixed/closed since last release:
+2633 2658 2659 2661 2662 2667 9116 9125 9127 9143
+
+
 Release 11.3.3 03 May 2022
 
 11.3.3 is a beta release.
