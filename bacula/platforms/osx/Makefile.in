@@ -76,7 +76,7 @@ CONFIGFLAGS:= \
 CPPFLAGS:=
 CFLAGS:=-O -g
 CXXFLAGS:=${CFLAGS}
-LDFLAGS:=
+LDFLAGS:=-framework CoreFoundation
 
 # required on snow leopard: compiling for 10.4 requires usage of gcc 4.0
 # system defaults to version 4.2
