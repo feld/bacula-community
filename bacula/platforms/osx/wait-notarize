@@ -1,0 +1,16 @@
+#!/bin/sh
+
+output=$1
+uuid=`awk -F= '/RequestUUID/ { print $2 }' $output`
+
+while xcrun altool --notarization-info $uuid --username $APPLEID_USER --password $APPLEID_APP_PASS | grep "in progress"
+do
+    sleep 15
+done
+
+xcrun altool --notarization-info $uuid --username $APPLEID_USER --password $APPLEID_APP_PASS | tee wait-notarize.out
+grep "Package Approved" wait-notarize.out
+ret=$?
+
+rm -f wait-notarize.out
+exit $ret

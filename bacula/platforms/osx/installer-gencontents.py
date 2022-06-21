@@ -53,4 +53,4 @@ def generateContentsDocument(path):
 if __name__ == "__main__":
     # construct document
     doc = generateContentsDocument(sys.argv[1])
-    print doc.toprettyxml(indent="  "),
+    print (doc.toprettyxml(indent="  "),)

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+versionh=$1
+if [ ! -f "$1" ]; then
+    echo "Usage: $0 version.h" >&2
+    exit 1
+fi
+
+sed -n -e 's/^#define VERSION.*"\(.*\)"$/\1/p' $versionh

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Update path to libraries, probably done by libtool but not working here
+
+dest=$1
+file=$2
+otool -L $file | awk '/Users/ { print $1 }' | while read fname
+do
+    f=`basename $fname`
+    install_name_tool -change $fname $dest/lib/$f $file
+done
