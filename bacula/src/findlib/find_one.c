@@ -241,9 +241,9 @@ static bool no_dump(JCR *jcr, FF_PKT *ff_pkt)
       int ioctl_ret = ioctl(fd, FS_IOC_GETFLAGS, &attr);
       if (ioctl_ret < 0) {
          if (errno == ENOTTY) {
-            Dmsg2(50, "Failed to check for NODUMP flag for file: %s er: %d, "
+            Dmsg2(50, "Failed to check for NODUMP flag for file: %s errno: %d, "
                       "probably because of wrong filesystem used.\n",
-                  errno, ff_pkt->fname);
+                  ff_pkt->fname, errno);
          } else {
             Dmsg2(50, "Failed to send Getflags IOCTL for: %s err: %d\n",
                   ff_pkt->fname, errno);
