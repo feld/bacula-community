@@ -327,8 +327,8 @@ void LeastUsedStore::apply_policy(bool write_store) {
    uint32_t store_count = store->size();
    uint32_t i, j, swap;
    //TODO arrays below limit store list to 64 items currently...
-   uint32_t conc_arr[64];
-   uint32_t idx_arr[64];
+   uint32_t *conc_arr = (uint32_t*) malloc((store_count+1) * sizeof(uint32_t));
+   uint32_t *idx_arr = (uint32_t*) malloc((store_count+1) * sizeof(uint32_t));
 
 
    for (uint32_t i=0; i<store_count; i++) {
@@ -363,6 +363,8 @@ void LeastUsedStore::apply_policy(bool write_store) {
       storage = (STORE *)tmp_list.get(idx_arr[i]);
       store->append(storage);
    }
+   free(conc_arr);
+   free(idx_arr);
 }
 
 void LeastUsedStore::apply_write_policy() {
