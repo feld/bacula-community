@@ -1,4 +1,22 @@
 
+               Release Notes for Baculum 13.0.0
+
+This is a new major release.
+
+New changes and fixes:
+
+ - Fix #2667 keep original fileset options order
+ - Fix clearing OAuth2 properties after testing API connection on security page
+ - Fix directing to default page after log in for users with non-admin roles
+ - Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
+ - Fix #2661 required parameter PHP error on PHP 8.0
+ - Fix error calling method_exists() with non-objects on PHP 8
+ - Update Polish translations
+
+Bugs fixed/closed since last release:
+2661, 2667
+
+
                Release Notes for Baculum 11.3.4
 
 This is a beta release.
