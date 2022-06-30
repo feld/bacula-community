@@ -965,7 +965,7 @@ sub set_maximum_concurrent_jobs
     die "Can't get new maximumconcurrentjobs" 
         unless ($nb);
 
-    add_attribute($file, "Maximum Concurrent Jobs", $nb, $obj, $name);
+    add_attribute($file, "MaximumConcurrentJobs", $nb, $obj, $name);
 }
 
 # You can comment out a directive
@@ -1288,7 +1288,7 @@ FileDaemon {
   WorkingDirectory = $REMOTE_FILE/working
   Pid Directory = $REMOTE_FILE/working
   Plugin Directory = $plugins
-  Maximum Concurrent Jobs = 20
+  MaximumConcurrentJobs = 20
 }
 Messages {
   Name = Standard
@@ -2407,7 +2407,7 @@ sub add_virtual_changer
 
     $nb_drives--;               # Let's start at 0
 
-    my $devices = join(",", map { "Drive-$_" } 0..$nb_drives);
+    my $devices = join(",", map { "$name-Drive-$_" } 0..$nb_drives);
     print FP "
 Autochanger {
   Name = $name
@@ -2420,7 +2420,7 @@ Autochanger {
     for my $nb (0..$nb_drives) {
         print FP "
 Device {
-  Name = Drive-$nb
+  Name = $name-Drive-$nb
   Device Type = File
   Media Type = ${name}Type
   Archive Device = $tmp
@@ -2450,7 +2450,7 @@ Device {
 
     add_attribute("$tmp/1", "Name", $name, "Storage");
     add_attribute("$tmp/1", "Device", $name, "Storage");
-    add_attribute("$tmp/1", "Maximum Concurrent Jobs", 1, "Storage", $name);
+    add_attribute("$tmp/1", "MaximumConcurrentJobs", $nb_drives+1, "Storage", $name);
     add_attribute("$tmp/1", "Media Type", "${name}Type", "Storage");
     system("cat $tmp/1 >> $conf/bacula-dir.conf");
 }
