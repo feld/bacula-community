@@ -214,7 +214,10 @@ bool storage::inc_stores(JCR *jcr) {
          if (inc_wstore(tmp_store)) {
             /* Counter incremented, can be added to list */
             list->append(tmp_store);
+         } else {
+            Dmsg1(dbglvl, "Storage %s cannot be included\n", tmp_store->name());
          }
+
       } else if (inc_rstore(jcr, tmp_store)) {
          /* Counter incremented, can be added to list */
          list->append(tmp_store);
@@ -321,12 +324,19 @@ void storage::dec_curr_store() {
    Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
 }
 
+static void swapit(uint32_t *v1, uint32_t *v2)
+{
+   uint32_t temp = *v1;
+   *v1 = *v2;
+   *v2 = temp;
+}
+
 void LeastUsedStore::apply_policy(bool write_store) {
    alist *store = write_store ? wstore.get_list() : rstore.get_list();
    alist tmp_list(10, not_owned_by_alist);
    uint32_t store_count = store->size();
-   uint32_t i, j, swap;
-   //TODO arrays below limit store list to 64 items currently...
+   uint32_t i, j;
+
    uint32_t *conc_arr = (uint32_t*) malloc((store_count+1) * sizeof(uint32_t));
    uint32_t *idx_arr = (uint32_t*) malloc((store_count+1) * sizeof(uint32_t));
 
@@ -345,20 +355,15 @@ void LeastUsedStore::apply_policy(bool write_store) {
       conc_arr[i] = storage->getNumConcurrentJobs();
    }
 
-   /* Simple bubble sort */
+   /* Simple sort */
    for (i = 0; i<store_count - 1; i++) {
       for (j =0; j<store_count - i -1; j++) {
-         if (conc_arr[i] > conc_arr[i+1]) {
-            swap = conc_arr[i];
-            conc_arr[i] = conc_arr[i+1];
-            conc_arr[i+1] = swap;
-            swap = idx_arr[i];
-            idx_arr[i] = idx_arr[i+1];
-            idx_arr[i+1] = swap;
+         if (conc_arr[j] > conc_arr[j+1]) {
+            swapit(&conc_arr[j], &conc_arr[j+1]);
+            swapit(&idx_arr[j], &idx_arr[j+1]);
          }
       }
    }
-
    for (i=0; i<store_count; i++) {
       storage = (STORE *)tmp_list.get(idx_arr[i]);
       store->append(storage);
