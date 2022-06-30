@@ -10,51 +10,77 @@ TestName="store-mngr-leastused"
 . scripts/functions
 
 scripts/cleanup
-scripts/copy-confs
+scripts/copy-test-confs
 
+# Limit per-device max concurrent jobs to 1
+$bperl -e 'add_virtual_changer("vDisk1", 5)'
+$bperl -e 'add_virtual_changer("vDisk2", 5)'
+$bperl -e 'add_virtual_changer("vDisk3", 5)'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "LabelFormat", "Vol", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "CommCompression", "no", "Director")'
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "CommCompression", "no", "FileDaemon")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "CommCompression", "no", "Storage")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "AllowCompression", "no", "Storage")'
+sed 's/sparse=yes;//' $conf/bacula-dir.conf > $tmp/1
+mv $tmp/1 $conf/bacula-dir.conf
+
+echo $tmp/f > $tmp/file-list
+dd if=/dev/zero of=$tmp/f count=10000
 
 # Add two simple jobs (one of them with store group)
 cat <<END_OF_DATA >> $bin/bacula-dir.conf
+
 Job {
   Name = "SingleStoreJob"
-  JobDefs = "DefaultJob"
-  Storage = File1
+  Client = $HOST-fd
+  Messages = Standard
+  Type = Backup
+  Storage = vDisk1
   Pool = Default
-  Maximum Concurrent Jobs = 10
+  FileSet="Full Set"
 }
 Job {
   Name = "StoreGroupJob"
   Type = Backup
-  JobDefs = "DefaultJob"
-  Storage = File1, File2
+  Client = $HOST-fd
+  Messages = Standard
+  Storage = vDisk1, vDisk2, vDisk3
   Storage Group Policy = LeastUsed
   Pool = Default
-  Maximum Concurrent Jobs = 10
+  FileSet = "Full Set"
 }
 END_OF_DATA
 
-# Limit per-device max concurrent jobs to 1
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumConcurrentJobs", "10", "Device")'
-$bperl -e 'add_attribute("$conf/bacula-dir.conf", "MaximumConcurrentJobs", "10", "Client")'
+$bperl -e 'set_global_maximum_concurrent_jobs(10)'
 
-# Make sure that each storage used has only 1 device
-sed -i "s/Device = FileChgr1-Dev1, FileChgr1-Dev2/Device = FileChgr1-Dev1/g" $conf/bacula-sd.conf
-sed -i "s/Device = FileChgr2-Dev1, FileChgr2-Dev2/Device = FileChgr2-Dev1/g" $conf/bacula-sd.conf
 start_test
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
 @$out  ${cwd}/tmp/log1.out
+setdebug level=0 trace=1 dir
+setbandwidth limit=500kb/s client
 label volume=TestVolume001 storage=File1 pool=Default slot=1 drive=0
 label volume=TestVolume002 storage=File2 pool=Default slot=1 drive=0
-run job=SingleStoreJob level=Full yes
-run job=SingleStoreJob level=Full yes
-run job=SingleStoreJob level=Full yes
-run job=SingleStoreJob level=Full yes
-run job=SingleStoreJob level=Full yes
 run job=StoreGroupJob level=Full yes
-@sleep 3
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
+run job=StoreGroupJob level=Full yes
+@sleep 1
 list jobs
 wait
 @$out  ${cwd}/tmp/log2.out
@@ -70,32 +96,13 @@ run_bacula
 
 stop_bacula
 
-# We should see that File1 is used 5 times (JobId 1,2,3, 4, 5),
-# while JobId 6 uses File2 (because File1 has 5 concurent jobs, File2 has 0)
-n_file1=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File1\"" | wc -l`
-if [ $n_file1 -ne 5 ]; then
-   estat=1
-   print_debug "Wrong usage count for File1, expectd 5, got: ${n_file1}"
-fi
+# Each vDisk should get 3 jobs
+awk '/Storage:/ { tab[$2]++ } END { for (t in tab) { if (tab[t] != 3) { print t ": ERROR found="  tab[t]} } }' $tmp/log2.out > $tmp/1
+grep ERROR $tmp/1
 
-n_file2=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File2\"" | wc -l`
-if [ $n_file2 -ne 1 ]; then
-   estat=1
-   print_debug "Wrong usage count for File2, expectd 1, got: ${n_file2}"
-fi
-
-# This time only File1 should be used (because it's the first on in the storage list and it was not
-# utilized during Job 7 run
-n_file1=`cat ${cwd}/tmp/log3.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File1\"" | wc -l`
-if [ $n_file1 -ne 1 ]; then
-   estat=1
-   print_debug "Wrong usage count for File1, expectd 1, got: ${n_file1}"
-fi
-
-n_file2=`cat ${cwd}/tmp/log3.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"File2\"" | wc -l`
-if [ $n_file2 -ne 0 ]; then
-   estat=1
-   print_debug "Wrong usage count for File2, expectd 0, got: ${n_file2}"
+if [ $? -eq 0 ]; then
+    print_debug "ERROR: Found incorrect drive sequence"
+    estat=1
 fi
 
 end_test
