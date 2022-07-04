@@ -12,7 +12,6 @@
 %define _version           @VERSION@
 %define _lsm               @LSMDATE@
 %define depkgs_version @DEPKGS_VERSION@
-%define azure_version @AZURE_VERSION@
 %define _packager Kern Sibbald <kern@sibbald.com>
 %define manpage_ext gz
 
