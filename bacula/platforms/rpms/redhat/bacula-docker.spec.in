@@ -95,14 +95,15 @@ cwd=${PWD}
         --with-mon-dir-password="XXX_REPLACE_WITH_DIRECTOR_MONITOR_PASSWORD_XXX" \
         --with-mon-fd-password="XXX_REPLACE_WITH_CLIENT_MONITOR_PASSWORD_XXX" \
         --with-mon-sd-password="XXX_REPLACE_WITH_STORAGE_MONITOR_PASSWORD_XXX" \
-        --with-openssl --disable-build-dir --disable-build-sd
+        --with-openssl --disable-build-dird --disable-build-stored
 
 make
 
 %install
-mkdir -pv $RPM_BUILD_ROOT%{plugin_dir}
-make DESTDIR=$RPM_BUILD_ROOT -C ../bacula-%{_version}/src/plugins/fd/docker all
-make DESTDIR=$RPM_BUILD_ROOT -C ../bacula-%{_version}/src/plugins/fd/ install-docker
+d=`mktemp -d`
+make DESTDIR=$d -C ../bacula-enterprise-%{_version}/src/plugins/fd install-docker
+mv $d/opt $RPM_BUILD_ROOT/
+rm -rf $d
 
 %files
 %defattr(-,root,root)
