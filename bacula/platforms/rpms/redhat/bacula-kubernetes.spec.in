@@ -1,0 +1,133 @@
+# Bacula RPM spec file
+#
+# Copyright (C) 2000-2022 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+%define _release @RELEASE@
+%define _version @VERSION@
+%define _lsm @LSMDATE@
+%define _packager Davide Franco <davide.franco@baculasystems.com>
+%define manpage_ext gz
+
+# Don't strip binaries
+%define __os_install_post %{nil}
+%define __debug_install_post %{nil}
+%define debug_package %{nil}
+
+%define base_package_name bacula
+
+%define rhel7 0
+%{?build_rhel7:%define rhel7 1}
+%{?build_el7:%define rhel7 1}
+
+# Installation Directory locations
+%define _prefix        /opt/bacula
+%define _sbindir       /opt/bacula/bin
+%define _bindir        /opt/bacula/bin
+%define _subsysdir     /opt/bacula/working
+%define sqlite_bindir  /opt/bacula/sqlite
+%define _mandir        /usr/share/man
+%define sysconf_dir    /opt/bacula/etc
+%define script_dir     /opt/bacula/scripts
+%define working_dir    /opt/bacula/working
+%define pid_dir        /opt/bacula/working
+%define plugin_dir     /opt/bacula/plugins
+%define lib_dir        /opt/bacula/lib
+
+Summary: Bacula Kubernetes Plugin - The Network Backup Solution
+Name: %{base_package_name}-kubernetes-plugin
+Version: %{_version}
+Release: %{_release}
+Group: System Environment/Daemons
+License: AGPLv3
+BuildRoot: %{_tmppath}/%{name}-root
+URL: http://www.bacula.org/
+Vendor: The Bacula Team
+Packager: %{_packager}
+Prefix: %{_prefix}
+Distribution: Bacula Kubernetes Plugin
+
+Source0: https://www.bacula.org/downloads/Bacula-${_version}/bacula-%{_version}.tar.gz
+
+Requires: %{base_package_name}-libs = %{_version}, bacula-fd
+
+%if %{rhel7}
+BuildRequires: python3-devel, python36-Cython, Cython
+%endif
+
+# define the basic package description
+%define blurb Bacula Enterprise - The Network Backup Solution.
+%define blurb2 The Kubernetes Plugin enables to backup Kubernetes cluster. 
+%define blurb3 This package provides the Bacula Enterprise Kubernetes Plugin.
+%description
+
+%{blurb}
+%{blurb2}
+%{blurb3}
+
+%prep
+
+%setup -T -D -n bacula-%{_version} -b 0
+
+%build
+
+cd ../bacula-%{_version}
+./configure \
+        --prefix=%{_prefix} \
+        --sbindir=%{_sbindir} \
+        --sysconfdir=%{sysconf_dir} \
+        --mandir=%{_mandir} \
+        --with-scriptdir=%{scripts_dir} \
+        --with-working-dir=%{working_dir} \
+        --with-plugindir=%{plugin_dir} \
+        --with-pid-dir=%{pid_dir} \
+        --with-subsys-dir=%{_subsysdir} \
+        --libdir=%{lib_dir} \
+        --enable-smartalloc \
+        --disable-bat \
+        --enable-client-only --disable-build-dir --disable-build-sd \
+        --with-dir-user=%{director_daemon_user} \
+        --with-dir-group=%{daemon_group} \
+        --with-sd-user=%{storage_daemon_user} \
+        --with-sd-group=%{storage_daemon_group} \
+        --with-fd-user=%{file_daemon_user} \
+        --with-fd-group=%{daemon_group} \
+        --with-basename="XXX_HOSTNAME_XXX" \
+        --with-hostname="XXX_HOSTNAME_XXX" \
+        --with-dir-password="XXX_REPLACE_WITH_DIRECTOR_PASSWORD_XXX" \
+        --with-fd-password="XXX_REPLACE_WITH_CLIENT_PASSWORD_XXX" \
+        --with-sd-password="XXX_REPLACE_WITH_STORAGE_PASSWORD_XXX" \
+        --with-mon-dir-password="XXX_REPLACE_WITH_DIRECTOR_MONITOR_PASSWORD_XXX" \
+        --with-mon-fd-password="XXX_REPLACE_WITH_CLIENT_MONITOR_PASSWORD_XXX" \
+        --with-mon-sd-password="XXX_REPLACE_WITH_STORAGE_MONITOR_PASSWORD_XXX"
+
+make
+
+%install
+
+mkdir -p $RPM_BUILD_ROOT%{plugin_dir}
+mkdir -p $RPM_BUILD_ROOT%{_sbindir}
+
+make DESTDIR=$RPM_BUILD_ROOT -C ../bacula-%{_version}/src/plugins/fd install-kubernetes
+make DESTDIR=$RPM_BUILD_ROOT -C ../bacula-%{_version}/src/plugins/fd/kubernetes-backend install-kubernetes
+
+%files
+
+%defattr(-,root,root)
+%{plugin_dir}/kubernetes-fd.so
+%{_bindir}/k8s_backend
+
+%post
+
+if [ ! -f %{sysconf_dir}/bacula-backup.key -a ! -f %{sysconf_dir}/bacula-backup.cert ]; then
+  openssl req -new -newkey rsa:4096 -days 1000 -nodes -x509 \
+      -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" \
+      -keyout %{sysconf_dir}/bacula-backup.key  -out %{sysconf_dir}/bacula-backup.cert
+fi
+
+%clean
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
+
+%changelog
+* Thu Oct 10 2019 Eric Bollengier <eric.bollengier@baculasystems.com>
+- First version
