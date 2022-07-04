@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory with
+# the HonorNoDumpFlag  then restore it.
+#
+TestName="nodump-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+cat <<EOF >> $conf/bacula-dir.conf
+FileSet {
+  Name = "HonorNoDumpFlag"
+  Include  { Options { signature=MD5; HonorNoDumpFlag = yes }
+    File = $cwd/build
+  }
+}
+EOF
+
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=4 storage=File1
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+show job=$JobName
+show fileset="HonorNoDumpFlag"
+run job=$JobName fileset=HonorNoDumpFlag level=full yes
+wait
+run job=$JobName fileset=HonorNoDumpFlag level=full yes
+wait
+messages
+@# 
+@# now do a restore
+@#
+@$out $tmp/log2.out  
+setdebug level=4 storage=File1
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+check_two_logs
+check_restore_diff
+end_test

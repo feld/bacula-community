@@ -147,6 +147,14 @@ FileSet {
   }
 }
 
+# List of files to be backed up
+FileSet {
+  Name = "HonorNoDumpFlag"
+  Include  { Options { signature=MD5; HonorNoDumpFlag = yes }
+    File = <@tmpdir@/file-list
+  }
+}
+
 FileSet {
   Name = "SparseSet"
   Include { Options { signature=MD5; sparse=yes }
