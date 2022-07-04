@@ -39,7 +39,7 @@
 
 Requires: %{base_package_name}-libs = %{_version}, bacula-fd
 
-Summary: Bacula - The Network Backup Solution
+Summary: Bacula Docker - The Network Backup Solution
 Name: %{base_package_name}-docker-plugin
 Version: %{_version}
 Release: %{_release}
@@ -51,7 +51,6 @@ Vendor: The Bacula Team
 Packager: %{_packager}
 Prefix: %{_prefix}
 Distribution: Bacula Docker
-Summary: Bacula Docker - The Network Backup Solution
 
 Source0: https://www.bacula.org/downloads/bacula-%{_version}.tar.gz
 
@@ -96,41 +95,18 @@ cwd=${PWD}
         --with-mon-dir-password="XXX_REPLACE_WITH_DIRECTOR_MONITOR_PASSWORD_XXX" \
         --with-mon-fd-password="XXX_REPLACE_WITH_CLIENT_MONITOR_PASSWORD_XXX" \
         --with-mon-sd-password="XXX_REPLACE_WITH_STORAGE_MONITOR_PASSWORD_XXX" \
-        --with-rsync=${cwd}/librsync \
-        --with-openssl
+        --with-openssl --disable-build-dir --disable-build-sd
 
 make
 
 %install
 mkdir -pv $RPM_BUILD_ROOT%{plugin_dir}
 make DESTDIR=$RPM_BUILD_ROOT -C ../bacula-%{_version}/src/plugins/fd/docker all
-cp -v ../bacula-%{_version}/src/plugins/fd/docker/.libs/docker-fd.so $RPM_BUILD_ROOT%{plugin_dir}
-
-# Remove unneeded files
-rm -rf $RPM_BUILD_ROOT%{_mandir}
-rm -rf $RPM_BUILD_ROOT%{_bindir}
-rm -rf $RPM_BUILD_ROOT%{sysconf_dir}
-rm -rf ${RPM_BUILD_ROOT}/opt/bacula/share/doc
-rm -f $RPM_BUILD_ROOT%{docdir}/*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbaccats*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbacfind*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbacsql*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbaccfg*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbac.*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbac-*
-rm -f $RPM_BUILD_ROOT%{lib_dir}/libbacsd*
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-driver.so
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-s3-driver.so
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-was-driver.so
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-gs-driver.so
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-oci-driver.so
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bpipe-fd.so
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-aligned-driver*
-rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-dedup-driver*,
+make DESTDIR=$RPM_BUILD_ROOT -C ../bacula-%{_version}/src/plugins/fd/ install-docker
 
 %files
-%defattr(-, root, %{daemon_group})
-%attr(755,root,%{daemon_group}) %{plugin_dir}/docker-fd.so
+%defattr(-,root,root)
+%{plugin_dir}/docker-fd.so
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"

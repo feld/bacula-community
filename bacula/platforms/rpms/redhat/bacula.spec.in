@@ -833,6 +833,7 @@ rm -f $RPM_BUILD_ROOT%{script_dir}/bconsole
 rm -f $RPM_BUILD_ROOT%{script_dir}/mtx-changer.conf
 rm -f $RPM_BUILD_ROOT%{_sbindir}/bacula
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/docker-fd.so
+rm -f $RPM_BUILD_ROOT%{script_dir}/isworm
 
 %endif
 
@@ -898,7 +899,6 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %attr(-, root, %{daemon_group}) %{script_dir}/tapealert
 %attr(-, root, %{daemon_group}) %{script_dir}/baculabackupreport
 
-%attr(-, root, %{daemon_group}) %{script_dir}/isworm
 %attr(-, root, %{daemon_group}) %{plugin_dir}/bpipe-fd.so
 %attr(-, root, %{daemon_group}) %{_sbindir}/dbcheck
 %attr(-, root, %{storage_daemon_group}) %{script_dir}/mtx-changer
