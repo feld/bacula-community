@@ -24,9 +24,9 @@
 #define COMMUNITY 1      /* Define to create a Windows community binary */
 
 /* Note: there can be only *one* VERSION in this file */
-#define VERSION "11.3.4"
-#define BDATE   "02 June 2022"
-#define LSMDATE "02Jun22"
+#define VERSION "13.0.0"
+#define BDATE   "04 July 2022"
+#define LSMDATE "04Jul22"
 
 #define RELEASE 1   /* Use ONLY in rpms */
 

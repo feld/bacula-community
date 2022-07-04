@@ -1,3 +1,21 @@
+        Changelog for version 13.0.0
+
+04Jul22
+ - Fix #9292 about file descriptor leak with the HonorNoDumpFlag fileset option
+
+30Jun22
+ - Fix #8955 About "Least Used" Storage Group not working as expected
+ - Remove limitation 64 Storage resources from the Storage Manager
+
+28Jun22
+ - Fix #9293 Incorrect debug message with NODUMP flag
+
+20Jun22
+ - Fix compilation on MacOS
+
+Bugs fixed/closed since last release:
+8955 9292 9293
+
         Changelog for version 11.3.4
 
 01Jun22

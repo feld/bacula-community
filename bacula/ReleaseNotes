@@ -1,9 +1,9 @@
-               Release Notes for Bacula 11.3
+               Release Notes for Bacula 13.0
 
-This is a beta version of the new 13.0 major release with many new features and a
-number of changes. Please take care to test this code carefully before putting
-it into production. Although the new features have been tested, they have not
-run in a production environment.
+This is a major release with many new features and a number of changes. Please
+take care to test this code carefully before putting it into
+production. Although the new features have been tested, they have not run in a
+production environment.
 
 Compatibility:
 --------------
@@ -11,13 +11,13 @@ As always, both the Director and Storage daemon(s) must be upgraded at
 the same time. Any File daemon running on the same machine as a Director
 or Storage daemon must be of the same version.
 
-Older File Daemons should be compatible with the 11.3 Director and Storage
+Older File Daemons should be compatible with the 13.0 Director and Storage
 daemons. There should be no need to upgrade older File Daemons.
 
-New Catalog format in version 11.3.0 and greater
+New Catalog format in version 13.0.0 and greater
 ------------------------------------------------
 This release of Bacula uses a new catalog format.  We provide a set of scripts
-that permit conversion from 9.x and earlier versions to the new 11.3 format
+that permit conversion from 9.x and earlier versions to the new 13.0 format
 (1024).  Normally the conversion/upgrade is automatic, though there is a big
 change from 9.x to 11.0 that takes longer than usual, the upgrade process will
 require about twice the disk space of the actual database.
@@ -37,71 +37,15 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
-Release 11.3.4 02 June 2022
+Release 13.0.0 04 July 2022
 
-11.3.4 is a beta release.
-
- - Fix #9127 About incorrect handling of the new Accurate 'o' option with 
-  multiple incremental jobs. Add support for ACL updates
- - Fix #9116: copy job missuses the client->FdStorageAddress directive
- - Fix org#2658 About segfault with bsdjson with incorrect parameters
- - Skip storage daemon detection if the information is not available in the BSR
-
- - snapshot: Adapt for BTRFS 5.17
- - snapshot: Fix snapshot delete/prune command
- - snapshot: Fix #9143 About snapshot not properly stored in the catalog
- - snapshot: Add support for new LVM 2.03.15
-
- - Fix org#2659 Install dbcheck and bsmtp in 755
- - Fix org#2662 About SQLite migration script issue
-
- - Fix query SQL provided in sample-query.sql
- - Fix compilation on s3 driver
- - Fix ./configure error with test-cpp.c
- - win32: Update to OpenSSL 1.1.1o
-
- - baculum: Fix clearing OAuth2 properties after testing API connection on security page
- - baculum: Fix directing to default page after log in for users with non-admin roles
- - baculum: Fix #2667 keep original fileset options order
- - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
- - baculum: Fix #2661 required parameter PHP error on PHP 8.0
- - baculum: Fix error calling method_exists() with non-objects on PHP 8
-
-Bugs fixed/closed since last release:
-2633 2658 2659 2661 2662 2667 9116 9125 9127 9143
-
-
-Release 11.3.3 03 May 2022
-
-11.3.3 is a beta release.
-
- - baculum: Fix clearing OAuth2 properties after testing API connection on security page
- - baculum: Fix directing to default page after log in for users with non-admin roles
- - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
- - baculum: Fix #2661 required parameter PHP error on PHP 8.0
- - baculum: Fix error calling method_exists() with non-objects on PHP 8
-
- - rpms: Fix org#2633 about log directory not created on Centos7 
- - Update updatedb scripts
-
- - Fix SQLite update script and add upgrade event
- - Fix org#2658 About segfault with bsdjson with incorrect parameters
- - Fix org#2659 Install dbcheck and bsmtp in 755
-
- - cloud: remove useless hash checks
-
-Bugs fixed/closed since last release:
-2633 2661
-
-Release 11.3.2 21 March 2022
-
-11.3.2 is a beta release.
+13.0.0 is a major release.
 
 New Features:
 -------------
  - Job 'Storage Group' support
  - Kubernetes plugin
- - New Accurate option to save only file's metadata
+ - New Accurate option to save only file's ACL and metadata
  - Windows CSV (Cluster Shared Volumes) support
  - More logging for daemon<->daemon connections in Job log output
  - Tag support on catalog objects
@@ -148,10 +92,31 @@ Main Fixes:
  - Fix about checking for Storage being used for Job restart/resume
  - Fix about incorrect variable substitution with the query command
  - Fix org#2579 About incorrect JSON generated from empty Messages resource
+ - Fix #9116: copy job missuses the client->FdStorageAddress directive
+ - Fix org#2658 About segfault with bsdjson with incorrect parameters
+ - Skip storage daemon detection if the information is not available in the BSR
  - alist: Fix for memory overflow access
- 
-Please see the New Features chapter of the manual for documentation on
-the new features.
+ - Fix org#2659 Install dbcheck and bsmtp in 755
+ - Fix org#2662 About SQLite migration script issue
+ - snapshot: Adapt for BTRFS 5.17
+ - snapshot: Fix snapshot delete/prune command
+ - snapshot: Fix #9143 About snapshot not properly stored in the catalog
+ - snapshot: Add support for new LVM 2.03.15
+ - win32: Update to OpenSSL 1.1.1q
+ - rpms: Fix org#2633 about log directory not created on Centos7 
+
+GUI:
+ - baculum: Fix clearing OAuth2 properties after testing API connection on security page
+ - baculum: Fix directing to default page after log in for users with non-admin roles
+ - baculum: Fix #2667 keep original fileset options order
+ - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
+ - baculum: Fix #2661 required parameter PHP error on PHP 8.0
+ - baculum: Fix error calling method_exists() with non-objects on PHP 8
+ - baculum: Fix clearing OAuth2 properties after testing API connection on security page
+ - baculum: Fix directing to default page after log in for users with non-admin roles
+ - baculum: Add to install wizard pre-defined b*json tool paths for FreeBSD and older Debian/Ubuntu
+ - baculum: Fix #2661 required parameter PHP error on PHP 8.0
+ - baculum: Fix error calling method_exists() with non-objects on PHP 8
 
 ----------------------------------------------------------------
 
