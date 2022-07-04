@@ -1,0 +1,70 @@
+# Bacula RPM spec file
+#
+# Copyright (C) 2000-2022 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+# Platform Build Configuration
+
+# basic defines for every build
+%define _release           @RELEASE@
+%define _version           @VERSION@
+%define k8s_version        @KUBERNETES_IMAGE_VERSION@
+%define product            bacula-kubernetes-tools
+%define _packager          Davide Franco <davide.franco@baculasystems.com>
+%define depkgs_version     @DEPKGS_VERSION@
+%define _lsm               @LSMDATE@
+
+# Installation Directory locations
+%define lib_dir        /opt/bacula/lib
+
+%define base_package_name bacula
+
+Name: %{base_package_name}-kubernetes-tools
+Version: %{_version}
+Release: %{_release}
+Group: System Environment/Daemons
+License: AGPLv3
+BuildRoot: %{_tmppath}/%{name}-root
+URL: http://www.bacula.org/
+Vendor: The Bacula Team
+Packager: %{_packager}
+Prefix: %{_prefix}
+Distribution: Bacula Kubernetes
+Summary: Bacula Kubernetes - The Network Backup Solution
+
+Source0: bacula-backup-%{k8s_version}.tar.gz
+
+%description
+Bacula - The Network Backup Solution.
+Bacula Docker Tools allows you to backup and restore Docker containers volumes
+
+%prep
+
+%install
+
+mkdir -p ${RPM_BUILD_ROOT}%{lib_dir}
+cp %{_sourcedir}/bacula-backup-%{k8s_version}.tar.gz ${RPM_BUILD_ROOT}%{lib_dir}
+
+%files
+%attr(0644, root, root) %{lib_dir}/bacula-backup-%{k8s_version}.tar.gz
+
+%post
+if which docker > /dev/null 2> /dev/null
+then
+    echo "Importing Docker image"
+    docker load -i %{lib_dir}/bacula-backup-%{k8s_version}.tar.gz
+
+    if [ ! $? -eq 0 ] ; then
+        echo "Unable to install %{lib_dir}/bacula-backup-%{k8s_version}.tar.gz Docker image automatically."
+        echo "It is required to install the docker image to backup Kubernetes external volumes."
+    fi
+else
+    echo "Unable to install %{lib_dir}/bacula-backup-%{k8s_version}.tar.gz Docker image automatically."
+    echo "It is required to install the docker image to backup Kubernetes external volumes."
+fi
+
+%postun
+
+%changelog
+* Tue Aug 27 2019 Davide Franco <davide.franco@baculasystems.com>
+- First version
