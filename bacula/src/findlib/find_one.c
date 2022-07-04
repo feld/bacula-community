@@ -231,7 +231,7 @@ static bool no_dump(JCR *jcr, FF_PKT *ff_pkt)
    int attr;
    int fd = -1;
    if (ff_pkt->flags & FO_HONOR_NODUMP) {
-      int fd = open(ff_pkt->fname, O_RDONLY);
+      fd = open(ff_pkt->fname, O_RDONLY|O_CLOEXEC);
       if (fd < 0) {
          Dmsg2(50, "Failed to open file: %s err: %d\n",
                ff_pkt->fname, errno);
