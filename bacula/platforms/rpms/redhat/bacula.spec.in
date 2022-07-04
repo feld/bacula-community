@@ -769,6 +769,7 @@ rm -f $RPM_BUILD_ROOT%{plugin_dir}/ldap-dir.so
 %endif
 
 rm -f $RPM_BUILD_ROOT%{_sbindir}/ldaptest
+rm -f $RPM_BUILD_ROOT%{script_dir}/isworm
 
 # install sqlite
 %if %{sqlite}
@@ -833,7 +834,6 @@ rm -f $RPM_BUILD_ROOT%{script_dir}/bconsole
 rm -f $RPM_BUILD_ROOT%{script_dir}/mtx-changer.conf
 rm -f $RPM_BUILD_ROOT%{_sbindir}/bacula
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/docker-fd.so
-rm -f $RPM_BUILD_ROOT%{script_dir}/isworm
 
 %endif
 

@@ -101,7 +101,7 @@ make
 
 %install
 d=`mktemp -d`
-make DESTDIR=$d -C ../bacula-enterprise-%{_version}/src/plugins/fd install-docker
+make DESTDIR=$d -C ../bacula-%{_version}/src/plugins/fd install-docker
 mv $d/opt $RPM_BUILD_ROOT/
 rm -rf $d
 
