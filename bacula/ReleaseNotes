@@ -29,8 +29,9 @@ database catalog.
 If you start from scratch, you don't need to run the update_bacula_tables
 script because the create_bacula_tables script automatically creates the new
 table format.  However, if you are using a version of Bacula older than 5.0.0
-(e.g.  3.0.3) then you need to run the update_bacula_tables script that will be
-found in the <bacula>/src/cats directory after you run the ./configure command.
+(e.g.  3.0.3) then you need to run the update_bacula_tables and the
+grant_bacula_privileges scripts that will be found in the <bacula>/src/cats
+directory after you run the ./configure command.
 
 As mentioned above, before running this script, please backup your catalog
 database, be sure to shutdown Bacula and be aware that running the script can
