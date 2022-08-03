@@ -20,10 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
-Prado::using('Application.Web.Portlets.DirectiveCheckBox');
-Prado::using('Application.Web.Portlets.DirectiveTextBox');
-Prado::using('Application.Web.Portlets.DirectiveComboBox');
+namespace Baculum\Web\Portlets;
+
+use Prado\Web\UI\TCommandEventParameter;
+use stdClass;
 
 /**
  * Runscript directive control.
@@ -35,9 +35,9 @@ Prado::using('Application.Web.Portlets.DirectiveComboBox');
 class DirectiveRunscript extends DirectiveListTemplate {
 
 	private $directive_types = array(
-		'DirectiveCheckBox',
-		'DirectiveComboBox',
-		'DirectiveTextBox'
+		'Baculum\Web\Portlets\DirectiveCheckBox',
+		'Baculum\Web\Portlets\DirectiveComboBox',
+		'Baculum\Web\Portlets\DirectiveTextBox'
 	);
 
 	public function loadConfig() {
@@ -147,7 +147,7 @@ class DirectiveRunscript extends DirectiveListTemplate {
 					// skip not changed values that don't exist in config
 					continue;
 				}
-				if ($this->directive_types[$i] === 'DirectiveCheckBox') {
+				if ($this->directive_types[$i] === 'Baculum\Web\Portlets\DirectiveCheckBox') {
 					settype($default_value, 'bool');
 				}
 				if ($directive_value === $default_value) {
@@ -169,7 +169,7 @@ class DirectiveRunscript extends DirectiveListTemplate {
 	}
 
 	public function removeRunscript($sender, $param) {
-		if ($param instanceof Prado\Web\UI\TCommandEventParameter) {
+		if ($param instanceof TCommandEventParameter) {
 			$idx = $param->getCommandName();
 			$data = $this->getDirectiveValue();
 			if (is_array($data)) {

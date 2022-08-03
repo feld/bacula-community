@@ -20,8 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.API.Class.ConsoleOutputPage');
- 
+use Baculum\API\Modules\ConsoleOutputPage;
+use Baculum\Common\Modules\Errors\BVFSError;
+
 /**
  * BVFS list directories.
  *

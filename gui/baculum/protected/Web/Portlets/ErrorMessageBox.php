@@ -20,7 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Portlets.Portlets');
+namespace Baculum\Web\Portlets;
 
 /**
  * Error message box - displays global errors and problems.

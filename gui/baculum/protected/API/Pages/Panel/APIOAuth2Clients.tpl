@@ -1,4 +1,4 @@
-<%@ MasterClass="Application.API.Layouts.Main" Theme="Baculum-v2"%>
+<%@ MasterClass="Baculum.API.Layouts.Main" Theme="Baculum-v2"%>
 <com:TContent ID="Main">
 	<header class="w3-container w3-block">
 		<h5>
@@ -128,7 +128,7 @@ var oOAuth2ClientList = {
 				<h2><%[ Add client ]%></h2>
 			</header>
 			<div class="w3-container w3-margin-left w3-margin-right w3-text-teal">
-				<com:Application.Common.Portlets.NewAuthClient
+				<com:Baculum.Common.Portlets.NewAuthClient
 					ID="NewOAuth2Client"
 					Mode="add"
 					AuthType="oauth2"
@@ -145,7 +145,7 @@ var oOAuth2ClientList = {
 				<h2><%[ Edit client ]%></h2>
 			</header>
 			<div class="w3-container w3-margin-left w3-margin-right w3-text-teal">
-				<com:Application.Common.Portlets.NewAuthClient
+				<com:Baculum.Common.Portlets.NewAuthClient
 					ID="EditOAuth2Client"
 					Mode="edit"
 					AuthType="oauth2"

@@ -20,6 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\BaculumAPIServer;
+
 /**
  * How many slots has autochanger.
  *

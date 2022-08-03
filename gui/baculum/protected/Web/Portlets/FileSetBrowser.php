@@ -20,8 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Portlets.Portlets');
+use Prado\Web\UI\ActiveControls\TActiveDropDownList;
+use Baculum\Web\Portlets\Portlets;
 
 /**
  * FileSet browser control.
@@ -38,7 +38,6 @@ class FileSetBrowser extends Portlets {
 	/**
 	 * Load client list.
 	 *
-	 * @return none
 	 */
 	public function loadClients($sender, $param) {
 		$client_list = array();
@@ -58,7 +57,6 @@ class FileSetBrowser extends Portlets {
 	 *
 	 * @param TActiveDropDownList $sender, sender object
 	 * @param TCommandParameter $param parameters object
-	 * @return none
 	 */
 	public function selectClient($sender, $param) {
 		$client_id = $this->Client->getSelectedValue();

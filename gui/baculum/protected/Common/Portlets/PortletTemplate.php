@@ -20,6 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
  
+namespace Baculum\Common\Portlets;
+
+use Prado\Web\UI\TTemplateControl;
+
 /**
  * Portlet template control.
  *

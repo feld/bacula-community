@@ -20,10 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveCheckBox');
-Prado::using('Application.Common.Class.Params');
-Prado::using('Application.Web.Portlets.DirectiveTemplate');
+use Prado\TPropertyValue;
+use Baculum\Common\Modules\Params;
+use Baculum\Web\Portlets\DirectiveTemplate;
 
 /**
  * Months of the year directive control.

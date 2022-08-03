@@ -20,9 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Class.BaculumWebPage'); 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.WebControls.TWizard');
+use Baculum\Web\Modules\BaculumWebPage;
+use Prado\Web\UI\WebControls\TWizard;
+use Prado\Web\UI\WebControls\TWizardNavigationEventParameter;
 
 /**
  * New backup job wizard page.
@@ -85,7 +85,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	 *
 	 * @param TWizard $sender sender object
 	 * @param TWizardNavigationEventParameter $param sender parameters
-	 * @return none
 	 */
 	public function wizardPrev($sender, $param) {
 	}
@@ -95,7 +94,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	 *
 	 * @param TWizard $sender sender object
 	 * @param TWizardNavigationEventParameter $param sender parameters
-	 * @return none
 	 */
 	public function wizardNext($sender, $param) {
 	}
@@ -104,7 +102,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load JobDefs (step 1).
 	 *
-	 * @return none
 	 */
 	public function loadJobDefs() {
 		$jobdefs_list = array();
@@ -122,7 +119,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Setup and remember selected JobDefs values to use in next wizard steps.
 	 *
-	 * @return none
 	 */
 	public function setupJobDefs() {
 		$directive_value = $this->JobDefs->getDirectiveValue();
@@ -153,7 +149,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load client list (step 2).
 	 *
-	 * @return none
 	 */
 	public function loadClients() {
 		$client_list = array();
@@ -173,7 +168,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load fileset list (step 2).
 	 *
-	 * @return none
 	 */
 	public function loadFilesets() {
 		$this->loadFilesetList(null, null);
@@ -197,7 +191,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load new fileset form.
 	 *
-	 * @return none
 	 */
 	public function loadNewFilesetForm() {
 		if ($this->IsCallBack) {
@@ -213,7 +206,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load new pool form.
 	 *
-	 * @return none
 	 */
 	public function loadNewPoolForm() {
 		if ($this->IsCallBack) {
@@ -229,7 +221,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load new schedule form.
 	 *
-	 * @return none
 	 */
 	public function loadNewScheduleForm() {
 		if ($this->IsCallBack) {
@@ -245,7 +236,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load storage list (step 2).
 	 *
-	 * @return none
 	 */
 	public function loadStorages() {
 		$storage_list = array();
@@ -277,7 +267,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load pool list (step 2).
 	 *
-	 * @return none
 	 */
 	public function loadPools() {
 		$pool_list = $this->loadPoolList(null, null);
@@ -359,7 +348,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load job levels.
 	 *
-	 * @return none
 	 */
 	public function loadLevels() {
 		// so far backup job levels only
@@ -376,7 +364,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load messages.
 	 *
-	 * @return none
 	 */
 	public function loadMessages() {
 		$message_list = array();
@@ -396,7 +383,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Load schedule.
 	 *
-	 * @return none
 	 */
 	public function loadSchedules() {
 		$this->loadScheduleList(null, null);
@@ -465,7 +451,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	/**
 	 * Cancel wizard.
 	 *
-	 * @return none
 	 */
 	public function wizardStop($sender, $param) {
 		$this->goToDefaultPage();
@@ -475,7 +460,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	 * Set selected JobDefs values.
 	 *
 	 * @param $jobdefs selected JobDefs values
-	 * @return none
 	 */
 	public function setJobDefs($jobdefs) {
 		$this->setViewState(self::JOBDEFS, $jobdefs);
@@ -494,7 +478,6 @@ class NewBackupJobWizard extends BaculumWebPage {
 	 * Set previous wizard step.
 	 *
 	 * @param integer $step previous step number
-	 * @return none
 	 */
 	public function setPrevStep($step) {
 		$step = intval($step);

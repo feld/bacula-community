@@ -20,8 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
  
-Prado::using('Application.API.Class.ConsoleOutputPage');
-Prado::using('Application.API.Class.ConsoleOutputShowPage');
+use Baculum\API\Modules\ConsoleOutputPage;
+use Baculum\API\Modules\ConsoleOutputShowPage;
+use Baculum\Common\Modules\Errors\StorageError;
 
 /**
  * Show storage command endpoint.

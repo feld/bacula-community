@@ -19,7 +19,9 @@
  *
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
- 
+
+use Baculum\API\Modules\BaculumAPIServer;
+
 /**
  * Console command endpoint.
  *

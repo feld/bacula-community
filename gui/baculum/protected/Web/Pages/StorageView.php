@@ -20,14 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActivePanel');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.ActiveControls.TActiveRepeater');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Common.Class.Params');
-Prado::using('Application.Common.Class.Errors');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Common\Modules\Errors\DeviceError;
+use Baculum\Common\Modules\Params;
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Storage view page.
@@ -301,6 +296,7 @@ class StorageView extends BaculumWebPage {
 
 	private function logActionError($result) {
 		$emsg = sprintf('Error %s: %s', $result->error, $result->output);
+		$messages_log = $this->getModule('messages_log');
 		$messages_log->append($result->output);
 		$this->getCallbackClient()->callClientFunction(
 			'oStorageActions.log',
@@ -1017,7 +1013,6 @@ class StorageView extends BaculumWebPage {
 	/**
 	 * Set storage storageid.
 	 *
-	 * @return none;
 	 */
 	public function setStorageId($storageid) {
 		$storageid = intval($storageid);
@@ -1036,7 +1031,6 @@ class StorageView extends BaculumWebPage {
 	/**
 	 * Set storage name.
 	 *
-	 * @return none;
 	 */
 	public function setStorageName($storage_name) {
 		$this->setViewState(self::STORAGE_NAME, $storage_name);
@@ -1054,7 +1048,6 @@ class StorageView extends BaculumWebPage {
 	/**
 	 * Set device name.
 	 *
-	 * @return none;
 	 */
 	public function setDeviceName($device_name) {
 		$this->setViewState(self::DEVICE_NAME, $device_name);
@@ -1081,7 +1074,6 @@ class StorageView extends BaculumWebPage {
 	/**
 	 * Set autochanger value for storage
 	 *
-	 * @return none;
 	 */
 	public function setIsAutochanger($is_autochanger) {
 		settype($is_autochanger, 'bool');
@@ -1091,7 +1083,6 @@ class StorageView extends BaculumWebPage {
 	/**
 	 * Set storage address.
 	 *
-	 * @return none;
 	 */
 	public function setStorageAddress($address) {
 		$this->setViewState(self::STORAGE_ADDRESS, $address);

@@ -20,27 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TActivePanel');
-Prado::using('System.Web.UI.ActiveControls.TActiveRepeater');
-Prado::using('System.Web.UI.WebControls.TItemDataRenderer');
-Prado::using('System.Web.UI.WebControls.THeader3');
-Prado::using('System.Web.UI.WebControls.TLiteral');
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
-Prado::using('Application.Web.Portlets.DirectiveCheckBox');
-Prado::using('Application.Web.Portlets.DirectiveComboBox');
-Prado::using('Application.Web.Portlets.DirectiveInteger');
-Prado::using('Application.Web.Portlets.DirectiveListBox');
-Prado::using('Application.Web.Portlets.DirectivePassword');
-Prado::using('Application.Web.Portlets.DirectiveSize');
-Prado::using('Application.Web.Portlets.DirectiveSpeed');
-Prado::using('Application.Web.Portlets.DirectiveTextBox');
-Prado::using('Application.Web.Portlets.DirectiveMultiComboBox');
-Prado::using('Application.Web.Portlets.DirectiveMultiTextBox');
-Prado::using('Application.Web.Portlets.DirectiveTimePeriod');
-Prado::using('Application.Web.Portlets.DirectiveRunscript');
-Prado::using('Application.Web.Portlets.DirectiveMessages');
+namespace Baculum\Web\Portlets;
+
+use Prado\Prado;
+use Prado\Web\UI\WebControls\TItemDataRenderer;
 
 /**
  * Directive renderer control.
@@ -166,7 +149,7 @@ class DirectiveRenderer extends TItemDataRenderer {
 	}
 
 	private function getField($field_type) {
-		return 'Application.Web.Portlets.Directive' . $field_type;
+		return 'Baculum.Web.Portlets.Directive' . $field_type;
 	}
 }
 ?>

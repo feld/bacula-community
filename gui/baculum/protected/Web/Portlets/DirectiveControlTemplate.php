@@ -20,7 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.TTemplateControl');
+namespace Baculum\Web\Portlets;
+
+use Prado\Web\UI\TTemplateControl;
 
 /**
  * Abstraction to directive control template.

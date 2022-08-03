@@ -20,10 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Job view page.
@@ -56,7 +53,6 @@ class JobView extends BaculumWebPage {
 	/**
 	 * Set job name to run job again.
 	 *
-	 * @return none;
 	 */
 	public function setJobName($job_name) {
 		$this->setViewState(self::JOB_NAME, $job_name);
@@ -74,7 +70,6 @@ class JobView extends BaculumWebPage {
 	/**
 	 * Set job information from show job output.
 	 *
-	 * @return none
 	 */
 	public function setJobInfo($job_name) {
 		$job_show = $this->getModule('api')->get(
@@ -103,7 +98,6 @@ class JobView extends BaculumWebPage {
 	 *
 	 * @param BaculaConfigDirectives $sender sender object
 	 * @param mixed $param save event parameter
-	 * @return none
 	 */
 	public function reloadJobInfo($sender, $param) {
 		if ($this->Request->contains('job')) {

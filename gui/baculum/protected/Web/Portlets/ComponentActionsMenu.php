@@ -20,8 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
+use Prado\TPropertyValue;
+use Prado\Web\UI\ActiveControls\TActiveLinkButton;
+use Baculum\Web\Portlets\DirectiveListTemplate;
+use Prado\Web\UI\TCommandEventParameter;
 
 /**
  * Component actions control responsible for start,
@@ -45,7 +47,6 @@ class ComponentActionsMenu extends DirectiveListTemplate {
 	 *
 	 * @param TActiveLinkButton $sender sender object
 	 * @param TCommandEventParameter $param command parameter
-	 * @return none
 	 */
 	public function componentAction($sender, $param) {
 		$action = $param->getCommandParameter();

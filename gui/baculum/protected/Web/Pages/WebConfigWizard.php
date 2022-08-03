@@ -20,10 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Class.BaculumWebPage'); 
-Prado::using('Application.Web.Class.HostConfig');
-Prado::using('Application.Web.Class.BasicWebUserConfig'); 
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
+use Baculum\Common\Modules\Logging;
+use Baculum\Web\Modules\BaculumWebPage;
+use Baculum\Web\Modules\HostConfig;
+use Baculum\Web\Modules\WebUserRoles;
 
 /**
  * Web config wizard page.

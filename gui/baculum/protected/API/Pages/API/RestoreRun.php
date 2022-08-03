@@ -20,8 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.API.Class.APIDbModule');
- 
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\Common\Modules\Errors\JobError;
+
 /**
  * Run restore command endpoint.
  *

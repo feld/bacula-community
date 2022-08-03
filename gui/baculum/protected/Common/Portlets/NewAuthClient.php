@@ -20,15 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveHiddenField');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.TTemplateControl');
-Prado::using('Application.Common.Class.OAuth2');
-Prado::using('Application.Common.Class.BasicUserConfig');
-Prado::using('Application.Common.Portlets.PortletTemplate');
+use Prado\TPropertyValue;
+use Prado\Web\UI\TCommandEventParameter;
+use Baculum\Common\Portlets\PortletTemplate;
 
 /**
  * New auth client control.

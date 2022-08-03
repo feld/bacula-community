@@ -20,10 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Device view page.
@@ -68,7 +65,6 @@ class DeviceView extends BaculumWebPage {
 	/**
 	 * Set storage storageid.
 	 *
-	 * @return none;
 	 */
 	public function setStorageId($storageid) {
 		$storageid = intval($storageid);
@@ -87,7 +83,6 @@ class DeviceView extends BaculumWebPage {
 	/**
 	 * Set storage name.
 	 *
-	 * @return none;
 	 */
 	public function setStorageName($storage_name) {
 		$this->setViewState(self::STORAGE_NAME, $storage_name);
@@ -106,7 +101,6 @@ class DeviceView extends BaculumWebPage {
 	/**
 	 * Set device name.
 	 *
-	 * @return none;
 	 */
 	public function setDeviceName($device_name) {
 		$this->setViewState(self::DEVICE_NAME, $device_name);

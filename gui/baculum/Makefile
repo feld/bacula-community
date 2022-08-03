@@ -37,7 +37,7 @@ examples = examples
 configcachedir = $(datadir)/runtime
 samplesdir = $(examples)/$(SAMPLETYPE)
 
-webdatadirsrc = $(datadir)/$(webdir)/Class \
+webdatadirsrc = $(datadir)/$(webdir)/Modules \
 	$(datadir)/$(webdir)/Config \
 	$(datadir)/$(webdir)/JavaScript \
 	$(datadir)/$(webdir)/Data \
@@ -46,14 +46,14 @@ webdatadirsrc = $(datadir)/$(webdir)/Class \
 	$(datadir)/$(webdir)/Pages \
 	$(datadir)/$(webdir)/Portlets
 
-apidatadirsrc = $(datadir)/$(apidir)/Class \
+apidatadirsrc = $(datadir)/$(apidir)/Modules \
 	$(datadir)/$(apidir)/Config \
 	$(datadir)/$(apidir)/Layouts \
 	$(datadir)/$(apidir)/Logs \
 	$(datadir)/$(apidir)/Pages \
 	$(datadir)/$(apidir)/Portlets
 
-commondatadirsrc = $(datadir)/$(commondir)/Class \
+commondatadirsrc = $(datadir)/$(commondir)/Modules \
 	$(datadir)/$(commondir)/JavaScript \
 	$(datadir)/$(commondir)/Pages \
 	$(datadir)/$(commondir)/Portlets

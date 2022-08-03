@@ -20,9 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.Ui.ActiveControls.TActiveRepeater');
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
-Prado::using('Application.Web.Portlets.DirectiveCheckBox');
+namespace Baculum\Web\Portlets;
 
 /**
  * Message types control.
@@ -39,7 +37,7 @@ class MessageTypes extends DirectiveListTemplate {
 	}
 
 	public function getDirectiveValues() {
-		$type_controls = $this->RepeaterMessageTypes->findControlsByType('DirectiveCheckBox');
+		$type_controls = $this->RepeaterMessageTypes->findControlsByType('Baculum\Web\Portlets\DirectiveCheckBox');
 		$is_all = false;
 		$types = array();
 		for ($i = 0; $i < count($type_controls); $i++) {
@@ -63,7 +61,7 @@ class MessageTypes extends DirectiveListTemplate {
 			// skip parent repeater items
 			return;
 		}
-		$control = $this->getChildControl($param->Item, 'DirectiveCheckBox');
+		$control = $this->getChildControl($param->Item, 'Baculum\Web\Portlets\DirectiveCheckBox');
 		if (is_object($control)) {
 			$control->setHost($param->Item->Data['host']);
 			$control->setComponentType($param->Item->Data['component_type']);

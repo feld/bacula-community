@@ -20,8 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.WebControls.TDataBoundControl');
-Prado::using('Application.Common.Portlets.BSimpleRepeaterItem');
+namespace Baculum\Common\Portlets;
+
+use Prado\Web\UI\ITemplate;
+use Prado\Web\UI\WebControls\TDataBoundControl;
 
 /**
  * Baculum simple repeater control.
@@ -50,7 +52,6 @@ class BSimpleRepeater extends TDataBoundControl {
 	 * Set template for items.
 	 *
 	 * @param ITemplate $tpl template
-	 * @return none
 	 */
 	public function setItemTemplate($tpl) {
 		if ($tpl instanceof \Prado\Web\UI\ITemplate) {
@@ -62,7 +63,6 @@ class BSimpleRepeater extends TDataBoundControl {
 	 * Data binding.
 	 *
 	 * @param $data data from data source
-	 * @return none
 	 */
 	protected function performDataBinding($data) {
 		for ($i = 0; $i < count($data); $i++) {

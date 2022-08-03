@@ -20,6 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\Common\Modules\Errors\JobError;
+
 /**
  * Job files endpoint.
  * It finds job by file criteria.

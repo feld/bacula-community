@@ -20,8 +20,11 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveControlAdapter');
-Prado::using('Application.Web.Portlets.ConfigListTemplate');
+namespace Baculum\Web\Portlets;
+
+use Prado\Web\UI\ActiveControls\IActiveControl;
+use Prado\Web\UI\ActiveControls\ICallbackEventHandler;
+use Prado\Web\UI\ActiveControls\TActiveControlAdapter;
 
 /**
  * Component list template control.

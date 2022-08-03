@@ -20,25 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.TCommandEventParameter');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TActivePanel');
-Prado::using('System.Web.UI.ActiveControls.TActiveRepeater');
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
-Prado::using('Application.Web.Portlets.DirectiveCheckBox');
-Prado::using('Application.Web.Portlets.DirectiveComboBox');
-Prado::using('Application.Web.Portlets.DirectiveInteger');
-Prado::using('Application.Web.Portlets.DirectiveListBox');
-Prado::using('Application.Web.Portlets.DirectivePassword');
-Prado::using('Application.Web.Portlets.DirectiveSize');
-Prado::using('Application.Web.Portlets.DirectiveSpeed');
-Prado::using('Application.Web.Portlets.DirectiveTextBox');
-Prado::using('Application.Web.Portlets.DirectiveMultiComboBox');
-Prado::using('Application.Web.Portlets.DirectiveMultiTextBox');
-Prado::using('Application.Web.Portlets.DirectiveTimePeriod');
-Prado::using('Application.Web.Portlets.DirectiveRunscript');
-Prado::using('Application.Web.Portlets.DirectiveMessages');
+use Baculum\Common\Modules\Logging;
+use Prado\TPropertyValue;
+use Prado\Web\UI\TCommandEventParameter;
+use Baculum\Web\Portlets\DirectiveListTemplate;
 
 /**
  * Bacula config directives control.
@@ -61,24 +46,24 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	public $resource_names = array();
 
 	private $directive_types = array(
-		'DirectiveCheckBox',
-		'DirectiveComboBox',
-		'DirectiveInteger',
-		'DirectiveListBox',
-		'DirectivePassword',
-		'DirectiveTextBox',
-		'DirectiveSize',
-		'DirectiveSpeed',
-		'DirectiveTimePeriod'
+		'Baculum\Web\Portlets\DirectiveCheckBox',
+		'Baculum\Web\Portlets\DirectiveComboBox',
+		'Baculum\Web\Portlets\DirectiveInteger',
+		'Baculum\Web\Portlets\DirectiveListBox',
+		'Baculum\Web\Portlets\DirectivePassword',
+		'Baculum\Web\Portlets\DirectiveTextBox',
+		'Baculum\Web\Portlets\DirectiveSize',
+		'Baculum\Web\Portlets\DirectiveSpeed',
+		'Baculum\Web\Portlets\DirectiveTimePeriod'
 	);
 
 	private $directive_list_types = array(
-		'DirectiveFileSet',
-		'DirectiveSchedule',
-		'DirectiveMessages',
-		'DirectiveRunscript',
-		'DirectiveMultiComboBox',
-		'DirectiveMultiTextBox'
+		'Baculum\Web\Portlets\DirectiveFileSet',
+		'Baculum\Web\Portlets\DirectiveSchedule',
+		'Baculum\Web\Portlets\DirectiveMessages',
+		'Baculum\Web\Portlets\DirectiveRunscript',
+		'Baculum\Web\Portlets\DirectiveMultiComboBox',
+		'Baculum\Web\Portlets\DirectiveMultiTextBox'
 	);
 
 	private $field_multple_values = array(
@@ -307,9 +292,9 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 					// skip not changed values that don't exist in config
 					continue;
 				}
-				if ($this->directive_types[$i] === 'DirectiveCheckBox') {
+				if ($this->directive_types[$i] === 'Baculum\Web\Portlets\DirectiveCheckBox') {
 					settype($default_value, 'bool');
-				} elseif ($this->directive_types[$i] === 'DirectiveInteger') {
+				} elseif ($this->directive_types[$i] === 'Baculum\Web\Portlets\DirectiveInteger') {
 					settype($directive_value, 'int');
 				}
 				if ($directive_value === $default_value && $in_config === false) {
@@ -338,21 +323,21 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 					$directives[$directive_name] = array();
 				}
 				if (is_array($directive_value)) {
-					if ($this->directive_list_types[$i] === 'DirectiveMessages') {
+					if ($this->directive_list_types[$i] === 'Baculum\Web\Portlets\DirectiveMessages') {
 						$directives = array_merge($directives, $directive_value);
-					} elseif ($this->directive_list_types[$i] === 'DirectiveRunscript') {
+					} elseif ($this->directive_list_types[$i] === 'Baculum\Web\Portlets\DirectiveRunscript') {
 						if (!isset($directives[$directive_name])) {
 							$directives[$directive_name] = array();
 						}
 						$directives[$directive_name] = array_merge($directives[$directive_name], $directive_value[$directive_name]);
-					} elseif ($this->directive_list_types[$i] === 'DirectiveFileSet') {
+					} elseif ($this->directive_list_types[$i] === 'Baculum\Web\Portlets\DirectiveFileSet') {
 						if (key_exists('Exclude', $directive_value) && count($directive_value['Exclude']) > 0) {
 							$directives['Exclude'] = array($directive_value['Exclude']);
 						}
 						$directives[$directive_name] = $directive_value[$directive_name];
-					} elseif ($this->directive_list_types[$i] === 'DirectiveSchedule') {
+					} elseif ($this->directive_list_types[$i] === 'Baculum\Web\Portlets\DirectiveSchedule') {
 						$directives[$directive_name] = $directive_value[$directive_name];
-					} elseif ($this->directive_list_types[$i] === 'DirectiveMultiTextBox' || $this->directive_list_types[$i] === 'DirectiveMultiComboBox') {
+					} elseif ($this->directive_list_types[$i] === 'Baculum\Web\Portlets\DirectiveMultiTextBox' || $this->directive_list_types[$i] === 'Baculum\Web\Portlets\DirectiveMultiComboBox') {
 						if (key_exists($directive_name, $directives)) {
 							$directive_value = array_merge($directives[$directive_name], $directive_value);
 						}
@@ -441,7 +426,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	 *
 	 * @return object $sender sender instance
 	 * @return mixed $param additional parameters
-	 * @return none
 	 */
 	public function removeResource($sender, $param) {
 		if (!$this->getPage()->IsCallback) {
@@ -499,7 +483,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	 *
 	 * @param string $resource_type removed resource type
 	 * @param string $resource_name removed resource name
-	 * @return none
 	 */
 	private function showRemovedResourceInfo($resource_type, $resource_name) {
 		$msg = Prado::localize('Resource %s "%s" removed successfully.');
@@ -517,7 +500,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	 * Show removed resource error message.
 	 *
 	 * @param string $error_message error message
-	 * @return none
 	 */
 	private function showRemovedResourceError($error_message) {
 		$this->RemoveResourceError->Text = $error_message;
@@ -531,7 +513,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	 * @param array $deps list dependencies for the removing resource
 	 * @param string $resource_type resource type of the removing resource
 	 * @param string $resource_name resource name of the removing resource
-	 * @return none
 	 */
 	private function showDependenciesError($deps, $resource_type, $resource_name) {
 		$emsg = Prado::localize('Resource %s "%s" is used in the following resources:');
@@ -561,7 +542,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	 * @param array $config entire config
 	 * @param string $resource_type resource type to remove
 	 * @param string $resource_name resource name to remove
-	 * @return none
 	 */
 	private function removeResourceFromConfig(&$config, $resource_type, $resource_name) {
 		for ($i = 0; $i < count($config); $i++) {
@@ -647,7 +627,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	 * @param string $resource_type resource type to rename
 	 * @param string $resource_name resource name to rename
 	 * @param string $resource_name_new new resource name to set
-	 * @return none
 	 */
 	private function renameResourceInConfig(&$config, $deps, $resource_type, $resource_name, $resource_name_new) {
 		for ($i = 0; $i < count($config); $i++) {
@@ -669,7 +648,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * Set if remove button should be available.
 	 *
-	 * @return none;
 	 */
 	public function setShowRemoveButton($show) {
 		$show = TPropertyValue::ensureBoolean($show);
@@ -688,7 +666,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * Set if cancel button should be available.
 	 *
-	 * @return none;
 	 */
 	public function setShowCancelButton($show) {
 		$show = TPropertyValue::ensureBoolean($show);
@@ -707,7 +684,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * Set if buttons should be flexible and available at the bottom of the page.
 	 *
-	 * @return none
 	 */
 	public function setShowBottomButtons($show) {
 		$show = TPropertyValue::ensureBoolean($show);
@@ -726,7 +702,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * On save event fired when resource is saved.
 	 *
-	 * @return none
 	 */
 	public function onSave($param) {
 		$this->raiseEvent('OnSave', $this, $param);
@@ -735,7 +710,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * On rename event fired when resource is renamed.
 	 *
-	 * @return none
 	 */
 	public function onRename($param) {
 		$this->raiseEvent('OnRename', $this, $param);
@@ -745,7 +719,6 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * Set if name field should be disabled.
 	 *
-	 * @return none;
 	 */
 	public function setDisableRename($rename) {
 		$rename = TPropertyValue::ensureBoolean($rename);

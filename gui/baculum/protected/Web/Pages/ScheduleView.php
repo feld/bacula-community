@@ -20,7 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage; 
 
 /**
  * Schedule view page.
@@ -61,7 +61,6 @@ class ScheduleView extends BaculumWebPage {
 	/**
 	 * Set schedule name.
 	 *
-	 * @return none;
 	 */
 	public function setScheduleName($schedule_name) {
 		$this->setViewState(self::SCHEDULE_NAME, $schedule_name);

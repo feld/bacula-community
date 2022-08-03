@@ -20,7 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage;
+use Prado\Web\UI\ActiveControls\TCallback;
 
 /**
  * Volume list page.
@@ -58,7 +59,6 @@ class VolumeList extends BaculumWebPage {
 	 *
 	 * @param TCallback $sender callback object
 	 * @param TCallbackEventPrameter $param event parameter
-	 * @return none
 	 */
 	public function pruneVolumes($sender, $param) {
 		$result = [];
@@ -83,7 +83,6 @@ class VolumeList extends BaculumWebPage {
 	 *
 	 * @param TCallback $sender callback object
 	 * @param TCallbackEventPrameter $param event parameter
-	 * @return none
 	 */
 	public function purgeVolumes($sender, $param) {
 		$result = [];
@@ -108,7 +107,6 @@ class VolumeList extends BaculumWebPage {
 	 *
 	 * @param TCallback $sender callback object
 	 * @param TCallbackEventPrameter $param event parameter
-	 * @return none
 	 */
 	public function deleteVolumes($sender, $param) {
 		$result = [];
@@ -133,7 +131,6 @@ class VolumeList extends BaculumWebPage {
 	 *
 	 * @param TCallback $sender callback object
 	 * @param TCallbackEventPrameter $param event parameter
-	 * @return none
 	 */
 	public function updateVolumes($sender, $param) {
 		$volumes = $this->getVolumes();

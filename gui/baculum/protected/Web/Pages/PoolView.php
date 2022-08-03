@@ -20,9 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Pool view page.
@@ -86,7 +84,6 @@ class PoolView extends BaculumWebPage {
 	/**
 	 * Set pool poolid.
 	 *
-	 * @return none;
 	 */
 	public function setPoolId($poolid) {
 		$poolid = intval($poolid);
@@ -105,7 +102,6 @@ class PoolView extends BaculumWebPage {
 	/**
 	 * Set pool name.
 	 *
-	 * @return none;
 	 */
 	public function setPoolName($pool_name) {
 		$this->setViewState(self::POOL_NAME, $pool_name);

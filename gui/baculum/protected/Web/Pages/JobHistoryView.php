@@ -20,11 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('System.Web.UI.JuiControls.TJuiProgressbar');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Prado\TPropertyValue;
+use Prado\Web\UI\ActiveControls\TActiveLabel;
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Job history view page.
@@ -163,7 +161,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set jobid to run job again.
 	 *
-	 * @return none
 	 */
 	public function setJobId($jobid) {
 		$jobid = intval($jobid);
@@ -182,7 +179,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set job clientid
 	 *
-	 * @return none
 	 */
 	public function setClientId($clientid) {
 		$clientid = intval($clientid);
@@ -201,7 +197,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set job name to run job again.
 	 *
-	 * @return none;
 	 */
 	public function setJobName($job_name) {
 		$this->setViewState(self::JOB_NAME, $job_name);
@@ -219,7 +214,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set job uname.
 	 *
-	 * @return none;
 	 */
 	public function setJobUname($job_uname) {
 		$this->setViewState(self::JOB_UNAME, $job_uname);
@@ -237,7 +231,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set job type.
 	 *
-	 * @return none;
 	 */
 	public function setJobType($job_type) {
 		$this->setViewState(self::JOB_TYPE, $job_type);
@@ -255,7 +248,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set job level.
 	 *
-	 * @return none;
 	 */
 	public function setJobLevel($job_level) {
 		$this->setViewState(self::JOB_LEVEL, $job_level);
@@ -273,7 +265,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set job information from show job output.
 	 *
-	 * @return none
 	 */
 	public function setJobInfo($job_name) {
 		$job_show = $this->getModule('api')->get(
@@ -300,7 +291,6 @@ class JobHistoryView extends BaculumWebPage {
 	/**
 	 * Set all storage information.
 	 *
-	 * @return none
 	 */
 	public function setStorageInfo() {
 		$storages_show = $this->getModule('api')->get(
@@ -328,7 +318,6 @@ class JobHistoryView extends BaculumWebPage {
 	 *
 	 * @param BaculaConfigDirectives $sender sender object
 	 * @param mixed $param save event parameter
-	 * @return none
 	 */
 	public function reloadJobInfo($sender, $param) {
 		$job_name = $this->getJobName();

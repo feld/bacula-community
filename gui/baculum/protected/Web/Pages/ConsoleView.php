@@ -20,8 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Class.BaculumWebPage');
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Console view page.

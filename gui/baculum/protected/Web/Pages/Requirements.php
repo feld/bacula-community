@@ -20,7 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Common.Class.GeneralRequirements');
+namespace Baculum\Web\Pages;
+
+use Baculum\Common\Modules\GeneralRequirements;
 
 /**
  * Web part requirements class.
@@ -58,7 +60,6 @@ class Requirements extends GeneralRequirements {
 	/**
 	 * Validate all Web environment depenencies.
 	 *
-	 * @return none
 	 */
 	public function validateEnvironment() {
 		parent::validateExtensions($this->req_exts);

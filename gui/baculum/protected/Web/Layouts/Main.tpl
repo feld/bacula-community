@@ -26,7 +26,7 @@
 			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/datatables.net-responsive-dt/css/responsive.dataTables.min.css %> />
 			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/datatables.net-buttons-dt/css/buttons.dataTables.min.css %> />
 			<com:BStyleSheet StyleSheetUrl=<%~ ../../../themes/Baculum-v2/css/baculum.css %> />
-			<com:Application.Common.Portlets.TableDefaults />
+			<com:Baculum.Common.Portlets.TableDefaults />
 			<!-- Top container -->
 			<div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
 				<button type="button" class="w3-bar-item w3-button w3-hover-none w3-hover-text-light-grey" onclick="W3SideBar.open();"><i class="fa fa-bars"></i>  Menu</button>
@@ -34,7 +34,7 @@
 					<img src="<%=$this->getPage()->getTheme()->getBaseUrl()%>/logo.png" alt="" />
 				</span>
 			</div>
-			<com:Application.Web.Portlets.MainSideBar />
+			<com:Baculum.Web.Portlets.MainSideBar />
 			<!-- !PAGE CONTENT! -->
 			<div class="w3-main page_main_el" id="page_main" style="margin-left: 250px; margin-top: 43px;">
 				<span class="w3-tag w3-large w3-purple w3-right w3-padding-small w3-margin-top w3-margin-right">
@@ -64,9 +64,9 @@
 			</div>
 		</com:TForm>
 		<div id="small" class="w3-hide-large"></div>
-<com:Application.Web.Portlets.ErrorMessageBox />
-<com:Application.Web.Portlets.ResourceMonitor />
-<com:Application.Web.Portlets.MsgEnvelope Visible="<%=($this->Application->getModule('web_config')->isMessagesLogEnabled() && $this->User->isInRole(WebUserRoles::ADMIN))%>" />
+<com:Baculum.Web.Portlets.ErrorMessageBox />
+<com:Baculum.Web.Portlets.ResourceMonitor />
+<com:Baculum.Web.Portlets.MsgEnvelope Visible="<%=($this->Application->getModule('web_config')->isMessagesLogEnabled() && $this->User->isInRole(WebUserRoles::ADMIN))%>" />
 <script>
 var is_small = $('#small').is(':visible');
 $(function() {

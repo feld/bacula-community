@@ -20,10 +20,11 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Common.Class.AuthBasic');
-Prado::using('Application.Common.Class.AuthOAuth2');
-Prado::using('Application.API.Class.BaculumAPIPage');
-Prado::using('Application.API.Class.BAPIException');
+use Baculum\API\Modules\Database;
+use Baculum\Common\Modules\AuthBasic;
+use Baculum\Common\Modules\AuthOAuth2;
+use Baculum\API\Modules\BaculumAPIPage;
+use Baculum\API\Modules\BAPIException;
 
 /**
  * API settings page.

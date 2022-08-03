@@ -20,15 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('System.Web.UI.ActiveControls.TActivePanel');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.ActiveControls.TActiveCustomValidator');
-Prado::using('System.Web.UI.ActiveControls.TActiveCheckBox');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Web.Portlets.Portlets');
+namespace Baculum\Web\Portlets;
+
+use Prado\Prado;
+use stdClass;
 
 /**
  * Run job control.
@@ -206,7 +201,10 @@ class RunJob extends Portlets {
 			$jobshow = $this->getModule('api')->get(
 				array('jobs', $jobdata->jobid, 'show'), null, true, self::USE_CACHE
 			)->output;
-			$jobdata->storage = $this->getResourceName('storage', $jobshow);
+			$jsh = $this->getModule('job_info')->parseResourceDirectives($jobshow);
+			$storage = key_exists('storage', $jsh) ? $jsh['storage']['name'] : null;
+			$autochanger = key_exists('autochanger', $jsh) ? $jsh['autochanger']['name'] : null;
+			$jobdata->storage = $storage ?: $autochanger;
 		}
 		$storage_list = array();
 		$storages = $this->getModule('api')->get(array('storages'), null, true, self::USE_CACHE)->output;
@@ -242,7 +240,6 @@ class RunJob extends Portlets {
 	/**
 	 * set jobid to run job again.
 	 *
-	 * @return none;
 	 */
 	public function setJobId($jobid) {
 		$jobid = intval($jobid);
@@ -261,7 +258,6 @@ class RunJob extends Portlets {
 	/**
 	 * set job name to run job again.
 	 *
-	 * @return none;
 	 */
 	public function setJobName($job_name) {
 		$this->setViewState(self::JOB_NAME, $job_name);

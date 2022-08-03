@@ -20,6 +20,11 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\APIServer;
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\Common\Modules\Errors\GenericError;
+use Baculum\Common\Modules\Errors\JobError;
+
 /**
  * List files from 'list files jobid=xx' bconsole command.
  *

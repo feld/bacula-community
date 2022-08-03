@@ -20,12 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveCheckBox');
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActivePanel');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('Application.Web.Portlets.Portlets');
+use Prado\TPropertyValue;
+use Baculum\Web\Portlets\Portlets;
 
 /**
  * Label volume control.

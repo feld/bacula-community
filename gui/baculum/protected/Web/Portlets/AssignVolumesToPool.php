@@ -20,7 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Portlets.Portlets');
+namespace Baculum\Web\Portlets;
+
+use Prado\Prado;
 
 /**
  * Assign volumes to pool control.
@@ -36,7 +38,6 @@ class AssignVolumesToPool extends Portlets {
 	/**
 	 * Set pool identifier.
 	 *
-	 * @return none;
 	 */
 	public function setPoolId($pool) {
 		settype($pool, 'integer');

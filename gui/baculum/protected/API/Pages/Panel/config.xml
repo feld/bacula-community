@@ -4,29 +4,29 @@
 	</paths>
 	<modules>
 		<!-- database modules -->
-		<module id="db" class="Application.API.Class.Database" />
+		<module id="db" class="Baculum\API\Modules\Database" />
 		<!-- tools modules -->
-		<module id="bconsole" class="Application.API.Class.Bconsole" />
-		<module id="json_tools" class="Application.API.Class.JSONTools" />
+		<module id="bconsole" class="Baculum\API\Modules\Bconsole" />
+		<module id="json_tools" class="Baculum\API\Modules\JSONTools" />
 		<!-- config modules -->
-		<module id="api_config" class="Application.API.Class.APIConfig" />
-		<module id="device_config" class="Application.API.Class.DeviceConfig" />
-		<module id="bacula_setting" class="Application.API.Class.BaculaSetting" />
+		<module id="api_config" class="Baculum\API\Modules\APIConfig" />
+		<module id="device_config" class="Baculum\API\Modules\DeviceConfig" />
+		<module id="bacula_setting" class="Baculum\API\Modules\BaculaSetting" />
 		<!-- internalization modules -->
 		<module id="globalization" class="TGlobalization">
-			<translation type="gettext" source="Application.API.Lang" marker="@@" autosave="false" cache="false" DefaultCulture="en" />
+			<translation type="gettext" source="Baculum\API\Lang" marker="@@" autosave="false" cache="false" DefaultCulture="en" />
 		</module>
 		<!-- logging modules -->
-		<module id="log" class="System.Util.TLogRouter">
-			<route class="TFileLogRoute"  Categories="Execute, External, Application, General, Security" LogPath="Application.API.Logs" LogFile="baculum-api.log" MaxFileSize="1000" MaxLogFiles="5" />
+		<module id="log" class="System\Util\TLogRouter">
+			<route class="TFileLogRoute"  Categories="Execute, External, Application, General, Security" LogPath="Baculum\API\Logs" LogFile="baculum-api.log" MaxFileSize="1000" MaxLogFiles="5" />
 		</module>
 		<!-- auth modules -->
-		<module id="basic_apiuser" class="Application.API.Class.BasicAPIUserConfig" />
-		<module id="basic_config" class="Application.API.Class.BasicConfig" />
-		<module id="oauth2_config" class="Application.API.Class.OAuth2.OAuth2Config" />
+		<module id="basic_apiuser" class="Baculum\API\Modules\BasicAPIUserConfig" />
+		<module id="basic_config" class="Baculum\API\Modules\BasicConfig" />
+		<module id="oauth2_config" class="Baculum\API\Modules\OAuth2\OAuth2Config" />
 		<!-- component actions modules -->
-		<module id="comp_actions" class="Application.API.Class.ComponentActions" />
+		<module id="comp_actions" class="Baculum\API\Modules\ComponentActions" />
 		<!-- changer command modules -->
-		<module id="changer_command" class="Application.API.Class.ChangerCommand" />
+		<module id="changer_command" class="Baculum\API\Modules\ChangerCommand" />
 	</modules>
 </configuration>

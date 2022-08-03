@@ -21,19 +21,10 @@
  */
 
 
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.ActiveControls.TActivePanel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveRadioButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveCustomValidator');
-Prado::using('Application.Common.Class.OAuth2');
-Prado::using('Application.API.Class.APIConfig');
-Prado::using('Application.API.Class.BAPIException');
-Prado::using('Application.API.Class.BaculumAPIPage');
-Prado::using('Application.API.Class.Database');
-Prado::using('Application.API.Class.BasicAPIUserConfig');
+use Baculum\API\Modules\APIConfig;
+use Baculum\API\Modules\BAPIException;
+use Baculum\API\Modules\BaculumAPIPage;
+use Baculum\API\Modules\Database;
 
 /**
  * API install wizard.

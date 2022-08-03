@@ -20,10 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Web.Portlets.DirectiveSpeed');
-Prado::using('Application.Web.Portlets.Portlets');
+use Prado\Web\UI\ActiveControls\TActiveLinkButton;
+use Baculum\Web\Portlets\Portlets;
+use Prado\Web\UI\ActiveControls\TCallbackEventParameter;
 
 /**
  * Set job bandwidth limit control.
@@ -42,7 +41,6 @@ class JobBandwidthLimit extends Portlets {
 	 *
 	 * @param TActiveLinkButton $sender sender
 	 * @param TCallbackEventParameter $param callback parameter
-	 * @return none
 	 */
 	public function setupBandwidthLimit($sender, $param) {
 		$jobid = $this->getJobId();
@@ -72,7 +70,6 @@ class JobBandwidthLimit extends Portlets {
 	 * Callback event method.
 	 *
 	 * @param mixed $param callback parameter or null
-	 * @return none
 	 */
 	public function onCallback($param) {
 		$this->raiseEvent('OnCallback', $this, $param);
@@ -81,7 +78,6 @@ class JobBandwidthLimit extends Portlets {
 	/**
 	 * Set job jobid.
 	 *
-	 * @return none;
 	 */
 	public function setJobId($jobid) {
 		$jobid = intval($jobid);
@@ -101,7 +97,6 @@ class JobBandwidthLimit extends Portlets {
 	/**
 	 * Set job uname.
 	 *
-	 * @return none;
 	 */
 	public function setJobUname($job_uname) {
 		$this->setViewState(self::JOB_UNAME, $job_uname);
@@ -130,7 +125,6 @@ class JobBandwidthLimit extends Portlets {
 	 * Set bandwidth limit value in field.
 	 *
 	 * @param integer $bwlimit bandiwdth limit in bytes
-	 * @return none
 	 */
 	public function setBandwidthLimit($bwlimit) {
 		$this->BandwidthLimit->setDirectiveValue($bwlimit);

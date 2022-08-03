@@ -20,9 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveRepeater');
-Prado::using('Application.Web.Portlets.ResourceListTemplate');
+namespace Baculum\Web\Portlets;
+
+use Prado\Prado;
 
 /**
  * Bacula config resource control.
@@ -103,7 +103,6 @@ class BaculaConfigResources extends ResourceListTemplate {
 	 *
 	 * @return object $sender sender instance
 	 * @return mixed $param additional parameters
-	 * @return none
 	 */
 	public function removeResource($sender, $param) {
 		if (!$this->getPage()->IsCallback) {
@@ -159,7 +158,6 @@ class BaculaConfigResources extends ResourceListTemplate {
 	 *
 	 * @param string $resource_type removed resource type
 	 * @param string $resource_name removed resource name
-	 * @return none
 	 */
 	private function showRemovedResourceInfo($resource_type, $resource_name) {
 		$msg = Prado::localize('Resource %s "%s" removed successfully.');
@@ -177,7 +175,6 @@ class BaculaConfigResources extends ResourceListTemplate {
 	 * Show removed resource error message.
 	 *
 	 * @param string $error_message error message
-	 * @return none
 	 */
 	private function showRemovedResourceError($error_message) {
 		$this->RemoveResourceError->Text = $error_message;
@@ -222,7 +219,6 @@ class BaculaConfigResources extends ResourceListTemplate {
 	 * @param array $config entire config
 	 * @param string $resource_type resource type to remove
 	 * @param string $resource_name resource name to remove
-	 * @return none
 	 */
 	public static function removeResourceFromConfig(&$config, $resource_type, $resource_name) {
 		for ($i = 0; $i < count($config); $i++) {

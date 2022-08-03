@@ -20,15 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveRepeater');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
-Prado::using('Application.Web.Portlets.DirectiveCheckBox');
-Prado::using('Application.Web.Portlets.DirectiveTextBox');
-Prado::using('Application.Web.Portlets.DirectiveComboBox');
-Prado::using('Application.Web.Portlets.DirectiveInteger');
-Prado::using('Application.Web.Portlets.FileSetOptionRenderer');
+namespace Baculum\Web\Portlets;
 
 /**
  * FileSet directive template.
@@ -40,19 +32,19 @@ Prado::using('Application.Web.Portlets.FileSetOptionRenderer');
 class DirectiveFileSet extends DirectiveListTemplate {
 
 	private $directive_types = array(
-		'DirectiveCheckBox',
-		'DirectiveTextBox',
-		'DirectiveComboBox',
-		'DirectiveListBox',
-		'DirectiveInteger'
+		'Baculum\Web\Portlets\DirectiveCheckBox',
+		'Baculum\Web\Portlets\DirectiveTextBox',
+		'Baculum\Web\Portlets\DirectiveComboBox',
+		'Baculum\Web\Portlets\DirectiveListBox',
+		'Baculum\Web\Portlets\DirectiveInteger'
 	);
 
 	private $directive_list_types = array(
-		'DirectiveMultiTextBox'
+		'Baculum\Web\Portlets\DirectiveMultiTextBox'
 	);
 
 	private $directive_inc_exc_types = array(
-		'DirectiveTextBox'
+		'Baculum\Web\Portlets\DirectiveTextBox'
 	);
 
 	public function loadConfig() {
@@ -296,7 +288,7 @@ class DirectiveFileSet extends DirectiveListTemplate {
 						// option not set or removed
 						continue;
 					}
-					if ($this->directive_types[$i] === 'DirectiveCheckBox') {
+					if ($this->directive_types[$i] === 'Baculum\Web\Portlets\DirectiveCheckBox') {
 						settype($default_value, 'bool');
 					}
 					if ($directive_value === $default_value) {

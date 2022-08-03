@@ -1,4 +1,4 @@
-<%@ MasterClass="Application.Web.Layouts.Main" Theme="Baculum-v2"%>
+<%@ MasterClass="Baculum\Web\Layouts\Main" Theme="Baculum-v2"%>
 <com:TContent ID="Main">
 	<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/opentip/downloads/opentip-jquery.min.js %> />
 	<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/opentip/css/opentip.css %> />
@@ -127,7 +127,7 @@
 		</div>
 	</div>
 	<div class="w3-container w3-row w3-padding">
-		<com:Application.Web.Portlets.DirectiveTimePeriod
+		<com:Baculum.Web.Portlets.DirectiveTimePeriod
 			ID="JobAgeOnJobStatusGraph"
 			DirectiveName="Age"
 			Label="<%[ Job age on the job status graph ]%>"

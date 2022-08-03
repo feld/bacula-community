@@ -20,12 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.ActiveControls.TActiveCheckBox');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Volume view page.
@@ -74,7 +69,6 @@ class VolumeView extends BaculumWebPage {
 	/**
 	 * Set volume mediaid.
 	 *
-	 * @return none;
 	 */
 	public function setMediaId($mediaid) {
 		$mediaid = intval($mediaid);
@@ -93,7 +87,6 @@ class VolumeView extends BaculumWebPage {
 	/**
 	 * Set volume name.
 	 *
-	 * @return none;
 	 */
 	public function setVolumeName($volume_name) {
 		$this->setViewState(self::VOLUME_NAME, $volume_name);

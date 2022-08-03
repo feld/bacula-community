@@ -36,7 +36,8 @@
 
 $namespaces = [
 	'Prado\\' => APPLICATION_DIRECTORY . '/protected/vendor/pradosoft/prado/framework',
-	'JSMin\\' => APPLICATION_DIRECTORY . '/protected/vendor/mrclay/jsmin-php/src/JSMin'
+	'JSMin\\' => APPLICATION_DIRECTORY . '/protected/vendor/mrclay/jsmin-php/src/JSMin',
+	'Baculum\\' => APPLICATION_DIRECTORY . '/protected'
 ];
 
 class BaculumAutoloader {

@@ -1,6 +1,6 @@
-<%@ MasterClass="Application.Web.Layouts.Main" Theme="Baculum-v2"%>
+<%@ MasterClass="Baculum\Web\Layouts\Main" Theme="Baculum-v2"%>
 <com:TContent ID="Main">
-	<com:Application.Web.Portlets.StatusSchedule
+	<com:Baculum.Web.Portlets.StatusSchedule
 		ShowClientFilter="true"
 		ShowScheduleFilter="true"
 	/>

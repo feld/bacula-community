@@ -27,7 +27,7 @@
 			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/datatables.net-buttons-dt/css/buttons.dataTables.min.css %> />
 			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/opentip/css/opentip.css %> />
 			<com:BStyleSheet StyleSheetUrl=<%~ ../../../themes/Baculum-v2/css/baculum.css %> />
-			<com:Application.Common.Portlets.TableDefaults />
+			<com:Baculum.Common.Portlets.TableDefaults />
 			<!-- Top container -->
 				<com:TContentPlaceHolder ID="Wizard" />
 		</com:TForm>

@@ -20,5 +20,5 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.API.Pages.OAuth2.Authorize');
+use Baculum\API\Pages\OAuth2\Authorize;
 ?>

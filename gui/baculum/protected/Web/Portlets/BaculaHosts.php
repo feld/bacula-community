@@ -20,10 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TActiveRepeater');
-Prado::using('Application.Web.Class.HostConfig');
-Prado::using('Application.Web.Portlets.HostListTemplate');
+namespace Baculum\Web\Portlets;
+
+use Baculum\Web\Modules\HostConfig;
+use Prado\Web\UI\TCommandEventParameter;
 
 /**
  * Bacula hosts control.

@@ -20,10 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
-Prado::using('Application.Web.Portlets.RunJob');
+use Prado\Web\UI\ActiveControls\TCallback;
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Job history list page.
@@ -113,7 +111,6 @@ class JobHistoryList extends BaculumWebPage {
 	 *
 	 * @param TCallback $sender callback object
 	 * @param TCallbackEventPrameter $param event parameter
-	 * @return none
 	 */
 	public function cancelJobs($sender, $param) {
 		$result = [];
@@ -137,7 +134,6 @@ class JobHistoryList extends BaculumWebPage {
 	 *
 	 * @param TCallback $sender callback object
 	 * @param TCallbackEventPrameter $param event parameter
-	 * @return none
 	 */
 	public function deleteJobs($sender, $param) {
 		$result = [];

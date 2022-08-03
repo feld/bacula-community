@@ -20,9 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveListBox');
-Prado::using('Application.Web.Portlets.DirectiveTemplate');
+namespace Baculum\Web\Portlets;
 
 /**
  * ListBox directive template.

@@ -20,9 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.TCommandEventParameter');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Class.BaculumWebPage');
+use Baculum\Common\Modules\Params;
+use Prado\Web\UI\TCommandEventParameter;
+use Baculum\Web\Modules\BaculumWebPage;
 
 /**
  * Director view page.
@@ -71,7 +71,6 @@ class DirectorView extends BaculumWebPage {
 	/**
 	 * Set director name.
 	 *
-	 * @return none;
 	 */
 	public function setDirectorName($client_name) {
 		$this->setViewState(self::DIRECTOR_NAME, $client_name);

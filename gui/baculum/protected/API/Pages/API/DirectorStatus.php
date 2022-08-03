@@ -20,7 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.API.Class.ConsoleOutputPage');
+use Baculum\API\Modules\ConsoleOutputPage;
+use Baculum\Common\Modules\Errors\BconsoleError;
+use Baculum\Common\Modules\Errors\GenericError;
 
 /**
  * Director status command endpoint.

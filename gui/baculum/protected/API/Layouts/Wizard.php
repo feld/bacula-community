@@ -19,7 +19,9 @@
  *
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
- 
+
+use Prado\Web\UI\TTemplateControl;
+
 /**
  * Wizard layout.
  *

@@ -20,10 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveTextBox');
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('Application.Web.Portlets.DirectiveTemplate');
+namespace Baculum\Web\Portlets;
+
+use Exception;
 
 /**
  * Speed directive control.
@@ -173,7 +172,6 @@ class DirectiveSpeed extends DirectiveTemplate {
 	 * If not set, there supported are both decimal and binary.
 	 *
 	 * @param string $unit_type unit type value (decimal or binary)
-	 * @return none
 	 * @throw Exception if provided invalid unit type value
 	 */
 	public function setUnitType($unit_type) {
@@ -193,7 +191,6 @@ class DirectiveSpeed extends DirectiveTemplate {
 	 * Get unit type to show in control.
 	 * If unit type is not set, returned is empty string that means both unit types are supported.
 	 *
-	 * @return none
 	 */
 	public function getUnitType() {
 		return $this->getViewState(self::UNIT_TYPE, '');

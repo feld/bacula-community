@@ -20,7 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.API.Class.ChangerCommand');
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\ChangerCommand;
+use Baculum\Common\Modules\Errors\DeviceError;
 
 /**
  * Transfer autochanger tape from slot to slot.

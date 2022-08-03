@@ -19,7 +19,7 @@
  *
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
-Prado::using('Application.Web.Portlets.Portlets');
+use Baculum\Web\Portlets\Portlets;
 
 /**
  * Job graphs control.
@@ -31,6 +31,7 @@ Prado::using('Application.Web.Portlets.Portlets');
 class JobGraphs extends Portlets {
 
 	const JOB = 'Job';
+	const CLIENT = 'Client';
 
 	public function onInit($param) {
 		parent::onInit($param);
@@ -53,7 +54,6 @@ class JobGraphs extends Portlets {
 	/**
 	 * Set client to show graphs.
 	 *
-	 * @return none
 	 */
 	public function setClient($client) {
 		$this->setViewState(self::CLIENT, $client);
@@ -62,7 +62,6 @@ class JobGraphs extends Portlets {
 	/**
 	 * Get client to show graph.
 	 *
-	 * @return none
 	 */
 	public function getClient() {
 		return $this->getViewState(self::CLIENT);
@@ -71,7 +70,6 @@ class JobGraphs extends Portlets {
 	/**
 	 * Set job to show graphs.
 	 *
-	 * @return none
 	 */
 	public function setJob($job) {
 		$this->setViewState(self::JOB, $job);
@@ -80,7 +78,6 @@ class JobGraphs extends Portlets {
 	/**
 	 * Get job to show graph.
 	 *
-	 * @return none
 	 */
 	public function getJob() {
 		return $this->getViewState(self::JOB);

@@ -20,7 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.API.Class.Bconsole');
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\Bconsole;
+use Baculum\Common\Modules\Errors\PoolError;
 
 /**
  * Status schedune endpoint.

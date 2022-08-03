@@ -20,19 +20,11 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveHiddenField');
-Prado::using('System.Web.UI.ActiveControls.TActiveRadioButton');
-Prado::using('Application.Common.Class.Params');
-Prado::using('Application.Web.Portlets.DirectiveListTemplate');
-Prado::using('Application.Web.Portlets.DirectiveCheckBox');
-Prado::using('Application.Web.Portlets.DirectiveComboBox');
-Prado::using('Application.Web.Portlets.DirectiveTextBox');
-Prado::using('Application.Web.Portlets.DirectiveTimePeriod');
-Prado::using('Application.Web.Portlets.DirectiveTime');
-Prado::using('Application.Web.Portlets.DirectiveDaysOfWeek');
-Prado::using('Application.Web.Portlets.DirectiveDaysOfMonth');
-Prado::using('Application.Web.Portlets.DirectiveWeeksOfMonth');
-Prado::using('Application.Web.Portlets.DirectiveWeeksOfYear');
+namespace Baculum\Web\Portlets;
+
+use Baculum\Common\Modules\Params;
+use Prado\Web\UI\TCommandEventParameter;
+use stdClass;
 
 /**
  * Schedule directive control.
@@ -359,7 +351,7 @@ class DirectiveSchedule extends DirectiveListTemplate {
 	}
 
 	public function removeSchedule($sender, $param) {
-		if ($param instanceof Prado\Web\UI\TCommandEventParameter) {
+		if ($param instanceof TCommandEventParameter) {
 			$idx = (integer)$param->getCommandName();
 			$data = $this->getDirectiveValue(true);
 			array_splice($data, $idx, 1);
@@ -453,10 +445,10 @@ class DirectiveSchedule extends DirectiveListTemplate {
 				if (is_null($subdirective_value)) {
 					continue;
 				}
-				if (get_class($control) === 'DirectiveCheckBox') {
+				if (get_class($control) === 'Baculum\Web\Portlets\DirectiveCheckBox') {
 					settype($default_value, 'bool');
 				}
-				if (get_class($control) === 'DirectiveTextBox') {
+				if (get_class($control) === 'Baculum\Web\Portlets\DirectiveTextBox') {
 					settype($default_value, 'string');
 				}
 
@@ -465,7 +457,7 @@ class DirectiveSchedule extends DirectiveListTemplate {
 					continue;
 				}
 				$obj->{$subdirective_name} = $subdirective_value;
-				if (get_class($control) === 'DirectiveCheckBox') {
+				if (get_class($control) === 'Baculum\Web\Portlets\DirectiveCheckBox') {
 					$subdirective_value = Params::getBoolValue($subdirective_value);
 				}
 				$directive_values[] = "{$subdirective_name}=\"{$subdirective_value}\"";

@@ -20,6 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\Common\Modules\Errors\DeviceError;
+
 /**
  * Which slot is loaded in autochanger drive.
  *
@@ -35,8 +38,8 @@ class ChangerDriveLoaded extends BaculumAPIServer {
 		$drive = $this->Request->contains('drive') && $misc->isValidName($this->Request['drive']) ? $this->Request['drive'] : null;
 
 		if (is_null($drive)) {
-			$this->output = ChangerCommandError::MSG_ERROR_CHANGER_COMMAND_AUTOCHANGER_DRIVE_DOES_NOT_EXIST;
-			$this->error = ChangerCommandError::ERROR_CHANGER_COMMAND_AUTOCHANGER_DRIVE_DOES_NOT_EXIST;
+			$this->output = DeviceError::MSG_ERROR_DEVICE_AUTOCHANGER_DRIVE_DOES_NOT_EXIST
+			$this->error = DeviceError::ERROR_DEVICE_AUTOCHANGER_DRIVE_DOES_NOT_EXIST
 			return;
 		}
 

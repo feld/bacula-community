@@ -20,9 +20,12 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveControlAdapter');
-Prado::using('Application.Web.Portlets.DirectiveControlTemplate');
-Prado::using('Application.Web.Portlets.IDirectiveField');
+namespace Baculum\Web\Portlets;
+
+use Prado\TPropertyValue;
+use Prado\Web\UI\ActiveControls\IActiveControl;
+use Prado\Web\UI\ActiveControls\TActiveControlAdapter;
+use Prado\Web\UI\TCommandEventParameter;
 
 /**
  * Directive template control.

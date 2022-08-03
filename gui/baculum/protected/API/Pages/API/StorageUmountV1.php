@@ -19,7 +19,10 @@
  *
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
- 
+
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\Common\Modules\Errors\StorageError;
+
 /**
  * Storage umount command endpoint.
  *

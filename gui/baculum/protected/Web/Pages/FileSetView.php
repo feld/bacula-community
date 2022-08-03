@@ -20,7 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Web\Modules\BaculumWebPage; 
 
 /**
  * FileSet view page.
@@ -61,7 +61,6 @@ class FileSetView extends BaculumWebPage {
 	/**
 	 * Set fileset name.
 	 *
-	 * @return none;
 	 */
 	public function setFileSetName($fileset_name) {
 		$this->setViewState(self::FILESET_NAME, $fileset_name);

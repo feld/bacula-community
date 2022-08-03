@@ -19,9 +19,11 @@
  *
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
-Prado::using('Application.Common.Class.Errors');
-Prado::using('Application.Web.Class.BaculumWebPage');
-Prado::using('Application.Web.Class.WebUserRoles');
+
+use Baculum\Common\Modules\BaculumPage;
+use Baculum\Common\Modules\Errors\GenericError;
+use Baculum\Web\Modules\WebConfig;
+use Baculum\Web\Modules\WebUserRoles;
 
 /**
  * Monitor class.
@@ -34,8 +36,6 @@ Prado::using('Application.Web.Class.WebUserRoles');
  * @package Baculum Web
  */
 class Monitor extends BaculumPage {
-
-	const DEFAULT_MAX_JOBS = 10000;
 
 	public function onInit($param) {
 		parent::onInit($param);
@@ -55,7 +55,7 @@ class Monitor extends BaculumPage {
 		$this->getModule('api')->initSessionCache(true);
 
 		$web_config = $this->getModule('web_config')->getConfig();
-		$job_limit = self::DEFAULT_MAX_JOBS;
+		$job_limit = WebConfig::DEF_MAX_JOBS;
 		if (count($web_config) > 0 && key_exists('max_jobs', $web_config['baculum'])) {
 			$job_limit = $web_config['baculum']['max_jobs'];
 		}

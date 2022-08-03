@@ -20,13 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('System.Web.UI.JuiControls.TJuiProgressbar');
-Prado::using('Application.Common.Class.Params');
-Prado::using('Application.Web.Class.BaculumWebPage'); 
+use Baculum\Common\Modules\Params;
+use Baculum\Web\Modules\BaculumWebPage; 
 
 /**
  * Client view page.
@@ -205,7 +200,6 @@ class ClientView extends BaculumWebPage {
 	/**
 	 * Set client clientid.
 	 *
-	 * @return none;
 	 */
 	public function setClientId($clientid) {
 		$clientid = intval($clientid);
@@ -225,7 +219,6 @@ class ClientView extends BaculumWebPage {
 	/**
 	 * Set client name.
 	 *
-	 * @return none;
 	 */
 	public function setClientName($client_name) {
 		$this->BWLimit->setClientName($client_name);
@@ -244,7 +237,6 @@ class ClientView extends BaculumWebPage {
 	/**
 	 * Set client address.
 	 *
-	 * @return none;
 	 */
 	public function setClientAddress($address) {
 		$this->setViewState(self::CLIENT_ADDRESS, $address);

@@ -20,6 +20,10 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\Common\Modules\Errors\ClientError;
+use Baculum\Common\Modules\Errors\GenericError;
+
 /**
  * Client list directories.
  *

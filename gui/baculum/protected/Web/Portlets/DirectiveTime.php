@@ -20,11 +20,9 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-use Prado\TPropertyValue;
+namespace Baculum\Web\Portlets;
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
-Prado::using('System.Web.UI.ActiveControls.TActiveDropDownList');
-Prado::using('Application.Web.Portlets.DirectiveTemplate');
+use Prado\TPropertyValue;
 
 /**
  * Time directive control.

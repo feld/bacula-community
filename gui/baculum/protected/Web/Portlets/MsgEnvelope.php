@@ -21,9 +21,9 @@
  */
 
 
-Prado::using('System.Web.UI.ActiveControls.TCallback');
-Prado::using('Application.Web.Class.WebUserRoles');
-Prado::using('Application.Web.Portlets.Portlets');
+namespace Baculum\Web\Portlets;
+
+use Baculum\Web\Modules\WebUserRoles;
 
 /**
  * Message envelope control.

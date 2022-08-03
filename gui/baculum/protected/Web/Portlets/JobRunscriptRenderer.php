@@ -20,8 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
-Prado::using('Application.Web.Portlets.DirectiveRenderer');
+use Prado\Web\UI\ActiveControls\TActiveLinkButton;
+use Baculum\Web\Portlets\DirectiveRenderer;
 
 /**
  * Job runscript renderer.
