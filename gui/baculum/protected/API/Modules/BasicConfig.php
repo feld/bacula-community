@@ -122,11 +122,8 @@ class BasicConfig extends ConfigFileModule {
 				$is_valid = false;
 				$emsg = 'Invalid Basic user config. Missing ' . $this->required_options[$i] . ' option.';
 				$this->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_APPLICATION,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 				break;
 			}

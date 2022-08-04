@@ -202,6 +202,7 @@ class Bconsole extends APIModule {
 	private function execCommand($director, array $command, $ptype = null) {
 		$cmd = '';
 		$result = null;
+		$output = [];
 		if(!is_null($director) && $this->isValidDirector($director) === false) {
 			throw new BConsoleException(
 				BconsoleError::MSG_ERROR_INVALID_DIRECTOR,
@@ -215,7 +216,7 @@ class Bconsole extends APIModule {
 			$cmd = $this->getCommand($pattern, $sudo, $dir, $bconsole_command);
 			exec($cmd['cmd'], $output, $exitcode);
 			if($exitcode != 0) {
-				$emsg = ' Output=>' . implode("\n", $output) . ', Exitcode=>' . $exitcode;
+				$emsg = ' Output=>' . implode(PHP_EOL, $output) . ', Exitcode=>' . $exitcode;
 				throw new BConsoleException(
 					BconsoleError::MSG_ERROR_BCONSOLE_CONNECTION_PROBLEM . $emsg,
 					BconsoleError::ERROR_BCONSOLE_CONNECTION_PROBLEM
@@ -232,11 +233,8 @@ class Bconsole extends APIModule {
 			}
 		}
 		$this->Application->getModule('logging')->log(
-			$cmd['cmd'],
-			$output,
 			Logging::CATEGORY_EXECUTE,
-			__FILE__,
-			__LINE__
+			Logging::prepareOutput($cmd['cmd'], $output)
 		);
 
 		return $result;

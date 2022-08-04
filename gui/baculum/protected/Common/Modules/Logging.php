@@ -23,9 +23,10 @@
 namespace Baculum\Common\Modules;
 
 use Prado\Prado;
+use Prado\Util\TLogger;
 
 /**
- * Logger class.
+ * Main logger class.
  *
  * @author Marcin Haba <marcin.haba@bacula.pl>
  * @category Module
@@ -33,51 +34,97 @@ use Prado\Prado;
  */
 class Logging extends CommonModule {
 
+	/*
+	 * Stores debug enable state.
+	 *
+	 * @var bool
+	 */
 	public static $debug_enabled = false;
 
+	/**
+	 * Log categories.
+	 */
 	const CATEGORY_EXECUTE = 'Execute';
 	const CATEGORY_EXTERNAL = 'External';
 	const CATEGORY_APPLICATION = 'Application';
 	const CATEGORY_GENERAL = 'General';
 	const CATEGORY_SECURITY = 'Security';
+	const CATEGORY_AUDIT = 'Audit';
 
-	private function getLogCategories() {
-		$categories = array(
-			self::CATEGORY_EXECUTE,
-			self::CATEGORY_EXTERNAL,
-			self::CATEGORY_APPLICATION,
-			self::CATEGORY_GENERAL,
-			self::CATEGORY_SECURITY
-		);
-		return $categories;
-	}
-
-	public function log($cmd, $output, $category, $file, $line) {
-		if(self::$debug_enabled !== true) {
+	/**
+	 * Main log method used to log message.
+	 *
+	 * @param string $category log category
+	 */
+	public function log($category, $message) {
+		if (!$this->isEnabled($category)) {
 			return;
 		}
-		$current_mode = $this->Application->getMode();
+		$this->prepareMessage($category, $message);
+		Prado::log($message, TLogger::INFO, $category);
+	}
 
-		// switch application to debug mode
-		$this->Application->setMode('Debug');
-
-		if(!in_array($category, $this->getLogCategories())) {
-			$category = self::CATEGORY_SECURITY;
+	/**
+	 * Check if log is enabled.
+	 *
+	 * @param string $category log category
+	 * @return bool true if log is enabled, otherwise false
+	 */
+	private function isEnabled($category) {
+		$is_enabled = false;
+		if (self::$debug_enabled === true || $category === self::CATEGORY_AUDIT) {
+			// NOTE: Audit log is written always, it is not possible to disable it
+			$is_enabled = true;
 		}
+		return $is_enabled;
+	}
 
-		$log = sprintf(
-			'Command=%s, Output=%s, File=%s, Line=%d',
+	/**
+	 * Prepare log to send to log manager.
+	 *
+	 * @param string $category log category
+	 * @param array|string|object &$message log message reference
+	 */
+	private function prepareMessage($category, &$message) {
+		if (is_object($message) || is_array($message)) {
+			// make a message as string if needed
+			$message = print_r($message, true);
+		}
+		if (self::$debug_enabled === true && $category !== self::CATEGORY_AUDIT) {
+			// If debug enabled, add file and line to log message
+			$f = '';
+			$trace = debug_backtrace();
+			if (isset($trace[1]['file']) && isset($trace[1]['line'])) {
+				$f = sprintf(
+					'%s:%s:',
+					basename($trace[1]['file']),
+					$trace[1]['line']
+				);
+			}
+			$message = $f . $message;
+		}
+		$message .= PHP_EOL . PHP_EOL;
+	}
+
+	/**
+	 * Helper method for preparing logs that come from executing programs or scripts.
+	 * This log consists of command and output.
+	 * Useful for bconsole, b*json... and others.
+	 *
+	 * @param string $cmd command
+	 * @param array|object|string $output command output
+	 * @return string formatted command log
+	 */
+	public static function prepareOutput($cmd, $output) {
+		if (is_array($output)) {
+			$output = implode(PHP_EOL, $output);
+		} elseif(is_object($output)) {
+			$output = print_r($output, true);
+		}
+		return sprintf(
+			"\n\n===> Command:\n\n%s\n\n===> Output:\n\n%s",
 			$cmd,
-			print_r($output, true),
-			$file,
-			intval($line)
+			$output
 		);
-
-		Prado::trace($log, $category);
-
-		// switch back application to original mode
-		$this->Application->setMode($current_mode);
 	}
 }
-
-?>

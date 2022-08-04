@@ -173,11 +173,8 @@ class BaculumAPIClient extends WebModule {
 			$this->addSpecialParams($uri);
 
 			$this->Application->getModule('logging')->log(
-				__FUNCTION__,
-				PHP_EOL . PHP_EOL . 'EXECUTE URI ==> ' . $uri . ' <==' . PHP_EOL . PHP_EOL,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				'REQUEST URI => ' . $uri
 			);
 		}
 		return $uri;
@@ -433,11 +430,8 @@ class BaculumAPIClient extends WebModule {
 	private function preParseOutput($result, $error, $errno, $show_error = true) {
 		// first write log with that what comes
 		$this->Application->getModule('logging')->log(
-			__FUNCTION__,
-			$result,
 			Logging::CATEGORY_APPLICATION,
-			__FILE__,
-			__LINE__
+			$result
 		);
 
 		// decode JSON to object
@@ -462,11 +456,8 @@ class BaculumAPIClient extends WebModule {
 		}
 
 		$this->Application->getModule('logging')->log(
-			__FUNCTION__,
-			$resource,
 			Logging::CATEGORY_APPLICATION,
-			__FILE__,
-			__LINE__
+			$resource
 		);
 
 		return $resource;

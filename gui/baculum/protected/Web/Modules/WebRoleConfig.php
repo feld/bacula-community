@@ -176,11 +176,8 @@ class WebRoleConfig extends ConfigFileModule {
 			for ($i = 0; $i < $required_len; $i++) {
 				$emsg = "ERROR [$path] Required {$invalid['required'][$i]['type']} '{$invalid['required'][$i]['value']}' not found for role '{$invalid['required'][$i]['role']}.";
 				$this->Application->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_APPLICATION,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 			}
 		}

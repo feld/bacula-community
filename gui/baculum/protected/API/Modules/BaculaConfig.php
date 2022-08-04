@@ -106,11 +106,8 @@ class BaculaConfig extends ConfigFileModule {
 			$error = is_array($result['output']) ? implode('', $result['output']) : $result['output'];
 			$emsg = "ERROR [$component_type] $error";
 			$this->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		return $ret;

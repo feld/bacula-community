@@ -175,11 +175,8 @@ class HostConfig extends ConfigFileModule {
 				$emsg = "ERROR [$path] Internal error";
 			}
 			$this->Application->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		return $valid;

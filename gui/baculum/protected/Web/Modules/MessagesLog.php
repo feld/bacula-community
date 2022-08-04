@@ -79,11 +79,8 @@ class MessagesLog extends WebModule {
 		} else {
 			$emsg = 'Could not get the exclusive lock: ' . $f;
 			$this->Application->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		fclose($fp);
@@ -103,11 +100,8 @@ class MessagesLog extends WebModule {
 		} else {
 			$emsg = 'Could not get the exclusive lock: ' . $f;
 			$this->Application->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		fclose($fp);
@@ -129,11 +123,8 @@ class MessagesLog extends WebModule {
 		} else {
 			$emsg = 'Could not get the exclusive lock: ' . $f;
 			$this->Application->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		fclose($fp);
@@ -159,11 +150,8 @@ class MessagesLog extends WebModule {
 		} else {
 			$emsg = 'Could not get the shared lock: ' . $f;
 			$this->Application->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		fclose($fp);

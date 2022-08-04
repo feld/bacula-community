@@ -61,7 +61,10 @@ class DataDependencies extends WebModule {
 			$data_deps = json_decode($deps_file);
 		} else {
 			$emsg = "Data dependencies file '$deps_file' does not exist or is not readable.";
-			$this->Application->getModule('logging')->log(__FUNCTION__, $emsg, Logging::CATEGORY_APPLICATION, __FILE__, __LINE__);
+			$this->Application->getModule('logging')->log(
+				Logging::CATEGORY_APPLICATION,
+				$emsg
+			);
 		}
 		return $data_deps;
 	}

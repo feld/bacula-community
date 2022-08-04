@@ -252,11 +252,8 @@ class Ldap extends CommonModule {
 		);
 		$this->error = $emsg;
 		$this->getModule('logging')->log(
-			__FUNCTION__,
-			$emsg,
 			Logging::CATEGORY_EXTERNAL,
-			__FILE__,
-			__LINE__
+			$emsg
 		);
 	}
 

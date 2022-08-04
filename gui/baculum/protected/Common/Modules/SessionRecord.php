@@ -68,11 +68,8 @@ class SessionRecord extends CommonModule implements ISessionItem {
 			} else {
 				$emsg = 'Unable to exclusive lock ' . $sessfile;
 				$this->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_APPLICATION,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 			}
 			fclose($fp);
@@ -94,11 +91,8 @@ class SessionRecord extends CommonModule implements ISessionItem {
 				} else {
 					$emsg = 'Unable to shared lock ' . $sessfile;
 					$this->getModule('logging')->log(
-						__FUNCTION__,
-						$emsg,
 						Logging::CATEGORY_APPLICATION,
-						__FILE__,
-						__LINE__
+						$emsg
 					);
 				}
 				fclose($fp);

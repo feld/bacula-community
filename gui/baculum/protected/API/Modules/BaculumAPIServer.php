@@ -212,14 +212,7 @@ abstract class BaculumAPIServer extends TPage {
 					break;
 				}
 			}
-		} catch(TException $e) {
-			$this->getModule('logging')->log(
-				__FUNCTION__,
-				"Method: {$_SERVER['REQUEST_METHOD']} $e",
-				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
-			);
+		} catch (TException $e) {
 			if ($e instanceof BAPIException) {
 				$this->output = $e->getErrorMessage();
 				$this->error = $e->getErrorCode();
@@ -261,6 +254,8 @@ abstract class BaculumAPIServer extends TPage {
 		} else {
 			$json = json_encode($output);
 		}
+		$out = json_encode($output, JSON_PRETTY_PRINT);
+		$this->audit($out);
 		return $json;
 	}
 
@@ -283,6 +278,27 @@ abstract class BaculumAPIServer extends TPage {
 	public function onLoad($params) {
 		parent::onLoad($params);
 		echo $this->getOutput();
+	}
+
+	/**
+	 * Write each request output to audit log.
+	 * This method is dedicated for logging requests to API.
+	 *
+	 * @param string $output output string
+	 */
+	private function audit($output) {
+		$username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '-';
+		$msg = sprintf(
+			"[%s] %s %s\n%s",
+			$_SERVER['REQUEST_METHOD'],
+			$username,
+			$this->Request->getRequestUri(),
+			$output
+		);
+		$this->getModule('logging')->log(
+			Logging::CATEGORY_AUDIT,
+			$msg
+		);
 	}
 
 	/**

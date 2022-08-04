@@ -242,11 +242,8 @@ class WebUserManager extends WebModule implements IUserManager {
 			} else {
 				$emsg = 'Basic auth is enabled, but PHP_AUTH_USER is not set or is empty.';
 				$this->Application->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_SECURITY,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 			}
 		}

@@ -113,7 +113,10 @@ class ComponentActions extends APIModule {
 		$cmd_pattern = $this->getCmdPattern();
 		$cmd = sprintf($cmd_pattern, $sudo, $bin);
 		exec($cmd, $output, $exitcode);
-		$this->getModule('logging')->log($cmd, $output, Logging::CATEGORY_EXECUTE, __FILE__, __LINE__);
+		$this->getModule('logging')->log(
+			Logging::CATEGORY_EXECUTE,
+			Logging::prepareOutput($cmd, $output)
+		);
 		$result = $this->prepareResult($output, $exitcode);
 		return $result;
 	}

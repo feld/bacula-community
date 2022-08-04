@@ -836,11 +836,8 @@ class Security extends BaculumWebPage {
 			if (!key_exists($params['user_attr'], $users[$i])) {
 				$emsg = "User attribute '{$params['user_attr']}' doesn't exist in LDAP response.";
 				$this->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_EXTERNAL,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 				continue;
 			}
@@ -848,11 +845,8 @@ class Security extends BaculumWebPage {
 			if ($params['user_attr'] !== Ldap::DN_ATTR && $users[$i][$params['user_attr']]['count'] != 1) {
 				$emsg = "Invalid user attribute count for '{$params['user_attr']}'. Is {$users[$i][$params['user_attr']]['count']}, should be 1.";
 				$this->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_EXTERNAL,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 				continue;
 

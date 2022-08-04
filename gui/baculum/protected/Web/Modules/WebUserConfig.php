@@ -245,11 +245,8 @@ class WebUserConfig extends ConfigFileModule {
 			$ret = false;
 			$emsg = 'Error while importing basic users.';
 			$this->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		return $ret;

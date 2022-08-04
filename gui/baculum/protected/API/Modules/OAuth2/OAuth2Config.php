@@ -120,11 +120,8 @@ class OAuth2Config extends ConfigFileModule {
 				$is_valid = false;
 				$emsg = 'Invalid OAuth2 config. Missing ' . $this->required_options[$i] . ' option.';
 				$this->getModule('logging')->log(
-					__FUNCTION__,
-					$emsg,
 					Logging::CATEGORY_APPLICATION,
-					__FILE__,
-					__LINE__
+					$emsg
 				);
 				break;
 			}

@@ -18,7 +18,8 @@
 		</module>
 		<!-- logging modules -->
 		<module id="log" class="System\Util\TLogRouter">
-			<route class="TFileLogRoute"  Categories="Execute, External, Application, General, Security" LogPath="Baculum\API\Logs" LogFile="baculum-api.log" MaxFileSize="1000" MaxLogFiles="5" />
+			<route class="Baculum\Common\Modules\BFileLogRoute"  Categories="Execute, External, Application, General, Security" LogPath="Baculum\API\Logs" LogFile="baculum-api-debug.log" MaxFileSize="10000" MaxLogFiles="5" />
+			<route class="Baculum\Common\Modules\BFileLogRoute"  Categories="Audit" LogPath="Baculum\API\Logs" LogFile="baculum-api.log" MaxFileSize="10000" MaxLogFiles="5" />
 		</module>
 		<!-- auth modules -->
 		<module id="basic_apiuser" class="Baculum\API\Modules\BasicAPIUserConfig" />

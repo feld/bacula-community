@@ -163,11 +163,8 @@ class ConfigIni extends CommonModule implements IConfigFormat {
 			}
 
 			$this->getModule('logging')->log(
-				__FUNCTION__,
-				$emsg,
 				Logging::CATEGORY_APPLICATION,
-				__FILE__,
-				__LINE__
+				$emsg
 			);
 		}
 		return $valid;
