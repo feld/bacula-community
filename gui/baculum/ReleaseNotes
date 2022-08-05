@@ -1,4 +1,19 @@
 
+               Release Notes for Baculum 13.0.1
+
+This is a minor bug fix and new feature release. The main change is better
+logging and a new audit log. We also made significant changes to use PSR-4
+autoloader.
+
+New changes and fixes:
+
+ - Improve logging and add audit log
+ - Adapt code to use PSR-4 autoloader
+ - Fix #2653 PHP warning about wrong array_key_exists() parameter in session record
+
+Bugs fixed/closed since last release:
+2653
+
                Release Notes for Baculum 13.0.0
 
 This is a new major release.
