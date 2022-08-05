@@ -566,10 +566,6 @@ enum {
    INC_KW_MAX                   /* Keep this last */
 };
 
-
-#undef  MAX_FOPTS
-#define MAX_FOPTS 50
-
 /* File options structure */
 struct FOPTS {
    char opts[MAX_FOPTS];              /* options string */

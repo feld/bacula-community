@@ -186,6 +186,14 @@ void InitWinAPIWrapper();
 /* Use the following for strings not to be translated */
 #define NT_(s) (s)   
 
+/* Maximum number of fileset options
+ * FileSet definitions very similar to the resource
+ *  contained in the Director because the components
+ *  of the structure are passed by the Director to the
+ *  File daemon and recompiled back into this structure
+ */
+#define MAX_FOPTS 50
+
 /* This should go away! ****FIXME***** */
 #define MAXSTRING 500
 

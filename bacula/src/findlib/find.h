@@ -78,14 +78,6 @@ struct s_excluded_file {
    char fname[1];
 };
 
-/* FileSet definitions very similar to the resource
- *  contained in the Director because the components
- *  of the structure are passed by the Director to the
- *  File daemon and recompiled back into this structure
- */
-#undef  MAX_FOPTS
-#define MAX_FOPTS 30
-
 enum {
    state_none,
    state_options,
