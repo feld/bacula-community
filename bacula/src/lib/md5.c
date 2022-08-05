@@ -286,7 +286,7 @@ static void usage()
 static bool decode = false;
 
 /*
- * Reads a single ASCII file and prints the HEX md5 sum.
+ * Reads a single file and prints the HEX md5 sum.
  */
 #include <stdio.h>
 int main(int argc, char *argv[])
@@ -325,8 +325,11 @@ int main(int argc, char *argv[])
       goto decode_it;
    }
    MD5Init(&ctx);
-   while (fgets(buf, sizeof(buf), fd)) {
-      MD5Update(&ctx, (unsigned char *)buf, strlen(buf));
+   while (!feof(fd) && !ferror(fd)) {
+      size_t nb = fread(buf, 1, sizeof(buf), fd);
+      if (nb > 0) {
+         MD5Update(&ctx, (unsigned char *)buf, nb);
+      }
    }
    MD5Final((unsigned char *)signature, &ctx);
    for (int i=0; i < 16; i++) {
