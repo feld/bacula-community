@@ -1,3 +1,39 @@
+        ChangeLog for Bacula Enterprise version 13.0.0
+
+
+05Aug22
+ - Fix org#2656 About incorrect error message on TLS CA Certificate
+ - Fix org#2594 About compilation warning on VolRead/WriteTime
+ - Fix org#2644 Add support for binary files to bacula md5sum
+ - Fix org#2655 About incorrect definition of MAX_FOPTS
+ - Fix org#2657 About startup problem for bacula-sd
+ - win32: update openssl to 1.1.1q
+
+04Aug22
+ - baculum: Improve logging and add audit log
+
+03Aug22
+ - baculum: Adapt code to use PSR-4 autoloader
+
+22Jul22
+ - baculum: Fix #2653 PHP warning about wrong array_key_exists() parameter in session record
+
+04Jul22
+ - rpms: fix bacula spec file
+ - rpms: Add spec file for k8s tools
+ - rpms: more work on docker and docker tools
+ - rpms: Add kubernetes spec file
+ - rpms: Fix cloud package
+
+29Jun22
+ - osx: Fix #9309 about extended attribute backup error on macOS
+
+21Jun22
+ - Rework MacOS package
+
+Bugs fixed/closed since last release:
+ 2653 9309
+
         Changelog for version 13.0.0
 
 04Jul22

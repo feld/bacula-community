@@ -38,6 +38,32 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
+Release 13.0.1 / 05 August 2022
+
+13.0.1 is a minor bug fix release.
+
+ - Fix org#2594 About compilation warning on VolRead/WriteTime
+ - Fix org#2644 Add support for binary files to bacula md5sum
+ - Fix org#2655 About incorrect definition of MAX_FOPTS
+ - Fix org#2656 About incorrect error message on TLS CA Certificate
+ - Fix org#2657 About startup problem for bacula-sd
+
+ - baculum: Adapt code to use PSR-4 autoloader
+ - baculum: Fix #2653 PHP warning about wrong array_key_exists() parameter in session record
+ - baculum: Improve logging and add audit log
+
+ - osx: Fix #9309 about extended attribute backup error on macOS
+ - Rework MacOS package
+
+ - rpms: Add kubernetes spec file
+ - rpms: Add spec file for k8s tools
+ - rpms: Fix cloud package
+ - rpms: more work on docker and docker tools
+ - win32: update openssl to 1.1.1q
+
+Bugs fixed/closed since last release:
+ 2653 9309
+
 Release 13.0.0 04 July 2022
 
 13.0.0 is a major release.
