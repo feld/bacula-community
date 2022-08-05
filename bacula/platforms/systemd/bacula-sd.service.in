@@ -17,13 +17,14 @@
 Description=Bacula Storage Daemon service
 Requires=network.target
 After=network.target
-RequiresMountsFor=@working_dir@ @sysconfdir@ @sbindir@
+RequiresMountsFor=@working_dir@ @sysconfdir@ @sbindir@ @piddir@
 
 # from http://www.freedesktop.org/software/systemd/man/systemd.service.html
 [Service]
-Type=simple
+Type=forking
 User=@sd_user@
 Group=@sd_group@
+SupplementaryGroups=@sd_user@
 Environment="LD_LIBRARY_PATH=@libdir@"
 # comment out to get traces working at startup using -T and -d options
 #WorkingDirectory=@working_dir@
