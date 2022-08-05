@@ -120,7 +120,6 @@ src/plugins/fd/docker/dkid.h
 src/plugins/fd/docker/dkinfo.h
 src/plugins/fd/docker/docker-fd.h
 src/plugins/fd/fd_common.h
-src/plugins/fd/pluglib.h
 src/qt-console/bat.h
 src/qt-console/bat_conf.cpp
 src/qt-console/bat_conf.h

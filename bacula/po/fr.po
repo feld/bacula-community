@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 1.38\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2020-12-04 16:47+0100\n"
+"POT-Creation-Date: 2022-08-05 17:12+0200\n"
 "PO-Revision-Date: 2009-10-18 14:04+0000\n"
 "Last-Translator: Eric Bollengier <eric@eb.homelinux.org>\n"
 "Language-Team: French <bacula-devel-fr@lists.sourceforge.net>\n"
@@ -28,7 +28,12 @@ msgstr ""
 msgid "*None*"
 msgstr ""
 
-#: src/lib/status.h:84
+#: src/dird/dird_conf.h:400
+#, fuzzy
+msgid "Unknown source"
+msgstr "source inconnue"
+
+#: src/lib/status.h:69
 msgid ""
 "\n"
 "Terminated Jobs:\n"
@@ -36,64 +41,64 @@ msgstr ""
 "\n"
 "Job terminés :\n"
 
-#: src/lib/status.h:91
+#: src/lib/status.h:76
 #, fuzzy
 msgid " JobId  Level    Files      Bytes   Status   Finished        Name \n"
 msgstr " JobId  Type     Fichiers   Octets   Statut  Terminé         Nom\n"
 
-#: src/lib/status.h:93
+#: src/lib/status.h:78
 msgid "===================================================================\n"
 msgstr "===================================================================\n"
 
-#: src/lib/status.h:119
+#: src/lib/status.h:104
 msgid "Created"
 msgstr "Crée"
 
-#: src/lib/status.h:123
+#: src/lib/status.h:108
 msgid "Error"
 msgstr "Erreur"
 
-#: src/lib/status.h:126
+#: src/lib/status.h:111
 msgid "Diffs"
 msgstr ""
 
-#: src/lib/status.h:129
+#: src/lib/status.h:114
 msgid "Cancel"
 msgstr "Annulé"
 
-#: src/lib/status.h:132
+#: src/lib/status.h:117
 msgid "OK"
 msgstr "OK"
 
-#: src/lib/status.h:135
+#: src/lib/status.h:120
 msgid "OK -- with warnings"
 msgstr "OK -- avec des avertissements"
 
-#: src/lib/status.h:138
+#: src/lib/status.h:123
 msgid "Incomplete"
 msgstr ""
 
-#: src/lib/status.h:141
+#: src/lib/status.h:126
 msgid "Other"
 msgstr "Autre"
 
-#: src/lib/status.h:153
+#: src/lib/status.h:138
 #, fuzzy, c-format
 msgid "%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"
 msgstr "%6d  %-6s %8s %10s %-7s  %-8s %s\n"
 
-#: src/lib/status.h:182
+#: src/lib/status.h:165
 #, fuzzy, c-format
 msgid "%6d  %-6s %8s %10s  %-7s  %-8s %s\n"
 msgstr "%6d  %-6s %8s %10s %-7s  %-8s %s\n"
 
-#: src/lib/status.h:261
+#: src/lib/status.h:244
 #, c-format
 msgid " Ulimits: nofile=%s memlock=%s status=%s\n"
 msgstr ""
 
-#: src/lib/status.h:281 src/lib/status.h:292 src/lib/status.h:306
-#: src/lib/status.h:310 src/lib/status.h:314
+#: src/lib/status.h:264 src/lib/status.h:275 src/lib/status.h:289
+#: src/lib/status.h:293 src/lib/status.h:297
 msgid "Bacula "
 msgstr "Bacula "
 
@@ -285,8 +290,9 @@ msgstr ""
 #: src/qt-console/main.cpp:229
 #, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Director \"%s\" in %s. At least one CA certificate store is required.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Director \"%s\" in %s. At least one CA certificate store is "
+"required.\n"
 msgstr ""
 
 #: src/qt-console/main.cpp:238
@@ -301,8 +307,8 @@ msgstr ""
 #: src/qt-console/main.cpp:259
 #, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Console \"%s\" in %s.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Console \"%s\" in %s.\n"
 msgstr ""
 
 #: src/qt-console/tray-monitor/authenticate.cpp:116
@@ -506,12 +512,12 @@ msgid ""
 "Bacula ERROR: "
 msgstr "Bacula "
 
-#: src/win32/filed/vss.cpp:249 src/win32/filed/vss.cpp:264
+#: src/win32/filed/vss.cpp:68 src/win32/filed/vss.cpp:83
 #, c-format
 msgid "pthread key create failed: ERR=%s\n"
 msgstr "erreur sur pthread_key_create. ERR=%s\n"
 
-#: src/win32/filed/vss.cpp:272
+#: src/win32/filed/vss.cpp:91
 #, fuzzy, c-format
 msgid "pthread_setspecific failed: ERR=%s\n"
 msgstr "Erreur sur l'ouverture du périphérique. ERR=%s\n"
@@ -1383,8 +1389,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 #, fuzzy
 #~ msgid "Error getting Media record for Volume \"%s\": ERR=%s"
 #~ msgstr ""
-#~ "Impossible de récupérer les informations du Media pour le Volume %s : ERR="
-#~ "%s\n"
+#~ "Impossible de récupérer les informations du Media pour le Volume %s : "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "Backup OK -- %s"
@@ -1631,8 +1637,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #~ msgid "Unable to get Media record for Volume %s: ERR=%s\n"
 #~ msgstr ""
-#~ "Impossible de récupérer les informations du Media pour le Volume %s : ERR="
-#~ "%s\n"
+#~ "Impossible de récupérer les informations du Media pour le Volume %s : "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "1991 Catalog Request for vol=%s failed: %s"
@@ -2199,9 +2205,6 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 #, fuzzy
 #~ msgid "Unable to init job cond variable: ERR=%s\n"
 #~ msgstr "Impossible d'initialiser le muxtex : ERR=%s\n"
-
-#~ msgid "unknown source"
-#~ msgstr "source inconnue"
 
 #, fuzzy
 #~ msgid "Job resource"
@@ -3525,16 +3528,16 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #~ msgid "Catalog record for Volume \"%s\" updated to reference slot %d.\n"
 #~ msgstr ""
-#~ "Mise à jour des informations du volume \"%s\" dans le catalogue (Slot="
-#~ "%d).\n"
+#~ "Mise à jour des informations du volume \"%s\" dans le catalogue "
+#~ "(Slot=%d).\n"
 
 #~ msgid "Catalog record for Volume \"%s\" is up to date.\n"
 #~ msgstr "Le volume \"%s\" est à jour dans le catalogue.\n"
 
 #~ msgid "Volume \"%s\" not found in catalog. Slot=%d InChanger set to zero.\n"
 #~ msgstr ""
-#~ "Volume \"%s\" absent du catalogue. mise à zéro de InChanger pour le Slot="
-#~ "%d.\n"
+#~ "Volume \"%s\" absent du catalogue. mise à zéro de InChanger pour le "
+#~ "Slot=%d.\n"
 
 #~ msgid ""
 #~ "Volume \"%s\" has VolStatus %s. It must be Purged or Recycled before "
@@ -6493,8 +6496,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "An error=%d occurred while decoding encrypted session data stream: ERR="
-#~ "%s\n"
+#~ "An error=%d occurred while decoding encrypted session data stream: "
+#~ "ERR=%s\n"
 #~ msgstr "Impossible d'ouvrir le fichier de données %s.\n"
 
 #, fuzzy
@@ -6732,14 +6735,14 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 #~ "acl_delete_def_file error on file \"%s\": filesystem doesn't support "
 #~ "ACLs\n"
 #~ msgstr ""
-#~ "Impossible de récupérer les informations du Media pour le Volume %s : ERR="
-#~ "%s\n"
+#~ "Impossible de récupérer les informations du Media pour le Volume %s : "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "acl_delete_def_file error on file \"%s\": ERR=%s\n"
 #~ msgstr ""
-#~ "Impossible de récupérer les informations du Media pour le Volume %s : ERR="
-#~ "%s\n"
+#~ "Impossible de récupérer les informations du Media pour le Volume %s : "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "acl_from_text error on file \"%s\": ERR=%s\n"
@@ -7916,8 +7919,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #~ msgid "Runscript: %s returned non-zero status=%d. ERR=%s\n"
 #~ msgstr ""
-#~ "Runscript : %s s'est terminé avec un statut différent de 0 statut=%d. ERR="
-#~ "%s\n"
+#~ "Runscript : %s s'est terminé avec un statut différent de 0 statut=%d. "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "rwl_writeunlock called too many times.\n"
@@ -9037,14 +9040,14 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 #, fuzzy
 #~ msgid "Created Media record for Volume: %s\n"
 #~ msgstr ""
-#~ "Impossible de récupérer les informations du Media pour le Volume %s : ERR="
-#~ "%s\n"
+#~ "Impossible de récupérer les informations du Media pour le Volume %s : "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "Updated Media record at end of Volume: %s\n"
 #~ msgstr ""
-#~ "Impossible de récupérer les informations du Media pour le Volume %s : ERR="
-#~ "%s\n"
+#~ "Impossible de récupérer les informations du Media pour le Volume %s : "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "Could not create pool record. ERR=%s\n"
@@ -9972,8 +9975,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #~ msgid "3920 Cannot label Volume because it is already labeled: \"%s\"\n"
 #~ msgstr ""
-#~ "3920 Impossible de labéliser le Volume car il possède déjà le label : \"%s"
-#~ "\"\n"
+#~ "3920 Impossible de labéliser le Volume car il possède déjà le label : "
+#~ "\"%s\"\n"
 
 #~ msgid "3921 Wrong volume mounted.\n"
 #~ msgstr "3921 Mauvais volume monté.\n"
@@ -10001,8 +10004,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 #~ msgid ""
 #~ "3919 Cannot label Volume. Unknown status %d from read_volume_label()\n"
 #~ msgstr ""
-#~ "3920 Impossible de labéliser le Volume car il possède déjà le label : \"%s"
-#~ "\"\n"
+#~ "3920 Impossible de labéliser le Volume car il possède déjà le label : "
+#~ "\"%s\"\n"
 
 #~ msgid "3001 Mounted Volume: %s\n"
 #~ msgstr "3001 Volume monté : %s\n"
@@ -10614,8 +10617,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 #~ "Autochanger Volume \"%s\" not found in slot %d.\n"
 #~ "    Setting InChanger to zero in catalog.\n"
 #~ msgstr ""
-#~ "Volume \"%s\" absent du catalogue. mise à zéro de InChanger pour le Slot="
-#~ "%d.\n"
+#~ "Volume \"%s\" absent du catalogue. mise à zéro de InChanger pour le "
+#~ "Slot=%d.\n"
 
 #, fuzzy
 #~ msgid ""
@@ -10904,14 +10907,14 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "User specified Job spool size reached: JobSpoolSize=%s MaxJobSpoolSize="
-#~ "%s\n"
+#~ "User specified Job spool size reached: JobSpoolSize=%s "
+#~ "MaxJobSpoolSize=%s\n"
 #~ msgstr "Taille du spool spécifiée par l'utlisateur atteinte.\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "User specified Device spool size reached: DevSpoolSize=%s MaxDevSpoolSize="
-#~ "%s\n"
+#~ "User specified Device spool size reached: DevSpoolSize=%s "
+#~ "MaxDevSpoolSize=%s\n"
 #~ msgstr "Taille du spool spécifiée par l'utlisateur atteinte.\n"
 
 #~ msgid "Spooling data again ...\n"
@@ -11351,8 +11354,8 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "Cannot reserve Volume=%s because drive is busy with Volume=%s (JobId="
-#~ "%ld).\n"
+#~ "Cannot reserve Volume=%s because drive is busy with Volume=%s "
+#~ "(JobId=%ld).\n"
 #~ msgstr "Impossible de pruner le Volume \"%s\" car il est archivé.\n"
 
 #, fuzzy
@@ -13398,11 +13401,11 @@ msgstr "Impossible d'ouvrir la base de données \"%s\".\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "Wanted to append to Volume \"%s\", but device %s is busy writing on \"%s"
-#~ "\" .\n"
+#~ "Wanted to append to Volume \"%s\", but device %s is busy writing on "
+#~ "\"%s\" .\n"
 #~ msgstr ""
-#~ "Voulait le Volume \"%s\", mais le Device %s est occupé à écrire sur \"%s"
-#~ "\".\n"
+#~ "Voulait le Volume \"%s\", mais le Device %s est occupé à écrire sur "
+#~ "\"%s\".\n"
 
 #~ msgid ""
 #~ "Cannot recycle volume \"%s\" on device %s because it is in use by another "

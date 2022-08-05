@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 3.0.2\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2020-12-04 16:47+0100\n"
+"POT-Creation-Date: 2022-08-05 17:12+0200\n"
 "PO-Revision-Date: 2009-12-01 16:04-0300\n"
 "Last-Translator: Victor Hugo dos Santos <listas.vhs@gmail.com>\n"
 "Language-Team: Bacula Spanish Team <bacula-users-es@lists.sourceforge.net>\n"
@@ -29,7 +29,12 @@ msgstr "Fallo ASSERT: %s\n"
 msgid "*None*"
 msgstr "*Ninguno*"
 
-#: src/lib/status.h:84
+#: src/dird/dird_conf.h:400
+#, fuzzy
+msgid "Unknown source"
+msgstr "fuente desconocida"
+
+#: src/lib/status.h:69
 msgid ""
 "\n"
 "Terminated Jobs:\n"
@@ -37,64 +42,64 @@ msgstr ""
 "\n"
 "Jobs No Terminados:\n"
 
-#: src/lib/status.h:91
+#: src/lib/status.h:76
 #, fuzzy
 msgid " JobId  Level    Files      Bytes   Status   Finished        Name \n"
 msgstr "JobId Nivel Archivos Bytes Estado Finalizado Nombre \n"
 
-#: src/lib/status.h:93
+#: src/lib/status.h:78
 msgid "===================================================================\n"
 msgstr "===================================================================\n"
 
-#: src/lib/status.h:119
+#: src/lib/status.h:104
 msgid "Created"
 msgstr "Creado"
 
-#: src/lib/status.h:123
+#: src/lib/status.h:108
 msgid "Error"
 msgstr "Error"
 
-#: src/lib/status.h:126
+#: src/lib/status.h:111
 msgid "Diffs"
 msgstr "Diferencias"
 
-#: src/lib/status.h:129
+#: src/lib/status.h:114
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/lib/status.h:132
+#: src/lib/status.h:117
 msgid "OK"
 msgstr "OK"
 
-#: src/lib/status.h:135
+#: src/lib/status.h:120
 msgid "OK -- with warnings"
 msgstr "OK - con advertencias"
 
-#: src/lib/status.h:138
+#: src/lib/status.h:123
 msgid "Incomplete"
 msgstr ""
 
-#: src/lib/status.h:141
+#: src/lib/status.h:126
 msgid "Other"
 msgstr "Otros"
 
-#: src/lib/status.h:153
+#: src/lib/status.h:138
 #, fuzzy, c-format
 msgid "%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"
 msgstr "%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"
 
-#: src/lib/status.h:182
+#: src/lib/status.h:165
 #, fuzzy, c-format
 msgid "%6d  %-6s %8s %10s  %-7s  %-8s %s\n"
 msgstr "%6d %-6s %8s %10s %-7s %-8s %s\n"
 
-#: src/lib/status.h:261
+#: src/lib/status.h:244
 #, c-format
 msgid " Ulimits: nofile=%s memlock=%s status=%s\n"
 msgstr ""
 
-#: src/lib/status.h:281 src/lib/status.h:292 src/lib/status.h:306
-#: src/lib/status.h:310 src/lib/status.h:314
+#: src/lib/status.h:264 src/lib/status.h:275 src/lib/status.h:289
+#: src/lib/status.h:293 src/lib/status.h:297
 msgid "Bacula "
 msgstr "Bacula"
 
@@ -289,10 +294,11 @@ msgid "TLS required but not configured in Bacula.\n"
 msgstr "Se requiere TLS pero no está configurado en Bacula.\n"
 
 #: src/qt-console/main.cpp:229
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Director \"%s\" in %s. At least one CA certificate store is required.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Director \"%s\" in %s. At least one CA certificate store is "
+"required.\n"
 msgstr ""
 "Ni \"Certificado TLS CA\" o \"Directorio de Certificado TLS CA\" están "
 "definidos para Director \"%s\" en %s. Por lo menos un almacén de "
@@ -308,10 +314,10 @@ msgstr ""
 "Sin eso no sé cómo hablar con el Director :-(\n"
 
 #: src/qt-console/main.cpp:259
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Console \"%s\" in %s.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Console \"%s\" in %s.\n"
 msgstr ""
 "Ni \"Certificado TLS CA\" o \"Directorio de Certificado TLS CA\" están "
 "definidos para Console \"%s\" en %s.\n"
@@ -524,12 +530,12 @@ msgstr ""
 "\n"
 "Bacula ERROR: "
 
-#: src/win32/filed/vss.cpp:249 src/win32/filed/vss.cpp:264
+#: src/win32/filed/vss.cpp:68 src/win32/filed/vss.cpp:83
 #, c-format
 msgid "pthread key create failed: ERR=%s\n"
 msgstr "fallo crear clave pthread: ERR=%s\n"
 
-#: src/win32/filed/vss.cpp:272
+#: src/win32/filed/vss.cpp:91
 #, c-format
 msgid "pthread_setspecific failed: ERR=%s\n"
 msgstr "fallo pthread_setspecific: ERR=%s\n"
@@ -1869,8 +1875,8 @@ msgstr "No se pudo bloquear la base de datos"
 #, fuzzy
 #~ msgid "Storage=%s not found. Assuming it was removed!!!\n"
 #~ msgstr ""
-#~ "Storage \"%s\" no encontrado, usando Storage \"%s\" desde MediaType\"%s"
-#~ "\".\n"
+#~ "Storage \"%s\" no encontrado, usando Storage \"%s\" desde "
+#~ "MediaType\"%s\".\n"
 
 #~ msgid "Failed to initialize TLS context for Director \"%s\" in %s.\n"
 #~ msgstr "Fallo al inicializar contexto TLS para Director \"%s\" en %s.\n"
@@ -1984,8 +1990,8 @@ msgstr "No se pudo bloquear la base de datos"
 #~ "     MaxJobs=%u NumJobs=%u Resched=%d Times=%d Interval=%s Spool=%d "
 #~ "WritePartAfterJob=%d\n"
 #~ msgstr ""
-#~ "MaxJobs=%u Resched=%d Times=%d Intervalo=%s Spool=%d WritePartAfterJob="
-#~ "%d\n"
+#~ "MaxJobs=%u Resched=%d Times=%d Intervalo=%s Spool=%d "
+#~ "WritePartAfterJob=%d\n"
 
 #~ msgid "     SpoolSize=%s\n"
 #~ msgstr "SpoolSize=%s\n"
@@ -2414,9 +2420,6 @@ msgstr "No se pudo bloquear la base de datos"
 #~ msgid "Could not open database \"%s\".\n"
 #~ msgstr "No se puede abrir la base de datos \"%s\".\n"
 
-#~ msgid "unknown source"
-#~ msgstr "fuente desconocida"
-
 #~ msgid "Job resource"
 #~ msgstr "Recurso Job"
 
@@ -2611,8 +2614,8 @@ msgstr "No se pudo bloquear la base de datos"
 #~ "    Read storage \"%s\" (From %s) -- Write storage \"%s\" (From %s)\n"
 #~ msgstr ""
 #~ "Job cancelado. Intento de leer y escribir mismo dispositivo.\n"
-#~ " Storage de Lectura \"%s\" (desde %s) -- Storage de Escritura \"%s"
-#~ "\" (desde %s)\n"
+#~ " Storage de Lectura \"%s\" (desde %s) -- Storage de Escritura "
+#~ "\"%s\" (desde %s)\n"
 
 #~ msgid "Could not get or create a Pool record.\n"
 #~ msgstr "No es posible obtener o crear un registro Pool.\n"
@@ -4042,8 +4045,8 @@ msgstr "No se pudo bloquear la base de datos"
 
 #~ msgid "Could not find next Volume for Job %s (Pool=%s, Level=%s).\n"
 #~ msgstr ""
-#~ "No se pudo encontrar el siguiente Volumen para Job %s (Pool=%s, Nivel="
-#~ "%s).\n"
+#~ "No se pudo encontrar el siguiente Volumen para Job %s (Pool=%s, "
+#~ "Nivel=%s).\n"
 
 #~ msgid ""
 #~ "The next Volume to be used by Job \"%s\" (Pool=%s, Level=%s) will be %s\n"
@@ -4573,14 +4576,14 @@ msgstr "No se pudo bloquear la base de datos"
 #, fuzzy
 #~ msgid "Using Storage \"%s\" from MediaType \"%s\".\n"
 #~ msgstr ""
-#~ "Storage \"%s\" no encontrado, usando Storage \"%s\" desde MediaType\"%s"
-#~ "\".\n"
+#~ "Storage \"%s\" no encontrado, usando Storage \"%s\" desde "
+#~ "MediaType\"%s\".\n"
 
 #~ msgid ""
 #~ "Storage \"%s\" not found, using Storage \"%s\" from MediaType \"%s\".\n"
 #~ msgstr ""
-#~ "Storage \"%s\" no encontrado, usando Storage \"%s\" desde MediaType\"%s"
-#~ "\".\n"
+#~ "Storage \"%s\" no encontrado, usando Storage \"%s\" desde "
+#~ "MediaType\"%s\".\n"
 
 #~ msgid ""
 #~ "\n"
@@ -6640,8 +6643,8 @@ msgstr "No se pudo bloquear la base de datos"
 #~ "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined "
 #~ "for File daemon in %s.\n"
 #~ msgstr ""
-#~ "Ninguno \"Certificado TLS de CA\" o \"Directorio de Certificado TLS de CA"
-#~ "\" están definidos para el demonio File en %s.\n"
+#~ "Ninguno \"Certificado TLS de CA\" o \"Directorio de Certificado TLS de "
+#~ "CA\" están definidos para el demonio File en %s.\n"
 
 #~ msgid ""
 #~ "\"PKI Key Pair\" must be defined for File daemon \"%s\" in %s if either "
@@ -7113,8 +7116,8 @@ msgstr "No se pudo bloquear la base de datos"
 
 #, fuzzy
 #~ msgid ""
-#~ "An error=%d occurred while decoding encrypted session data stream: ERR="
-#~ "%s\n"
+#~ "An error=%d occurred while decoding encrypted session data stream: "
+#~ "ERR=%s\n"
 #~ msgstr ""
 #~ "Se produjo un error al descodificar flujo de datos de sesión encriptados: "
 #~ "%s\n"
@@ -7521,8 +7524,8 @@ msgstr "No se pudo bloquear la base de datos"
 
 #~ msgid "wrong encoding of acl type in acl stream on file \"%s\"\n"
 #~ msgstr ""
-#~ "codificación errónea del tipo de ACL en el flujo de ACL en el archivo \"%s"
-#~ "\" \n"
+#~ "codificación errónea del tipo de ACL en el flujo de ACL en el archivo "
+#~ "\"%s\" \n"
 
 #~ msgid "acl_set error on file \"%s\": ERR=%s\n"
 #~ msgstr "error de acl_set en el archivo \"%s\": ERR=%s\n"
@@ -7563,13 +7566,13 @@ msgstr "No se pudo bloquear la base de datos"
 
 #~ msgid "Unable to restore owner of xattr %s on file \"%s\": ERR=%s\n"
 #~ msgstr ""
-#~ "No es posible restablecer el propietario de xattr %s en el archivo \"%s"
-#~ "\": ERR=%s\n"
+#~ "No es posible restablecer el propietario de xattr %s en el archivo "
+#~ "\"%s\": ERR=%s\n"
 
 #~ msgid "Unable to restore filetimes of xattr %s on file \"%s\": ERR=%s\n"
 #~ msgstr ""
-#~ "No es posible restablecer filetimes de xattr %s en el archivo \"%s\": ERR="
-#~ "%s\n"
+#~ "No es posible restablecer filetimes de xattr %s en el archivo \"%s\": "
+#~ "ERR=%s\n"
 
 #~ msgid "Unable to set file owner %s: ERR=%s\n"
 #~ msgstr "No se pudo establecer propietario del archivo %s: ERR=%s\n"
@@ -10013,8 +10016,8 @@ msgstr "No se pudo bloquear la base de datos"
 #~ "3995 Bad autochanger \"unload Volume %s, Slot %d, Drive %d\": ERR=%s\n"
 #~ "Results=%s\n"
 #~ msgstr ""
-#~ "3995 Malo comando auto-cambiador \"descargar ranura %d, unidad %d\": ERR="
-#~ "%s\n"
+#~ "3995 Malo comando auto-cambiador \"descargar ranura %d, unidad %d\": "
+#~ "ERR=%s\n"
 #~ "Resultados=%s\n"
 
 #~ msgid "Volume \"%s\" wanted on %s is in use by device %s\n"
@@ -10024,8 +10027,8 @@ msgstr "No se pudo bloquear la base de datos"
 #~ msgid ""
 #~ "3997 Bad autochanger \"unload Volume %s, Slot %d, Drive %d\": ERR=%s.\n"
 #~ msgstr ""
-#~ "3995 Malo comando auto-cambiador \"descargar ranura %d, unidad %d\": ERR="
-#~ "%s.\n"
+#~ "3995 Malo comando auto-cambiador \"descargar ranura %d, unidad %d\": "
+#~ "ERR=%s.\n"
 
 #~ msgid "3993 Device %s not an autochanger device.\n"
 #~ msgstr "3993 Dispositivo %s no es un dispositivo auto-cargador.\n"
@@ -10349,8 +10352,8 @@ msgstr "No se pudo bloquear la base de datos"
 #~ "Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer "
 #~ "discarded.\n"
 #~ msgstr ""
-#~ "Error de volumen de datos en %u:%u! Se busca ID: \"%s\",se obtiene \"%s"
-#~ "\". Buffer descartado.\n"
+#~ "Error de volumen de datos en %u:%u! Se busca ID: \"%s\",se obtiene "
+#~ "\"%s\". Buffer descartado.\n"
 
 #~ msgid ""
 #~ "Volume data error at %u:%u! Block length %u is insane (too large), "
@@ -10385,12 +10388,12 @@ msgstr "No se pudo bloquear la base de datos"
 
 #~ msgid ""
 #~ "Re-read of last block: block numbers differ by more than one.\n"
-#~ "Probable tape misconfiguration and data loss. Read block=%u Want block="
-#~ "%u.\n"
+#~ "Probable tape misconfiguration and data loss. Read block=%u Want "
+#~ "block=%u.\n"
 #~ msgstr ""
 #~ "Re-lectura del último bloque: número de bloque difieren en más de uno.\n"
-#~ "Probable mala configuración de la cinta y pérdida de datos. Leer bloque="
-#~ "%u Espera bloque=%u.\n"
+#~ "Probable mala configuración de la cinta y pérdida de datos. Leer "
+#~ "bloque=%u Espera bloque=%u.\n"
 
 #~ msgid ""
 #~ "Re-read of last block OK, but block numbers differ. Read block=%u Want "
@@ -11727,11 +11730,11 @@ msgstr "No se pudo bloquear la base de datos"
 #~ msgstr "Error leyendo el bloque. ERR=%s\n"
 
 #~ msgid ""
-#~ "Block=%u file,blk=%u,%u blen=%u First rec FI=%s SessId=%u SessTim=%u Strm="
-#~ "%s rlen=%d\n"
+#~ "Block=%u file,blk=%u,%u blen=%u First rec FI=%s SessId=%u SessTim=%u "
+#~ "Strm=%s rlen=%d\n"
 #~ msgstr ""
-#~ "Bloque=%u archivo,blk=%u,%u blen=%u Primero rec FI=%s SessId=%u SessTim="
-#~ "%u Strm=%s rlen=%d\n"
+#~ "Bloque=%u archivo,blk=%u,%u blen=%u Primero rec FI=%s SessId=%u "
+#~ "SessTim=%u Strm=%s rlen=%d\n"
 
 #~ msgid "Device status: %u. ERR=%s\n"
 #~ msgstr "Estado del dispositivo: %u. ERR=%s\n"
@@ -12734,8 +12737,8 @@ msgstr "No se pudo bloquear la base de datos"
 
 #, fuzzy
 #~ msgid ""
-#~ "[SE0002] %s is an unknown device type. Must be tape or directory. st_mode="
-#~ "%x\n"
+#~ "[SE0002] %s is an unknown device type. Must be tape or directory. "
+#~ "st_mode=%x\n"
 #~ msgstr ""
 #~ "%s es un tipo de dispositivo desconocido. Debe ser cinta o directorio\n"
 #~ " o tener RequiresMount=yes para DVD. st_mode=%x\n"
@@ -12910,8 +12913,8 @@ msgstr "No se pudo bloquear la base de datos"
 #, fuzzy
 #~ msgid "Failed to re-open device after truncate on %s device %s: ERR=%s"
 #~ msgstr ""
-#~ "No se ha podido re-abrir el DVD después de truncar el dispositivo %s: ERR="
-#~ "%s\n"
+#~ "No se ha podido re-abrir el DVD después de truncar el dispositivo %s: "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "Unable to write %s device %s: ERR=%s\n"
@@ -13482,14 +13485,14 @@ msgstr "No se pudo bloquear la base de datos"
 
 #, fuzzy
 #~ msgid ""
-#~ "User specified Job spool size reached: JobSpoolSize=%s MaxJobSpoolSize="
-#~ "%s\n"
+#~ "User specified Job spool size reached: JobSpoolSize=%s "
+#~ "MaxJobSpoolSize=%s\n"
 #~ msgstr "Tamaño de cola especificada por el usuario alcanzado.\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "User specified Device spool size reached: DevSpoolSize=%s MaxDevSpoolSize="
-#~ "%s\n"
+#~ "User specified Device spool size reached: DevSpoolSize=%s "
+#~ "MaxDevSpoolSize=%s\n"
 #~ msgstr "Tamaño de cola especificada por el usuario alcanzado.\n"
 
 #~ msgid "Bad return from despool in write_block.\n"
@@ -13957,8 +13960,8 @@ msgstr "No se pudo bloquear la base de datos"
 
 #, fuzzy
 #~ msgid ""
-#~ "Cannot reserve Volume=%s because drive is busy with Volume=%s (JobId="
-#~ "%ld).\n"
+#~ "Cannot reserve Volume=%s because drive is busy with Volume=%s "
+#~ "(JobId=%ld).\n"
 #~ msgstr "No se puede podar Volumen \"%s\", porque el esta archivo.\n"
 
 #, fuzzy
@@ -14885,8 +14888,8 @@ msgstr "No se pudo bloquear la base de datos"
 #, fuzzy
 #~ msgid "Unknown acl type encountered on file \"%s\": %ld\n"
 #~ msgstr ""
-#~ "codificación errónea del tipo de ACL en el flujo de ACL en el archivo \"%s"
-#~ "\" \n"
+#~ "codificación errónea del tipo de ACL en el flujo de ACL en el archivo "
+#~ "\"%s\" \n"
 
 #, fuzzy
 #~ msgid "Failed to convert acl into text on file \"%s\"\n"

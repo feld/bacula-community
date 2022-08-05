@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bacula 9.2.1\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2020-12-04 16:47+0100\n"
+"POT-Creation-Date: 2022-08-05 17:12+0200\n"
 "PO-Revision-Date: 2010-01-08 17:32+0300\n"
 "Last-Translator: Vitaliy Kosharskiy <kisa_co@ukrpost.net>\n"
 "Language-Team: Ukrainian\n"
@@ -16,8 +16,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: src/baconfig.h:69 src/baconfig.h:70 src/baconfig.h:75 src/baconfig.h:76
 #: src/baconfig.h:87 src/baconfig.h:88
@@ -29,69 +29,74 @@ msgstr ""
 msgid "*None*"
 msgstr ""
 
-#: src/lib/status.h:84
+#: src/dird/dird_conf.h:400
+#, fuzzy
+msgid "Unknown source"
+msgstr "Невідомий тип ресурсу %d\n"
+
+#: src/lib/status.h:69
 msgid ""
 "\n"
 "Terminated Jobs:\n"
 msgstr ""
 
-#: src/lib/status.h:91
+#: src/lib/status.h:76
 msgid " JobId  Level    Files      Bytes   Status   Finished        Name \n"
 msgstr ""
 
-#: src/lib/status.h:93
+#: src/lib/status.h:78
 msgid "===================================================================\n"
 msgstr ""
 
-#: src/lib/status.h:119
+#: src/lib/status.h:104
 msgid "Created"
 msgstr ""
 
-#: src/lib/status.h:123
+#: src/lib/status.h:108
 msgid "Error"
 msgstr ""
 
-#: src/lib/status.h:126
+#: src/lib/status.h:111
 msgid "Diffs"
 msgstr ""
 
-#: src/lib/status.h:129
+#: src/lib/status.h:114
 msgid "Cancel"
 msgstr ""
 
-#: src/lib/status.h:132
+#: src/lib/status.h:117
 msgid "OK"
 msgstr ""
 
-#: src/lib/status.h:135
+#: src/lib/status.h:120
 msgid "OK -- with warnings"
 msgstr ""
 
-#: src/lib/status.h:138
+#: src/lib/status.h:123
 msgid "Incomplete"
 msgstr ""
 
-#: src/lib/status.h:141
+#: src/lib/status.h:126
 msgid "Other"
 msgstr ""
 
-#: src/lib/status.h:153
+#: src/lib/status.h:138
 #, c-format
 msgid "%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"
 msgstr ""
 
-#: src/lib/status.h:182
+#: src/lib/status.h:165
 #, c-format
 msgid "%6d  %-6s %8s %10s  %-7s  %-8s %s\n"
 msgstr ""
 
-#: src/lib/status.h:261
+#: src/lib/status.h:244
 #, c-format
 msgid " Ulimits: nofile=%s memlock=%s status=%s\n"
 msgstr ""
 
-#: src/lib/status.h:281 src/lib/status.h:292 src/lib/status.h:306
-#: src/lib/status.h:310 src/lib/status.h:314
+#: src/lib/status.h:264 src/lib/status.h:275 src/lib/status.h:289
+#: src/lib/status.h:293 src/lib/status.h:297
 msgid "Bacula "
 msgstr ""
 
@@ -284,10 +289,11 @@ msgid "TLS required but not configured in Bacula.\n"
 msgstr "TLS необхідний, але не налаштовано у Bacula.\n"
 
 #: src/qt-console/main.cpp:229
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Director \"%s\" in %s. At least one CA certificate store is required.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Director \"%s\" in %s. At least one CA certificate store is "
+"required.\n"
 msgstr ""
 "Жоден із параметрів \"TLS CA Certificate\" або \"TLS CA Certificate Dir\" не "
 "задано для Керівника \"%s\" у %s. Необхідне щонайменше одне сховище для "
@@ -303,10 +309,10 @@ msgstr ""
 "Без цього я не знаю як спілкуватись із Керівником :-(\n"
 
 #: src/qt-console/main.cpp:259
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Console \"%s\" in %s.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Console \"%s\" in %s.\n"
 msgstr ""
 "Жоден із параметрів \"TLS CA Certificate\" або \"TLS CA Certificate Dir\" не "
 "задано для Консолі \"%s\" у %s.\n"
@@ -515,12 +521,12 @@ msgid ""
 "Bacula ERROR: "
 msgstr ""
 
-#: src/win32/filed/vss.cpp:249 src/win32/filed/vss.cpp:264
+#: src/win32/filed/vss.cpp:68 src/win32/filed/vss.cpp:83
 #, fuzzy, c-format
 msgid "pthread key create failed: ERR=%s\n"
 msgstr "Помилка у %s файл %s: ERR=%s\n"
 
-#: src/win32/filed/vss.cpp:272
+#: src/win32/filed/vss.cpp:91
 #, fuzzy, c-format
 msgid "pthread_setspecific failed: ERR=%s\n"
 msgstr "Помилка у %s файл %s: ERR=%s\n"
@@ -1615,10 +1621,6 @@ msgstr "Не вдалось відкрити%s: ERR=%s\n"
 #, fuzzy
 #~ msgid "Unable to init job cond variable: ERR=%s\n"
 #~ msgstr "Не можливо встановити власника файлу %s: ERR=%s\n"
-
-#, fuzzy
-#~ msgid "unknown source"
-#~ msgstr "Невідомий тип ресурсу %d\n"
 
 #, fuzzy
 #~ msgid "Job resource"
@@ -3328,8 +3330,8 @@ msgstr "Не вдалось відкрити%s: ERR=%s\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "An error=%d occurred while decoding encrypted session data stream: ERR="
-#~ "%s\n"
+#~ "An error=%d occurred while decoding encrypted session data stream: "
+#~ "ERR=%s\n"
 #~ msgstr "Помилка у %s файл %s: ERR=%s\n"
 
 #, fuzzy

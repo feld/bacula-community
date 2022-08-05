@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Bacula 5.2.7\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2020-12-04 16:47+0100\n"
+"POT-Creation-Date: 2022-08-05 17:12+0200\n"
 "PO-Revision-Date: 2012-05-05 11:52+0100\n"
 "Last-Translator: W. van den Akker <wvdakker@wilsoft.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,69 +26,74 @@ msgstr ""
 msgid "*None*"
 msgstr "*Geen*"
 
-#: src/lib/status.h:84
+#: src/dird/dird_conf.h:400
+#, fuzzy
+msgid "Unknown source"
+msgstr "Onbekende opdracht."
+
+#: src/lib/status.h:69
 msgid ""
 "\n"
 "Terminated Jobs:\n"
 msgstr ""
 
-#: src/lib/status.h:91
+#: src/lib/status.h:76
 msgid " JobId  Level    Files      Bytes   Status   Finished        Name \n"
 msgstr ""
 
-#: src/lib/status.h:93
+#: src/lib/status.h:78
 msgid "===================================================================\n"
 msgstr ""
 
-#: src/lib/status.h:119
+#: src/lib/status.h:104
 msgid "Created"
 msgstr ""
 
-#: src/lib/status.h:123
+#: src/lib/status.h:108
 msgid "Error"
 msgstr ""
 
-#: src/lib/status.h:126
+#: src/lib/status.h:111
 msgid "Diffs"
 msgstr ""
 
-#: src/lib/status.h:129
+#: src/lib/status.h:114
 msgid "Cancel"
 msgstr ""
 
-#: src/lib/status.h:132
+#: src/lib/status.h:117
 msgid "OK"
 msgstr ""
 
-#: src/lib/status.h:135
+#: src/lib/status.h:120
 msgid "OK -- with warnings"
 msgstr ""
 
-#: src/lib/status.h:138
+#: src/lib/status.h:123
 msgid "Incomplete"
 msgstr ""
 
-#: src/lib/status.h:141
+#: src/lib/status.h:126
 msgid "Other"
 msgstr ""
 
-#: src/lib/status.h:153
+#: src/lib/status.h:138
 #, c-format
 msgid "%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"
 msgstr ""
 
-#: src/lib/status.h:182
+#: src/lib/status.h:165
 #, c-format
 msgid "%6d  %-6s %8s %10s  %-7s  %-8s %s\n"
 msgstr ""
 
-#: src/lib/status.h:261
+#: src/lib/status.h:244
 #, c-format
 msgid " Ulimits: nofile=%s memlock=%s status=%s\n"
 msgstr ""
 
-#: src/lib/status.h:281 src/lib/status.h:292 src/lib/status.h:306
-#: src/lib/status.h:310 src/lib/status.h:314
+#: src/lib/status.h:264 src/lib/status.h:275 src/lib/status.h:289
+#: src/lib/status.h:293 src/lib/status.h:297
 msgid "Bacula "
 msgstr ""
 
@@ -273,8 +278,9 @@ msgstr ""
 #: src/qt-console/main.cpp:229
 #, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Director \"%s\" in %s. At least one CA certificate store is required.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Director \"%s\" in %s. At least one CA certificate store is "
+"required.\n"
 msgstr ""
 
 #: src/qt-console/main.cpp:238
@@ -287,8 +293,8 @@ msgstr ""
 #: src/qt-console/main.cpp:259
 #, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Console \"%s\" in %s.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Console \"%s\" in %s.\n"
 msgstr ""
 
 #: src/qt-console/tray-monitor/authenticate.cpp:116
@@ -488,12 +494,12 @@ msgstr ""
 "\n"
 "Bacula FOUT: "
 
-#: src/win32/filed/vss.cpp:249 src/win32/filed/vss.cpp:264
+#: src/win32/filed/vss.cpp:68 src/win32/filed/vss.cpp:83
 #, fuzzy, c-format
 msgid "pthread key create failed: ERR=%s\n"
 msgstr "Lees fout op bestand %s. FOUT=%s\n"
 
-#: src/win32/filed/vss.cpp:272
+#: src/win32/filed/vss.cpp:91
 #, fuzzy, c-format
 msgid "pthread_setspecific failed: ERR=%s\n"
 msgstr "Lees fout op bestand %s. FOUT=%s\n"
@@ -3690,10 +3696,6 @@ msgstr "Kan Client niet vinden %s: ERR=%s"
 #, fuzzy
 #~ msgid "Decryption error"
 #~ msgstr "Fout in versleuteling \n"
-
-#, fuzzy
-#~ msgid "Unknown error"
-#~ msgstr "Onbekende opdracht."
 
 #, fuzzy
 #~ msgid "Cannot fork to become daemon: ERR=%s\n"

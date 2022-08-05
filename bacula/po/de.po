@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: bacula-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2020-12-04 16:47+0100\n"
+"POT-Creation-Date: 2022-08-05 17:12+0200\n"
 "PO-Revision-Date: 2007-06-25 20:38+0200\n"
 "Last-Translator: Kern Sibbald <kern@sibbald.com>\n"
 "Language-Team: \n"
@@ -27,70 +27,75 @@ msgstr ""
 msgid "*None*"
 msgstr ""
 
-#: src/lib/status.h:84
+#: src/dird/dird_conf.h:400
+#, fuzzy
+msgid "Unknown source"
+msgstr "unbekannte Quelle"
+
+#: src/lib/status.h:69
 msgid ""
 "\n"
 "Terminated Jobs:\n"
 msgstr ""
 
-#: src/lib/status.h:91
+#: src/lib/status.h:76
 msgid " JobId  Level    Files      Bytes   Status   Finished        Name \n"
 msgstr ""
 
-#: src/lib/status.h:93
+#: src/lib/status.h:78
 msgid "===================================================================\n"
 msgstr ""
 
-#: src/lib/status.h:119
+#: src/lib/status.h:104
 msgid "Created"
 msgstr ""
 
-#: src/lib/status.h:123
+#: src/lib/status.h:108
 msgid "Error"
 msgstr ""
 
-#: src/lib/status.h:126
+#: src/lib/status.h:111
 msgid "Diffs"
 msgstr ""
 
-#: src/lib/status.h:129
+#: src/lib/status.h:114
 msgid "Cancel"
 msgstr ""
 
-#: src/lib/status.h:132
+#: src/lib/status.h:117
 msgid "OK"
 msgstr ""
 
-#: src/lib/status.h:135
+#: src/lib/status.h:120
 #, fuzzy
 msgid "OK -- with warnings"
 msgstr "%s OK -- mit Warnungen"
 
-#: src/lib/status.h:138
+#: src/lib/status.h:123
 msgid "Incomplete"
 msgstr ""
 
-#: src/lib/status.h:141
+#: src/lib/status.h:126
 msgid "Other"
 msgstr ""
 
-#: src/lib/status.h:153
+#: src/lib/status.h:138
 #, fuzzy, c-format
 msgid "%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"
 msgstr "1000 OK: %s Version: %s (%s)\n"
 
-#: src/lib/status.h:182
+#: src/lib/status.h:165
 #, fuzzy, c-format
 msgid "%6d  %-6s %8s %10s  %-7s  %-8s %s\n"
 msgstr "1000 OK: %s Version: %s (%s)\n"
 
-#: src/lib/status.h:261
+#: src/lib/status.h:244
 #, c-format
 msgid " Ulimits: nofile=%s memlock=%s status=%s\n"
 msgstr ""
 
-#: src/lib/status.h:281 src/lib/status.h:292 src/lib/status.h:306
-#: src/lib/status.h:310 src/lib/status.h:314
+#: src/lib/status.h:264 src/lib/status.h:275 src/lib/status.h:289
+#: src/lib/status.h:293 src/lib/status.h:297
 msgid "Bacula "
 msgstr "Bacula "
 
@@ -283,11 +288,15 @@ msgid "TLS required but not configured in Bacula.\n"
 msgstr "TLS benötigt aber nicht konfiguriert in Bacula.\n"
 
 #: src/qt-console/main.cpp:229
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Director \"%s\" in %s. At least one CA certificate store is required.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Director \"%s\" in %s. At least one CA certificate store is "
+"required.\n"
 msgstr ""
+"Weder \"TLS CA Certificate\"  noch \"TLS CA Certificate Dir\" sind für "
+"Director \"%s\" in %s definert. Mindestens ein CA certificate store wird "
+"benötigt wenn \"TLS Verify Peer\" eingesetzt wird.\n"
 
 #: src/qt-console/main.cpp:238
 #, c-format
@@ -297,11 +306,13 @@ msgid ""
 msgstr ""
 
 #: src/qt-console/main.cpp:259
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined for "
-"Console \"%s\" in %s.\n"
+"Neither \"TLS CA Certificate File\" or \"TLS CA Certificate Dir\" are "
+"defined for Console \"%s\" in %s.\n"
 msgstr ""
+"Weder \"TLS CA Certificate\" noch \"TLS CA Certificate Dir\" sind definiert "
+"fürStorage \"%s\" in %s.\n"
 
 #: src/qt-console/tray-monitor/authenticate.cpp:116
 #: src/qt-console/tray-monitor/authenticate.cpp:186
@@ -513,12 +524,12 @@ msgid ""
 "Bacula ERROR: "
 msgstr "Bacula "
 
-#: src/win32/filed/vss.cpp:249 src/win32/filed/vss.cpp:264
+#: src/win32/filed/vss.cpp:68 src/win32/filed/vss.cpp:83
 #, fuzzy, c-format
 msgid "pthread key create failed: ERR=%s\n"
 msgstr "pthread_create: ERR=%s\n"
 
-#: src/win32/filed/vss.cpp:272
+#: src/win32/filed/vss.cpp:91
 #, fuzzy, c-format
 msgid "pthread_setspecific failed: ERR=%s\n"
 msgstr "Media id select fehlgeschlagen: ERR=%s\n"
@@ -1201,8 +1212,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
 #~ msgid "bdird<stored: \"%s:%s\" bad response to Hello command: ERR=%s\n"
 #~ msgstr ""
-#~ "bdird<stored: \"%s:%s\" fehlerhafte Antwort auf \"Hello\" Kommando: ERR="
-#~ "%s\n"
+#~ "bdird<stored: \"%s:%s\" fehlerhafte Antwort auf \"Hello\" Kommando: "
+#~ "ERR=%s\n"
 
 #~ msgid "Storage daemon rejected Hello command\n"
 #~ msgstr "Storage daemon hat Hello Kommando abgewiesen.\n"
@@ -1214,8 +1225,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 #, fuzzy
 #~ msgid "Error sending Hello to File daemon at \"%s:%d\". ERR=%s\n"
 #~ msgstr ""
-#~ "Fehler beim senden des Kommandos Hello an File daemon auf \"%s:%d\". ERR="
-#~ "%s\n"
+#~ "Fehler beim senden des Kommandos Hello an File daemon auf \"%s:%d\". "
+#~ "ERR=%s\n"
 
 #~ msgid "Director and File daemon passwords or names not the same.\n"
 #~ msgstr "Director und File daemon Passworte oder Namen sind nicht gleich.\n"
@@ -1258,8 +1269,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 #~ msgid ""
 #~ "Bad response from File daemon at \"%s:%d\" to Hello command: ERR=%s\n"
 #~ msgstr ""
-#~ "Fehlerhafte Antwort von File daemon an \"%s:%d\" auf Hello Kommando: ERR="
-#~ "%s\n"
+#~ "Fehlerhafte Antwort von File daemon an \"%s:%d\" auf Hello Kommando: "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "File daemon at \"%s:%d\" rejected Hello command\n"
@@ -1495,15 +1506,6 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
 #~ msgid "\"TLS Key\" file not defined for Director \"%s\" in %s.\n"
 #~ msgstr "\"TLS Key\" Datei nicht für Director definiert \"%s\" in %s.\n"
-
-#~ msgid ""
-#~ "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined "
-#~ "for Director \"%s\" in %s. At least one CA certificate store is required "
-#~ "when using \"TLS Verify Peer\".\n"
-#~ msgstr ""
-#~ "Weder \"TLS CA Certificate\"  noch \"TLS CA Certificate Dir\" sind für "
-#~ "Director \"%s\" in %s definert. Mindestens ein CA certificate store wird "
-#~ "benötigt wenn \"TLS Verify Peer\" eingesetzt wird.\n"
 
 #~ msgid "\"TLS Certificate\" file not defined for Console \"%s\" in %s.\n"
 #~ msgstr ""
@@ -1758,13 +1760,6 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 #, fuzzy
 #~ msgid "Could not update storage record for %s\n"
 #~ msgstr "Kann Storage resource %s nicht finden\n"
-
-#~ msgid ""
-#~ "Neither \"TLS CA Certificate\" or \"TLS CA Certificate Dir\" are defined "
-#~ "for Storage \"%s\" in %s.\n"
-#~ msgstr ""
-#~ "Weder \"TLS CA Certificate\" noch \"TLS CA Certificate Dir\" sind "
-#~ "definiert fürStorage \"%s\" in %s.\n"
 
 #, fuzzy
 #~ msgid "Failed to initialize TLS context for Storage \"%s\" in %s.\n"
@@ -2266,9 +2261,6 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
 #~ msgid "Unable to init job cond variable: ERR=%s\n"
 #~ msgstr "konnte job cond Variable nicht initialisieren: ERR=%s\n"
-
-#~ msgid "unknown source"
-#~ msgstr "unbekannte Quelle"
 
 #~ msgid "Job resource"
 #~ msgstr "Job Ressource"
@@ -5136,8 +5128,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "An error=%d occurred while decoding encrypted session data stream: ERR="
-#~ "%s\n"
+#~ "An error=%d occurred while decoding encrypted session data stream: "
+#~ "ERR=%s\n"
 #~ msgstr "Fehler beim holen von Zeile: %s\n"
 
 #, fuzzy
@@ -5743,8 +5735,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 #, fuzzy
 #~ msgid "Write error sending %d bytes to %s:%s:%d: ERR=%s\n"
 #~ msgstr ""
-#~ "Fehler beim senden des Kommandos Hello an File daemon auf \"%s:%d\". ERR="
-#~ "%s\n"
+#~ "Fehler beim senden des Kommandos Hello an File daemon auf \"%s:%d\". "
+#~ "ERR=%s\n"
 
 #, fuzzy
 #~ msgid "Read expected %d got %d from %s:%s:%d\n"
@@ -6076,8 +6068,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 #~ msgid ""
 #~ "Attempt to define second \"%s\" resource named \"%s\" is not permitted.\n"
 #~ msgstr ""
-#~ "Der Versuch der Definition einer zweiten  %s resource mit dem Namen \"%s"
-#~ "\" ist nicht erlaubt.\n"
+#~ "Der Versuch der Definition einer zweiten  %s resource mit dem Namen "
+#~ "\"%s\" ist nicht erlaubt.\n"
 
 #, fuzzy
 #~ msgid "Inserted res: %s index=%d\n"
@@ -7743,8 +7735,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "[SE0002] %s is an unknown device type. Must be tape or directory. st_mode="
-#~ "%x\n"
+#~ "[SE0002] %s is an unknown device type. Must be tape or directory. "
+#~ "st_mode=%x\n"
 #~ msgstr "unbekannt\n"
 
 #, fuzzy
@@ -9259,8 +9251,8 @@ msgstr "Konnte Datenbank \"%s\" nicht öffen.\n"
 
 #, fuzzy
 #~ msgid ""
-#~ "Wanted to append to Volume \"%s\", but device %s is busy writing on \"%s"
-#~ "\" .\n"
+#~ "Wanted to append to Volume \"%s\", but device %s is busy writing on "
+#~ "\"%s\" .\n"
 #~ msgstr ""
 #~ "Wollte Volume \"%s\"erzeugen, aber , but it already exists. Trying "
 #~ "again.\n"
