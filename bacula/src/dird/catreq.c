@@ -45,7 +45,7 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolJobs=%u VolFiles=%u VolBlocks=%u VolBytes=%lld VolABytes=%lld"
    " VolHoleBytes=%lld VolHoles=%u VolMounts=%u"
    " VolErrors=%u VolWrites=%lld MaxVolBytes=%lld EndTime=%lld VolStatus=%10s"
-   " Slot=%d relabel=%d InChanger=%d VolReadTime=%lld VolWriteTime=%lld"
+   " Slot=%d relabel=%d InChanger=%d VolReadTime=%llu VolWriteTime=%llu"
    " VolFirstWritten=%lld VolType=%u VolParts=%d VolCloudParts=%d"
    " LastPartBytes=%lld Enabled=%d Recycle=%d\n";
 
@@ -102,8 +102,8 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
       edit_uint64(mr->VolCapacityBytes, ed6),
       mr->VolStatus, mr->Slot, mr->MaxVolJobs, mr->MaxVolFiles,
       mr->InChanger,
-      edit_int64(mr->VolReadTime, ed7),
-      edit_int64(mr->VolWriteTime, ed8),
+      edit_uint64(mr->VolReadTime, ed7),
+      edit_uint64(mr->VolWriteTime, ed8),
       mr->EndFile, mr->EndBlock,
       mr->VolType,
       mr->LabelType,
@@ -350,12 +350,8 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       mr.Enabled       = Enabled;  /* byte assignment */
       mr.Recycle       = Recycle;  /* byte assignment */
       bstrncpy(mr.VolStatus, sdmr.VolStatus, sizeof(mr.VolStatus));
-      if (sdmr.VolReadTime >= 0) {
-         mr.VolReadTime  = sdmr.VolReadTime;
-      }
-      if (sdmr.VolWriteTime >= 0) {
-         mr.VolWriteTime = sdmr.VolWriteTime;
-      }
+      mr.VolReadTime  = sdmr.VolReadTime;
+      mr.VolWriteTime = sdmr.VolWriteTime;
 
       Dmsg2(400, "db_update_media_record. Stat=%s Vol=%s\n", mr.VolStatus, mr.VolumeName);
       /*
