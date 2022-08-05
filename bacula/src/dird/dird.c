@@ -966,7 +966,7 @@ static bool check_resources()
 
       if ((!newDirector->tls_ca_certfile && !newDirector->tls_ca_certdir) &&
            need_tls && newDirector->tls_verify_peer) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\" or \"TLS CA"
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\" or \"TLS CA"
               " Certificate Dir\" are defined for Director \"%s\" in %s."
               " At least one CA certificate store is required"
               " when using \"TLS Verify Peer\".\n"),
@@ -1199,7 +1199,7 @@ static bool check_resources()
 
       if ((!cons->tls_ca_certfile && !cons->tls_ca_certdir)
             && need_tls && cons->tls_verify_peer) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\" or \"TLS CA"
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\" or \"TLS CA"
             " Certificate Dir\" are defined for Console \"%s\" in %s."
             " At least one CA certificate store is required"
             " when using \"TLS Verify Peer\".\n"),
@@ -1256,7 +1256,7 @@ static bool check_resources()
       }
       need_tls = client->tls_enable || client->tls_authenticate;
       if ((!client->tls_ca_certfile && !client->tls_ca_certdir) && need_tls) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
             " or \"TLS CA Certificate Dir\" are defined for File daemon \"%s\" in %s.\n"),
             client->name(), configfile);
          OK = false;
@@ -1589,7 +1589,7 @@ static bool check_catalog(cat_op mode)
          need_tls = store->tls_enable || store->tls_authenticate;
 
          if ((!store->tls_ca_certfile && !store->tls_ca_certdir) && need_tls) {
-            Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+            Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
                  " or \"TLS CA Certificate Dir\" are defined for Storage \"%s\" in %s.\n"),
                  store->name(), configfile);
             OK = false;

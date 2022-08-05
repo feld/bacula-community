@@ -431,7 +431,7 @@ static int check_resources()
       }
 
       if ((!store->tls_ca_certfile && !store->tls_ca_certdir) && tls_needed && store->tls_verify_peer) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
               " or \"TLS CA Certificate Dir\" are defined for Storage \"%s\" in %s."
               " At least one CA certificate store is required"
               " when using \"TLS Verify Peer\".\n"),
@@ -489,7 +489,7 @@ static int check_resources()
       }
 
       if ((!director->tls_ca_certfile && !director->tls_ca_certdir) && tls_needed && director->tls_verify_peer) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
               " or \"TLS CA Certificate Dir\" are defined for Director \"%s\" in %s."
               " At least one CA certificate store is required"
               " when using \"TLS Verify Peer\".\n"),

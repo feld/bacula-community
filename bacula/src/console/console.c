@@ -1495,7 +1495,7 @@ static int check_resources()
       tls_needed = director->tls_enable || director->tls_authenticate;
 
       if ((!director->tls_ca_certfile && !director->tls_ca_certdir) && tls_needed) {
-         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
                              " or \"TLS CA Certificate Dir\" are defined for Director \"%s\" in %s."
                              " At least one CA certificate store is required.\n"),
                              director->hdr.name, configfile);
@@ -1529,7 +1529,7 @@ static int check_resources()
       }
       tls_needed = cons->tls_enable || cons->tls_authenticate;
       if ((!cons->tls_ca_certfile && !cons->tls_ca_certdir) && tls_needed) {
-         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
                              " or \"TLS CA Certificate Dir\" are defined for Console \"%s\" in %s.\n"),
                              cons->hdr.name, configfile);
          OK = false;

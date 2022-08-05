@@ -624,7 +624,7 @@ static bool check_resources()
       need_tls = me->tls_enable || me->tls_authenticate;
 
       if ((!me->tls_ca_certfile && !me->tls_ca_certdir) && need_tls) {
-         Emsg1(M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Emsg1(M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
             " or \"TLS CA Certificate Dir\" are defined for File daemon in %s.\n"),
                             configfile);
         OK = false;
@@ -682,7 +682,7 @@ static bool check_resources()
       }
 
       if ((!director->dirinfo.tls_ca_certfile && !director->dirinfo.tls_ca_certdir) && need_tls && director->dirinfo.tls_verify_peer) {
-         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
                              " or \"TLS CA Certificate Dir\" are defined for Director \"%s\" in %s."
                              " At least one CA certificate store is required"
                              " when using \"TLS Verify Peer\".\n"),
@@ -719,7 +719,7 @@ static bool check_resources()
       }
 
       if ((!cons->dirinfo.tls_ca_certfile && !cons->dirinfo.tls_ca_certdir) && need_tls && cons->dirinfo.tls_verify_peer) {
-         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Emsg2(M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
                              " or \"TLS CA Certificate Dir\" are defined for Console \"%s\" in %s."
                              " At least one CA certificate store is required"
                              " when using \"TLS Verify Peer\".\n"),

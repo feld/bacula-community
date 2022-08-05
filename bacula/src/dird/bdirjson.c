@@ -1226,7 +1226,7 @@ static bool check_resources(bool apply_jobdefs)
 
       if ((!director->tls_ca_certfile && !director->tls_ca_certdir) &&
            need_tls && director->tls_verify_peer) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\" or \"TLS CA"
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\" or \"TLS CA"
               " Certificate Dir\" are defined for Director \"%s\" in %s."
               " At least one CA certificate store is required"
               " when using \"TLS Verify Peer\".\n"),
@@ -1267,7 +1267,7 @@ static bool check_resources(bool apply_jobdefs)
 
       if ((!cons->tls_ca_certfile && !cons->tls_ca_certdir)
             && need_tls && cons->tls_verify_peer) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\" or \"TLS CA"
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\" or \"TLS CA"
             " Certificate Dir\" are defined for Console \"%s\" in %s."
             " At least one CA certificate store is required"
             " when using \"TLS Verify Peer\".\n"),
@@ -1313,7 +1313,7 @@ static bool check_resources(bool apply_jobdefs)
       }
       need_tls = client->tls_enable || client->tls_authenticate;
       if ((!client->tls_ca_certfile && !client->tls_ca_certdir) && need_tls) {
-         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate\""
+         Jmsg(NULL, M_FATAL, 0, _("Neither \"TLS CA Certificate File\""
             " or \"TLS CA Certificate Dir\" are defined for File daemon \"%s\" in %s.\n"),
             client->name(), configfile);
          OK = false;
