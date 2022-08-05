@@ -38,6 +38,7 @@ class ClientRecord extends APIDbModule {
 	public $autoprune;
 	public $fileretention;
 	public $jobretention;
+	public $plugins;
 
 	public static function finder($className = __CLASS__) {
 		return parent::finder($className);
