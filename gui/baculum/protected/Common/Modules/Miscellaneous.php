@@ -286,6 +286,10 @@ class Miscellaneous extends TModule {
 		return (preg_match('/^(raw|json)$/', $type) === 1);
 	}
 
+	public function isValidUUID($uuid) {
+		return (preg_match('/^[\w]{8}(-[\w]{4}){3}-[\w]{12}$/', $uuid) === 1);
+	}
+
 	public function escapeCharsToConsole($path) {
 		return preg_replace('/([$])/', '\\\${1}', $path);
 	}

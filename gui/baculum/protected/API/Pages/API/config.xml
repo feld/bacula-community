@@ -28,6 +28,7 @@
 		<module id="storage" class="Baculum\API\Modules\StorageManager" />
 		<module id="version" class="Baculum\API\Modules\VersionManager" />
 		<module id="volume" class="Baculum\API\Modules\VolumeManager" />
+		<module id="object" class="Baculum\API\Modules\ObjectManager" />
 		<!-- tools modules -->
 		<module id="bconsole" class="Baculum\API\Modules\Bconsole" />
 		<module id="json_tools" class="Baculum\API\Modules\JSONTools" />
@@ -54,5 +55,7 @@
 		<module id="list" class="Baculum\API\Modules\BList" />
 		<!-- changer command modules -->
 		<module id="changer_command" class="Baculum\API\Modules\ChangerCommand" />
+		<!-- plugin modules -->
+		<module id="fd_plugin_cfg" class="Baculum\API\Modules\PluginFDConfig" />
 	</modules>
 </configuration>

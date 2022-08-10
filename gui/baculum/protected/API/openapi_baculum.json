@@ -122,6 +122,15 @@
 			},
 			"AutochangerSlotVolume": {
 				"$ref": "#/definitions/AutochangerSlotVolume"
+			},
+			"Objects": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/Object"
+				}
+			},
+			"Object": {
+				"$ref": "#/definitions/Object"
 			}
 		},
 		"parameters": {
@@ -276,6 +285,15 @@
 				"schema": {
 					"type": "boolean",
 					"default": 0
+				}
+			},
+			"TenantId": {
+				"name": "tenantid",
+				"in": "query",
+				"description": "Tenant identifier",
+				"required": false,
+				"schema": {
+					"type": "string"
 				}
 			}
 		}
@@ -5982,6 +6000,149 @@
 					}
 				]
 			}
+		},
+		"/api/v2/objects": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object list",
+				"description": "Get object list.",
+				"responses": {
+					"200": {
+						"description": "List of objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/Objects"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectname",
+						"in": "query",
+						"required": false,
+						"description": "Object name'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectcategory",
+						"in": "query",
+						"required": false,
+						"description": "Object category, ex: 'mailbox'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectsource",
+						"in": "query",
+						"required": false,
+						"description": "Object data source",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectuuid",
+						"in": "query",
+						"required": false,
+						"description": "Object UUID",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectstatus",
+						"in": "query",
+						"required": false,
+						"description": "Object status ex: 'T', 'e' ...",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "jobname",
+						"in": "query",
+						"required": false,
+						"description": "Job name",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/plugins/m365/{clientid}/users": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin logged in user list",
+				"description": "Get Microsoft 365 logged in user list.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 users",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"tenantid": {
+													"type": "array",
+													"description": "Microsoft 365 users"
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/TenantId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
 		}
 	},
 	"definitions": {
@@ -6777,6 +6938,63 @@
 				},
 				"slot_cat": {
 					"description": "Slot in the Catalog database",
+					"type": "integer"
+				}
+			}
+		},
+		"Object": {
+			"type": "object",
+			"properties": {
+				"objectid": {
+					"description": "Object identifier",
+					"type": "integer"
+				},
+				"jobid": {
+					"description": "Job identifier",
+					"type": "integer"
+				},
+				"path": {
+					"description": "Object path, ex: /@m365/n45/users/john@finger/email/",
+					"type": "string"
+				},
+				"filename": {
+					"description": "Object file name",
+					"type": "string"
+				},
+				"pluginname": {
+					"description": "Plugin definition in form 'plugin_name: param1=value1 param2=value2 ...'",
+					"type": "string"
+				},
+				"objecttype": {
+					"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+					"type": "string"
+				},
+				"objectname": {
+					"description": "Object name",
+					"type": "string"
+				},
+				"objectsource": {
+					"description": "Object data source",
+					"type": "string"
+				},
+				"objectuuid": {
+					"description": "Object UUID",
+					"type": "string"
+				},
+				"objectsize": {
+					"description": "Object size",
+					"type": "integer"
+				},
+				"objectcategory": {
+					"description": "Object category, ex: 'mailbox'",
+					"type": "string"
+				},
+				"objectstatus": {
+					"description": "Object status ex: 'T', 'e' ...",
+					"type": "string"
+				},
+				"objectcount": {
+					"description": "Object count",
 					"type": "integer"
 				}
 			}

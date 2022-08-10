@@ -1,5 +1,5 @@
 <urls>
-	<!-- #### NEW API version 1 #### -->
+	<!-- #### NEW API version 2 #### -->
 
 	<!-- OAuth2 - only to be compatible with old OAuth2 endpoints -->
 	<!-- Remove it in the future -->
@@ -87,6 +87,8 @@
 	<url ServiceParameter="BVFSCleanUp" pattern="api/v2/bvfs/cleanup/" />
 	<!-- joblog endpoints -->
 	<url ServiceParameter="JobLog" pattern="api/v2/joblog/{id}/" parameters.id="\d+" />
+	<!-- event endpoints -->
+	<url ServiceParameter="Objects" pattern="api/v2/objects/" />
 	<!-- @TODO: Separate this endpoint outside 'joblog' -->
 	<url ServiceParameter="Messages" pattern="api/v2/joblog/messages" />
 	<!-- fileset endpoints -->
@@ -112,8 +114,11 @@
 	<!-- Basic user endpoints -->
 	<url ServiceParameter="BasicUsers" pattern="api/v2/basic/users/" />
 	<url ServiceParameter="BasicUser" pattern="api/v2/basic/users/{id}/" parameters.id="[a-zA-Z0-9]+" />
+	<!-- Plugins -->
+	<!-- M365 Plugin -->
+	<url ServiceParameter="PluginM365ListLoggedUsers" pattern="api/v2/plugins/m365/{id}/users/" parameters.id="\d+" />
 
-	<!-- API v1 -->
+	<!-- OLD API v1 -->
 	<!-- general endpoint -->
 	<url ServiceParameter="Welcome" pattern="api/v1/welcome/" />
 	<!-- bconsole endpoints -->
