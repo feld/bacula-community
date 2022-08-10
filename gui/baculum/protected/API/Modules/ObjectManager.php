@@ -53,4 +53,18 @@ LEFT JOIN Job USING (JobId) '
 
 		return ObjectRecord::finder()->findAllBySql($sql, $where['params']);
 	}
+
+	public function getObjectById($objectid) {
+		$params = [
+			'Object.ObjectId' => [
+				'vals' => $objectid,
+				'operator' => ''
+			]
+		];
+		$obj = $this->getObjects($params, 1);
+		if (is_array($obj) && count($obj) > 0) {
+			$obj = array_shift($obj);
+		}
+		return $obj;
+	}
 }
