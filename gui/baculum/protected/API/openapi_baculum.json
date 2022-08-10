@@ -6116,7 +6116,11 @@
 											"properties": {
 												"tenantid": {
 													"type": "array",
-													"description": "Microsoft 365 users"
+													"description": "Microsoft 365 users",
+													"items": {
+														"description": "User list",
+														"type": "string"
+													}
 												}
 											}
 										},
