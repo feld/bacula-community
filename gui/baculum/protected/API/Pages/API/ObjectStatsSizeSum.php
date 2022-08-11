@@ -23,13 +23,13 @@
 use Baculum\Common\Modules\Errors\ObjectError;
 
 /**
- * Object category stats endpoint.
+ * Object size stats endpoint.
  *
  * @author Marcin Haba <marcin.haba@bacula.pl>
  * @category API
  * @package Baculum API
  */
-class ObjectStatsCategorySum extends BaculumAPIServer {
+class ObjectStatsSizeSum extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
@@ -50,7 +50,7 @@ class ObjectStatsCategorySum extends BaculumAPIServer {
 			$dateend = $this->Request['dateend'];
 		}
 
-		$objects = $this->getModule('object')->getObjectCategorySum(
+		$objects = $this->getModule('object')->getObjectSizeSum(
 			$objecttype,
 			$objectsource,
 			$datestart,

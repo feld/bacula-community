@@ -6138,7 +6138,7 @@
 				]
 			}
 		},
-		"/api/v2/objects/stats/category-sum/": {
+		"/api/v2/objects/stats/category-sum": {
 			"get": {
 				"tags": ["objects"],
 				"summary": "Get object stats per category",
@@ -6175,6 +6175,86 @@
 													"last_job_time": {
 														"type": "string",
 														"description": "Last job start time in ISO form, ex: 2022-08-11 12:31:16"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectsource",
+						"in": "query",
+						"required": false,
+						"description": "Object data source",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "datestart",
+						"in": "query",
+						"required": false,
+						"description": "Start date for job time range. If not given, default is used 1 month ago date.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "dateend",
+						"in": "query",
+						"required": false,
+						"description": "End date for job time range. If not given, default is used current date.",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/objects/stats/size-sum": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Get object size stats",
+				"description": "Get object size statistics",
+				"responses": {
+					"200": {
+						"description": "Object size statistics",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"sum": {
+														"type": "string",
+														"description": "Object size sum"
+													},
+													"month": {
+														"type": "string",
+														"description": "Month date"
 													}
 												}
 											}

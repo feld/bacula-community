@@ -91,6 +91,7 @@
 	<url ServiceParameter="Objects" pattern="api/v2/objects/" />
 	<url ServiceParameter="ObjectClass" pattern="api/v2/objects/{id}/" parameters.id="\d+" />
 	<url ServiceParameter="ObjectStatsCategorySum" pattern="api/v2/objects/stats/category-sum/" />
+	<url ServiceParameter="ObjectStatsSizeSum" pattern="api/v2/objects/stats/size-sum/" />
 	<!-- @TODO: Separate this endpoint outside 'joblog' -->
 	<url ServiceParameter="Messages" pattern="api/v2/joblog/messages" />
 	<!-- fileset endpoints -->
