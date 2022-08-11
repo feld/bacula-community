@@ -67,4 +67,64 @@ LEFT JOIN Job USING (JobId) '
 		}
 		return $obj;
 	}
+
+	/**
+	 * Get number object per object category.
+	 *
+	 * @param string $objecttype object type (usually plugin short name such as 'm365' or 'mysql')
+	 * @param string $objectsource object source
+	 * @param string $datestart start date
+	 * @param string $dateend end date
+	 * @return array summary in form [objectcategory => '', objecttype => '', objectsource => '', count => 0, last_job_time => '']
+	 */
+	public function getObjectPerCategorySum($objecttype = null, $objectsource = null, $datestart = null, $dateend = null) {
+		$otype = '';
+		if (!is_null($objecttype)) {
+			$otype = ' AND oobj.ObjectType=:objecttype ';
+
+		}
+		$osource = '';
+		if (!is_null($objectsource)) {
+			$osource = ' AND oobj.ObjectSource=:objectsource ';
+		}
+		$dformat = 'Y-m-d H:i:s';
+		if (is_null($datestart)) {
+			$m_ago = new \DateTime('1 month ago');
+			$datestart = $m_ago->format($dformat);
+		}
+		if (is_null($dateend)) {
+			$dateend = date($dformat);
+		}
+
+		$sql = 'SELECT oobj.ObjectCategory AS objectcategory,
+				oobj.ObjectType AS objecttype,
+				oobj.ObjectSource AS objectsource,
+				COUNT(DISTINCT oobj.ObjectUUID) AS count,
+				MAX(Job.StartTime) AS last_job_time
+			FROM Object AS oobj
+			JOIN Job USING(JobId)
+			WHERE
+				Job.StartTime BETWEEN :datestart AND :dateend
+				AND Job.JobStatus IN (\'T\', \'W\')
+				AND oobj.JobId=(
+					SELECT MAX(iobj.JobId) FROM Object AS iobj WHERE iobj.ObjectId=oobj.ObjectId
+				)
+				' . $otype . $osource . '
+			GROUP BY oobj.ObjectCategory, oobj.ObjectType, oobj.ObjectSource';
+
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->prepare($sql);
+		if (!is_null($objecttype)) {
+			$sth->bindParam(':objecttype', $objecttype, \PDO::PARAM_STR, 100);
+		}
+		if (!is_null($objectsource)) {
+			$sth->bindParam(':objectsource', $objectsource, \PDO::PARAM_STR, 400);
+		}
+		$sth->bindParam(':datestart', $datestart, \PDO::PARAM_STR, 19);
+		$sth->bindParam(':dateend', $dateend, \PDO::PARAM_STR, 19);
+		$sth->execute();
+		return $sth->fetchAll(\PDO::FETCH_ASSOC);
+	}
 }

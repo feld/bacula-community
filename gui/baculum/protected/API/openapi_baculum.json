@@ -6020,7 +6020,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
 										}
 									}
 								}
@@ -6091,6 +6091,127 @@
 						"in": "query",
 						"required": false,
 						"description": "Job name",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/objects/{objectid}": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object by objectid",
+				"description": "Get single object.",
+				"responses": {
+					"200": {
+						"description": "Single object by objectid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/Object"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v2/objects/stats/category-sum/": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Get object stats per category",
+				"description": "Get object statistics per object category",
+				"responses": {
+					"200": {
+						"description": "Object statistics per category",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"objectcategory": {
+														"type": "string",
+														"description": "Object category"
+													},
+													"objecttype": {
+														"type": "string",
+														"description": "Object type, ex. 'm365' or 'PostgreSQL'"
+													},
+													"objectsource": {
+														"type": "string",
+														"description": "Object data source"
+													},
+													"count": {
+														"type": "integer",
+														"description": "Object count"
+													},
+													"last_job_time": {
+														"type": "string",
+														"description": "Last job start time in ISO form, ex: 2022-08-11 12:31:16"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectsource",
+						"in": "query",
+						"required": false,
+						"description": "Object data source",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "datestart",
+						"in": "query",
+						"required": false,
+						"description": "Start date for job time range. If not given, default is used 1 month ago date.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "dateend",
+						"in": "query",
+						"required": false,
+						"description": "End date for job time range. If not given, default is used current date.",
 						"schema": {
 							"type": "string"
 						}
