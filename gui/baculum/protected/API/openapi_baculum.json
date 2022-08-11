@@ -6124,7 +6124,18 @@
 							}
 						}
 					}
-				}
+				},
+				"parameters": [
+					{
+						"name": "objectid",
+						"in": "path",
+						"required": true,
+						"description": "Object identifier",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				]
 			}
 		},
 		"/api/v2/objects/stats/category-sum/": {
