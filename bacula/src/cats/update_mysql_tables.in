@@ -3,7 +3,7 @@
 # Copyright (C) 2000-2022 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-# Shell script to update MySQL tables to Bacula version 11.4.x
+# Shell script to update MySQL tables to Bacula version 13.0.x
 #
 
 OLDVERSION=1022
@@ -13,7 +13,7 @@ echo " "
 echo "This script will update a Bacula MySQL database"
 echo " from any from version 12-15 or 1014-$OLDVERSION to version $NEWVERSION"
 echo " which is needed to convert from any Bacula Community "
-echo " versions 5.0.x, 5.2.x, 7.4.x, 9.x.x to Community version 11.4"
+echo " versions 5.0.x, 5.2.x, 7.4.x, 9.x.x to Community version 13.0"
 echo " "
 echo "Depending on the current version of your catalog, you may"
 echo " have to run this script multiple times"
@@ -513,7 +513,7 @@ ALTER TABLE FileMedia ADD FileMediaId integer auto_increment primary key;
 ALTER TABLE JobHisto MODIFY COLUMN JobId int PRIMARY KEY AUTO_INCREMENT;
 ALTER TABLE Version MODIFY COLUMN VersionId int PRIMARY KEY;
 ALTER TABLE Object ADD ObjectCategory TINYBLOB NOT NULL;
-create index object_type_idx on Object  (ObjectCategory(255));
+create index object_category_idx on Object  (ObjectCategory(255));
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1023');
 
@@ -537,9 +537,10 @@ fi
 if [ "$DBVERSION" -eq 1023 ] ; then
     if mysql $* -f  <<END-OF-DATA
 USE ${db_name};
-ALTER TABLE Object ADD ObjectStatus BINARY(1) DEFAULT 'U';
-ALTER TABLE Object ADD ObjectCount  INTEGER UNSIGNED DEFAULT 1;
-create index object_status_idx on Object  (ObjectStatus);
+ALTER TABLE Object
+    ADD ObjectStatus BINARY(1) DEFAULT 'U',
+    ADD ObjectCount  INTEGER UNSIGNED DEFAULT 1,
+    ADD INDEX object_status_idx (ObjectStatus);
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1024');
 UPDATE Version SET VersionId=1024;
