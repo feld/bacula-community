@@ -6270,6 +6270,85 @@
 				]
 			}
 		},
+		"/api/v2/objects/stats/category-status": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Get object category status stats",
+				"description": "Get object category status statistics",
+				"responses": {
+					"200": {
+						"description": "Object category statistics",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"jobid": {
+														"type": "integer",
+														"description": "Job identifier"
+													},
+													"jobstatus": {
+														"type": "string",
+														"description": "Job status letter"
+													},
+													"starttime": {
+														"type": "string",
+														"description": "Job start time"
+													},
+													"objectcategory": {
+														"type": "string",
+														"description": "Object category"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectsource",
+						"in": "query",
+						"required": false,
+						"description": "Object data source",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectcategory",
+						"in": "query",
+						"required": false,
+						"description": "Object category like 'mailbox' or 'team'",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/objects/stats/size-sum": {
 			"get": {
 				"tags": ["objects"],

@@ -228,4 +228,58 @@ LEFT JOIN Job USING (JobId) '
 		$sth->execute();
 		return $sth->fetchAll(\PDO::FETCH_ASSOC);
 	}
+
+	/**
+	 * Get object job statistics by category.
+	 * There are taken into account last three jobs.
+	 *
+	 * @param string $objecttype object type (usually short name such as 'm365' or 'MySQL')
+	 * @param string $objectsource object source
+	 * @param string $objectcategory object category like: 'mailbox' or 'team'
+	 * @return array object statistics
+	 */
+	public function getObjectCategoryStatus($objecttype = null, $objectsource = null, $objectcategory = null) {
+		$where = [];
+		if (!is_null($objecttype)) {
+			$where[] = ' Object.ObjectType=:objecttype ';
+		}
+		if (!is_null($objectsource)) {
+			$where[] = ' Object.ObjectSource=:objectsource ';
+		}
+		if (!is_null($objectcategory)) {
+			$where[] = ' Object.ObjectCategory=:objectcategory ';
+		}
+		$where_val = implode(' AND ', $where);
+
+		$sql = 'SELECT
+				DISTINCT b.JobId, b.JobStatus, b.StartTime, b.ObjectCategory
+			FROM (
+				SELECT
+					Job.JobId	 AS jobid,
+					Job.JobStatus	 AS jobstatus,
+					Job.StartTime	 AS starttime,
+					Object.ObjectCategory AS objectcategory,
+					ROW_NUMBER() OVER (PARTITION BY Object.ObjectCategory ORDER BY Job.JobId DESC) AS r
+				FROM Job
+					JOIN Object USING(JobId)
+				' . ($where_val ? ' WHERE ' . $where_val : '') . '
+			) AS b
+			WHERE
+				b.r <= 3';
+		$connection = ObjectRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->prepare($sql);
+		if (!is_null($objecttype)) {
+			$sth->bindParam(':objecttype', $objecttype, \PDO::PARAM_STR, 100);
+		}
+		if (!is_null($objectsource)) {
+			$sth->bindParam(':objectsource', $objectsource, \PDO::PARAM_STR, 400);
+		}
+		if (!is_null($objectcategory)) {
+			$sth->bindParam(':objectcategory', $objectcategory, \PDO::PARAM_STR, 400);
+		}
+		$sth->execute();
+		return $sth->fetchAll(\PDO::FETCH_ASSOC);
+	}
 }
