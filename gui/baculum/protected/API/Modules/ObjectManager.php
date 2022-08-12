@@ -187,4 +187,45 @@ LEFT JOIN Job USING (JobId) '
 		$sth->execute();
 		return $sth->fetchAll(\PDO::FETCH_ASSOC);
 	}
+
+	/**
+	 * Get all object versions by objectuuid.
+	 *
+	 * @param string $objectuuid object UUID
+	 * @return array object versions
+	 */
+	public function getObjectVersions($objectuuid) {
+		$sql = 'SELECT
+				obj.ObjectUUID     AS objectuuid,
+				obj.ObjectId	   AS objectid,
+				obj.ObjectType	   AS objecttype,
+				obj.ObjectName	   AS objectname,
+				obj.ObjectCategory AS objectcategory,
+				Job.JobId 	   AS jobid,
+				Job.Name	   AS jobname,
+				Job.Level	   AS level,
+				Job.JobStatus	   AS jobstatus,
+				Job.JobBytes	   AS jobbytes,
+				Job.JobFiles	   AS jobfiles,
+				Job.StartTime	   AS starttime,
+				Job.EndTime	   AS endtime,
+				Job.JobErrors	   AS joberrors,
+				Client.Name	   AS client,
+				FileSet.FileSet	   AS fileset
+				FROM
+					Object AS obj
+					LEFT JOIN Job USING(JobId)
+					LEFT JOIN Client USING(ClientId)
+					LEFT JOIN FileSet USING(FileSetId)
+				WHERE
+					obj.ObjectUUID=:objectuuid
+				ORDER BY Job.StartTime DESC';
+		$connection = ObjectRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->prepare($sql);
+		$sth->bindParam(':objectuuid', $objectuuid, \PDO::PARAM_STR, 400);
+		$sth->execute();
+		return $sth->fetchAll(\PDO::FETCH_ASSOC);
+	}
 }

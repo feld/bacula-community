@@ -6138,6 +6138,46 @@
 				]
 			}
 		},
+		"/api/v2/objects/versions/{objectuuid}": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object versions by objectuuid",
+				"description": "Get object versions.",
+				"responses": {
+					"200": {
+						"description": "Object versions by objectuuid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/Objects"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "objectuuid",
+						"in": "path",
+						"required": true,
+						"description": "Object UUID",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/objects/stats/category-sum": {
 			"get": {
 				"tags": ["objects"],
