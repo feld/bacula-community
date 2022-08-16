@@ -222,6 +222,10 @@ class Miscellaneous extends TModule {
 		return (preg_match('/^[\w:\.\-\s]{1,127}$/', $name) === 1);
 	}
 
+	public function isValidNameExt($name_ext) {
+		return (preg_match('/^[\w:\.\-\s\*]{1,127}$/', $name_ext) === 1);
+	}
+
 	public function isValidState($state) {
 		return (preg_match('/^[\w\-]+$/', $state) === 1);
 	}
@@ -264,6 +268,10 @@ class Miscellaneous extends TModule {
 
 	public function isValidBvfsPath($path) {
 		return (preg_match('/^b2\d+$/', $path) === 1);
+	}
+
+	public function isValidBDate($date) {
+		return (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1);
 	}
 
 	public function isValidBDateAndTime($time) {

@@ -20,27 +20,31 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-use Baculum\Common\Modules\Errors\ObjectError;
+namespace Baculum\API\Modules;
 
 /**
- * Object endpoint.
+ * Event record module.
  *
  * @author Marcin Haba <marcin.haba@bacula.pl>
- * @category API
+ * @category Database
  * @package Baculum API
  */
-class ObjectClass extends BaculumAPIServer {
+class EventRecord extends APIDbModule {
 
-	public function get() {
-		$objectid = $this->Request->contains('id') ? (int)$this->Request['id'] : 0;
+	const TABLE = 'Events';
 
-		$object = $this->getModule('object')->getObjectById($objectid);
-		if (is_object($object)) {
-			$this->output = $object;
-			$this->error = ObjectError::ERROR_NO_ERRORS;
-		} else {
-			$this->output = ObjectError::MSG_ERROR_OBJECT_DOES_NOT_EXISTS;
-			$this->error = ObjectError::ERROR_OBJECT_DOES_NOT_EXISTS;
-		}
+	public $eventsid;
+	public $eventscode;
+	public $eventstype;
+	public $eventstime;
+	public $eventsinserttime;
+	public $eventsdaemon;
+	public $eventssource;
+	public $eventsref;
+	public $eventstext;
+
+	public static function finder($className = __CLASS__) {
+		return parent::finder($className);
 	}
 }
+?>

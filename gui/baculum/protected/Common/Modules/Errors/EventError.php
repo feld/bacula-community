@@ -20,27 +20,17 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-use Baculum\Common\Modules\Errors\ObjectError;
+namespace Baculum\Common\Modules\Errors;
 
 /**
- * Object endpoint.
+ * Event error class.
  *
  * @author Marcin Haba <marcin.haba@bacula.pl>
- * @category API
- * @package Baculum API
+ * @category Errors
+ * @package Baculum Common
  */
-class ObjectClass extends BaculumAPIServer {
+class EventError extends GenericError {
+	const ERROR_EVENT_DOES_NOT_EXIST = 510;
 
-	public function get() {
-		$objectid = $this->Request->contains('id') ? (int)$this->Request['id'] : 0;
-
-		$object = $this->getModule('object')->getObjectById($objectid);
-		if (is_object($object)) {
-			$this->output = $object;
-			$this->error = ObjectError::ERROR_NO_ERRORS;
-		} else {
-			$this->output = ObjectError::MSG_ERROR_OBJECT_DOES_NOT_EXISTS;
-			$this->error = ObjectError::ERROR_OBJECT_DOES_NOT_EXISTS;
-		}
-	}
+	const MSG_ERROR_EVENT_DOES_NOT_EXIST = 'Event does not exist.';
 }

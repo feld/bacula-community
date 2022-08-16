@@ -174,6 +174,7 @@ class Database extends APIModule {
 				} else {
 					$cond[] = "$key = :$kval";
 					$vals[":$kval"] = $value['vals'];
+					$value['operator'] = '';
 				}
 				$condition[] = implode(' ' . $value['operator'] . ' ', $cond);
 				foreach ($vals as $pkey => $pval) {

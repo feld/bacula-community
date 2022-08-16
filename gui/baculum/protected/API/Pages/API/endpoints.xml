@@ -87,13 +87,16 @@
 	<url ServiceParameter="BVFSCleanUp" pattern="api/v2/bvfs/cleanup/" />
 	<!-- joblog endpoints -->
 	<url ServiceParameter="JobLog" pattern="api/v2/joblog/{id}/" parameters.id="\d+" />
-	<!-- event endpoints -->
+	<!-- object endpoints -->
 	<url ServiceParameter="Objects" pattern="api/v2/objects/" />
 	<url ServiceParameter="ObjectClass" pattern="api/v2/objects/{id}/" parameters.id="\d+" />
 	<url ServiceParameter="ObjectVersions" pattern="api/v2/objects/versions/{uuid}" parameters.uuid="[a-zA-Z0-9:.\-_ ]+" />
 	<url ServiceParameter="ObjectStatsCategorySum" pattern="api/v2/objects/stats/category-sum/" />
 	<url ServiceParameter="ObjectStatsCategoryStatus" pattern="api/v2/objects/stats/category-status/" />
 	<url ServiceParameter="ObjectStatsSizeSum" pattern="api/v2/objects/stats/size-sum/" />
+	<!-- event endpoints -->
+	<url ServiceParameter="Events" pattern="api/v2/events/" />
+	<url ServiceParameter="Event" pattern="api/v2/events/{id}" parameters.id="\d+" />
 	<!-- @TODO: Separate this endpoint outside 'joblog' -->
 	<url ServiceParameter="Messages" pattern="api/v2/joblog/messages" />
 	<!-- fileset endpoints -->

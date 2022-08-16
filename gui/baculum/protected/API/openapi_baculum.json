@@ -131,6 +131,15 @@
 			},
 			"Object": {
 				"$ref": "#/definitions/Object"
+			},
+			"Events": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/Event"
+				}
+			},
+			"Event": {
+				"$ref": "#/definitions/Event"
 			}
 		},
 		"parameters": {
@@ -6429,6 +6438,152 @@
 				]
 			}
 		},
+		"/api/v2/events": {
+			"get": {
+				"tags": ["events"],
+				"summary": "Event list",
+				"description": "Get event list.",
+				"responses": {
+					"200": {
+						"description": "List of events",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/Events"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "eventscode",
+						"in": "query",
+						"required": false,
+						"description": "Event code",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventstype",
+						"in": "query",
+						"required": false,
+						"description": "Event type",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventstimestart",
+						"in": "query",
+						"required": false,
+						"description": "Event time start in form: YYYY-MM-DD",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventstimeend",
+						"in": "query",
+						"required": false,
+						"description": "Event time end in form: YYYY-MM-DD",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventsdaemon",
+						"in": "query",
+						"required": false,
+						"description": "Event daemon",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventssource",
+						"in": "query",
+						"required": false,
+						"description": "Event source",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventsref",
+						"in": "query",
+						"required": false,
+						"description": "Event reference",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "eventstext",
+						"in": "query",
+						"required": false,
+						"description": "Event text",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/events/{eventid}": {
+			"get": {
+				"tags": ["events"],
+				"summary": "Event by eventid",
+				"description": "Get single event.",
+				"responses": {
+					"200": {
+						"description": "Single event by eventid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/Event"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "eventid",
+						"in": "path",
+						"required": true,
+						"description": "Event identifier",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/users": {
 			"get": {
 				"tags": ["plugins"],
@@ -7331,6 +7486,47 @@
 				"objectcount": {
 					"description": "Object count",
 					"type": "integer"
+				}
+			}
+		},
+		"Event": {
+			"type": "object",
+			"properties": {
+				"eventsid": {
+					"description": "Event identifier",
+					"type": "integer"
+				},
+				"eventscode": {
+					"description": "Event code",
+					"type": "string"
+				},
+				"eventstype": {
+					"description": "Event type",
+					"type": "string"
+				},
+				"eventstime": {
+					"description": "Event time (YYYY-MM-DD HH:MM::SS)",
+					"type": "string"
+				},
+				"eventsinserttime": {
+					"description": "Event insert time (YYYY-MM-DD HH:MM::SS.ms)",
+					"type": "string"
+				},
+				"eventsdaemon": {
+					"description": "Event daemon",
+					"type": "string"
+				},
+				"eventssource": {
+					"description": "Event source",
+					"type": "string"
+				},
+				"eventsref": {
+					"description": "Event reference",
+					"type": "string"
+				},
+				"eventstext": {
+					"description": "Event text",
+					"type": "string"
 				}
 			}
 		}
