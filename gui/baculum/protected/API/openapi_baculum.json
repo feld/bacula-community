@@ -149,6 +149,15 @@
 			},
 			"PluginM365Email": {
 				"$ref": "#/definitions/PluginM365Email"
+			},
+			"PluginM365EmailAttachments": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/PluginM365EmailAttachment"
+				}
+			},
+			"PluginM365EmailAttachment": {
+				"$ref": "#/definitions/PluginM365EmailAttachment"
 			}
 		},
 		"parameters": {
@@ -6690,7 +6699,7 @@
 						"name": "mailbox",
 						"in": "query",
 						"required": false,
-						"description": "Mailbox address",
+						"description": "Mailbox email address",
 						"schema": {
 							"type": "string"
 						}
@@ -6792,6 +6801,100 @@
 						"description": "Email conversation identifier",
 						"schema": {
 							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/plugins/m365/{clientid}/{tenantid}/emails/attachments": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin email attachment list",
+				"description": "Get Microsoft 365 email attachment list.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 email attachments",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/PluginM365EmailAttachments"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/TenantId"
+					},
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "mailbox",
+						"in": "query",
+						"required": false,
+						"description": "Mailbox email address",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": false,
+						"description": "Attachment name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "contenttype",
+						"in": "query",
+						"required": false,
+						"description": "Attachment content type  (ex. image/jpeg)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "minsize",
+						"in": "query",
+						"required": false,
+						"description": "Attachment minimum size in bytes",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "maxsize",
+						"in": "query",
+						"required": false,
+						"description": "Attachment maximum size in bytes",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "isinline",
+						"in": "query",
+						"required": false,
+						"description": "Is inline flag that informs if email is attached in-line in email body or as attachment outside content",
+						"schema": {
+							"type": "integer"
 						}
 					}
 				]
@@ -7775,6 +7878,51 @@
 				"emailhasattachment": {
 					"description": "Email attachment flag",
 					"type": "integer"
+				},
+				"plugin": {
+					"description": "Plugin name",
+					"type": "string"
+				}
+			}
+		},
+		"PluginM365EmailAttachment": {
+			"type": "object",
+			"properties": {
+				"jobid": {
+					"description": "Job identifier",
+					"type": "integer"
+				},
+				"fileindex": {
+					"description": "File index",
+					"type": "integer"
+				},
+				"attachmenttenant": {
+					"description": "Tenant name",
+					"type": "string"
+				},
+				"attachmentowner": {
+					"description": "Email owner",
+					"type": "string"
+				},
+				"attachmentcontenttype": {
+					"description": "Attachment content type  (ex. image/jpeg)",
+					"type": "string"
+				},
+				"attachmentemailid": {
+					"description": "Attachment email identifier",
+					"type": "string"
+				},
+				"attachmentisinline": {
+					"description": "Is inline flag that informs if email is attached in-line in email body or as attachment outside content",
+					"type": "integer"
+				},
+				"attachmentname": {
+					"description": "Attachment file name",
+					"type": "string"
+				},
+				"attachmentsize": {
+					"description": "Attachment file size",
+					"type": "string"
 				},
 				"plugin": {
 					"description": "Plugin name",
