@@ -6605,11 +6605,11 @@
 		"/api/v2/plugins/m365/{clientid}/users": {
 			"get": {
 				"tags": ["plugins"],
-				"summary": "Microsoft 365 plugin logged in user list",
-				"description": "Get Microsoft 365 logged in user list.",
+				"summary": "Microsoft 365 plugin logged in user list for all tenants",
+				"description": "Get Microsoft 365 logged in user list for all tenants.",
 				"responses": {
 					"200": {
-						"description": "List of Microsoft 365 users",
+						"description": "List of Microsoft 365 users for all tenants",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -6651,6 +6651,56 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
+		"/api/v2/plugins/m365/{clientid}/{tenantid}/users": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin logged in user list",
+				"description": "Get Microsoft 365 logged in user list.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 users",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"tenantid": {
+													"type": "array",
+													"description": "Microsoft 365 users",
+													"items": {
+														"description": "User list",
+														"type": "string"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/TenantId"
 					},
 					{
 						"$ref": "#/components/parameters/Output"
