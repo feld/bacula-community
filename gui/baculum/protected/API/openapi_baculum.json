@@ -140,6 +140,15 @@
 			},
 			"Event": {
 				"$ref": "#/definitions/Event"
+			},
+			"PluginM365Emails": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/PluginM365Email"
+				}
+			},
+			"PluginM365Email": {
+				"$ref": "#/definitions/PluginM365Email"
 			}
 		},
 		"parameters": {
@@ -298,9 +307,9 @@
 			},
 			"TenantId": {
 				"name": "tenantid",
-				"in": "query",
+				"in": "path",
 				"description": "Tenant identifier",
-				"required": false,
+				"required": true,
 				"schema": {
 					"type": "string"
 				}
@@ -6626,10 +6635,164 @@
 						"$ref": "#/components/parameters/ClientId"
 					},
 					{
-						"$ref": "#/components/parameters/TenantId"
+						"name": "tenantid",
+						"in": "path",
+						"description": "Tenant identifier",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					},
 					{
 						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
+		"/api/v2/plugins/m365/{clientid}/{tenantid}/emails": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin email list",
+				"description": "Get Microsoft 365 email list.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 emails",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/PluginM365Emails"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/TenantId"
+					},
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "mailbox",
+						"in": "query",
+						"required": false,
+						"description": "Mailbox address",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "mailbox_pattern",
+						"in": "query",
+						"required": false,
+						"description": "Mailbox pattern address (it can be partial email address)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "mintime",
+						"in": "query",
+						"required": false,
+						"description": "Date start (YYYY-MM-DD)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "maxtime",
+						"in": "query",
+						"required": false,
+						"description": "Date end (YYYY-MM-DD)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "folder",
+						"in": "query",
+						"required": false,
+						"description": "Email folder name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "tags",
+						"in": "query",
+						"required": false,
+						"description": "Email tags",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"required": false,
+						"description": "Email sender (from)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"description": "Email recipient (to)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "cc",
+						"in": "query",
+						"required": false,
+						"description": "Email copy address (cc)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "minsize",
+						"in": "query",
+						"required": false,
+						"description": "Email minimum size in bytes",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "maxsize",
+						"in": "query",
+						"required": false,
+						"description": "Email maximum size in bytes",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "conversationid",
+						"in": "query",
+						"required": false,
+						"description": "Email conversation identifier",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -7526,6 +7689,95 @@
 				},
 				"eventstext": {
 					"description": "Event text",
+					"type": "string"
+				}
+			}
+		},
+		"PluginM365Email": {
+			"type": "object",
+			"properties": {
+				"jobid": {
+					"description": "Job identifier",
+					"type": "integer"
+				},
+				"fileindex": {
+					"description": "File index",
+					"type": "integer"
+				},
+				"emailtenant": {
+					"description": "Tenant name",
+					"type": "string"
+				},
+				"emailowner": {
+					"description": "Email owner",
+					"type": "string"
+				},
+				"emailbodypreview": {
+					"description": "Email body preview",
+					"type": "string"
+				},
+				"emailcc": {
+					"description": "Email copy address (cc)",
+					"type": "string"
+				},
+				"emailconversationid": {
+					"description": "Email conversation identifier",
+					"type": "string"
+				},
+				"emailfoldername": {
+					"description": "Email folder name",
+					"type": "string"
+				},
+				"emailfrom": {
+					"description": "Email sender (from)",
+					"type": "string"
+				},
+				"emailid": {
+					"description": "Email identifier",
+					"type": "string"
+				},
+				"emailimportance": {
+					"description": "Email importance",
+					"type": "string"
+				},
+				"emailinternetmessageid": {
+					"description": "Email Internet message identifier",
+					"type": "string"
+				},
+				"emailisread": {
+					"description": "Email is read flag",
+					"type": "integer"
+				},
+				"emailisdraft": {
+					"description": "Email is draft flag",
+					"type": "integer"
+				},
+				"emailtime": {
+					"description": "Email time (YYYY-MM-DD HH:II:SS)",
+					"type": "string"
+				},
+				"emailsubject": {
+					"description": "Email subject",
+					"type": "string"
+				},
+				"emailtags": {
+					"description": "Email tags",
+					"type": "string"
+				},
+				"emailto": {
+					"description": "Email recipient (to)",
+					"type": "string"
+				},
+				"emailsize": {
+					"description": "Email size in bytes",
+					"type": "string"
+				},
+				"emailhasattachment": {
+					"description": "Email attachment flag",
+					"type": "integer"
+				},
+				"plugin": {
+					"description": "Plugin name",
 					"type": "string"
 				}
 			}

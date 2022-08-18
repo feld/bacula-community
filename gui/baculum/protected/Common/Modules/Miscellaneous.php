@@ -223,7 +223,7 @@ class Miscellaneous extends TModule {
 	}
 
 	public function isValidNameExt($name_ext) {
-		return (preg_match('/^[\w:\.\-\s\*]{1,127}$/', $name_ext) === 1);
+		return (preg_match('/^[\w:\.\-\s\*=]{1,127}$/', $name_ext) === 1);
 	}
 
 	public function isValidState($state) {
@@ -296,6 +296,10 @@ class Miscellaneous extends TModule {
 
 	public function isValidUUID($uuid) {
 		return (preg_match('/^[\w]{8}(-[\w]{4}){3}-[\w]{12}$/', $uuid) === 1);
+	}
+
+	public function isValidEmail($email) {
+		return filter_var($email, FILTER_VALIDATE_EMAIL);
 	}
 
 	public function escapeCharsToConsole($path) {

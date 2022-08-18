@@ -97,7 +97,8 @@ class Bconsole extends APIModule {
 		'.status',
 		'.ls',
 		'setbandwidth',
-		'.query'
+		'.query',
+		'.jlist'
 	);
 
 	private $config;
