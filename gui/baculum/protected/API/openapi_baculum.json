@@ -6949,6 +6949,84 @@
 					}
 				]
 			}
+		},
+		"/api/v2/search": {
+			"get": {
+				"tags": ["tools"],
+				"summary": "Search for Bacula items (clients, jobs, volumes)",
+				"description": "Search for Bacula items (clients, jobs, volumes)",
+				"responses": {
+					"200": {
+						"description": "Bacula items (clients, jobs and volumes)",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"client": {
+													"type": "array",
+													"description": "Bacula clients",
+													"items": {
+														"description": "Client name",
+														"type": "string"
+													}
+												},
+												"volume": {
+													"type": "array",
+													"description": "Bacula volumes",
+													"items": {
+														"description": "Volume names",
+														"type": "string"
+													}
+												},
+												"job": {
+													"type": "array",
+													"description": "Bacula jobs",
+													"items": {
+														"description": "Job names",
+														"type": "string"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "text",
+						"in": "query",
+						"required": false,
+						"description": "Text to search items",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "category",
+						"in": "query",
+						"required": false,
+						"description": "Category to search (all, job, client, volume). Default is 'all'.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
 		}
 	},
 	"definitions": {

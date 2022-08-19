@@ -40,7 +40,7 @@ abstract class ConsoleOutputQueryPage extends ConsoleOutputPage {
 	protected function parseOutputKeyValue(array $output) {
 		$ret = [];
 		for ($i = 0; $i < count($output); $i++) {
-			if (preg_match('/(?P<key>\w+)=(?P<value>.+?)$/i', $output[$i], $matches) === 1) {
+			if (preg_match('/(?P<key>\w+)=(?P<value>.*?)$/i', $output[$i], $matches) === 1) {
 				$ret[$matches['key']] = $matches['value'];
 			}
 		}
