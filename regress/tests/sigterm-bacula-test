@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory
+#   then send a TERM signal to see if FD is properly stopped
+#
+TestName="sigterm-bacula-test"
+JobName=backup
+. scripts/functions
+
+require_linux
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=4 storage=File1
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+setbandwidth limit=1000 client
+run job=$JobName yes
+@sleep 5
+messages
+@exec "killall -TERM bacula-fd"
+@sleep 2
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+ls -l $working/ | grep backtrace
+if [ $? = 0 ]; then
+    print_debug "ERROR: Found backtrace file"
+    estat=1
+fi
+
+stop_bacula
+
+end_test
