@@ -115,6 +115,7 @@ public:
    char                *m_volume_name;
    uint32_t             m_part;
    cloud_driver        *m_driver;
+   uint32_t             m_job_id;
    DCR                 *m_dcr;
    cloud_proxy         *m_proxy;
    /* size of the transfer result : filled by the processor (driver) */
@@ -153,6 +154,7 @@ public:
             const char   *volume_name,
             uint32_t     part,
             cloud_driver *driver,
+            uint32_t     JobId,
             DCR          *dcr,
             cloud_proxy  *proxy
       );
@@ -290,6 +292,7 @@ public:
             const char   *volume_name,
             uint32_t     part,
             cloud_driver *driver,
+            uint32_t     JobId,
             DCR          *dcr,
             cloud_proxy  *proxy);
 

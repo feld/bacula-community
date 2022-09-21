@@ -215,7 +215,7 @@ transfer_state upload_engine(transfer *tpkt)
    if (tpkt && tpkt->m_driver) {
       /* call the driver method async */
       Dmsg4(dbglvl, "Upload start %s-%d JobId : %d driver :%p\n",
-         tpkt->m_volume_name, tpkt->m_part, tpkt->m_dcr->jcr->JobId, tpkt->m_driver);
+         tpkt->m_volume_name, tpkt->m_part, tpkt->m_job_id, tpkt->m_driver);
 
       cancel_callback cancel_cb;
       cancel_cb.fct = DCR_cancel_cb;
@@ -253,7 +253,7 @@ transfer_state upload_engine(transfer *tpkt)
             }
          } else {
             Dmsg4(dbglvl, "Move error!! JobId=%d part=%d Vol=%s cache=%s\n",
-               tpkt->m_dcr->jcr->JobId, tpkt->m_part, tpkt->m_volume_name, tpkt->m_cache_fname);
+               tpkt->m_job_id, tpkt->m_part, tpkt->m_volume_name, tpkt->m_cache_fname);
             POOL_MEM dmsg(PM_MESSAGE);
             tpkt->append_status(dmsg);
             Dmsg1(dbglvl, "%s\n",dmsg.c_str());
@@ -265,7 +265,7 @@ transfer_state upload_engine(transfer *tpkt)
       if (!tpkt->m_driver->copy_cache_part_to_cloud(tpkt)) {
          /* Error message already sent by Qmsg() */
          Dmsg4(dbglvl, "Upload error!! JobId=%d part=%d Vol=%s cache=%s\n",
-            tpkt->m_dcr->jcr->JobId, tpkt->m_part, tpkt->m_volume_name, tpkt->m_cache_fname);
+            tpkt->m_job_id, tpkt->m_part, tpkt->m_volume_name, tpkt->m_cache_fname);
          POOL_MEM dmsg(PM_MESSAGE);
          tpkt->append_status(dmsg);
          Dmsg1(dbglvl, "%s\n",dmsg.c_str());
@@ -273,7 +273,7 @@ transfer_state upload_engine(transfer *tpkt)
       }
 
       Dmsg2(dbglvl, "Upload end JobId : %d driver :%p\n",
-         tpkt->m_dcr->jcr->JobId, tpkt->m_driver);
+         tpkt->m_job_id, tpkt->m_driver);
 
       if (tpkt->m_do_cache_truncate && tpkt->m_part!=1) {
          if (unlink(tpkt->m_cache_fname) != 0) {
@@ -308,7 +308,7 @@ transfer_state wait_engine(transfer *tpkt)
       }
       if (tpkt->m_driver && tpkt->m_driver->is_waiting_on_server(tpkt)) {
          Dmsg3(dbglvl, "JobId=%d %s/part.%d waiting...\n",
-         tpkt->m_dcr->jcr->JobId, tpkt->m_volume_name, tpkt->m_part);
+         tpkt->m_job_id, tpkt->m_volume_name, tpkt->m_part);
          lock_guard lg(tpkt->m_mutex);
          /* increase the timeout increment up to MAX_WAIT_TIMEOUT_INC_INSEC value */
          if (tpkt->m_wait_timeout_inc_insec < MAX_WAIT_TIMEOUT_INC_INSEC)
@@ -322,7 +322,7 @@ transfer_state wait_engine(transfer *tpkt)
          return TRANS_STATE_QUEUED;
       } else {
          Dmsg3(dbglvl, "JobId=%d %s/part.%d is ready!\n",
-         tpkt->m_dcr->jcr->JobId, tpkt->m_volume_name, tpkt->m_part);
+         tpkt->m_job_id, tpkt->m_volume_name, tpkt->m_part);
          lock_guard lg(tpkt->m_mutex);
          tpkt->m_wait_timeout_inc_insec = 0;
          tpkt->m_funct = download_engine;
@@ -351,9 +351,9 @@ transfer_state download_engine(transfer *tpkt)
    if (tpkt && tpkt->m_driver) {
       /* call the driver method async */
       Dmsg4(dbglvl, "JobId=%d %s/part.%d download started to %s.\n",
-      tpkt->m_dcr->jcr->JobId, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname);
+      tpkt->m_job_id, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname);
       Dmsg4(dbglvl, "%s/part.%d download started. job : %d driver :%p\n",
-         tpkt->m_volume_name, tpkt->m_part, tpkt->m_dcr->jcr->JobId, tpkt->m_driver);
+         tpkt->m_volume_name, tpkt->m_part, tpkt->m_job_id, tpkt->m_driver);
       int ret = tpkt->m_driver->copy_cloud_part_to_cache(tpkt);
       switch (ret) {
          case cloud_driver::CLOUD_DRIVER_COPY_PART_TO_CACHE_OK:
@@ -366,7 +366,7 @@ transfer_state download_engine(transfer *tpkt)
             strcpy(p,partnumber);
             if (rename(tpkt->m_cache_fname, cache_fname) != 0) {
                Dmsg5(dbglvl, "JobId=%d %s/part.%d download. part copy from %s to %s error!!\n",
-               tpkt->m_dcr->jcr->JobId, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname, cache_fname);
+               tpkt->m_job_id, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname, cache_fname);
                free_pool_memory(cache_fname);
                return TRANS_STATE_ERROR;
             }
@@ -376,7 +376,7 @@ transfer_state download_engine(transfer *tpkt)
          case cloud_driver::CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR:
          {
             Dmsg4(dbglvl, "JobId=%d %s/part.%d download to cache=%s error!!\n",
-               tpkt->m_dcr->jcr->JobId, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname);
+               tpkt->m_job_id, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname);
             POOL_MEM dmsg(PM_MESSAGE);
             tpkt->append_status(dmsg);
             Dmsg1(dbglvl, "%s\n",dmsg.c_str());
@@ -394,7 +394,7 @@ transfer_state download_engine(transfer *tpkt)
          {
             lock_guard lg(tpkt->m_mutex);
             Dmsg4(dbglvl, "JobId=%d %s/part.%d download to cache=%s retry... \n",
-               tpkt->m_dcr->jcr->JobId, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname);
+               tpkt->m_job_id, tpkt->m_volume_name, tpkt->m_part, tpkt->m_cache_fname);
             tpkt->m_wait_timeout_inc_insec = WAIT_TIMEOUT_INC_INSEC;
             tpkt->m_wait_timeout = time(NULL)+ tpkt->m_wait_timeout_inc_insec;
             tpkt->m_funct = wait_engine;
@@ -462,6 +462,7 @@ bool cloud_dev::upload_part_to_cloud(DCR *dcr, const char *VolumeName, uint32_t 
                                        VolumeName, /* VolumeName is duplicated in the transfer constructor*/
                                        upart,
                                        driver,
+                                       dcr->jcr->JobId,
                                        dcr,
                                        cloud_prox);
    dcr->uploads->append(item);
@@ -567,6 +568,7 @@ transfer *cloud_dev::download_part_to_cache(DCR *dcr, const char *VolumeName, ui
                                  VolumeName, /* VolumeName is duplicated in the transfer constructor*/
                                  dpart,
                                  driver,
+                                 dcr->jcr->JobId,
                                  dcr,
                                  NULL); // no proxy on download to cache
       dcr->downloads->append(item);

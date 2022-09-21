@@ -49,6 +49,7 @@ transfer::transfer(uint64_t    size,
                   const char   *volume_name,
                   uint32_t     part,
                   cloud_driver *driver,
+                  uint32_t     JobId,
                   DCR          *dcr,
                   cloud_proxy  *proxy) :
    m_stat_size(size),
@@ -68,6 +69,7 @@ transfer::transfer(uint64_t    size,
    m_volume_name(bstrdup(volume_name)), /* volume name is duplicated*/
    m_part(part),
    m_driver(driver),
+   m_job_id(JobId),
    m_dcr(dcr),
    m_proxy(proxy),
    m_workq_elem(NULL),
@@ -262,11 +264,13 @@ uint32_t transfer::append_status(POOL_MEM& msg)
 void transfer::append_api_status(OutputWriter &ow)
 {
    lock_guard lg(m_stat_mutex);
+   Dmsg2(dbglvl, "transfer::append_api_status state=%d JobId=%d\n", m_state, m_job_id);
+
    if (m_state > TRANS_STATE_PROCESSED) {
          ow.get_output(OT_START_OBJ,
                   OT_STRING,"volume_name",            NPRTB(m_volume_name),
                   OT_INT32, "part",                   m_part,
-                  OT_INT32, "jobid",                  m_dcr ? (m_dcr->jcr ? m_dcr->jcr->JobId : 0) : 0,
+                  OT_INT32, "jobid",                  m_job_id,
                   OT_STRING,"state",                  (m_state == TRANS_STATE_QUEUED) ? 
                                                          (m_wait_timeout_inc_insec == 0) ? "queued":"waiting" :transfer_state_name[m_state],
                   OT_INT64, "size",                   m_stat_size,
@@ -278,7 +282,7 @@ void transfer::append_api_status(OutputWriter &ow)
          ow.get_output(OT_START_OBJ,
                   OT_STRING,"volume_name",            NPRTB(m_volume_name),
                   OT_INT32, "part",                   m_part,
-                  OT_INT32, "jobid",                  m_dcr ? (m_dcr->jcr ? m_dcr->jcr->JobId : 0) : 0,
+                  OT_INT32, "jobid",                  m_job_id,
                   OT_STRING,"state",                  (m_state == TRANS_STATE_QUEUED) ? 
                                                          (m_wait_timeout_inc_insec == 0) ? "queued":"waiting" :transfer_state_name[m_state],
                   OT_INT64, "size",                   m_stat_size,
@@ -571,6 +575,7 @@ transfer *transfer_manager::get_xfer(uint64_t     size,
             const char   *volume_name,
             uint32_t     part,
             cloud_driver *driver,
+            uint32_t     JobId,
             DCR          *dcr,
             cloud_proxy  *proxy)
 {
@@ -593,6 +598,7 @@ transfer *transfer_manager::get_xfer(uint64_t     size,
                        volume_name, /* volume_name is duplicated in the transfer constructor*/
                        part,
                        driver,
+                       JobId,
                        dcr,
                        proxy));
 
