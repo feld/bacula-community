@@ -22,6 +22,8 @@
 
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\Common\Modules\Errors\JobError;
+use Baculum\Common\Modules\Logging;
+use Prado\Prado;
 
 /**
  * Run restore command endpoint.
@@ -79,6 +81,36 @@ class RestoreRun extends BaculumAPIServer {
 			$regex_where = $params->regex_where;
 		}
 
+		// Plugin options
+		$plugin_options = $plugin_files = $pre_cmds = [];
+		if (property_exists($params, 'plugin_options') && is_object($params->plugin_options)) {
+			foreach ($params->plugin_options as $objectid => $options) {
+				$dir = Prado::getPathOfNamespace('Baculum.API.Config');
+				$tmpname = tempnam($dir, 'restore');
+				$opts = '';
+				foreach ($options as $key => $value) {
+					$opts .= "{$key}={$value}" . PHP_EOL;
+				}
+				if (file_put_contents($tmpname, $opts) !== false) {
+					$fileref = "obj{$objectid}";
+					$pre_cmds[] = '@putfile';
+					$pre_cmds[] = $fileref;
+					$pre_cmds[] = $tmpname . PHP_EOL;
+					$plugin_options[] = sprintf(
+						'pluginrestoreconf="%s:%s"',
+						$objectid,
+						$fileref
+					);
+					$plugin_files[] = $tmpname;
+				} else {
+					$this->Application->getModule('logging')->log(
+						Logging::CATEGORY_APPLICATION,
+						"Error while writing temporary plugin file $tmpname."
+					);
+				}
+			}
+		}
+
 		if(is_null($client)) {
 			$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
 			$this->error = JobError::ERROR_CLIENT_DOES_NOT_EXISTS;
@@ -102,9 +134,16 @@ class RestoreRun extends BaculumAPIServer {
 			return;
 		}
 
+
 		$command = array('restore',
 			'client="' . $client . '"'
 		);
+		if (count($pre_cmds) > 0) {
+			$command = array_merge($pre_cmds, $command);
+		}
+		if (count($plugin_options) > 0) {
+			$command[] = implode(' ', $plugin_options);
+		}
 		if (is_string($rfile)) {
 			// Restore using Bvfs
 			$command[] = 'file="?' . $rfile . '"';
@@ -140,6 +179,17 @@ class RestoreRun extends BaculumAPIServer {
 		$command[] = 'yes';
 
 		$restore = $this->getModule('bconsole')->bconsoleCommand($this->director, $command);
+
+		// remove temporary plugin files
+		for ($i = 0; $i < count($plugin_files); $i++) {
+			if (!unlink($plugin_files[$i])) {
+				$this->Application->getModule('logging')->log(
+					Logging::CATEGORY_APPLICATION,
+					"Error while removing temporary plugin file {$plugin_files[$i]}."
+				);
+			}
+		}
+
 		$this->output = $restore->output;
 		$this->error = $restore->exitcode;
 	}
