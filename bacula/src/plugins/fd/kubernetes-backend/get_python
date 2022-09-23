@@ -12,7 +12,7 @@ if [ $# != 1 ]; then
 fi
 
 VERSION=
-for i in 13 12 11 10 9 8 7 6 5 4
+for i in 14 13 12 11 10 9 8 7 6 5 4
 do
     if which python3.$i &> /dev/null ; then
         VERSION=3.$i
