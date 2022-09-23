@@ -1991,6 +1991,81 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "plugin_options",
+						"in": "body",
+						"description": "Pluging options in JSON form: {objectid1: {option1: value1, option2: value2}, objectid2: {option3: value3}...}",
+						"required": false,
+						"schema": {
+							"type": "object"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/jobs/restore/plugin/config": {
+			"get": {
+				"tags": ["jobs"],
+				"summary": "Plugin configuration used for restore",
+				"consumes": [ "application/json" ],
+				"description": "Backup job plugin configuration used to restore.",
+				"responses": {
+					"200": {
+						"description": "Plugin configuration",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"jobid": {
+														"type": "string",
+														"description": "Job identifier"
+													},
+													"restoreobjectid": {
+														"type": "string",
+														"description": "Restore object identifier"
+													},
+													"objectname": {
+														"type": "string",
+														"description": "Object name"
+													},
+													"pluginname": {
+														"type": "string",
+														"description": "Plugin line with the plugin definition"
+													},
+													"objecttype": {
+														"type": "string",
+														"description": "Object type"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 50, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "jobids",
+						"in": "query",
+						"description": "Job identifiers",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}

@@ -77,6 +77,7 @@
 	<url ServiceParameter="JobListFiles" pattern="api/v2/jobs/{id}/files/" parameters.id="\d+" />
 	<url ServiceParameter="JobFiles" pattern="api/v2/jobs/files/" />
 	<url ServiceParameter="RestoreRun" pattern="api/v2/jobs/restore/" />
+	<url ServiceParameter="LlistPluginRestoreConf" pattern="api/v2/jobs/restore/plugin/config" />
 	<!-- bvfs endpoints-->
 	<url ServiceParameter="BVFSUpdate" pattern="api/v2/bvfs/update/" />
 	<url ServiceParameter="BVFSLsDirs" pattern="api/v2/bvfs/lsdirs/" />

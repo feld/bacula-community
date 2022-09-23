@@ -64,6 +64,7 @@ class Bconsole extends APIModule {
 		'version',
 		'status',
 		'list',
+		'llist',
 		'messages',
 		'show',
 		'mount',
