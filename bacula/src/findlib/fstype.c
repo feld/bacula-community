@@ -646,14 +646,9 @@ bool check_current_fs(char *fname, FF_PKT *ff, uint64_t fstype_magic)
 
    if (fstype_magic > 0){
       // get fsid for file
-      if (ff->last_fstype != 0){
-         fsid = ff->last_fstype;
-      } else {
-         fsid = fstypeid(fname, ff);
-         ff->last_fstype = fsid;
-      }
-      if (fsid != 0){
-         return fsid == fstype_magic;
+      char fsname[NAME_MAX];
+      if (fstype(fname, ff, fsname, NAME_MAX)) {
+         return ff->last_fstype == fstype_magic;
       }
    }
    return false;
