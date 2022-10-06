@@ -20,6 +20,9 @@ cleanup();
 # initialize the configuration
 system("scripts//copy-test-confs");
 
+# Force to have a prompt with two different SDs
+add_attribute("$conf/bacula-dir.conf", "SDPort", "1234", "Storage", "File2");
+
 # initialize the fileset
 add_to_backup_list("$cwd/build/po");
 
@@ -45,23 +48,33 @@ p("Now try to cancel the previous job to see if the director will connect to FD/
 create_bconcmds(
     "$out $tmp/log3.out",
     "cancel inactive client=$CLIENT ujobid=$job",
+    "1",                        # Storage selection
     "$out $tmp/log4.out",
     "cancel inactive ujobid=$job",
+    "1",
     "$out $tmp/log5.out",
-    "cancel inactive storage=File ujobid=$job"
+    "cancel inactive storage=File ujobid=$job",
+    "$out $tmp/log6.out",
+    "cancel inactive jobid=1",
+    "."
     );
 
 run_bconsole();
 
 stop_bacula();
 
-p("Should find FD code 2901 in cancel output");
+p("Should find FD code 2901 and SD 3904 in cancel output");
 
 if (!docmd("grep 2901 $tmp/log3.out") ||
     !docmd("grep 2901 $tmp/log4.out") ||
-    !docmd("grep 2901 $tmp/log5.out")) 
+    !docmd("grep 2901 $tmp/log5.out") ||
+    !docmd("grep 2901 $tmp/log6.out") ||
+    !docmd("grep 3904 $tmp/log3.out") ||
+    !docmd("grep 3904 $tmp/log4.out") ||
+    !docmd("grep 3904 $tmp/log5.out") ||
+    docmd("grep 3904 $tmp/log6.out")) 
 {
-    print "ERROR: Unable to find 2901 in log3,4,5.out\n";
+    print "ERROR: Unable to find 2901 or 3904 in log3,4,5,6.out\n";
     $estat=1;
 }
 
