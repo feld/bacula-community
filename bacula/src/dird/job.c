@@ -35,7 +35,7 @@ static bool job_check_maxwaittime(JCR *jcr);
 static bool job_check_maxruntime(JCR *jcr);
 static bool job_check_maxrunschedtime(JCR *jcr);
 static void set_jcr_default_store(JCR *jcr, JOB *job);
-
+static void init_store_manager(JCR *jcr, const char *policy);
 static const int dbglvl_store_mngr = 200;
 
 /* Imported subroutines and variables */
@@ -684,10 +684,12 @@ int cancel_inactive_job(UAContext *ua)
    /* At this time, we can't really guess the storage name from
     * the job record
     */
-   if (get_storage_resource(ua, &store, false/*no default*/, true/*unique*/)) {
+   get_storage_resource(ua, &store, false/*no default*/, true/*unique*/);
+   if (!store.store) {
       goto bail_out;
    }
 
+   init_store_manager(jcr, StorageManager::get_default_policy());
    jcr->store_mngr->set_wstorage(store.store, store.store_source);
    if (!cancel_sd_job(ua, "cancel", jcr)) {
       ua->error_msg(_("Failed to cancel storage dameon job for JobId=%d\n"), jcr->JobId);
