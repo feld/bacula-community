@@ -61,6 +61,16 @@ class JobRecord extends APIDbModule {
 	public $comment;
 	public $filetable;
 	public $priorjob;
+	public $realstarttime;
+	public $isvirtualfull;
+	public $compressratio;
+	public $rate;
+	public $lastreadstorageid;
+	public $lastreaddevice;
+	public $writestorageid;
+	public $writedevice;
+	public $statusinfo;
+	public $encrypted;
 
 	// Additional values (not from Job table)
 	public $client;
