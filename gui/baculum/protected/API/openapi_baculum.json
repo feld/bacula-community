@@ -2066,6 +2066,65 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
+		"/api/v2/jobs/restore/plugin/config/fields": {
+			"get": {
+				"tags": ["jobs"],
+				"summary": "Plugin configuration in fields form used for restore",
+				"consumes": [ "application/json" ],
+				"description": "Backup job plugin configuration in fields form used to restore.",
+				"responses": {
+					"200": {
+						"description": "Plugin configuration",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 50, 151, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "jobid",
+						"in": "query",
+						"description": "Job identifier",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "restoreobjectid",
+						"in": "query",
+						"description": "Restore object identifier",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"$ref": "#/components/parameters/Output"
 					}
 				]
 			}

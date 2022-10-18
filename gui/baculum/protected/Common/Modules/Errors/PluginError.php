@@ -31,6 +31,8 @@ namespace Baculum\Common\Modules\Errors;
  */
 class PluginError extends GenericError {
 	const ERROR_EXECUTING_PLUGIN_QUERY_COMMAND = 150;
+	const ERROR_WRONG_PLUGIN_OPTION = 151;
 
 	const MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND = 'Error executing plugin query command.';
+	const MSG_ERROR_WRONG_PLUGIN_OPTION = 'Wrong plugin option.';
 }

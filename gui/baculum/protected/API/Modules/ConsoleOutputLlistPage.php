@@ -51,4 +51,25 @@ abstract class ConsoleOutputLlistPage extends ConsoleOutputPage {
 		}
 		return $ret;
 	}
+
+	/**
+	 * Parse list plugin configuration fields.
+	 *
+	 * @param array $output command output
+	 * @return array parsed output
+	 */
+	protected function parseFields(array $output) {
+		$ret = $vals = [];
+		$out_len = count($output);
+		for ($i = 0; $i < $out_len; $i++) {
+			if (preg_match('/^(?P<key>\w+)="?(?P<value>.*?)"?$/i', $output[$i], $matches) === 1) {
+				$vals[$matches['key']] = $matches['value'];
+			}
+			if ((empty($output[$i]) || ($i == ($out_len - 1))) && count($vals) > 0) {
+				$ret[] = $vals;
+				$vals = [];
+			}
+		}
+		return $ret;
+	}
 }
