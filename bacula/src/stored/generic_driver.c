@@ -951,7 +951,7 @@ bool generic_driver::truncate_cloud_volume(const char *volume_name, ilist *trunc
 
 
 struct clean_cloud_volume_read_cb_arg {
-   POOLMEM **remain;
+   POOLMEM *remain;
    ilist *parts;
    cleanup_cb_type *cb;
    cleanup_ctx_type *ctx;
@@ -959,30 +959,27 @@ struct clean_cloud_volume_read_cb_arg {
 
 size_t clean_cloud_volume_read_cb(char *res, size_t sz, void* arg)
 {
-   ilist *parts = NULL;
    bool wrong_string = false;
    size_t left = sz;
-   POOLMEM **remain = NULL;
    clean_cloud_volume_read_cb_arg *_arg = (clean_cloud_volume_read_cb_arg*)arg;
-   if (_arg) {
-      parts = _arg->parts;
-      remain = _arg->remain;
+   if (!_arg) {
+      return 0;
    }
 
-   if (parts) {
+   if (_arg->parts) {
       char * pch = strtok (res,"\n");
       /* we enter the cb again and remaining string has not been processed */
-      if (remain && strlen(*remain) != 0) {
-         pm_strcat(remain, pch);
-         char *name=strstr(*remain, "part");
-         char *time=strstr(*remain, ",mtime:");
+      if (_arg->remain && strlen(_arg->remain) != 0) {
+         pm_strcat(_arg->remain, pch);
+         char *name=strstr(_arg->remain, "part");
+         char *time=strstr(_arg->remain, ",mtime:");
          if (name && time) {
             *time='\0';
-            parts->append(bstrdup(name));
+            _arg->parts->append(bstrdup(name));
          } else {
             wrong_string = true;
          }
-         **remain = 0;
+         *(_arg->remain) = 0;
          left -= strlen(pch)+1;
          pch = strtok (NULL,"\n");
       }
@@ -992,9 +989,9 @@ size_t clean_cloud_volume_read_cb(char *res, size_t sz, void* arg)
          char *time=strstr(pch, ",mtime:");
          if (name && time) {
             *time='\0';
-            parts->append(bstrdup(name));
+            _arg->parts->append(bstrdup(name));
          } else {
-            pm_strcpy(remain, pch);
+            pm_strcpy(_arg->remain, pch);
          }
          left -= strlen(pch)+1;
          pch = strtok (NULL, "\n");
@@ -1018,7 +1015,7 @@ bool generic_driver::clean_cloud_volume(const char *VolumeName, cleanup_cb_type 
    arg.parts = &parts;
    POOLMEM *p= get_memory(block_size);
    *p = 0;
-   arg.remain = &p;
+   arg.remain = p;
    arg.cb = cb;
    arg.ctx = ctx;
    read_callback pcb;
@@ -1026,7 +1023,7 @@ bool generic_driver::clean_cloud_volume(const char *VolumeName, cleanup_cb_type 
    pcb.arg = (void*)&arg;
    /* list everything in the volume VolumeName */
    int ret = call_fct("ls", VolumeName, "", &pcb, NULL, cancel_cb, err);
-   free_pool_memory(*arg.remain);
+   free_pool_memory(arg.remain);
 
    int rtn=0;
    int i;
@@ -1048,29 +1045,27 @@ bool generic_driver::clean_cloud_volume(const char *VolumeName, cleanup_cb_type 
 }
 
 struct get_cloud_volume_parts_list_read_cb_arg {
-   POOLMEM **remain;
+   POOLMEM *remain;
    ilist *parts;
 };
 
 
 size_t get_cloud_volume_parts_list_read_cb(char *res, size_t sz, void* arg)
 {
-   ilist *parts = NULL;
    bool wrong_string = false;
    size_t left = sz;
-   POOLMEM **remain = NULL;
+
    get_cloud_volume_parts_list_read_cb_arg *_arg = (get_cloud_volume_parts_list_read_cb_arg*)arg;
-   if (_arg) {
-      parts = _arg->parts;
-      remain = _arg->remain;
+   if (!_arg) {
+      return 0;
    }
 
-   if (parts) {
+   if (_arg->parts) {
       char * pch = strtok (res,"\n");
       /* we enter the cb again and remaining string has not been processed */
-      if (remain && *remain && strlen(*remain) != 0) {
-         pm_strcat(remain, pch);
-         char *ext=strstr(*remain, "part."), *size=strstr(*remain, "size:"), *mtime=strstr(*remain, "mtime:");
+      if (_arg->remain && strlen(_arg->remain) != 0) {
+         pm_strcat(_arg->remain, pch);
+         char *ext=strstr(_arg->remain, "part."), *size=strstr(_arg->remain, "size:"), *mtime=strstr(_arg->remain, "mtime:");
          if (ext && size && mtime) {
             cloud_part *part = (cloud_part*) malloc(sizeof(cloud_part));
             part->index = str_to_uint64(&(ext[5]));
@@ -1078,11 +1073,11 @@ size_t get_cloud_volume_parts_list_read_cb(char *res, size_t sz, void* arg)
             part->size = str_to_uint64((&(size[5])));
             /* ***FIXME*** : wbn to retrieve SHA512 from cloud */
             bmemzero(part->hash64, 64);
-            parts->put(part->index, part);
+            _arg->parts->put(part->index, part);
          } else {
             wrong_string = true;
          }
-         **remain = 0;
+         *(_arg->remain) = 0;
          left -= strlen(pch)+1;
          pch = strtok (NULL,"\n");
       }
@@ -1096,9 +1091,9 @@ size_t get_cloud_volume_parts_list_read_cb(char *res, size_t sz, void* arg)
             part->size = str_to_uint64((&(size[5])));
             /* ***FIXME*** : wbn to retrieve SHA512 from cloud */
             bmemzero(part->hash64, 64);
-            parts->put(part->index, part);
+            _arg->parts->put(part->index, part);
          } else {
-            pm_strcpy(remain, pch);
+            pm_strcpy(_arg->remain, pch);
          }
          left -= strlen(pch)+1;
          pch = strtok (NULL, "\n");
@@ -1123,17 +1118,17 @@ bool generic_driver::get_cloud_volume_parts_list(const char* volume_name, ilist 
    arg.parts = parts;
    POOLMEM *p= get_memory(block_size);
    *p = 0;
-   arg.remain = &p;
+   arg.remain = p;
    read_callback pcb;
    pcb.fct = &get_cloud_volume_parts_list_read_cb;
    pcb.arg = (void*)&arg;
    int ret = call_fct("ls", volume_name, "part.", &pcb, NULL, cancel_cb, err);
-   free_pool_memory(*arg.remain);
+   free_pool_memory(arg.remain);
    return (ret == 0);
 }
 
 struct get_cloud_volume_list_read_cb_arg {
-   POOLMEM **remain;
+   POOLMEM *remain;
    alist *volumes;
 };
 
@@ -1152,31 +1147,28 @@ void get_cloud_volumes_list_read_cb_append_to_volumes(char* c, alist* volumes) {
 
 size_t get_cloud_volumes_list_read_cb(char* res, size_t size, void *arg)
 {
-   alist *volumes = NULL;
-   POOLMEM **remain = NULL;
    bool is_complete(res[size-1]=='\n');
    get_cloud_volume_list_read_cb_arg *_arg = (get_cloud_volume_list_read_cb_arg*)arg;
-   if (_arg) {
-      volumes = _arg->volumes;
-      remain = _arg->remain;
+   if (!_arg) {
+      return 0;
    }
 
-   if (volumes) {
+   if (_arg->volumes) {
       /* do the actual process */
       char * pch = strtok (res,"\n");
-      if (remain && *remain && strlen(*remain) != 0) {
-         pm_strcat(remain, pch);
-         get_cloud_volumes_list_read_cb_append_to_volumes(*remain, volumes);
+      if (_arg->remain && strlen(_arg->remain) != 0) {
+         pm_strcat(_arg->remain, pch);
+         get_cloud_volumes_list_read_cb_append_to_volumes(_arg->remain, _arg->volumes);
          pch = strtok (NULL, "\n");
-         *remain = 0;
+         *(_arg->remain) = 0;
       }
 
       while (pch != NULL)
       {
-         pm_strcpy(*remain, pch);
+         pm_strcpy(_arg->remain, pch);
          pch = strtok (NULL, "\n");
          if (pch || is_complete) {
-            get_cloud_volumes_list_read_cb_append_to_volumes(*remain, volumes);
+            get_cloud_volumes_list_read_cb_append_to_volumes(_arg->remain, _arg->volumes);
          }
       }
       return size;
@@ -1196,10 +1188,10 @@ bool generic_driver::get_cloud_volumes_list(alist *volumes, cancel_callback *can
    arg.volumes = volumes;
    POOLMEM *p= get_memory(block_size);
    *p = 0;
-   arg.remain = &p;
+   arg.remain = p;
    pcb.arg = (void*)&arg;
    int ret = call_fct("vol_ls", NULL, 0, &pcb, NULL, cancel_cb, err);
-   free_pool_memory(*arg.remain);
+   free_pool_memory(arg.remain);
    return (ret == 0);
 }
 
