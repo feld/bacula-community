@@ -41,6 +41,7 @@ class Objects extends BaculumAPIServer {
 		$objectuuid = $this->Request->contains('objectuuid') && $misc->isValidName($this->Request['objectuuid']) ? $this->Request['objectuuid'] : null;
 		$objectstatus = $this->Request->contains('objectstatus') && $misc->isValidState($this->Request['objectstatus']) ? $this->Request['objectstatus'] : null;
 		$jobname = $this->Request->contains('jobname') && $misc->isValidName($this->Request['jobname']) ? $this->Request['jobname'] : null;
+		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
 
 		$params = [];
 		if (!empty($objecttype)) {
@@ -71,6 +72,11 @@ class Objects extends BaculumAPIServer {
 			$params['Job.Name']['operator'] = '';
 			$params['Job.Name']['vals'] = $jobname;
 		}
+		if (count($jobids) > 0) {
+			$params['Job.JobId']['operator'] = 'IN';
+			$params['Job.JobId']['vals'] = $jobids;
+		}
+
 		$objects = $this->getModule('object')->getObjects($params, $limit);
 		$this->output = $objects;
 		$this->error = ObjectError::ERROR_NO_ERRORS;

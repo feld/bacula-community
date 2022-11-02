@@ -167,9 +167,20 @@ class Database extends APIModule {
 				$vals = array();
 				$kval = str_replace('.', '_', $key);
 				if (is_array($value['vals'])) {
-					for ($i = 0; $i < count($value['vals']); $i++) {
-						$cond[] = "{$key} = :{$kval}{$i}";
-						$vals[":{$kval}{$i}"] = $value['vals'][$i];
+					if ($value['operator'] == 'IN') {
+						// IN operator is treated separately
+						$tcond = [];
+						for ($i = 0; $i < count($value['vals']); $i++) {
+							$tcond[] = ":{$kval}{$i}";
+							$vals[":{$kval}{$i}"] = $value['vals'][$i];
+						}
+						$cond[] = "{$key} {$value['operator']} (" . implode(',', $tcond) . ')';
+					} else {
+						// other operators
+						for ($i = 0; $i < count($value['vals']); $i++) {
+							$cond[] = "{$key} = :{$kval}{$i}";
+							$vals[":{$kval}{$i}"] = $value['vals'][$i];
+						}
 					}
 				} else {
 					$cond[] = "$key = :$kval";

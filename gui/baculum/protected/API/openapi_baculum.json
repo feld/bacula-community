@@ -6255,6 +6255,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "jobids",
+						"in": "query",
+						"required": false,
+						"description": "Job identifiers (comma separated)",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
