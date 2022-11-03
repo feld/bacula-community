@@ -3909,7 +3909,18 @@
 							}
 						}
 					}
-				}
+				},
+				"parameters": [
+					{
+						"name": "jobids",
+						"in": "query",
+						"required": false,
+						"description": "Job identifiers (comma separated)",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/api/v2/bvfs/lsdirs": {
