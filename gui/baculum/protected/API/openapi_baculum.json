@@ -3913,8 +3913,8 @@
 				"parameters": [
 					{
 						"name": "jobids",
-						"in": "query",
-						"required": false,
+						"in": "body",
+						"required": true,
 						"description": "Job identifiers (comma separated)",
 						"schema": {
 							"type": "string"
