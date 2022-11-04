@@ -550,6 +550,13 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          break;
 
       case SOS_LABEL:
+         if (bsr && rec->match_stat < 1) {
+            /* Skipping record, because does not match BSR filter and we don't want to
+             * create job records outside of the BSR specifications
+             */
+            break;
+         }
+
          mr.VolJobs++;
          num_jobs++;
          if (ignored_msgs > 0) {
@@ -629,6 +636,13 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          break;
 
       case EOS_LABEL:
+         if (bsr && rec->match_stat < 1) {
+            /* Skipping record, because does not match BSR filter and we don't want to
+             * create job records outside of the BSR specifications
+             */
+            break;
+         }
+
          unser_session_label(&elabel, rec);
 
          /* Create FileSet record */
