@@ -47,6 +47,11 @@ if [ "x$DBVERSION" = x ]; then
     exit 1
 fi
 
+if [ "$DBVERSION" -eq "$NEWVERSION" ] ; then
+   echo "Current ${db_name} database is up-to-date (version $NEWVERSION)."
+   exit 0
+fi
+
 if [ "$DBVERSION" -lt 1014 -o "$DBVERSION" -gt $OLDVERSION ] ; then
   if [ "$DBVERSION" -lt 12 -o "$DBVERSION" -gt 16 ] ; then
     echo " "
