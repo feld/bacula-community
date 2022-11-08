@@ -37,6 +37,7 @@ class ObjectRecord extends APIDbModule {
 	public $jobid;
 	public $path;
 	public $filename;
+	public $fileindex;
 	public $pluginname;
 	public $objecttype;
 	public $objectname;
