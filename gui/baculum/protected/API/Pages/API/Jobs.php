@@ -21,6 +21,7 @@
  */
 
 use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\JobRecord;
 use Baculum\Common\Modules\Errors\JobError;
 
 /**
@@ -31,6 +32,7 @@ use Baculum\Common\Modules\Errors\JobError;
  * @package Baculum API
  */
 class Jobs extends BaculumAPIServer {
+
 	public function get() {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
@@ -47,6 +49,8 @@ class Jobs extends BaculumAPIServer {
 		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
 		$realendtime_from = $this->Request->contains('realendtime_from') && $misc->isValidInteger($this->Request['realendtime_from']) ? (int)$this->Request['realendtime_from'] : null;
 		$realendtime_to = $this->Request->contains('realendtime_to') && $misc->isValidInteger($this->Request['realendtime_to']) ? (int)$this->Request['realendtime_to'] : null;
+		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'JobId';
+		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 
 		if (!empty($clientid) && !$misc->isValidId($clientid)) {
 			$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
@@ -60,6 +64,25 @@ class Jobs extends BaculumAPIServer {
 			$this->error = JobError::ERROR_CLIENT_DOES_NOT_EXISTS;
 			return;
 		}
+		$jr = new \ReflectionClass('Baculum\API\Modules\JobRecord');
+		$sort_cols = $jr->getProperties();
+		$order_by_lc = strtolower($order_by);
+		$cols_excl = ['client', 'fileset', 'pool'];
+		$columns = [];
+		foreach ($sort_cols as $cols) {
+			$name = $cols->getName();
+			// skip columns not existing in the catalog
+			if (in_array($name, $cols_excl)) {
+				continue;
+			}
+			$columns[] = $name;
+		}
+		if (!in_array($order_by_lc, $columns)) {
+			$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
+			$this->error = JobError::ERROR_INVALID_PROPERTY;
+			return;
+		}
+
 
 		$params = [];
 		$jobstatuses = array_keys($misc->getJobState());
@@ -215,7 +238,7 @@ class Jobs extends BaculumAPIServer {
 			}
 
 			if ($error === false) {
-				$jobs = $this->getModule('job')->getJobs($params, $limit);
+				$jobs = $this->getModule('job')->getJobs($params, $limit, $order_by, $order_direction);
 				$this->output = $jobs;
 				$this->error = JobError::ERROR_NO_ERRORS;
 			}

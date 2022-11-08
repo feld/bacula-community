@@ -34,13 +34,12 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class JobManager extends APIModule {
 
-	public function getJobs($criteria = array(), $limit_val = null) {
-		$sort_col = 'JobId';
+	public function getJobs($criteria = array(), $limit_val = null, $sort_col = 'JobId', $sort_order = 'ASC') {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
 		}
-		$order = ' ORDER BY ' . $sort_col . ' DESC';
+		$order = ' ORDER BY ' . $sort_col . ' ' . strtoupper($sort_order);
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;

@@ -302,6 +302,13 @@ class Miscellaneous extends TModule {
 		return filter_var($email, FILTER_VALIDATE_EMAIL);
 	}
 
+	public function isValidColumn($column) {
+		return (preg_match('/^[\w+.]+$/i', $column) === 1);
+	}
+	public function isValidOrderDirection($order) {
+		return (preg_match('/^(asc|desc)$/i', $order) === 1);
+	}
+
 	public function escapeCharsToConsole($path) {
 		return preg_replace('/([$])/', '\\\${1}', $path);
 	}

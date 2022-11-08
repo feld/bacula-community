@@ -35,10 +35,12 @@ class GenericError {
 	const ERROR_INTERNAL_ERROR = 1000;
 	const ERROR_INVALID_PATH = 8;
 	const ERROR_WRONG_EXITCODE = 9;
+	const ERROR_INVALID_PROPERTY = 520;
 
 	const MSG_ERROR_NO_ERRORS = '';
 	const MSG_ERROR_INVALID_COMMAND = 'Invalid command.';
 	const MSG_ERROR_INTERNAL_ERROR = 'Internal error.';
 	const MSG_ERROR_INVALID_PATH = 'Invalid path.';
 	const MSG_ERROR_WRONG_EXITCODE = 'Wrong exitcode.';
+	const MSG_ERROR_INVALID_PROPERTY = 'Invalid property.';
 }
