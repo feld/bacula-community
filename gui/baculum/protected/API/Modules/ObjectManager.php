@@ -56,10 +56,9 @@ LEFT JOIN Job USING (JobId) '
 
 	public function getObjectById($objectid) {
 		$params = [
-			'Object.ObjectId' => [
-				'vals' => $objectid,
-				'operator' => ''
-			]
+			'Object.ObjectId' => [[
+				'vals' => $objectid
+			]]
 		];
 		$obj = $this->getObjects($params, 1);
 		if (is_array($obj) && count($obj) > 0) {

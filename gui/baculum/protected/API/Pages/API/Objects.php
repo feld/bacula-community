@@ -45,36 +45,53 @@ class Objects extends BaculumAPIServer {
 
 		$params = [];
 		if (!empty($objecttype)) {
-			$params['Object.ObjectType']['operator'] = '';
-			$params['Object.ObjectType']['vals'] = $objecttype;
+			$params['Object.ObjectType'] = [];
+			$params['Object.ObjectType'][] = [
+				'vals' => $objecttype
+			];
 		}
 		if (!empty($objectname)) {
-			$params['Object.ObjectName']['operator'] = '';
-			$params['Object.ObjectName']['vals'] = $objectname;
+			$params['Object.ObjectName'] = [];
+			$params['Object.ObjectName'][] = [
+				'vals' => $objectname
+			];
 		}
 		if (!empty($objectcategory)) {
-			$params['Object.ObjectCategory']['operator'] = '';
-			$params['Object.ObjectCategory']['vals'] = $objectcategory;
+			$params['Object.ObjectCategory'] = [];
+			$params['Object.ObjectCategory'][] = [
+				'vals' => $objectcategory
+			];
 		}
 		if (!empty($objectsource)) {
-			$params['Object.ObjectSource']['operator'] = '';
-			$params['Object.ObjectSource']['vals'] = $objectsource;
+			$params['Object.ObjectSource'] = [];
+			$params['Object.ObjectSource'][] = [
+				'vals' => $objectsource
+			];
 		}
 		if (!empty($objectuuid)) {
-			$params['Object.ObjectUUID']['operator'] = '';
-			$params['Object.ObjectUUID']['vals'] = $objectuuid;
+			$params['Object.ObjectUUID'] = [];
+			$params['Object.ObjectUUID'][] = [
+				'vals' => $objectuuid
+			];
 		}
 		if (!empty($objectstatus)) {
-			$params['Object.ObjectStatus']['operator'] = '';
-			$params['Object.ObjectStatus']['vals'] = $objectstatus;
+			$params['Object.ObjectStatus'] = [];
+			$params['Object.ObjectStatus'][] = [
+				'vals' => $objectstatus
+			];
 		}
 		if (!empty($jobname)) {
-			$params['Job.Name']['operator'] = '';
-			$params['Job.Name']['vals'] = $jobname;
+			$params['Job.Name'] = [];
+			$params['Job.Name'][] = [
+				'vals' => $jobname
+			];
 		}
 		if (count($jobids) > 0) {
-			$params['Job.JobId']['operator'] = 'IN';
-			$params['Job.JobId']['vals'] = $jobids;
+			$params['Job.JobId'] = [];
+			$params['Job.JobId'][] = [
+				'operator' => 'IN',
+				'vals' => $jobids
+			];
 		}
 
 		$objects = $this->getModule('object')->getObjects($params, $limit);

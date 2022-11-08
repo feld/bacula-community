@@ -877,6 +877,78 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "schedtime_from",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "schedtime_to",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_from",
+						"in": "query",
+						"required": false,
+						"description": "End time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_to",
+						"in": "query",
+						"required": false,
+						"description": "End time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_from",
+						"in": "query",
+						"required": false,
+						"description": "Real end time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_to",
+						"in": "query",
+						"required": false,
+						"description": "Real end time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
 					}
 				]
 			}

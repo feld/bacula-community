@@ -66,10 +66,10 @@ LEFT JOIN Storage USING (StorageId)
 
 	public function getVolumesByPoolId($poolid) {
 		$volumes = $this->getVolumes(array(
-			'Media.PoolId' => array(
-				'vals' => array($poolid),
+			'Media.PoolId' => [[
+				'vals' => [$poolid],
 				'operator' => 'AND'
-			)
+			]]
 		));
 		$this->setExtraVariables($volumes);
 		return $volumes;
@@ -77,10 +77,10 @@ LEFT JOIN Storage USING (StorageId)
 
 	public function getVolumeByPoolId($poolid) {
 		$volume = $this->getVolumes(array(
-			'Media.PoolId' => array(
-				'vals' => array($poolid),
+			'Media.PoolId' => [[
+				'vals' => [$poolid],
 				'operator' => 'AND'
-			)
+			]]
 		), 1);
 		if (is_array($volume) && count($volume) > 0) {
 			$volume = array_shift($volume);
@@ -91,10 +91,10 @@ LEFT JOIN Storage USING (StorageId)
 
 	public function getVolumeByName($volume_name) {
 		$volume = $this->getVolumes(array(
-			'Media.VolumeName' => array(
-				'vals' => array($volume_name),
+			'Media.VolumeName' => [[
+				'vals' => [$volume_name],
 				'operator' => 'AND'
-			)
+			]]
 		), 1);
 		if (is_array($volume) && count($volume) > 0) {
 			$volume = array_shift($volume);
@@ -105,10 +105,10 @@ LEFT JOIN Storage USING (StorageId)
 
 	public function getVolumeById($volume_id) {
 		$volume = $this->getVolumes(array(
-			'Media.MediaId' => array(
-				'vals' => array($volume_id),
+			'Media.MediaId' => [[
+				'vals' => [$volume_id],
 				'operator' => 'AND'
-			)
+			]]
 		));
 		if (is_array($volume) && count($volume) > 0) {
 			$volume = array_shift($volume);

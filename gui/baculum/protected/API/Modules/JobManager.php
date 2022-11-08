@@ -63,10 +63,10 @@ LEFT JOIN FileSet USING (FilesetId)'
 
 	public function getJobById($jobid) {
 		$job = $this->getJobs(array(
-			'Job.JobId' => array(
-				'vals' => array($jobid),
+			'Job.JobId' => [[
+				'vals' => [$jobid],
 				'operator' => 'AND'
-			)
+			]]
 		), 1);
 		if (is_array($job) && count($job) > 0) {
 			$job = array_shift($job);
@@ -231,10 +231,10 @@ WHERE JobMedia.MediaId='$mediaid' $jobs_criteria";
 		$where = '';
 		if (count($allowed_jobs) > 0) {
 			$criteria = [
-				'Job.Name' => [
+				'Job.Name' => [[
 					'vals' => $allowed_jobs,
 					'operator' => 'OR'
-				]
+				]]
 			];
 			$where = Database::getWhere($criteria, true);
 			$wh = '';

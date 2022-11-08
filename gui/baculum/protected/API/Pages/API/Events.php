@@ -45,22 +45,34 @@ class Events extends BaculumAPIServer {
 
 		$params = $time_scope =  [];
 		if (!empty($eventscode)) {
-			$params['Events.EventsCode']['vals'] = $eventscode;
+			$params['Events.EventsCode'] = [[
+				'vals' => $eventscode
+			]];
 		}
 		if (!empty($eventstype)) {
-			$params['Events.EventsType']['vals'] = $eventstype;
+			$params['Events.EventsType'] = [[
+				'vals' => $eventstype
+			]];
 		}
 		if (!empty($eventsdaemon)) {
-			$params['Events.EventsDaemon']['vals'] = $eventsdaemon;
+			$params['Events.EventsDaemon'] = [[
+				'vals' => $eventsdaemon
+			]];
 		}
 		if (!empty($eventssource)) {
-			$params['Events.EventsSource']['vals'] = $eventssource;
+			$params['Events.EventsSource']= [[
+				'vals' => $eventssource
+			]];
 		}
 		if (!empty($eventsref)) {
-			$params['Events.EventsRef']['vals'] = $eventsref;
+			$params['Events.EventsRef'] = [[
+				'vals' => $eventsref
+			]];
 		}
 		if (!empty($eventstext)) {
-			$params['Events.EventsText']['vals'] = $eventstext;
+			$params['Events.EventsText'] = [[
+				'vals' => $eventstext
+			]];
 		}
 		if (!empty($eventstimestart)) {
 			$time_scope['eventstimestart'] = $eventstimestart;

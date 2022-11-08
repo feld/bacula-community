@@ -39,6 +39,14 @@ class Jobs extends BaculumAPIServer {
 		$type = $this->Request->contains('type') && $misc->isValidJobType($this->Request['type']) ? $this->Request['type'] : '';
 		$jobname = $this->Request->contains('name') && $misc->isValidName($this->Request['name']) ? $this->Request['name'] : '';
 		$clientid = $this->Request->contains('clientid') ? $this->Request['clientid'] : '';
+		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
+		$schedtime_to = $this->Request->contains('schedtime_to') && $misc->isValidInteger($this->Request['schedtime_to']) ? (int)$this->Request['schedtime_to'] : null;
+		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
+		$starttime_to = $this->Request->contains('starttime_to') && $misc->isValidInteger($this->Request['starttime_to']) ? (int)$this->Request['starttime_to'] : null;
+		$endtime_from = $this->Request->contains('endtime_from') && $misc->isValidInteger($this->Request['endtime_from']) ? (int)$this->Request['endtime_from'] : null;
+		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
+		$realendtime_from = $this->Request->contains('realendtime_from') && $misc->isValidInteger($this->Request['realendtime_from']) ? (int)$this->Request['realendtime_from'] : null;
+		$realendtime_to = $this->Request->contains('realendtime_to') && $misc->isValidInteger($this->Request['realendtime_to']) ? (int)$this->Request['realendtime_to'] : null;
 
 		if (!empty($clientid) && !$misc->isValidId($clientid)) {
 			$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
@@ -56,23 +64,100 @@ class Jobs extends BaculumAPIServer {
 		$params = [];
 		$jobstatuses = array_keys($misc->getJobState());
 		$sts = str_split($jobstatus);
+		$counter = 0;
 		for ($i = 0; $i < count($sts); $i++) {
 			if (in_array($sts[$i], $jobstatuses)) {
 				if (!key_exists('Job.JobStatus', $params)) {
-					$params['Job.JobStatus'] = array('operator' => 'OR', 'vals' => array());
+					$params['Job.JobStatus'][$counter] = [
+						'operator' => 'OR',
+						'vals' => []
+					];
 				}
-				$params['Job.JobStatus']['vals'][] = $sts[$i];
+				$params['Job.JobStatus'][$counter]['vals'][] = $sts[$i];
+				$counter++;
 			}
 		}
 		if (!empty($level)) {
-			$params['Job.Level']['operator'] = '';
-			$params['Job.Level']['vals'] = $level;
+			$params['Job.Level'] = [];
+			$params['Job.Level'][] = [
+				'vals' => $level
+			];
 		}
 		if (!empty($type)) {
-			$params['Job.Type']['operator'] = '';
-			$params['Job.Type']['vals'] = $type;
+			$params['Job.Type'] = [];
+			$params['Job.Type'][] = [
+				'vals' => $type
+			];
 		}
-		$allowed = [];
+
+		// Scheduled time range
+		if (!empty($schedtime_from) || !empty($schedtime_to)) {
+			$params['Job.SchedTime'] = [];
+			if (!empty($schedtime_from)) {
+				$params['Job.SchedTime'][] = [
+					'operator' => '>=',
+					'vals' => date('Y-m-d H:m:s', $schedtime_from)
+				];
+			}
+			if (!empty($schedtime_to)) {
+				$params['Job.SchedTime'][] = [
+					'operator' => '<=',
+					'vals' => date('Y-m-d H:m:s', $schedtime_to)
+				];
+			}
+		}
+
+		// Start time range
+		if (!empty($starttime_from) || !empty($starttime_to)) {
+			$params['Job.StartTime'] = [];
+			if (!empty($starttime_from)) {
+				$params['Job.StartTime'][] = [
+					'operator' => '>=',
+					'vals' => date('Y-m-d H:m:s', $starttime_from)
+				];
+			}
+			if (!empty($starttime_to)) {
+				$params['Job.StartTime'][] = [
+					'operator' => '<=',
+					'vals' => date('Y-m-d H:m:s', $starttime_to)
+				];
+			}
+		}
+
+		// End time range
+		if (!empty($endtime_from) || !empty($endtime_to)) {
+			$params['Job.EndTime'] = [];
+			if (!empty($endtime_from)) {
+				$params['Job.EndTime'][] = [
+					'operator' => '>=',
+					'vals' => date('Y-m-d H:m:s', $endtime_from)
+				];
+			}
+			if (!empty($endtime_to)) {
+				$params['Job.EndTime'][] = [
+					'operator' => '<=',
+					'vals' => date('Y-m-d H:m:s', $endtime_to)
+				];
+			}
+		}
+
+		// Real end time range
+		if (!empty($realendtime_from) || !empty($realendtime_to)) {
+			$params['Job.RealEndTime'] = [];
+			if (!empty($realendtime_from)) {
+				$params['Job.RealEndTime'][] = [
+					'operator' => '>=',
+					'vals' => date('Y-m-d H:m:s', $realendtime_from)
+				];
+			}
+			if (!empty($realendtime_to)) {
+				$params['Job.RealEndTime'][] = [
+					'operator' => '<=',
+					'vals' => date('Y-m-d H:m:s', $realendtime_to)
+				];
+			}
+		}
+
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
 			['.jobs'],
@@ -93,8 +178,11 @@ class Jobs extends BaculumAPIServer {
 				return;
 			}
 
-			$params['Job.Name']['operator'] = 'OR';
-			$params['Job.Name']['vals'] = $vals;
+			$params['Job.Name'] = [];
+			$params['Job.Name'][] = [
+				'operator' => 'OR',
+				'vals' => $vals
+			];
 
 			$error = false;
 			// Client name and clientid filter
@@ -109,8 +197,11 @@ class Jobs extends BaculumAPIServer {
 						$cli = $this->getModule('client')->getClientById($clientid);
 					}
 					if (is_object($cli) && in_array($cli->name, $result->output)) {
-						$params['Job.ClientId']['operator'] = 'AND';
-						$params['Job.ClientId']['vals'] = [$cli->clientid];
+						$params['Job.ClientId'] = [];
+						$params['Job.ClientId'][] = [
+							'operator' => 'AND',
+							'vals' => [$cli->clientid]
+						];
 					} else {
 						$error = true;
 						$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;

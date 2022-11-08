@@ -161,35 +161,41 @@ class Database extends APIModule {
 		$where = '';
 		$parameters = array();
 		if (count($params) > 0) {
-			$condition = array();
+			$condition = [];
 			foreach ($params as $key => $value) {
-				$cond = array();
-				$vals = array();
-				$kval = str_replace('.', '_', $key);
-				if (is_array($value['vals'])) {
-					if ($value['operator'] == 'IN') {
-						// IN operator is treated separately
-						$tcond = [];
-						for ($i = 0; $i < count($value['vals']); $i++) {
-							$tcond[] = ":{$kval}{$i}";
-							$vals[":{$kval}{$i}"] = $value['vals'][$i];
+				for ($i = 0; $i < count($value); $i++) {
+					$cond = [];
+					$vals = [];
+					$kval = str_replace('.', '_', $key);
+					if (is_array($value[$i]['vals'])) {
+						if ($value[$i]['operator'] == 'IN') {
+							// IN operator is treated separately
+							$tcond = [];
+							for ($j = 0; $j < count($value[$i]['vals']); $j++) {
+								$tcond[] = ":{$kval}{$i}{$j}";
+								$vals[":{$kval}{$i}{$j}"] = $value[$i]['vals'][$j];
+							}
+							$cond[] = "{$key} {$value[$i]['operator']} (" . implode(',', $tcond) . ')';
+						} else {
+							// other operators
+							for ($j = 0; $j < count($value[$i]['vals']); $j++) {
+								$cond[] = "{$key} = :{$kval}{$i}{$j}";
+								$vals[":{$kval}{$i}{$j}"] = $value[$i]['vals'][$j];
+							}
 						}
-						$cond[] = "{$key} {$value['operator']} (" . implode(',', $tcond) . ')';
+					} elseif (isset($value[$i]['operator']) && in_array($value[$i]['operator'], ['>', '<', '>=', '<='])) {
+						$cond[] = "{$key} {$value[$i]['operator']} :{$kval}{$i}";
+						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
+						$value[$i]['operator'] = '';
 					} else {
-						// other operators
-						for ($i = 0; $i < count($value['vals']); $i++) {
-							$cond[] = "{$key} = :{$kval}{$i}";
-							$vals[":{$kval}{$i}"] = $value['vals'][$i];
-						}
+						$cond[] = "$key = :{$kval}{$i}";
+						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
+						$value[$i]['operator'] = '';
 					}
-				} else {
-					$cond[] = "$key = :$kval";
-					$vals[":$kval"] = $value['vals'];
-					$value['operator'] = '';
-				}
-				$condition[] = implode(' ' . $value['operator'] . ' ', $cond);
-				foreach ($vals as $pkey => $pval) {
-					$parameters[$pkey] = $pval;
+					$condition[] = implode(' ' . $value[$i]['operator'] . ' ', $cond);
+					foreach ($vals as $pkey => $pval) {
+						$parameters[$pkey] = $pval;
+					}
 				}
 			}
 			if (count($condition) > 0) {
