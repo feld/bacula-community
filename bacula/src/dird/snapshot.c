@@ -152,7 +152,7 @@ int delete_snapshot(UAContext *ua)
    POOL_MEM     buf;
    POOLMEM     *out;
    SNAPSHOT_DBR snapdbr;
-   CLIENT      *client;
+   CLIENT      *client, *old_client;
    BSOCK       *fd;
 
    if (!open_new_client_db(ua)) {
@@ -175,6 +175,7 @@ int delete_snapshot(UAContext *ua)
    }
 
    /* Connect to File daemon */
+   old_client = ua->jcr->client;
    ua->jcr->client = client;
 
    /* Try to connect for 15 seconds */
@@ -182,7 +183,8 @@ int delete_snapshot(UAContext *ua)
                 client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
-      ua->jcr->client = NULL;
+      free_bsock(ua->jcr->file_bsock);
+      ua->jcr->client = old_client;
       return 0;
    }
 
@@ -199,8 +201,7 @@ int delete_snapshot(UAContext *ua)
 
    ua->jcr->file_bsock->signal(BNET_TERMINATE);
    free_bsock(ua->jcr->file_bsock);
-   ua->jcr->client = NULL;
-
+   ua->jcr->client = old_client;
    db_delete_snapshot_record(ua->jcr, ua->db, &snapdbr);
    ua->send_msg(_("Snapshot \"%s\" deleted from catalog\n"), snapdbr.Name);
    return 1;
@@ -214,8 +215,9 @@ int list_snapshot(UAContext *ua, alist *snap_list)
    POOL_MEM     tmp;
    SNAPSHOT_DBR snap;
    POOLMEM     *buf;
-   CLIENT      *client;
+   CLIENT      *client, *old_client;
    BSOCK       *fd;
+   int ret = 0;
 
    client = select_client_resource(ua, JT_BACKUP_RESTORE);
    if (!client) {
@@ -223,6 +225,7 @@ int list_snapshot(UAContext *ua, alist *snap_list)
    }
 
    /* Connect to File daemon */
+   old_client = ua->jcr->client;
    ua->jcr->client = client;
 
    /* Try to connect for 15 seconds */
@@ -231,7 +234,7 @@ int list_snapshot(UAContext *ua, alist *snap_list)
 
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
-      return 0;
+      goto bail_out;
    }
 
    fd = ua->jcr->file_bsock;
@@ -258,10 +261,13 @@ int list_snapshot(UAContext *ua, alist *snap_list)
    parse_args(ua->cmd, &ua->args, &ua->argc, ua->argk, ua->argv, MAX_CMD_ARGS);
 
    ua->jcr->file_bsock->signal(BNET_TERMINATE);
-   free_bsock(ua->jcr->file_bsock);
-   ua->jcr->client = NULL;
    free_pool_memory(buf);
-   return 1;
+   ret = 1;
+
+bail_out:
+   free_bsock(ua->jcr->file_bsock);
+   ua->jcr->client = old_client;
+   return ret;
 }
 
 static void storeit(void *ctx, const char *msg)
@@ -283,6 +289,7 @@ int prune_snapshot(UAContext *ua)
    SNAPSHOT_DBR snapdbr;
    alist *lst;
    intptr_t id;
+   CLIENT *old_client = ua->jcr->client;
 
    snapshot_scan_cmdline(ua, 0, &snapdbr);
    snapdbr.expired = true;
@@ -350,11 +357,10 @@ int prune_snapshot(UAContext *ua)
    if (ua->jcr->file_bsock) {
       ua->jcr->file_bsock->signal(BNET_TERMINATE);
       free_bsock(ua->jcr->file_bsock);
-      ua->jcr->client = NULL;
    }
-
    free_pool_memory(buf);
    delete lst;
+   ua->jcr->client = old_client;
    return 1;
 }
 

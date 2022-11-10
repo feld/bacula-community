@@ -1731,7 +1731,7 @@ static void do_client_cmd(UAContext *ua, CLIENT *client, const char *cmd)
                 client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
-      return;
+      goto bail_out;
    }
    Dmsg0(120, "Connected to file daemon\n");
    fd = ua->jcr->file_bsock;
@@ -1740,6 +1740,8 @@ static void do_client_cmd(UAContext *ua, CLIENT *client, const char *cmd)
       ua->send_msg("%s", fd->msg);
    }
    fd->signal(BNET_TERMINATE);
+
+bail_out:
    free_bsock(ua->jcr->file_bsock);
    return;
 }
@@ -2293,6 +2295,8 @@ static bool dot_querycmd(UAContext *ua, const char *cmd)
    POOL_MEM esc1, esc2, esc3;
    JCR *jcr = ua->jcr;
    int i;
+   bool ret = false;
+   CLIENT *old_client = jcr->client;
 
    Dmsg0(200, "dot_querycmd()\n");
    
@@ -2343,7 +2347,7 @@ static bool dot_querycmd(UAContext *ua, const char *cmd)
 
    if (!connect_to_file_daemon(jcr, 1, 15, 0)) {
       ua->error_msg(_("error=Failed to connect to Client.\n"));
-      return false;
+      goto bail_out;
    }
 
    if (!jcr->file_bsock->fsend("query parameter=%s plugin=%s value=%s\n",
@@ -2358,12 +2362,15 @@ static bool dot_querycmd(UAContext *ua, const char *cmd)
       ua->send_msg("%s", jcr->file_bsock->msg);
    }
 
+   ret = true;
+
 bail_out:
    if (jcr->file_bsock) {
       jcr->file_bsock->signal(BNET_TERMINATE);
       free_bsock(ua->jcr->file_bsock);
    }
-   return true;
+   jcr->client = old_client;
+   return ret;
 }
 
 static bool tagscmd(UAContext *ua, const char *cmd)

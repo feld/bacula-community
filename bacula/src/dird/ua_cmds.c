@@ -772,10 +772,10 @@ static int setbwlimit_client(UAContext *ua, CLIENT *client, char *Job, int64_t l
    }
 
    ua->jcr->file_bsock->signal(BNET_TERMINATE);
-   free_bsock(ua->jcr->file_bsock);
    ua->jcr->max_bandwidth = 0;
 
 bail_out:
+   free_bsock(ua->jcr->file_bsock);
    ua->jcr->client = old_client;
    return 1;
 }
@@ -1096,8 +1096,7 @@ static void do_client_setdebug(UAContext *ua, CLIENT *client,
 
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
-      ua->jcr->client = old_client;
-      return;
+      goto bail_out;
    }
    Dmsg0(120, "Connected to file daemon\n");
 
@@ -1113,6 +1112,8 @@ static void do_client_setdebug(UAContext *ua, CLIENT *client,
       ua->send_msg("%s", fd->msg);
    }
    fd->signal(BNET_TERMINATE);
+
+bail_out:
    free_bsock(ua->jcr->file_bsock);
    ua->jcr->client = old_client;
    return;
@@ -1543,7 +1544,7 @@ static int estimate_cmd(UAContext *ua, const char *cmd)
                 jcr->client->name(), get_client_address(jcr, jcr->client, buf.addr()), jcr->client->FDport);
    if (!connect_to_file_daemon(jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Client.\n"));
-      return 1;
+      goto bail_out;
    }
 
    /* The level string change if accurate mode is enabled */
@@ -2449,7 +2450,7 @@ static void do_storage_cmd(UAContext *ua, const char *command)
 
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
       ua->error_msg(_("Failed to connect to Storage daemon.\n"));
-      return;
+      goto bail_out;
    }
 
    /* Keep track of this important event */
@@ -2463,6 +2464,8 @@ static void do_storage_cmd(UAContext *ua, const char *command)
       ua->send_msg("%s", sd->msg);
    }
    sd->signal(BNET_TERMINATE);
+
+bail_out:
    free_bsock(ua->jcr->store_bsock);
 }
 
