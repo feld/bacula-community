@@ -167,6 +167,9 @@ class Database extends APIModule {
 					$cond = [];
 					$vals = [];
 					$kval = str_replace('.', '_', $key);
+					if (!isset($value[$i]['operator'])) {
+						$value[$i]['operator'] = '';
+					}
 					if (is_array($value[$i]['vals'])) {
 						if ($value[$i]['operator'] == 'IN') {
 							// IN operator is treated separately
@@ -176,6 +179,7 @@ class Database extends APIModule {
 								$vals[":{$kval}{$i}{$j}"] = $value[$i]['vals'][$j];
 							}
 							$cond[] = "{$key} {$value[$i]['operator']} (" . implode(',', $tcond) . ')';
+							$value[$i]['operator'] = '';
 						} else {
 							// other operators
 							for ($j = 0; $j < count($value[$i]['vals']); $j++) {
@@ -183,14 +187,13 @@ class Database extends APIModule {
 								$vals[":{$kval}{$i}{$j}"] = $value[$i]['vals'][$j];
 							}
 						}
-					} elseif (isset($value[$i]['operator']) && in_array($value[$i]['operator'], ['>', '<', '>=', '<='])) {
+					} elseif (in_array($value[$i]['operator'], ['>', '<', '>=', '<='])) {
 						$cond[] = "{$key} {$value[$i]['operator']} :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
 						$value[$i]['operator'] = '';
 					} else {
 						$cond[] = "$key = :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
-						$value[$i]['operator'] = '';
 					}
 					$condition[] = implode(' ' . $value[$i]['operator'] . ' ', $cond);
 					foreach ($vals as $pkey => $pval) {
