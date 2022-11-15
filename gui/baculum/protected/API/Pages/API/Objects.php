@@ -21,6 +21,7 @@
  */
 
 use Baculum\Common\Modules\Errors\ObjectError;
+use Baculum\API\Modules\ObjectRecord;
 
 /**
  * Objects endpoint.
@@ -42,6 +43,29 @@ class Objects extends BaculumAPIServer {
 		$objectstatus = $this->Request->contains('objectstatus') && $misc->isValidState($this->Request['objectstatus']) ? $this->Request['objectstatus'] : null;
 		$jobname = $this->Request->contains('jobname') && $misc->isValidName($this->Request['jobname']) ? $this->Request['jobname'] : null;
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
+		$groupby = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
+
+		if (is_string($groupby)) {
+			$or = new \ReflectionClass('Baculum\API\Modules\ObjectRecord');
+			$group_cols = $or->getProperties();
+
+			$cols_excl = ['jobname'];
+			$columns = [];
+			foreach ($group_cols as $cols) {
+				$name = $cols->getName();
+				// skip columns not existing in the catalog
+				if (in_array($name, $cols_excl)) {
+					continue;
+				}
+				$columns[] = $name;
+			}
+
+			if (!in_array($groupby, $columns)) {
+				$this->output = ObjectError::MSG_ERROR_INVALID_PROPERTY;
+				$this->error = ObjectError::ERROR_INVALID_PROPERTY;
+				return;
+			}
+		}
 
 		$params = [];
 		if (!empty($objecttype)) {
@@ -94,7 +118,7 @@ class Objects extends BaculumAPIServer {
 			];
 		}
 
-		$objects = $this->getModule('object')->getObjects($params, $limit);
+		$objects = $this->getModule('object')->getObjects($params, $limit, $groupby);
 		$this->output = $objects;
 		$this->error = ObjectError::ERROR_NO_ERRORS;
 	}

@@ -6283,7 +6283,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 2, 3, 6, 7, 1000]
+											"enum": [0, 1, 2, 3, 6, 7, 520, 1000]
 										}
 									}
 								}
@@ -6363,6 +6363,15 @@
 						"in": "query",
 						"required": false,
 						"description": "Job identifiers (comma separated)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "groupby",
+						"in": "query",
+						"required": false,
+						"description": "Object property to group results. Note: it changes the result output format.",
 						"schema": {
 							"type": "string"
 						}

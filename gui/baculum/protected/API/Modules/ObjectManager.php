@@ -31,7 +31,7 @@ namespace Baculum\API\Modules;
  */
 class ObjectManager extends APIModule {
 
-	public function getObjects($criteria = array(), $limit_val = null) {
+	public function getObjects($criteria = array(), $limit_val = null, $groupby = null) {
 		$sort_col = 'ObjectId';
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
@@ -51,7 +51,22 @@ FROM Object
 LEFT JOIN Job USING (JobId) '
 . $where['where'] . $order . $limit;
 
-		return ObjectRecord::finder()->findAllBySql($sql, $where['params']);
+		$result = ObjectRecord::finder()->findAllBySql($sql, $where['params']);
+		if (is_string($groupby) && is_array($result)) {
+			// Group results
+			$new_result = [];
+			for ($i = 0; $i < count($result); $i++) {
+				if (!property_exists($result[$i], $groupby)) {
+					continue;
+				}
+				if (!key_exists($result[$i]->{$groupby}, $new_result)) {
+					$new_result[$result[$i]->{$groupby}] = [];
+				}
+				$new_result[$result[$i]->{$groupby}][] = $result[$i];
+			}
+			$result = $new_result;
+		}
+		return $result;
 	}
 
 	public function getObjectById($objectid) {
