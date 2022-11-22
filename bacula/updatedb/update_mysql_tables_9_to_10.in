@@ -15,7 +15,7 @@ bindir=@MYSQL_BINDIR@
 PATH="$bindir:$PATH"
 db_name=${db_name:-@db_name@}
 
-if mysql $* -f <<END-OF-DATA
+if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 DROP TABLE IF EXISTS MAC;

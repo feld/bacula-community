@@ -23,7 +23,7 @@ if [ -n "$DB_VER" ] && [ "$DB_VER" -ne "4" ]; then
 	exit 1
 fi
 
-if $bindir/mysql -f <<END-OF-DATA
+if $bindir/mysql  <<END-OF-DATA
 USE bacula;
 ALTER TABLE Media ADD COLUMN VolUseDuration BIGINT UNSIGNED NOT NULL;
 ALTER TABLE Media ADD COLUMN MaxVolJobs INTEGER UNSIGNED NOT NULL;

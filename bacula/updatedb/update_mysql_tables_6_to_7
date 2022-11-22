@@ -23,7 +23,7 @@ if [ -n "$DB_VER" ] && [ "$DB_VER" -ne "6" ]; then
 	exit 1
 fi
 
-if $bindir/mysql $* -f <<END-OF-DATA
+if $bindir/mysql $*  <<END-OF-DATA
 USE bacula;
 
 ALTER TABLE Media ADD COLUMN InChanger TINYINT NOT NULL DEFAULT 0;

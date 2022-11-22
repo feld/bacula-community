@@ -65,12 +65,12 @@ fi
 
 # For all versions, we need to create the Index on Media(StorageId)
 # It may fail, but it's not a big problem
-# mysql $* -f <<END-OF-DATA >/dev/null 2> /dev/null
+# mysql $*  <<END-OF-DATA >/dev/null 2> /dev/null
 # CREATE INDEX media_storageid_idx ON Media (StorageId);
 # END-OF-DATA
 
 if [ "$DBVERSION" -eq 12 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 CREATE TABLE RestoreObject (
@@ -103,7 +103,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 13 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 ALTER TABLE File ADD COLUMN DeltaSeq smallint default 0;
@@ -120,7 +120,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 14 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
@@ -137,7 +137,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1014 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 ALTER TABLE Media
@@ -293,7 +293,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1016 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 CREATE INDEX jobtdate_idx on JobHisto (JobTDate);
 ALTER TABLE Snapshot ADD COLUMN JobId INTEGER UNSIGNED DEFAULT 0;
@@ -310,7 +310,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1017 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 CREATE TABLE FileMedia
 (
@@ -335,7 +335,7 @@ fi
 
 # We are coming from version 16, so it's already done
 if [ "$SKIP1018" = 1 -a "$DBVERSION" -eq 1018 ]; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE File MODIFY FileIndex INTEGER DEFAULT 0;
 ALTER TABLE RestoreObject MODIFY FileIndex INTEGER DEFAULT 0;
@@ -352,7 +352,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1018 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE BaseFiles MODIFY COLUMN BaseId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE Media 
@@ -396,7 +396,7 @@ fi
 
 
 if [ "$DBVERSION" -eq 1019 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE Pool ADD COLUMN MaxPoolBytes BIGINT UNSIGNED DEFAULT 0;
 ALTER TABLE Job ADD COLUMN PriorJob TINYBLOB;
@@ -413,7 +413,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1020 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE File
    MODIFY FileIndex INTEGER DEFAULT 0;
@@ -433,7 +433,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1021 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 
 CREATE TABLE TagJob
@@ -512,7 +512,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1022 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE FileMedia ADD FileMediaId integer auto_increment primary key;
 ALTER TABLE JobHisto MODIFY COLUMN JobId int PRIMARY KEY AUTO_INCREMENT;
@@ -540,7 +540,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 1023 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE Object
     ADD ObjectStatus BINARY(1) DEFAULT 'U',

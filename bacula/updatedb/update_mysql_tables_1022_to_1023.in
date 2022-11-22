@@ -23,7 +23,7 @@ if [ $DBVERSION != 1022 ] ; then
    exit 1
 fi
 
-if mysql $* -f <<END-OF-DATA
+if mysql $*  <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE FileMedia ADD FileMediaId integer auto_increment primary key;
 ALTER TABLE JobHisto MODIFY COLUMN JobId int PRIMARY KEY AUTO_INCREMENT;

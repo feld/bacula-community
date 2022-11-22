@@ -27,7 +27,7 @@ if [ -n "$DB_VER" ]; then
        fi
 fi
 
-if $bindir/mysql $* -f << END_OF_DATA
+if $bindir/mysql $*  << END_OF_DATA
 USE bacula;
 
 ALTER TABLE Media ADD COLUMN EndFile INTEGER UNSIGNED NOT NULL DEFAULT 0;

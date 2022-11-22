@@ -46,12 +46,12 @@ fi
 
 # For all versions, we need to create the Index on Media(StorageId)
 # It may fail, but it's not a big problem
-# mysql $* -f <<END-OF-DATA >/dev/null 2> /dev/null
+# mysql $*  <<END-OF-DATA >/dev/null 2> /dev/null
 # CREATE INDEX media_storageid_idx ON Media (StorageId);
 # END-OF-DATA
 
 if [ "$DBVERSION" -eq 12 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 CREATE TABLE RestoreObject (
@@ -84,7 +84,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 13 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 ALTER TABLE File ADD COLUMN DeltaSeq smallint default 0;
@@ -101,7 +101,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 14 ] ; then
-    if mysql $* -f <<END-OF-DATA
+    if mysql $*  <<END-OF-DATA
 USE ${db_name};
 
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
@@ -144,7 +144,7 @@ END-OF-DATA
 fi
 
 if [ "$DBVERSION" -eq 15 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $*   <<END-OF-DATA
 USE ${db_name};
 ALTER TABLE BaseFiles MODIFY COLUMN BaseId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE Media CHANGE COLUMN VolParts VolType INTEGER UNSIGNED DEFAULT 0;

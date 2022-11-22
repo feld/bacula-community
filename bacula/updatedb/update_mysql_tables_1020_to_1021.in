@@ -24,7 +24,7 @@ if [ $DBVERSION != 1020 ] ; then
    exit 1
 fi
 
-if mysql $* -f <<END-OF-DATA
+if mysql $*  <<END-OF-DATA
 USE ${db_name};
 UPDATE Version SET VersionId=1021;
 ALTER TABLE File

@@ -9,7 +9,7 @@ echo "this script may take several minutes to run."
 echo " "
 bindir=/usr/bin
 
-if $bindir/mysql $* -f <<END-OF-DATA
+if $bindir/mysql $*  <<END-OF-DATA
 USE bacula;
 
 ALTER TABLE Media ADD COLUMN LabelType INTEGER UNSIGNED NOT NULL DEFAULT 0;

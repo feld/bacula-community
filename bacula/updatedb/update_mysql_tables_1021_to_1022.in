@@ -23,7 +23,7 @@ if [ $DBVERSION != 1021 ] ; then
    exit 1
 fi
 
-if mysql $* -f <<END-OF-DATA
+if mysql $*  <<END-OF-DATA
 USE ${db_name};
 CREATE TABLE TagJob
 (
