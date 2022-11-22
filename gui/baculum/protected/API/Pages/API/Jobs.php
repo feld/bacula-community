@@ -119,13 +119,13 @@ class Jobs extends BaculumAPIServer {
 			if (!empty($schedtime_from)) {
 				$params['Job.SchedTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:m:s', $schedtime_from)
+					'vals' => date('Y-m-d H:i:s', $schedtime_from)
 				];
 			}
 			if (!empty($schedtime_to)) {
 				$params['Job.SchedTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:m:s', $schedtime_to)
+					'vals' => date('Y-m-d H:i:s', $schedtime_to)
 				];
 			}
 		}
@@ -136,13 +136,13 @@ class Jobs extends BaculumAPIServer {
 			if (!empty($starttime_from)) {
 				$params['Job.StartTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:m:s', $starttime_from)
+					'vals' => date('Y-m-d H:i:s', $starttime_from)
 				];
 			}
 			if (!empty($starttime_to)) {
 				$params['Job.StartTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:m:s', $starttime_to)
+					'vals' => date('Y-m-d H:i:s', $starttime_to)
 				];
 			}
 		}
@@ -153,13 +153,13 @@ class Jobs extends BaculumAPIServer {
 			if (!empty($endtime_from)) {
 				$params['Job.EndTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:m:s', $endtime_from)
+					'vals' => date('Y-m-d H:i:s', $endtime_from)
 				];
 			}
 			if (!empty($endtime_to)) {
 				$params['Job.EndTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:m:s', $endtime_to)
+					'vals' => date('Y-m-d H:i:s', $endtime_to)
 				];
 			}
 		}
@@ -170,13 +170,13 @@ class Jobs extends BaculumAPIServer {
 			if (!empty($realendtime_from)) {
 				$params['Job.RealEndTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:m:s', $realendtime_from)
+					'vals' => date('Y-m-d H:i:s', $realendtime_from)
 				];
 			}
 			if (!empty($realendtime_to)) {
 				$params['Job.RealEndTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:m:s', $realendtime_to)
+					'vals' => date('Y-m-d H:i:s', $realendtime_to)
 				];
 			}
 		}
