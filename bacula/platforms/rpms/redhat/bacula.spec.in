@@ -91,9 +91,10 @@ Prefix: %{_prefix}
 
 # opensuse build service changes the release itself
 # what happens if the release is not 1? DSB
-Source0: http://www.prdownloads.sourceforge.net/bacula/depkgs-%{depkgs_version}.tar.gz
-Source1: http://www.prdownloads.sourceforge.net/bacula/%{product}-%{version}.tar.gz
+Source0: https://sourceforge.net/projects/bacula/files/depkgs/depkgs-%{depkgs_version}.tar.gz
+Source1: https://sourceforge.net/projects/bacula/files/bacula/%{_version}/%{product}-%{_version}.tar.gz
 Source2: Release_Notes-%{version}-%{release}.tar.gz
+
 
 # define the basic package description
 %define blurb Bacula - The Leading Open Source Backup Solution.
