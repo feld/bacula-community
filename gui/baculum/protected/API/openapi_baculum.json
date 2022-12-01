@@ -132,6 +132,15 @@
 			"Object": {
 				"$ref": "#/definitions/Object"
 			},
+			"Sources": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/Source"
+				}
+			},
+			"Source": {
+				"$ref": "#/definitions/Source"
+			},
 			"Events": {
 				"type": "array",
 				"items": {
@@ -6782,6 +6791,104 @@
 				]
 			}
 		},
+		"/api/v2/sources": {
+			"get": {
+				"tags": ["sources"],
+				"summary": "Source list",
+				"description": "Get source list.",
+				"responses": {
+					"200": {
+						"description": "List of sources",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/Sources"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "job",
+						"in": "query",
+						"required": false,
+						"description": "Job name filter",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "client",
+						"in": "query",
+						"required": false,
+						"description": "Client name filter",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "fileset",
+						"in": "query",
+						"required": false,
+						"description": "Fileset name filter",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "starttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "jobstatus",
+						"in": "query",
+						"required": false,
+						"description": "Job status letter",
+						"schema": {
+							"type": "string",
+							"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
+						}
+					},
+					{
+						"name": "hasobject",
+						"in": "query",
+						"required": false,
+						"description": "Show sources that have object, 1 - show sources with objects created, 0 - show sources without objects created",
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/events": {
 			"get": {
 				"tags": ["events"],
@@ -8206,6 +8313,35 @@
 				"objectcount": {
 					"description": "Object count",
 					"type": "integer"
+				}
+			}
+		},
+		"Source": {
+			"type": "object",
+			"properties": {
+				"fileset": {
+					"description": "Fileset name",
+					"type": "string"
+				},
+				"client": {
+					"description": "Client name",
+					"type": "string"
+				},
+				"job": {
+					"description": "Job name",
+					"type": "string"
+				},
+				"starttime": {
+					"description": "Start time latest job using this source",
+					"type": "string"
+				},
+				"jobid": {
+					"description": "Latest jobid",
+					"type": "integer"
+				},
+				"jobstatus": {
+					"description": "Job status latest job",
+					"type": "string"
 				}
 			}
 		},
