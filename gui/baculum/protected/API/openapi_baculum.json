@@ -960,6 +960,16 @@
 						}
 					},
 					{
+
+						"name": "age",
+						"in": "query",
+						"required": false,
+						"description": "Job age in seconds (used is start time). starttime_from and starttime_to take precedence over this parameter.",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
 						"name": "order_by",
 						"in": "query",
 						"required": false,
@@ -6599,6 +6609,16 @@
 						"in": "query",
 						"required": false,
 						"description": "Real end time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+
+						"name": "age",
+						"in": "query",
+						"required": false,
+						"description": "Job age in seconds (used is start time). starttime_from and starttime_to take precedence over this parameter.",
 						"schema": {
 							"type": "integer"
 						}
