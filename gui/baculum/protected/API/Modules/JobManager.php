@@ -412,5 +412,24 @@ WHERE Client.ClientId='$clientid' $wh";
 		}
 		return $result;
 	}
+
+	public function getNumberOfJobs($criteria) {
+		$where = Database::getWhere($criteria);
+
+		$sql = 'SELECT
+			Type      AS type,
+			SUM(1)    AS total,
+			JobStatus AS jobstatus
+		FROM Job
+		' . (!empty($where['where']) ? $where['where'] : '') . '
+		GROUP BY type, jobstatus';
+
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->prepare($sql);
+		$sth->execute($where['params']);
+		return $sth->fetchAll(PDO::FETCH_ASSOC);
+	}
 }
 ?>

@@ -2229,6 +2229,124 @@
 				]
 			}
 		},
+		"/api/v2/jobs/stats/sum": {
+			"get": {
+				"tags": ["jobs"],
+				"summary": "Total number of jobs with specific job type and job status.",
+				"consumes": [ "application/json" ],
+				"description": "Get total number of jobs with specific job type and job status.",
+				"responses": {
+					"200": {
+						"description": "Total number of jobs.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"type": {
+														"type": "string",
+														"description": "Job type",
+														"enum": ["B", "M", "V", "R", "I", "D", "A", "C", "c", "g"]
+													},
+													"total": {
+														"type": "integer",
+														"description": "Total number of the specific type jobs."
+													},
+													"jobstatus": {
+														"type": "string",
+														"description": "Job status. Note, some statuses can be not visible outside (used internally by Bacula)",
+														"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "jobstatus",
+						"in": "query",
+						"description": "Job status letter(s). Possible multiple values like 'Ef' or 'Tef'",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"description": "Job status. Note, some statuses can be not visible outside (used internally by Bacula)",
+							"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
+						}
+					},
+					{
+						"name": "type",
+						"in": "query",
+						"description": "Job type",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"description": "Job type",
+							"enum": ["B", "M", "V", "R", "I", "D", "A", "C", "c", "g"]
+						}
+					},
+					{
+						"name": "starttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "jobname",
+						"in": "query",
+						"description": "Job name",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "clientid",
+						"in": "query",
+						"description": "Client identifier (can be used instead of client value)",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "client",
+						"in": "query",
+						"description": "Client name (can be used instead clientid)",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/storages": {
 			"get": {
 				"tags": ["storages"],
