@@ -238,8 +238,13 @@ class Jobs extends BaculumAPIServer {
 			}
 
 			if ($error === false) {
-				$jobs = $this->getModule('job')->getJobs($params, $limit, $order_by, $order_direction);
-				$this->output = $jobs;
+				$result = $this->getModule('job')->getJobs(
+					$params,
+					$limit,
+					$order_by,
+					$order_direction
+				);
+				$this->output = $result;
 				$this->error = JobError::ERROR_NO_ERRORS;
 			}
 		} else {

@@ -6504,6 +6504,34 @@
 						}
 					},
 					{
+						"name": "group_limit",
+						"in": "query",
+						"required": false,
+						"description": "Maximum number elements per group.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected object property (default objectid). There can be any object property (objectid, objectname, objectsource ...etc.) except jobname.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
 						"name": "schedtime_from",
 						"in": "query",
 						"required": false,

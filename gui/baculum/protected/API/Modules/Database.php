@@ -213,5 +213,33 @@ class Database extends APIModule {
 		}
 		return array('where' => $where, 'params' => $parameters);
 	}
+
+	/**
+	 * Group database records by specific column.
+	 *
+	 * @param string $group_by column to use as group
+	 * @param array $result database results/records (please note - reference)
+	 * @param integer $group_limit group limit (zero means no limit)
+	 */
+	public static function groupBy($group_by, &$result, $group_limit = 0) {
+		if (is_string($group_by) && is_array($result)) {
+			// Group results
+			$new_result = [];
+			for ($i = 0; $i < count($result); $i++) {
+				if (!property_exists($result[$i], $group_by)) {
+					continue;
+				}
+				if (!key_exists($result[$i]->{$group_by}, $new_result)) {
+					$new_result[$result[$i]->{$group_by}] = [];
+				}
+				if ($group_limit > 0 && count($new_result[$result[$i]->{$group_by}]) >= $group_limit) {
+					// limit per group reached
+					continue;
+				}
+				$new_result[$result[$i]->{$group_by}][] = $result[$i];
+			}
+			$result = $new_result;
+		}
+	}
 }
 ?>

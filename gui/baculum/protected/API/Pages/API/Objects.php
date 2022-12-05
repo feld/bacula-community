@@ -43,7 +43,8 @@ class Objects extends BaculumAPIServer {
 		$objectstatus = $this->Request->contains('objectstatus') && $misc->isValidState($this->Request['objectstatus']) ? $this->Request['objectstatus'] : null;
 		$jobname = $this->Request->contains('jobname') && $misc->isValidName($this->Request['jobname']) ? $this->Request['jobname'] : null;
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
-		$groupby = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
+		$group_by = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
+		$group_limit = $this->Request->contains('group_limit') ? intval($this->Request['group_limit']) : 0;
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
 		$schedtime_to = $this->Request->contains('schedtime_to') && $misc->isValidInteger($this->Request['schedtime_to']) ? (int)$this->Request['schedtime_to'] : null;
 		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
@@ -52,14 +53,16 @@ class Objects extends BaculumAPIServer {
 		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
 		$realendtime_from = $this->Request->contains('realendtime_from') && $misc->isValidInteger($this->Request['realendtime_from']) ? (int)$this->Request['realendtime_from'] : null;
 		$realendtime_to = $this->Request->contains('realendtime_to') && $misc->isValidInteger($this->Request['realendtime_to']) ? (int)$this->Request['realendtime_to'] : null;
+		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'ObjectId';
+		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 
-		if (is_string($groupby)) {
-			$or = new \ReflectionClass('Baculum\API\Modules\ObjectRecord');
-			$group_cols = $or->getProperties();
-
-			$cols_excl = ['jobname'];
+		$or = new \ReflectionClass('Baculum\API\Modules\ObjectRecord');
+		$prop_cols = $or->getProperties();
+		$cols_excl = ['jobname'];
+		$columns = [];
+		if (is_string($group_by)) {
 			$columns = [];
-			foreach ($group_cols as $cols) {
+			foreach ($prop_cols as $cols) {
 				$name = $cols->getName();
 				// skip columns not existing in the catalog
 				if (in_array($name, $cols_excl)) {
@@ -68,12 +71,29 @@ class Objects extends BaculumAPIServer {
 				$columns[] = $name;
 			}
 
-			if (!in_array($groupby, $columns)) {
+			if (!in_array($group_by, $columns)) {
 				$this->output = ObjectError::MSG_ERROR_INVALID_PROPERTY;
 				$this->error = ObjectError::ERROR_INVALID_PROPERTY;
 				return;
 			}
 		}
+
+		$order_by_lc = strtolower($order_by);
+		$columns = [];
+		foreach ($prop_cols as $cols) {
+			$name = $cols->getName();
+			// skip columns not existing in the catalog
+			if (in_array($name, $cols_excl)) {
+				continue;
+			}
+			$columns[] = $name;
+		}
+		if (!in_array($order_by_lc, $columns)) {
+			$this->output = ObjectError::MSG_ERROR_INVALID_PROPERTY;
+			$this->error = ObjectError::ERROR_INVALID_PROPERTY;
+			return;
+		}
+
 
 		$params = [];
 		if (!empty($objecttype)) {
@@ -194,7 +214,14 @@ class Objects extends BaculumAPIServer {
 			}
 		}
 
-		$objects = $this->getModule('object')->getObjects($params, $limit, $groupby);
+		$objects = $this->getModule('object')->getObjects(
+			$params,
+			$limit,
+			$order_by_lc,
+			$order_direction,
+			$group_by,
+			$group_limit
+		);
 		$this->output = $objects;
 		$this->error = ObjectError::ERROR_NO_ERRORS;
 	}

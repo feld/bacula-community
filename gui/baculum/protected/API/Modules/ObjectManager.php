@@ -29,18 +29,36 @@ namespace Baculum\API\Modules;
  * @category Module
  * @package Baculum API
  */
-class ObjectManager extends APIModule {
+class ObjectManager extends APIModule
+{
 
-	public function getObjects($criteria = array(), $limit_val = null, $groupby = null) {
-		$sort_col = 'ObjectId';
+	/**
+	 * Get objects.
+	 *
+	 * @param array $criteria criteria in nested array format (@see  Databaes::getWhere)
+	 * @param integer $limit_val maximum number of elements to return
+	 * @param string $sort_col column to sort
+	 * @param string $sort_order sort order (asc - ascending, desc - descending)
+	 * @param string $group_by column to group
+	 * @param integer $group_limit maximum number of elements in one group
+	 * @return array object list
+	 */
+	public function getObjects($criteria = array(), $limit_val = null, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
 		}
-		$order = ' ORDER BY ' . $sort_col . ' DESC';
+		$order = sprintf(
+			' ORDER BY %s %s',
+			$sort_col,
+			$sort_order
+		);
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
-			$limit = ' LIMIT ' . $limit_val;
+			$limit = sprintf(
+				' LIMIT %s',
+				$limit_val
+			);
 		}
 
 		$where = Database::getWhere($criteria);
@@ -52,20 +70,7 @@ LEFT JOIN Job USING (JobId) '
 . $where['where'] . $order . $limit;
 
 		$result = ObjectRecord::finder()->findAllBySql($sql, $where['params']);
-		if (is_string($groupby) && is_array($result)) {
-			// Group results
-			$new_result = [];
-			for ($i = 0; $i < count($result); $i++) {
-				if (!property_exists($result[$i], $groupby)) {
-					continue;
-				}
-				if (!key_exists($result[$i]->{$groupby}, $new_result)) {
-					$new_result[$result[$i]->{$groupby}] = [];
-				}
-				$new_result[$result[$i]->{$groupby}][] = $result[$i];
-			}
-			$result = $new_result;
-		}
+		Database::groupBy($group_by, $result, $group_limit);
 		return $result;
 	}
 
