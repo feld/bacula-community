@@ -2239,7 +2239,7 @@
 				]
 			}
 		},
-		"/api/v2/jobs/stats/sum": {
+		"/api/v2/jobs/stats/type-sum": {
 			"get": {
 				"tags": ["jobs"],
 				"summary": "Total number of jobs with specific job type and job status.",
@@ -6781,16 +6781,74 @@
 						"name": "datestart",
 						"in": "query",
 						"required": false,
-						"description": "Start date for job time range. If not given, default is used 1 month ago date.",
+						"description": "Start date for job time range in form YYYY-MM-DD HH:II:SS.",
 						"schema": {
 							"type": "string"
-						}
+						},
+						"deprecated": true
 					},
 					{
 						"name": "dateend",
 						"in": "query",
 						"required": false,
-						"description": "End date for job time range. If not given, default is used current date.",
+						"description": "End date for job time range in form YYYY-MM-DD HH:II:SS.",
+						"schema": {
+							"type": "string"
+						},
+						"deprecated": true
+					},
+					{
+						"name": "jobstatus",
+						"in": "query",
+						"description": "Job status letter(s). Possible multiple values like 'Ef' or 'Tef'",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"description": "Job status. Note, some statuses can be not visible outside (used internally by Bacula)",
+							"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
+						}
+					},
+					{
+						"name": "starttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "jobname",
+						"in": "query",
+						"description": "Job name",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "clientid",
+						"in": "query",
+						"description": "Client identifier (can be used instead of client value)",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "client",
+						"in": "query",
+						"description": "Client name (can be used instead clientid)",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
