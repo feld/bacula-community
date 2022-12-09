@@ -31,7 +31,7 @@ namespace Baculum\API\Modules;
  */
 class VolumeManager extends APIModule {
 
-	public function getVolumes($criteria = array(), $limit_val = 0) {
+	public function getVolumes($criteria = array(), $limit_val = 0, $offset_val = 0) {
 		$order_pool_id = 'PoolId';
 		$order_volume = 'VolumeName';
 		$db_params = $this->getModule('api_config')->getConfig('db');
@@ -44,6 +44,10 @@ class VolumeManager extends APIModule {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = " LIMIT $limit_val ";
+		}
+		$offset = '';
+		if (is_int($offset_val) && $offset_val > 0) {
+			$offset = ' OFFSET ' . $offset_val;
 		}
 
 		$where = Database::getWhere($criteria);
@@ -58,7 +62,7 @@ LEFT JOIN Pool AS pool1 USING (PoolId)
 LEFT JOIN Pool AS pool2 ON Media.ScratchPoolId = pool2.PoolId 
 LEFT JOIN Pool AS pool3 ON Media.RecyclePoolId = pool3.PoolId 
 LEFT JOIN Storage USING (StorageId) 
-' . $where['where'] . $order . $limit;
+' . $where['where'] . $order . $limit . $offset;
 		$volumes = VolumeRecord::finder()->findAllBySql($sql, $where['params']);
 		$this->setExtraVariables($volumes);
 		return $volumes;

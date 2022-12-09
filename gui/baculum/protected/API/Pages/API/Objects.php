@@ -34,7 +34,8 @@ class Objects extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
-		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
+		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$objecttype = $this->Request->contains('objecttype') && $misc->isValidName($this->Request['objecttype']) ? $this->Request['objecttype'] : null;
 		$objectname = $this->Request->contains('objectname') && $misc->isValidName($this->Request['objectname']) ? $this->Request['objectname'] : null;
 		$objectcategory = $this->Request->contains('objectcategory') && $misc->isValidName($this->Request['objectcategory']) ? $this->Request['objectcategory'] : null;
@@ -224,6 +225,7 @@ class Objects extends BaculumAPIServer {
 		$objects = $this->getModule('object')->getObjects(
 			$params,
 			$limit,
+			$offset,
 			$order_by_lc,
 			$order_direction,
 			$group_by,

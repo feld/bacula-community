@@ -35,7 +35,8 @@ class Jobs extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
-		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
+		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$jobstatus = $this->Request->contains('jobstatus') ? $this->Request['jobstatus'] : '';
 		$level = $this->Request->contains('level') && $misc->isValidJobLevel($this->Request['level']) ? $this->Request['level'] : '';
 		$type = $this->Request->contains('type') && $misc->isValidJobType($this->Request['type']) ? $this->Request['type'] : '';
@@ -248,6 +249,7 @@ class Jobs extends BaculumAPIServer {
 				$result = $this->getModule('job')->getJobs(
 					$params,
 					$limit,
+					$offset,
 					$order_by,
 					$order_direction
 				);

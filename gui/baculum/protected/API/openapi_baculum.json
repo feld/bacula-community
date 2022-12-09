@@ -179,6 +179,15 @@
 					"type": "integer"
 				}
 			},
+			"Offset": {
+				"name": "offset",
+				"in": "query",
+				"description": "Items offset",
+				"required": false,
+				"schema": {
+					"type": "integer"
+				}
+			},
 			"ClientId": {
 				"name": "clientid",
 				"in": "path",
@@ -831,6 +840,9 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
 					},
 					{
 						"name": "name",
@@ -2978,9 +2990,14 @@
 						}
 					}
 				},
-				"parameters": [{
-					"$ref": "#/components/parameters/Limit"
-				}]
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					}
+				]
 			}
 		},
 		"/api/v2/volumes/{mediaid}": {
@@ -6431,6 +6448,9 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
 					},
 					{
 						"name": "objecttype",

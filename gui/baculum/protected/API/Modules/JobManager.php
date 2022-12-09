@@ -34,7 +34,7 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class JobManager extends APIModule {
 
-	public function getJobs($criteria = array(), $limit_val = null, $sort_col = 'JobId', $sort_order = 'ASC') {
+	public function getJobs($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'JobId', $sort_order = 'ASC') {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -43,6 +43,10 @@ class JobManager extends APIModule {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
+		}
+		$offset = '';
+		if (is_int($offset_val) && $offset_val > 0) {
+			$offset = ' OFFSET ' . $offset_val;
 		}
 
 		$where = Database::getWhere($criteria);
@@ -55,7 +59,7 @@ FROM Job
 LEFT JOIN Client USING (ClientId) 
 LEFT JOIN Pool USING (PoolId) 
 LEFT JOIN FileSet USING (FilesetId)'
-. $where['where'] . $order . $limit;
+. $where['where'] . $order . $limit . $offset;
 
 		return JobRecord::finder()->findAllBySql($sql, $where['params']);
 	}

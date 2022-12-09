@@ -32,8 +32,10 @@ use Baculum\Common\Modules\Errors\VolumeError;
  */
 class Volumes extends BaculumAPIServer {
 	public function get() {
-		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
-		$result = $this->getModule('volume')->getVolumes(array(), $limit);
+		$misc = $this->getModule('misc');
+		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
+		$result = $this->getModule('volume')->getVolumes(array(), $limit, $offset);
 		$this->output = $result;
 		$this->error = VolumeError::ERROR_NO_ERRORS;
 	}

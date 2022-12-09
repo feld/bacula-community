@@ -37,13 +37,14 @@ class ObjectManager extends APIModule
 	 *
 	 * @param array $criteria criteria in nested array format (@see  Databaes::getWhere)
 	 * @param integer $limit_val maximum number of elements to return
+	 * @param integer $offset_val query offset number
 	 * @param string $sort_col column to sort
 	 * @param string $sort_order sort order (asc - ascending, desc - descending)
 	 * @param string $group_by column to group
 	 * @param integer $group_limit maximum number of elements in one group
 	 * @return array object list
 	 */
-	public function getObjects($criteria = array(), $limit_val = null, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0) {
+	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -56,8 +57,15 @@ class ObjectManager extends APIModule
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = sprintf(
-				' LIMIT %s',
+				' LIMIT %d',
 				$limit_val
+			);
+		}
+		$offset = '';
+		if (is_int($offset_val) && $offset_val > 0) {
+			$offset = sprintf(
+				' OFFSET %d',
+				$offset_val
 			);
 		}
 
@@ -67,7 +75,7 @@ class ObjectManager extends APIModule
 Job.Name as jobname 
 FROM Object 
 LEFT JOIN Job USING (JobId) '
-. $where['where'] . $order . $limit;
+. $where['where'] . $order . $limit . $offset;
 
 		$result = ObjectRecord::finder()->findAllBySql($sql, $where['params']);
 		Database::groupBy($group_by, $result, $group_limit);
