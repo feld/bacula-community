@@ -855,6 +855,15 @@
 						}
 					},
 					{
+						"name": "jobids",
+						"in": "query",
+						"required": false,
+						"description": "Comma separated job identifiers. Using this filter causes that all other filters are ignored. Sorting is possible.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "jobstatus",
 						"in": "query",
 						"required": false,
