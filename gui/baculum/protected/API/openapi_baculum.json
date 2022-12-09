@@ -6427,6 +6427,55 @@
 				]
 			}
 		},
+		"/api/v2/actions/{component}/{action}/": {
+			"get": {
+				"tags": ["actions"],
+				"summary": "Run Bacula component action",
+				"description": "Run Bacula component action.",
+				"responses": {
+					"200": {
+						"description": "Run Bacula component action",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "string"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 110, 111, 112, 113, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "component",
+						"in": "path",
+						"required": true,
+						"description": "Component name: director, storage or client.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "action",
+						"in": "path",
+						"required": true,
+						"description": "Component action: start, stop or restart.",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/objects": {
 			"get": {
 				"tags": ["objects"],
