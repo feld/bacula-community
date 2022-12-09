@@ -37,7 +37,7 @@ class SourceManager extends APIModule {
 			$limit = ' LIMIT ' . $limit_val;
 		}
 		$where = Database::getWhere($criteria, true);
-		$sql = 'SELECT
+		$sql = 'SELECT DISTINCT 
 	sres.fileset, sres.client, sres.job, ores.starttime, ores.jobid, jres.jobstatus
 	FROM Job AS jres,
 	(
