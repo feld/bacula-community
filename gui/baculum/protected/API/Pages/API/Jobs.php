@@ -35,6 +35,7 @@ class Jobs extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
+		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? $this->Request['jobids'] : '';
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$jobstatus = $this->Request->contains('jobstatus') ? $this->Request['jobstatus'] : '';
@@ -53,6 +54,27 @@ class Jobs extends BaculumAPIServer {
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'JobId';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
+
+		if (!empty($jobids)) {
+			/**
+			 * If jobids parameter provided, all other parameters are not used.
+			 */
+			$params['Job.JobId'] = [];
+			$params['Job.JobId'][] = [
+				'operator' => 'OR',
+				'vals' => explode(',', $jobids)
+			];
+			$result = $this->getModule('job')->getJobs(
+				$params,
+				null,
+				0,
+				$order_by,
+				$order_direction
+			);
+			$this->output = $result;
+			$this->error = JobError::ERROR_NO_ERRORS;
+			return;
+		}
 
 		if (!empty($clientid) && !$misc->isValidId($clientid)) {
 			$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
