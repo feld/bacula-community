@@ -864,6 +864,15 @@
 						}
 					},
 					{
+						"name": "afterjobid",
+						"in": "query",
+						"required": false,
+						"description": "Displays jobs after given job identifier with excluding the given jobid.",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
 						"name": "jobstatus",
 						"in": "query",
 						"required": false,

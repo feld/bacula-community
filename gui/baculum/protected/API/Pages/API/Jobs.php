@@ -36,6 +36,7 @@ class Jobs extends BaculumAPIServer {
 	public function get() {
 		$misc = $this->getModule('misc');
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? $this->Request['jobids'] : '';
+		$afterjobid = $this->Request->contains('afterjobid') && $misc->isValidInteger($this->Request['afterjobid']) ? $this->Request['afterjobid'] : 0;
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$jobstatus = $this->Request->contains('jobstatus') ? $this->Request['jobstatus'] : '';
@@ -109,6 +110,15 @@ class Jobs extends BaculumAPIServer {
 
 
 		$params = [];
+
+		if ($afterjobid > 0) {
+			$params['Job.JobId'] = [];
+			$params['Job.JobId'][] = [
+				'operator' => '>',
+				'vals' => $afterjobid
+			];
+		}
+
 		$jobstatuses = array_keys($misc->getJobState());
 		$sts = str_split($jobstatus);
 		$counter = 0;
