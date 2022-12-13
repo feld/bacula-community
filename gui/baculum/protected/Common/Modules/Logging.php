@@ -41,6 +41,14 @@ class Logging extends CommonModule {
 	 */
 	public static $debug_enabled = false;
 
+	/*
+	 * Stores audit enable state.
+	 * Default audit log is enabled.
+	 *
+	 * @var bool
+	 */
+	public static $audit_enabled = true;
+
 	/**
 	 * Log categories.
 	 */
@@ -72,7 +80,7 @@ class Logging extends CommonModule {
 	 */
 	private function isEnabled($category) {
 		$is_enabled = false;
-		if (self::$debug_enabled === true || $category === self::CATEGORY_AUDIT) {
+		if ((self::$debug_enabled === true && $category !== self::CATEGORY_AUDIT) || (self::$audit_enabled === true && $category === self::CATEGORY_AUDIT)) {
 			// NOTE: Audit log is written always, it is not possible to disable it
 			$is_enabled = true;
 		}

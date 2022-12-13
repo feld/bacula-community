@@ -32,6 +32,15 @@
 			</div>
 		</div>
 		<div class="w3-row w3-section">
+			<div class="w3-col w3-quarter"><com:TLabel ForControl="GeneralAuditLog" Text="<%[ Audit log: ]%>" /></div>
+			<div class="w3-col w3-threequarter">
+				<com:TActiveCheckBox
+					ID="GeneralAuditLog"
+					CssClass="w3-check"
+				/>
+			</div>
+		</div>
+		<div class="w3-row w3-section">
 			<div class="w3-col w3-quarter"><com:TLabel ForControl="GeneralDebug" Text="<%[ Debug: ]%>" /></div>
 			<div class="w3-col w3-threequarter">
 				<com:TActiveCheckBox

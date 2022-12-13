@@ -695,3 +695,6 @@ msgstr "Настройка:"
 msgid "Dedicated Bconsole config"
 msgstr "Выделенная Bconsole"
 
+
+msgid "Audit log:"
+msgstr "Audit log:"

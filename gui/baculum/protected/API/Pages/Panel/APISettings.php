@@ -64,6 +64,8 @@ class APISettings extends BaculumAPIPage {
 			return;
 		}
 		$this->GeneralLang->SelectedValue= $this->config['api']['lang'];
+		// NOTE: Default audit log is enabled
+		$this->GeneralAuditLog->Checked = (!key_exists('audit_log', $this->config['api']) || $this->config['api']['audit_log'] == 1);
 		$this->GeneralDebug->Checked = ($this->config['api']['debug'] == 1);
 	}
 
@@ -393,6 +395,7 @@ class APISettings extends BaculumAPIPage {
 			$reload_page = true;
 		}
 		$this->config['api']['lang'] = $this->GeneralLang->SelectedValue;
+		$this->config['api']['audit_log'] = $this->GeneralAuditLog->Checked ? 1 : 0;
 		$this->config['api']['debug'] = $this->GeneralDebug->Checked ? 1 : 0;
 		$this->getModule('api_config')->setConfig($this->config);
 		if ($reload_page) {

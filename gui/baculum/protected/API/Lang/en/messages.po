@@ -688,3 +688,6 @@ msgstr "Configs:"
 
 msgid "Dedicated Bconsole config"
 msgstr "Dedicated Bconsole config"
+
+msgid "Audit log:"
+msgstr "Audit log:"

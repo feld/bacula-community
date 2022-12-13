@@ -173,6 +173,7 @@ abstract class BaculumAPIServer extends TPage {
 
 		$config = $this->getModule('api_config')->getConfig('api');
 
+		Logging::$audit_enabled = (!key_exists('audit_log', $config) || $config['audit_log'] == 1);
 		Logging::$debug_enabled = (key_exists('debug', $config) && $config['debug'] == 1);
 
 		if ($this->authenticate() === false) {
