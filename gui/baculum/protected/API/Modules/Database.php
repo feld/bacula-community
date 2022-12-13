@@ -225,7 +225,8 @@ class Database extends APIModule {
 		if (is_string($group_by) && is_array($result)) {
 			// Group results
 			$new_result = [];
-			for ($i = 0; $i < count($result); $i++) {
+			$len = count($result);
+			for ($i = 0; $i < $len; $i++) {
 				if (!property_exists($result[$i], $group_by)) {
 					continue;
 				}
