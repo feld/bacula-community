@@ -37,6 +37,7 @@ class FileSetRecord extends APIDbModule {
 	public $fileset;
 	public $md5;
 	public $createtime;
+	public $content;
 
 	public static function finder($className = __CLASS__) {
 		return parent::finder($className);

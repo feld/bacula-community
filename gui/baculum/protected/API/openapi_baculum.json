@@ -7932,6 +7932,51 @@
 					"description": "File table",
 					"type": "string"
 				},
+				"priorjob": {
+					"description": "Original copied job",
+					"type": "string"
+				},
+				"realstarttime": {
+
+					"description": "Real start time (YYYY-MM-DD HH:M:SS)",
+					"type": "string"
+				},
+				"isvirtualfull": {
+					"description": "Is virtual full job (0 or 1)",
+					"type": "integer"
+				},
+				"compressratio": {
+					"description": "Software compression ratio",
+					"type": "string"
+				},
+				"rate": {
+					"description": "Job average speed",
+					"type": "string"
+				},
+				"lastreadstorageid": {
+					"description": "Last read storage identifier",
+					"type": "integer"
+				},
+				"lastreaddevice": {
+					"description": "Last read device name",
+					"type": "string"
+				},
+				"writestorageid": {
+					"description": "Write storage storage identifier",
+					"type": "integer"
+				},
+				"writedevice": {
+					"description": "Write device name",
+					"type": "string"
+				},
+				"statusinfo": {
+					"description": "Status information",
+					"type": "string"
+				},
+				"encrypted": {
+					"description": "Encrypted job state (0 or 1)",
+					"type": "integer"
+				},
 				"client": {
 					"description": "Client name",
 					"type": "string"
@@ -8313,6 +8358,18 @@
 					"description": "Cache retention time",
 					"type": "integer"
 				},
+				"protected": {
+					"description": "Protected state. 1 if the volume is currently protected (read-only, immutable, ...), otherwise 0",
+					"type": "integer"
+				},
+				"useprotect": {
+					"description": "Use protect state. 1 if the last device can handle volume protection (read-only, immutable, ...), otherwise 0",
+					"type": "integer"
+				},
+				"volencrypted": {
+					"description": "Encrypted volume state. 1 if the volume is encrypted using SD encryption, otherwise 0",
+					"type": "integer"
+				},
 				"storage": {
 					"description": "Storage name",
 					"type": "string"
@@ -8354,6 +8411,10 @@
 				},
 				"createtime": {
 					"description": "Create date and time",
+					"type": "string"
+				},
+				"content": {
+					"description": "Comma separated FileSet content types (file, postgresql, mysql...)",
 					"type": "string"
 				}
 			}

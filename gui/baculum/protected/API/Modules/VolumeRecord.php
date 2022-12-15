@@ -83,6 +83,9 @@ class VolumeRecord extends APIDbModule {
 	public $volcloudparts;
 	public $lastpartbytes;
 	public $cacheretention;
+	public $protected;
+	public $useprotect;
+	public $volencrypted;
 
 	// Additional values (not from Media table)
 	public $storage;
