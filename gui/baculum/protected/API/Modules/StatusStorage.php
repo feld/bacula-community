@@ -38,6 +38,7 @@ class StatusStorage extends ComponentStatusModule {
 	const OUTPUT_TYPE_RUNNING = 'running';
 	const OUTPUT_TYPE_TERMINATED = 'terminated';
 	const OUTPUT_TYPE_DEVICES = 'devices';
+	const OUTPUT_TYPE_DEDUPENGINE = 'dedupengine';
 
 	/**
 	 * Get parsed storage status.
@@ -78,18 +79,23 @@ class StatusStorage extends ComponentStatusModule {
 		$autochangers = [];
 		$ach_dev = [];
 		$empty_lines = 0;
-		for($i = 0; $i < count($output); $i++) {
+		for ($i = 0; $i < count($output); $i++) {
+			if (preg_match('/[\[\]]$/', $output[$i]) === 1) {
+				$output[$i] = '';
+			}
 			if (empty($output[$i])) {
 				$empty_lines++;
-				if  (count($part) > 10) {
-					$result[] = $part;
-					$part = [];
-				}
 				if (count($ach_dev) == 2) {
 					$autochangers[$autochanger]['devices'][]  = $ach_dev;
 					$ach_dev = [];
+					continue;
 				}
-				if ($empty_lines == 4 && $autochanger) {
+				if  (count($part) > 7) {
+					$result[] = $part;
+					$part = [];
+					continue;
+				}
+				if ($empty_lines > 3 && $autochanger) {
 					$autochanger = null;
 				}
 			} else {
@@ -144,7 +150,8 @@ class StatusStorage extends ComponentStatusModule {
 				self::OUTPUT_TYPE_HEADER,
 				self::OUTPUT_TYPE_RUNNING,
 				self::OUTPUT_TYPE_TERMINATED,
-				self::OUTPUT_TYPE_DEVICES
+				self::OUTPUT_TYPE_DEVICES,
+				self::OUTPUT_TYPE_DEDUPENGINE
 			)
 		);
 	}

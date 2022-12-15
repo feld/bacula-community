@@ -58,7 +58,9 @@ class StorageStatus extends ConsoleOutputPage {
 
 		$out = (object)['output' => [], 'error' => 0];
 		if ($out_format === parent::OUTPUT_FORMAT_RAW) {
-			$out = $this->getRawOutput(['storage' => $storage->name]);
+			$out = $this->getRawOutput([
+				'storage' => $storage->name
+			]);
 		} elseif ($out_format === parent::OUTPUT_FORMAT_JSON) {
 			$out = $this->getJSONOutput([
 				'storage' => $storage->name,
