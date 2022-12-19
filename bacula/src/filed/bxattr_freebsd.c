@@ -76,7 +76,7 @@ BXATTR_FreeBSD::BXATTR_FreeBSD()
 bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
 
    bRC_BXATTR rc;
-   POOLMEM *xlist;
+   POOLMEM *xlist = NULL;
    uint32_t xlen;
    char *name;
    uint32_t name_len;
@@ -84,7 +84,7 @@ bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
    uint32_t value_len;
    POOLMEM *name_gen;
    uint32_t name_gen_len;
-   char * namespace_str;
+   char * namespace_str = NULL;
    int namespace_len;
    bool skip;
    alist *xattr_list = NULL;
@@ -103,12 +103,17 @@ bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
          case bRC_BXATTR_skip:
          case bRC_BXATTR_cont:
             /* no xattr available, so skip rest of it */
-            return bRC_BXATTR_ok;
+            rc = bRC_XACL_ok;
+            continue;
          default:
-            return rc;
+            goto bail_out;
       }
 
-      /* get a string representation of the namespace */
+      /*
+       * Convert the numeric attrnamespace into a string representation and make
+       * a private copy of that string. The extattr_namespace_to_string functions
+       * returns a strdupped string which we need to free.
+       */
       if (extattr_namespace_to_string(os_xattr_namespaces[a], &namespace_str) != 0){
          Mmsg2(jcr->errmsg, _("Failed to convert %d into namespace on file \"%s\"\n"), os_xattr_namespaces[a], jcr->last_fname);
          Dmsg2(100, "Failed to convert %d into namespace on file \"%s\"\n", os_xattr_namespaces[a], jcr->last_fname);
@@ -139,7 +144,7 @@ bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
             case bRC_BXATTR_skip:
                /* no xattr available, so skip rest of it */
                rc = bRC_BXATTR_ok;
-               goto bail_out;
+               continue;
             default:
                /* error / fatal */
                goto bail_out;
@@ -164,6 +169,13 @@ bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
          xattr_list->append(xattr);
          xattr_count++;
       }
+
+      /*
+       * Drop the local copy of the current_attrnamespace.
+       */
+      actuallyfree(namespace_str);
+      namespace_str = NULL;
+
       if (xattr_count > 0){
          /* serialize the stream */
          rc = serialize_xattr_stream(jcr, len, xattr_list);
@@ -178,9 +190,16 @@ bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
       } else {
          rc = bRC_BXATTR_ok;
       }
+      if (xlist != NULL){
+         free_pool_memory(xlist);
+         xlist = NULL;
+      }
    }
 bail_out:
    /* free allocated data */
+   if (namespace_str != NULL) {
+      actuallyfree(namespace_str);
+   }
    if (xattr_list != NULL){
       foreach_alist(xattr, xattr_list){
          if (xattr == NULL){
