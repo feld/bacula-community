@@ -876,7 +876,7 @@
 						"name": "jobstatus",
 						"in": "query",
 						"required": false,
-						"description": "Job status letter",
+						"description": "Job status letter(s). Possible multiple values like 'Ef' or 'Tef'",
 						"schema": {
 							"type": "string"
 						}

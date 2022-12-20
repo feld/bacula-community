@@ -121,17 +121,17 @@ class Jobs extends BaculumAPIServer {
 
 		$jobstatuses = array_keys($misc->getJobState());
 		$sts = str_split($jobstatus);
-		$counter = 0;
+		$js_counter = 0;
 		for ($i = 0; $i < count($sts); $i++) {
 			if (in_array($sts[$i], $jobstatuses)) {
 				if (!key_exists('Job.JobStatus', $params)) {
-					$params['Job.JobStatus'][$counter] = [
+					$params['Job.JobStatus'] = [];
+					$params['Job.JobStatus'][$js_counter] = [
 						'operator' => 'OR',
 						'vals' => []
 					];
 				}
-				$params['Job.JobStatus'][$counter]['vals'][] = $sts[$i];
-				$counter++;
+				$params['Job.JobStatus'][$js_counter]['vals'][] = $sts[$i];
 			}
 		}
 		if (!empty($level)) {
