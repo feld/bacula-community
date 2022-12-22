@@ -32,8 +32,10 @@ use Baculum\Common\Modules\Errors\PoolError;
  */
 class Pools extends BaculumAPIServer {
 	public function get() {
+		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
-		$pools = $this->getModule('pool')->getPools($limit);
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
+		$pools = $this->getModule('pool')->getPools($limit, $offset);
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
 			['.pool'],

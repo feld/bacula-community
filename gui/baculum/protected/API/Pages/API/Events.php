@@ -34,6 +34,7 @@ class Events extends BaculumAPIServer {
 	public function get() {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$eventscode = $this->Request->contains('eventscode') && $misc->isValidName($this->Request['eventscode']) ? $this->Request['eventscode'] : null;
 		$eventstype = $this->Request->contains('eventstype') && $misc->isValidName($this->Request['eventstype']) ? $this->Request['eventstype'] : null;
 		$eventstimestart = $this->Request->contains('eventstimestart') && $misc->isValidBDate($this->Request['eventstimestart']) ? $this->Request['eventstimestart'] : null;
@@ -81,7 +82,7 @@ class Events extends BaculumAPIServer {
 			$time_scope['eventstimeend'] = $eventstimeend;
 		}
 
-		$events = $this->getModule('event')->getEvents($params, $time_scope, $limit);
+		$events = $this->getModule('event')->getEvents($params, $time_scope, $limit, $offset);
 		$this->output = $events;
 		$this->error = EventError::ERROR_NO_ERRORS;
 	}

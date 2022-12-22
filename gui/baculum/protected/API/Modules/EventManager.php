@@ -38,7 +38,7 @@ class EventManager extends APIModule {
 	 * @param array $time_scope time range for events time
 	 * @param int|null $limit_val limit results value
 	 */
-	public function getEvents($criteria = [], $time_scope = [], $limit_val = null) {
+	public function getEvents($criteria = [], $time_scope = [], $limit_val = 0, $offset_val = 0) {
 		$sort_col = 'EventsId';
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
@@ -48,6 +48,10 @@ class EventManager extends APIModule {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
+		}
+		$offset = '';
+		if (is_int($offset_val) && $offset_val > 0) {
+			$offset = ' OFFSET ' . $offset_val;
 		}
 
 		$where = Database::getWhere($criteria, true);
@@ -64,7 +68,7 @@ class EventManager extends APIModule {
 			$where['where'] = ' WHERE ' . $where['where'];
 		}
 
-		$sql = 'SELECT Events.* FROM Events ' . $where['where'] . $order . $limit;
+		$sql = 'SELECT Events.* FROM Events ' . $where['where'] . $order . $limit . $offset;
 
 		return EventRecord::finder()->findAllBySql($sql, $where['params']);
 	}

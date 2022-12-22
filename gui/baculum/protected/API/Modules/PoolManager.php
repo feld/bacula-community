@@ -32,7 +32,7 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  * @package Baculum API
  */
 class PoolManager extends APIModule {
-	public function getPools($limit) {
+	public function getPools($limit_val = 0, $offset_val = 0) {
 		$criteria = new TActiveRecordCriteria;
 		$order = 'Name';
 		$db_params = $this->getModule('api_config')->getConfig('db');
@@ -40,8 +40,11 @@ class PoolManager extends APIModule {
 		    $order = strtolower($order);
 		}
 		$criteria->OrdersBy[$order] = 'asc';
-		if(is_int($limit) && $limit > 0) {
-			$criteria->Limit = $limit;
+		if(is_int($limit_val) && $limit_val > 0) {
+			$criteria->Limit = $limit_val;
+		}
+		if (is_int($offset_val) && $offset_val > 0) {
+			$criteria->Offset = $offset_val;
 		}
 		return PoolRecord::finder()->findAll($criteria);
 	}
