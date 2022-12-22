@@ -33,8 +33,10 @@ use Baculum\Common\Modules\Errors\StorageError;
 class Storages extends BaculumAPIServer {
 
 	public function get() {
+		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
-		$storages = $this->getModule('storage')->getStorages($limit);
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
+		$storages = $this->getModule('storage')->getStorages($limit, $offset);
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
 			array('.storage')

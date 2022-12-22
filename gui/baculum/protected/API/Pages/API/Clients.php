@@ -33,10 +33,12 @@ use Baculum\Common\Modules\Errors\ClientError;
 class Clients extends BaculumAPIServer {
 
 	public function get() {
+		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {
-			$clients = $this->getModule('client')->getClients($limit);
+			$clients = $this->getModule('client')->getClients($limit, $offset);
 			array_shift($result->output);
 			$clients_output = array();
 			foreach($clients as $client) {

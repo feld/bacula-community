@@ -33,10 +33,13 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class ClientManager extends APIModule {
 
-	public function getClients($limit) {
+	public function getClients($limit_val = 0, $offset_val = 0) {
 		$criteria = new TActiveRecordCriteria;
-		if(is_numeric($limit) && $limit > 0) {
-			$criteria->Limit = $limit;
+		if(is_numeric($limit_val) && $limit_val > 0) {
+			$criteria->Limit = $limit_val;
+		}
+		if (is_int($offset_val) && $offset_val > 0) {
+			$criteria->Offset = $offset_val;
 		}
 		return ClientRecord::finder()->findAll($criteria);
 	}

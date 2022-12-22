@@ -452,9 +452,14 @@
 						}
 					}
 				},
-				"parameters": [{
-					"$ref": "#/components/parameters/Limit"
-				}]
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					}
+				]
 			}
 		},
 		"/api/v2/clients/{clientid}": {
@@ -2414,9 +2419,14 @@
 						}
 					}
 				},
-				"parameters": [{
-					"$ref": "#/components/parameters/Limit"
-				}]
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					}
+				]
 			}
 		},
 		"/api/v2/storages/{storageid}": {
