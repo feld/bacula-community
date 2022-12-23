@@ -35,12 +35,17 @@ class Messages extends BaculumAPIServer {
 	public function get() {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 
 		$cmd = ['messages'];
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, $cmd, null, true);
 		$output = $result->output;
 		if ($result->exitcode == 0) {
-			$output = $limit > 0 ? array_slice($output, -$limit) : $output;
+			if ($limit > 0 && $offset <= 0) {
+				$output =  array_slice($output, -$limit);
+			} elseif ($limit > 0 && $offset > 0) {
+				$output = array_slice($output, -$offset, $limit);
+			}
 		}
 		$this->output = $output;
 		$this->error = $result->exitcode > 0 ? GenericError::ERROR_WRONG_EXITCODE : GenericError::ERROR_NO_ERRORS;

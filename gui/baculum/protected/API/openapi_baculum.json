@@ -5558,16 +5558,28 @@
 						}
 					}
 				},
-				"parameters": [{
-					"name": "limit",
-					"in": "query",
-					"description": "Set messages log Limit.",
-					"required": false,
-					"default": 0,
-					"schema": {
-						"type": "integer"
+				"parameters": [
+					{
+						"name": "limit",
+						"in": "query",
+						"description": "Set messages log Limit. It is applyed from the end, not from the beginning. Ex. for msg1, msg2, msg3, msg4 and limit=2 it displays msg3 and msg4.",
+						"required": false,
+						"default": 0,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"description": "Messages' offset must be used together with limit. It is applyed from the end, not from the beginning. Ex. for msg1, msg2, msg3, msg4 and offset=3 limit=2 it displays msg2 and msg3.",
+						"required": false,
+						"default": 0,
+						"schema": {
+							"type": "integer"
+						}
 					}
-				}]
+				]
 			}
 		},
 		"/api/v2/directors/{director_name}/status": {
