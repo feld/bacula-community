@@ -40,6 +40,8 @@ class Sources extends BaculumAPIServer {
 		$fileset = $this->Request->contains('fileset') && $misc->isValidName($this->Request['fileset']) ? $this->Request['fileset'] : '';
 		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
 		$starttime_to = $this->Request->contains('starttime_to') && $misc->isValidInteger($this->Request['starttime_to']) ? (int)$this->Request['starttime_to'] : null;
+		$endtime_from = $this->Request->contains('endtime_from') && $misc->isValidInteger($this->Request['endtime_from']) ? (int)$this->Request['endtime_from'] : null;
+		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
 		$jobstatus = $this->Request->contains('jobstatus') && $misc->isValidState($this->Request['jobstatus']) ? $this->Request['jobstatus'] : '';
 		$hasobject = $this->Request->contains('hasobject') && $misc->isValidBoolean($this->Request['hasobject']) ? $this->Request['hasobject'] : null;
 
@@ -81,17 +83,34 @@ class Sources extends BaculumAPIServer {
 
 		// Start time range
 		if (!empty($starttime_from) || !empty($starttime_to)) {
-			$params['ores.starttime'] = [];
+			$params['jres.starttime'] = [];
 			if (!empty($starttime_from)) {
-				$params['ores.starttime'][] = [
+				$params['jres.starttime'][] = [
 					'operator' => '>=',
 					'vals' => date('Y-m-d H:i:s', $starttime_from)
 				];
 			}
 			if (!empty($starttime_to)) {
-				$params['ores.starttime'][] = [
+				$params['jres.starttime'][] = [
 					'operator' => '<=',
 					'vals' => date('Y-m-d H:i:s', $starttime_to)
+				];
+			}
+		}
+
+		// End time range
+		if (!empty($endtime_from) || !empty($endtime_to)) {
+			$params['jres.endtime'] = [];
+			if (!empty($endtime_from)) {
+				$params['jres.endtime'][] = [
+					'operator' => '>=',
+					'vals' => date('Y-m-d H:i:s', $endtime_from)
+				];
+			}
+			if (!empty($endtime_to)) {
+				$params['jres.endtime'][] = [
+					'operator' => '<=',
+					'vals' => date('Y-m-d H:i:s', $endtime_to)
 				];
 			}
 		}

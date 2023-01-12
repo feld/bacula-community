@@ -7207,6 +7207,24 @@
 						}
 					},
 					{
+						"name": "endtime_from",
+						"in": "query",
+						"required": false,
+						"description": "End time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_to",
+						"in": "query",
+						"required": false,
+						"description": "End time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
 						"name": "jobstatus",
 						"in": "query",
 						"required": false,
@@ -8736,6 +8754,10 @@
 				},
 				"starttime": {
 					"description": "Start time latest job using this source",
+					"type": "string"
+				},
+				"endtime": {
+					"description": "End time latest job using this source",
 					"type": "string"
 				},
 				"jobid": {

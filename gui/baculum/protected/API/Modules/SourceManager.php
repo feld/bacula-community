@@ -38,7 +38,7 @@ class SourceManager extends APIModule {
 		}
 		$where = Database::getWhere($criteria, true);
 		$sql = 'SELECT DISTINCT 
-	sres.fileset, sres.client, sres.job, ores.starttime, ores.jobid, jres.jobstatus
+	sres.fileset, sres.client, sres.job, jres.starttime, jres.endtime, ores.jobid, jres.jobstatus
 	FROM Job AS jres,
 	(
 		SELECT DISTINCT
@@ -50,7 +50,6 @@ class SourceManager extends APIModule {
 		JOIN Client USING (ClientId)
 	) AS sres, (
 		SELECT
-			MAX(StartTime) AS starttime,
 			MAX(JobId) AS jobid,
 			FileSet.FileSet AS fileset,
 			Client.Name AS client,
@@ -68,7 +67,7 @@ class SourceManager extends APIModule {
 		AND sres.fileset = ores.fileset
 		AND jres.Type = \'B\'
 		' . (!empty($where['where']) ? ' AND ' .  $where['where']  : '') . '
-	ORDER BY sres.fileset ASC, sres.client ASC, sres.job ASC, ores.starttime ASC ' . $limit;
+	ORDER BY sres.fileset ASC, sres.client ASC, sres.job ASC, jres.starttime ASC ' . $limit;
 
 		$connection = SourceRecord::finder()->getDbConnection();
 		$connection->setActive(true);
