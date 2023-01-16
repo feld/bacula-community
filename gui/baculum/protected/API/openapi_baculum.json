@@ -1022,6 +1022,15 @@
 							"type": "string",
 							"enum": ["asc", "desc"]
 						}
+					},
+					{
+						"name": "overview",
+						"in": "query",
+						"required": false,
+						"description": "If set, it puts jobs in 'jobs' property and adds the 'overview' property with the job count (successful, unsuccessful, running, all). NOTE: Offset and limit parameters do not apply to overview counts.",
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				]
 			}

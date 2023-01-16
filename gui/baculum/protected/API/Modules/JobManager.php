@@ -34,7 +34,7 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class JobManager extends APIModule {
 
-	public function getJobs($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'JobId', $sort_order = 'ASC') {
+	public function getJobs($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'JobId', $sort_order = 'ASC', $overview = false) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -61,7 +61,37 @@ LEFT JOIN Pool USING (PoolId)
 LEFT JOIN FileSet USING (FilesetId)'
 . $where['where'] . $order . $limit . $offset;
 
-		return JobRecord::finder()->findAllBySql($sql, $where['params']);
+		$result = JobRecord::finder()->findAllBySql($sql, $where['params']);
+		if ($overview) {
+			$misc = $this->getModule('misc');
+			$st_ok = array_keys($misc->getJobStatesByType('ok'));
+			$st_warn = array_keys($misc->getJobStatesByType('warning'));
+			$st_err = array_keys($misc->getJobStatesByType('error'));
+			$st_can = array_keys($misc->getJobStatesByType('cancel'));
+			$st_run = array_keys($misc->getJobStatesByType('running'));
+			$successful = array_merge($st_ok, $st_warn);
+			$unsuccessful = array_merge($st_err, $st_can);
+			$running = $st_run;
+			$sql = 'SELECT
+				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $successful) . '\')) AS successful,
+				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $unsuccessful) . '\')) AS unsuccessful,
+				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $running) . '\')) AS running,
+				(SELECT COUNT(1) FROM Job ' . $where['where'] . ') AS all
+			';
+
+			$record = JobRecord::finder();
+			$connection = $record->getDbConnection();
+			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
+			$builder = $tableInfo->createCommandBuilder($connection);
+			$command = $builder->applyCriterias($sql, $where['params']);
+			$res = $command->query();
+			$ov = $res->read();
+			$result = [
+				'jobs' => $result,
+				'overview' => $ov
+			];
+		}
+		return $result;
 	}
 
 	public function getJobById($jobid) {

@@ -55,6 +55,7 @@ class Jobs extends BaculumAPIServer {
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'JobId';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
+		$overview = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']));
 
 		if (!empty($jobids)) {
 			/**
@@ -283,7 +284,8 @@ class Jobs extends BaculumAPIServer {
 					$limit,
 					$offset,
 					$order_by,
-					$order_direction
+					$order_direction,
+					$overview
 				);
 				$this->output = $result;
 				$this->error = JobError::ERROR_NO_ERRORS;
