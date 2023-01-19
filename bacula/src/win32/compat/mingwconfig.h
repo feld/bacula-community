@@ -436,6 +436,9 @@
 /* Whether to enable IPv6 support */
 #define HAVE_IPV6 1
 
+/* Use sockaddr_storage */
+#define HAVE_SOCKADDR_STORAGE 1
+
 /* Set the default configuration file */
 #undef  SYSCONFDIR
 #define SYSCONFDIR "C:/Program Files/Bacula"
