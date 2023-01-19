@@ -1,3 +1,133 @@
+        ChangeLog for Bacula Enterprise version 13.0.1
+
+
+19Jan23
+ - win32: Switch to openssl 1.1.1s
+ - win32: Fix org#2667 enable sockaddress_storage for windows
+
+10Jan23
+ - Fix org#2666 About fixing getaddrinfo check in ./configure
+
+23Dec22
+ - baculum: Add offset parameter to messages endpoint
+
+22Dec22
+ - baculum: Add offset parameter to event and pool list endpoint
+ - baculum: Add offset parameter to storage and client list endpoint
+
+20Dec22
+ - baculum: Fix using multiple job statuses in list jobs jobstatus filter
+
+19Dec22
+ - Add Thomas Franz to AUTHORS list
+ - Fix org#2665 About memory leak on FreeBSD with extended attributes
+
+15Dec22
+ - baculum: Add new job, fileset and media properties support
+ - baculum: Add dedupengine output type to status storage
+
+13Dec22
+ - baculum: Add option to enable/disable audit log
+
+12Dec22
+ - Add afterjobid parameter to job list endpoint
+
+09Dec22
+ - baculum: Add documentation for component actions
+ - baculum: Add documentation to new jobids parameter in job list endpoint
+ - baculum: Add patch for offset parameter support in SQL queries
+ - baculum: Fix OFFSET parameter in PHP framework
+ - baculum: Add multiple jobids filter to jobs endpoint
+ - baculum: Add offset parameter to jobs, objects and volumes endpoints
+ - baculum: Fix sources endpoint double results
+
+06Dec22
+ - baculum: Add new filters to object category sum endpoint
+
+05Dec22
+ - baculum: Add age parameter to jobs and objects endpoints
+ - baculum: Add group_limit, order_by and order_direction parameters to objects 
+  endpoint
+ - baculum: Add job sum statistics endpoint
+
+01Dec22
+ - baculum: Add sources endpoint
+
+22Nov22
+ - baculum: Fix time range filter for job and object endpoints
+ - Fix org#2577 Remove -f option from MySQL update scripts to detect errors 
+  properly
+
+16Nov22
+ - baculum: Add time range parameters to objects endpoint
+
+15Nov22
+ - baculum: Add groupby parameter to object list endpoint
+
+10Nov22
+ - baculum: Fix using operators for SQL queries
+
+09Nov22
+ - baculum: Add documentation to new job sort parameters
+
+08Nov22
+ - baculum: Add to jobs endpoint parameters to sort property and sort order
+ - baculum: Add time range parameters to jobs endpoint
+ - baculum: Add new fileindex property to objects
+
+04Nov22
+ - Fix org#2628 About improving the update_bacula_tables script on up to date 
+  catalogs
+
+03Nov22
+ - baculum: Add jobids parameter to Bvfs update endpoint
+
+02Nov22
+ - Add jobids parameter to objects endpoint
+
+18Oct22
+ - baculum: Adapt job record to version 16.0
+ - baculum: Add restore plugin option fields endpoint
+
+23Sep22
+ - baculum: Add restore plugin options endpoint
+
+22Sep22
+ - baculum: Add capability to restore using plugin
+
+19Aug22
+ - baculum: Add search Bacula items endpoint
+
+18Aug22
+ - baculum: Add Microsoft 365 plugin endpoint for listing logged in users for 
+  given tenant
+ - baculum: Add Microsoft 365 email attachment list endpoint
+ - baculum: Add Microsoft 365 email list endpoints
+
+16Aug22
+ - baculum: Add event list and single event record endpoints
+
+12Aug22
+ - baculum: Add object category status endpoint
+ - baculum: Add object versions endpoint
+ - Fix errors in update_bacula_tables
+
+11Aug22
+ - baculum: Add object size statistics endpoint
+ - baculum: Add missing objectid parameter to API documentation
+ - baculum: Add object category stats endpoint
+
+10Aug22
+ - baculum: Add single object record endpoint
+ - baculum: Add query command support, object endpoint and m365 user list 
+  endpoint
+
+05Aug22
+ - Add plugin column
+
+Bugs fixed/closed since last release:
+2577 2628 2665 2666 2667
+
         ChangeLog for Bacula Enterprise version 13.0.0
 
 
