@@ -2339,7 +2339,7 @@
 						"schema": {
 							"type": "string",
 							"description": "Job status. Note, some statuses can be not visible outside (used internally by Bacula)",
-							"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
+							"example": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
 						}
 					},
 					{
@@ -6929,7 +6929,7 @@
 						"schema": {
 							"type": "string",
 							"description": "Job status. Note, some statuses can be not visible outside (used internally by Bacula)",
-							"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
+							"example": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"]
 						}
 					},
 					{
