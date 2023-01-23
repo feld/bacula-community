@@ -63,18 +63,19 @@ LEFT JOIN FileSet USING (FilesetId)'
 
 		$result = JobRecord::finder()->findAllBySql($sql, $where['params']);
 		if ($overview) {
-			$misc = $this->getModule('misc');
-			$st_ok = array_keys($misc->getJobStatesByType('ok'));
-			$st_warn = array_keys($misc->getJobStatesByType('warning'));
-			$st_err = array_keys($misc->getJobStatesByType('error'));
-			$st_can = array_keys($misc->getJobStatesByType('cancel'));
-			$st_run = array_keys($misc->getJobStatesByType('running'));
-			$successful = array_merge($st_ok, $st_warn);
-			$unsuccessful = array_merge($st_err, $st_can);
-			$running = $st_run;
+			/**
+			 * Job statuses in some parts are not compatible with rest of the API.
+			 * NOTE: Used here are also internal job statuses that are not used in the Catalog
+			 * but they are used internally by Bacula.
+			 */
+			$successful = ['T'];
+			$unsuccessful = ['A', 'E', 'f'];
+			$warning = ['I', 'e'];
+			$running = ['C', 'B', 'D', 'F', 'L', 'M', 'R', 'S', 'a', 'c', 'd', 'i', 'j', 'l', 'm', 'p', 'q', 's', 't'];
 			$sql = 'SELECT
-				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $successful) . '\')) AS successful,
+				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $successful) . '\') AND Job.JobErrors = 0) AS successful,
 				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $unsuccessful) . '\')) AS unsuccessful,
+				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND (Job.JobStatus IN (\'' . implode('\',\'', $warning) . '\') OR (Job.JobStatus IN (\'' . implode('\',\'', $successful) . '\') AND JobErrors > 0))) AS warning,
 				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $running) . '\')) AS running,
 				(SELECT COUNT(1) FROM Job ' . $where['where'] . ') AS all
 			';
