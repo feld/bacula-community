@@ -101,7 +101,8 @@ class Bconsole extends APIModule {
 		'.query',
 		'.jlist',
 		'.search',
-		'@putfile'
+		'@putfile',
+		'cloud'
 	);
 
 	private $config;

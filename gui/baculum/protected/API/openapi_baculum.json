@@ -2697,6 +2697,341 @@
 				]
 			}
 		},
+		"/api/v2/storages/{storageid}/cloud/upload": {
+			"get": {
+				"tags": ["storages"],
+				"summary": "Upload cloud volumes",
+				"description": "Upload cloud volumes",
+				"responses": {
+					"200": {
+						"description": "Upload cloud volume output",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Upload cloud volume output"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 20, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+					"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"name": "volume",
+						"in": "query",
+						"required": false,
+						"description": "Volume name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "pool",
+						"in": "query",
+						"required": false,
+						"description": "Pool name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "allpools",
+						"in": "query",
+						"required": false,
+						"description": "Get volumes from all pools",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "allfrompool",
+						"in": "query",
+						"required": false,
+						"description": "Get all from given pool in 'pool' parameter",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "mediatype",
+						"in": "query",
+						"required": false,
+						"description": "Media type",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "drive",
+						"in": "query",
+						"required": false,
+						"description": "Drive number",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/storages/{storageid}/cloud/truncate": {
+			"get": {
+				"tags": ["storages"],
+				"summary": "Truncate cloud volumes",
+				"description": "Truncate cloud volumes",
+				"responses": {
+					"200": {
+						"description": "Truncate cloud volume output",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Truncate cloud volume output"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 20, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+					"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"name": "volume",
+						"in": "query",
+						"required": false,
+						"description": "Volume name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "pool",
+						"in": "query",
+						"required": false,
+						"description": "Pool name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "allpools",
+						"in": "query",
+						"required": false,
+						"description": "Get volumes from all pools",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "allfrompool",
+						"in": "query",
+						"required": false,
+						"description": "Get all from given pool in 'pool' parameter",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "mediatype",
+						"in": "query",
+						"required": false,
+						"description": "Media type",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "drive",
+						"in": "query",
+						"required": false,
+						"description": "Drive number",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/storages/{storageid}/cloud/prune": {
+			"get": {
+				"tags": ["storages"],
+				"summary": "Prune cloud volumes",
+				"description": "Prune cloud volumes",
+				"responses": {
+					"200": {
+						"description": "Prune cloud volume output",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Prune cloud volume output"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 20, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+					"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"name": "volume",
+						"in": "query",
+						"required": false,
+						"description": "Volume name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "pool",
+						"in": "query",
+						"required": false,
+						"description": "Pool name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "allpools",
+						"in": "query",
+						"required": false,
+						"description": "Get volumes from all pools",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "allfrompool",
+						"in": "query",
+						"required": false,
+						"description": "Get all from given pool in 'pool' parameter",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "mediatype",
+						"in": "query",
+						"required": false,
+						"description": "Media type",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "drive",
+						"in": "query",
+						"required": false,
+						"description": "Drive number",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/storages/{storageid}/cloud/list": {
+			"get": {
+				"tags": ["storages"],
+				"summary": "List cloud volumes",
+				"description": "List cloud volumes",
+				"responses": {
+					"200": {
+						"description": "List cloud volume output",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "List cloud volume output"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 20, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					},
+					{
+						"name": "volume",
+						"in": "query",
+						"required": false,
+						"description": "Volume name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "drive",
+						"in": "query",
+						"required": false,
+						"description": "Drive number",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/storages/show": {
 			"get": {
 				"tags": ["storages"],
