@@ -40,6 +40,11 @@ abstract class ConsoleOutputShowPage extends ConsoleOutputPage {
 	protected function parseOutput(array $output) {
 		$ret = [];
 		for ($i = 0; $i < count($output); $i++) {
+			$acount = preg_match('/^\s+-->\s+(\w+):\s+name=(.+?)(?=\s+\w+=.+|$)/i', $output[$i], $match);
+			if ($acount === 1) {
+				$key = strtolower($match[1]);
+				$ret[$key] = $match[2];
+			}
 			$mcount = preg_match_all('/(?<=\s)\w+=.+?(?=\s+\w+=.+|$)/i', $output[$i], $matches);
 			if ($mcount === 0) {
 				continue;
