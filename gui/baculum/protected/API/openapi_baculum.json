@@ -1766,7 +1766,11 @@
 												},
 												"avg_duration": {
 													"type": "integer",
-													"description": "Average job duration based on historical job time values. NOTE: it takes into account all finished jobs for given job name and level."
+													"description": "Average job duration in seconds based on historical job time values. NOTE: it takes into account all finished jobs for given job name and level."
+												},
+												"avg_objects": {
+													"type": "integer",
+													"description": "Average number of objects for job based on historical job values. NOTE: it takes into account all successfully finished jobs for given job name and level."
 												},
 												"success_perc": {
 													"type": "integer",

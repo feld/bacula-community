@@ -539,6 +539,7 @@ WHERE Client.ClientId='$clientid' $wh";
 		$result = $sth->fetch(PDO::FETCH_ASSOC);
 		$duration = $this->getJobHistoryDuration($job, $level);
 		$success = $this->getJobHistorySuccessPercent($job);
+		$objects = $this->getJobHistoryAverageObjects($job, $level);
 		return [
 			'bytes_est' => (int) ($result['jobbytes'] ?? '0'),
 			'bytes_corr' => (float) $result['corr_jobbytes'],
@@ -546,6 +547,7 @@ WHERE Client.ClientId='$clientid' $wh";
 			'files_corr' => (float) $result['corr_jobfiles'],
 			'job_count' => (int) $result['nb_jobs'],
 			'avg_duration' => (int) ($duration['duration'] ?? '0'),
+			'avg_objects' => (int) ($objects['objects'] ?? '0'),
 			'success_perc' => (int) ($success['success'] ?? '0')
 		];
 	}
@@ -556,6 +558,7 @@ WHERE Client.ClientId='$clientid' $wh";
 	 * all job statuses.
 	 *
 	 * @param string $job job name
+	 * @param string $level backup job level
 	 * @return array|bool average job duration or false if no job found
 	 */
 	public function getJobHistoryDuration($job, $level) {
@@ -591,6 +594,30 @@ WHERE Client.ClientId='$clientid' $wh";
 		$sql = 'SELECT (COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM Job WHERE Name=\'' . $job . '\'), 0)) as success
 			FROM Job
 			WHERE Name=\'' . $job . '\' AND JobStatus=\'T\'';
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->query($sql);
+		return $sth->fetch(PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Get average value of objects backed up by job.
+	 *
+	 * @param string $job job name
+	 * @param string $level backup job level
+	 * @return array|bool average backed up by job object number or false
+	 *                    if no job found
+	 */
+	public function getJobHistoryAverageObjects($job, $level) {
+		$sql = 'SELECT AVG(f.counter) AS objects FROM (
+			SELECT  Object.JobId AS jobid,
+				COUNT(1) AS counter
+			FROM Object
+			LEFT JOIN Job USING (JobId)
+			WHERE Job.Name=\'' . $job . '\' AND Job.Level=\'' . $level . '\' AND Job.JobStatus=\'T\'
+			GROUP BY Object.JobId
+		) AS f';
 		$connection = JobRecord::finder()->getDbConnection();
 		$connection->setActive(true);
 		$pdo = $connection->getPdoInstance();
