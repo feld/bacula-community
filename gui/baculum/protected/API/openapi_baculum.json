@@ -1728,6 +1728,87 @@
 				]
 			}
 		},
+		"/api/v2/jobs/estimate/stat": {
+			"get": {
+				"tags": ["jobs"],
+				"summary": "Get estimated values based on job history",
+				"description": "Get estimated job values based on job history",
+				"responses": {
+					"200": {
+						"description": "Estimated values",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"bytes_est": {
+													"type": "integer",
+													"description": "Estimated job bytes"
+												},
+												"bytes_corr": {
+													"type": "number",
+													"description": "Correlation of historical job bytes. Value between -1 and 1"
+												},
+												"files_est": {
+													"type": "integer",
+													"description": "Estimated job files"
+												},
+												"files_corr": {
+													"type": "number",
+													"description": "Correlation of historical job files. Value between -1 and 1"
+												},
+												"job_count": {
+													"type": "integer",
+													"description": "Job count taken into account for bytes/files estimation"
+												},
+												"avg_duration": {
+													"type": "integer",
+													"description": "Average job duration based on historical job time values. NOTE: it takes into account all finished jobs for given job name and level."
+												},
+												"success_perc": {
+													"type": "integer",
+													"description": "Percentage value of successful jobs. NOTE: it takes into account all successful jobs for given job name."
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 50, 51, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "name",
+						"in": "query",
+						"required": true,
+						"description": "Job name",
+						"schema": {
+							"type": "string",
+							"pattern": "[a-zA-Z0-9:.-_ ]+"
+						}
+					},
+					{
+						"name": "level",
+						"in": "query",
+						"description": "Backup job level",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": ["F","I", "D"]
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/jobs/run": {
 			"post": {
 				"tags": ["jobs"],

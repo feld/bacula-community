@@ -62,6 +62,8 @@ class Miscellaneous extends TModule {
 		'A' => 'Data'
 	);
 
+	public $backupJobLevels = ['F', 'I', 'D'];
+
 	public $jobStates =  array(
 		'C' => array('value' => 'Created', 'description' =>'Created but not yet running'),
 		'R' => array('value' => 'Running', 'description' => 'Running'),

@@ -466,5 +466,136 @@ WHERE Client.ClientId='$clientid' $wh";
 		$sth->execute($where['params']);
 		return $sth->fetchAll(PDO::FETCH_ASSOC);
 	}
+
+	/**
+	 * Get job estimation values based on job history.
+	 * For PostgreSQL catalog the byte and file values are computed using linear regression.
+	 * For MySQL and SQLite catalog the byte and file values are average values
+	 * It returns array in form:
+	 *  [
+	 *  	'bytes_est' => estimated job bytes
+	 *  	'bytes_corr' => correlation of the historical size values
+	 *  	'files_est' => estimated job files
+	 *  	'files_corr' => correlation of the historical file values
+	 *  	'job_count' => number of jobs taken into account
+	 *  	'avg_duration' => average job duration per job level,
+	 *  	'success_perc' => percentage usage successful jobs (for all job levels)
+	 *  ]
+	 *
+	 * @param string $job job name
+	 * @param string $level job level letter
+	 * @return array|bool job estimation values
+	 */
+	public function getJobEstimatation($job, $level) {
+		$now = time();
+		$q = '';
+		$sql = '';
+		$db_params = $this->getModule('api_config')->getConfig('db');
+		if ($db_params['type'] === Database::PGSQL_TYPE) {
+			$sql = 'SELECT
+					COALESCE(CORR(jobbytes, jobtdate), 0) AS corr_jobbytes,
+					(' . $now . ' * REGR_SLOPE(jobbytes, jobtdate) + REGR_INTERCEPT(jobbytes, jobtdate)) AS jobbytes,
+					COALESCE(CORR(jobfiles, jobtdate), 0) AS corr_jobfiles,
+					(' . $now . ' * REGR_SLOPE(jobfiles, jobtdate) + REGR_INTERCEPT(jobfiles, jobtdate)) AS jobfiles,
+					COUNT(1) AS nb_jobs';
+		} else {
+			$sql = 'SELECT
+					0.1 AS corr_jobbytes,
+					AVG(jobbytes) AS jobbytes,
+					0.1 AS corr_jobfiles,
+					AVG(jobfiles) AS jobfiles,
+					COUNT(1) AS nb_jobs';
+		}
+
+		if ($level == 'D') {
+			$q = 'AND Job.StartTime > (
+				SELECT StartTime
+				FROM Job
+				WHERE Job.Name = \'' . $job . '\'
+				AND Job.Level = \'F\'
+				AND Job.JobStatus IN (\'T\', \'W\')
+				ORDER BY Job.StartTime DESC LIMIT 1
+			)';
+		}
+
+		$sql .= '
+			FROM (
+				SELECT JobBytes AS jobbytes,
+					JobFiles AS jobfiles,
+					JobTDate AS jobtdate
+				FROM Job
+				WHERE Job.Name = \'' . $job . '\'
+				AND Job.Level = \'' . $level . '\'
+				AND Job.JobStatus IN (\'T\', \'W\')
+				' . $q . '
+				ORDER BY StartTime DESC
+				LIMIT 4
+			) AS temp';
+
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->query($sql);
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+		$duration = $this->getJobHistoryDuration($job, $level);
+		$success = $this->getJobHistorySuccessPercent($job);
+		return [
+			'bytes_est' => (int) ($result['jobbytes'] ?? '0'),
+			'bytes_corr' => (float) $result['corr_jobbytes'],
+			'files_est' => (int) ($result['jobfiles'] ?? '0'),
+			'files_corr' => (float) $result['corr_jobfiles'],
+			'job_count' => (int) $result['nb_jobs'],
+			'avg_duration' => (int) ($duration['duration'] ?? '0'),
+			'success_perc' => (int) ($success['success'] ?? '0')
+		];
+	}
+
+	/**
+	 * Get average job duration by job.
+	 * NOTE: It is job duration per job level, not overall job duration for
+	 * all job statuses.
+	 *
+	 * @param string $job job name
+	 * @return array|bool average job duration or false if no job found
+	 */
+	public function getJobHistoryDuration($job, $level) {
+		$duration = '';
+		$db_params = $this->getModule('api_config')->getConfig('db');
+
+		if ($db_params['type'] === Database::PGSQL_TYPE) {
+			$duration = 'date_part(\'epoch\', EndTime) -  date_part(\'epoch\', StartTime)';
+		} elseif ($db_params['type'] === Database::MYSQL_TYPE) {
+			$duration = 'UNIX_TIMESTAMP(EndTime) - UNIX_TIMESTAMP(StartTime)';
+		} elseif ($db_params['type'] === Database::SQLITE_TYPE) {
+			$duration = 'strftime(\'%s\', EndTime) -  strftime(\'%s\', StartTime)';
+		}
+
+		$sql = 'SELECT AVG(' . $duration . ') AS duration
+			FROM Job
+			WHERE Name=\'' . $job . '\' AND Level=\'' . $level . '\'';
+
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->query($sql);
+		return $sth->fetch(PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Get percentage value of successful jobs by job.
+	 *
+	 * @param string $job job name
+	 * @return array|bool percentage success ratio or false if no job found
+	 */
+	public function getJobHistorySuccessPercent($job) {
+		$sql = 'SELECT (COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM Job WHERE Name=\'' . $job . '\'), 0)) as success
+			FROM Job
+			WHERE Name=\'' . $job . '\' AND JobStatus=\'T\'';
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+		$sth = $pdo->query($sql);
+		return $sth->fetch(PDO::FETCH_ASSOC);
+	}
 }
 ?>
