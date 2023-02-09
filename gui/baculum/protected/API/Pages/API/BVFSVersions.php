@@ -33,13 +33,16 @@ use Baculum\Common\Modules\Errors\BVFSError;
 class BVFSVersions extends ConsoleOutputPage {
 
 	public function get() {
+		$misc = $this->getModule('misc');
 		$jobid = $this->Request->contains('jobid') ? intval($this->Request['jobid']) : 0;
 		$pathid = $this->Request->contains('pathid') ? intval($this->Request['pathid']) : 0;
 		$filenameid = $this->Request->contains('filenameid') ? intval($this->Request['filenameid']) : 0;
 		$copies = $this->Request->contains('copies') ? intval($this->Request['copies']) : 0;
 		$out_format = $this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output']) ? $this->Request['output'] : parent::OUTPUT_FORMAT_RAW;
+		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$client = null;
-		if ($this->Request->contains('client') && $this->getModule('misc')->isValidName($this->Request['client'])) {
+		if ($this->Request->contains('client') && $misc->isValidName($this->Request['client'])) {
 			$client = $this->Request['client'];
 		} elseif ($this->Request->contains('clientid')) {
 			$clientid = intval($this->Request['clientid']);
@@ -61,6 +64,14 @@ class BVFSVersions extends ConsoleOutputPage {
 			'filenameid' => $filenameid,
 			'copies' => $copies
 		];
+
+		if(is_int($limit) && $limit > 0) {
+			$params['limit'] = $limit;
+		}
+		if (is_int($offset) && $offset > 0) {
+			$params['offset'] = $offset;
+		}
+
 		$out = (object)['output' => [], 'exitcode' => 0];
 		if ($out_format === parent::OUTPUT_FORMAT_RAW) {
 			$out = $this->getRawOutput($params);
@@ -88,6 +99,12 @@ class BVFSVersions extends ConsoleOutputPage {
 		);
 		if ($params['copies'] == 1) {
 			$cmd[] = 'copies';
+		}
+		if (isset($params['offset'])) {
+			$cmd[] = 'offset="' . $params['offset'] . '"';
+		}
+		if (isset($params['limit'])) {
+			$cmd[] = 'limit="' . $params['limit'] . '"';
 		}
 		return $this->getModule('bconsole')->bconsoleCommand($this->director, $cmd);
 	}
