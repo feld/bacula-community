@@ -34,7 +34,7 @@ class BVFS extends APIModule {
 
 	const DIR_PATTERN = '/^(?P<pathid>\d+)\t(?P<filenameid>\d+)\t(?P<fileid>\d+)\t(?P<jobid>\d+)\t(?P<lstat>[a-zA-z0-9\+\-\/\ ]+)\t(?P<name>(.*\/|\.{2}))$/';
 	const FILE_PATTERN = '/^(?P<pathid>\d+)\t(?P<filenameid>\d+)\t(?P<fileid>\d+)\t(?P<jobid>\d+)\t(?P<lstat>[a-zA-z0-9\+\-\/\ ]+)\t(?P<name>[^\/]+)$/';
-	const VERSION_PATTERN = '/^(?P<pathid>\d+)\t(?P<filenameid>\d+)\t(?P<fileid>\d+)\t(?P<jobid>\d+)\t(?P<lstat>[a-zA-Z0-9\+\-\/\ ]+)\t(?P<md5>.+)\t(?P<volname>.+)\t(?P<inchanger>\d+)$/';
+	const VERSION_PATTERN = '/^(?P<pathid>\d+)\t(?P<filenameid>\d+)\t(?P<fileid>\d+)\t(?P<jobid>\d+)\t(?P<lstat>[a-zA-Z0-9\+\-\/\ ]+?)\t(?P<md5>.+?)\t(?P<volname>.+?)\t(?P<inchanger>\d+)((?:\t)?(?P<voltype>\d+|))$/';
 
 	public function parseFileDirList($list) {
 		$elements = array();
@@ -85,6 +85,7 @@ class BVFS extends APIModule {
 					'md5' => $match['md5'],
 					'volname' => $match['volname'],
 					'inchanger' => $match['inchanger'],
+					'voltype' => $match['voltype'],
 					'type' => 'file'
 				);
 			}
