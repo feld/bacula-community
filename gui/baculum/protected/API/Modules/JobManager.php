@@ -540,15 +540,23 @@ WHERE Client.ClientId='$clientid' $wh";
 		$duration = $this->getJobHistoryDuration($job, $level);
 		$success = $this->getJobHistorySuccessPercent($job);
 		$objects = $this->getJobHistoryAverageObjects($job, $level);
+		$bytes_est = (int) $result['jobbytes'];
+		$files_est = (int) $result['jobfiles'];
+		$corr_jobbytes = (float) $result['corr_jobbytes'];
+		$nb_jobs = (int) $result['nb_jobs'];
+		$corr_jobfiles = (float) $result['corr_jobfiles'];
+		$avg_duration = (int) $duration['duration'];
+		$avg_objects = (int) $objects['objects'];
+		$success_perc = (int) $success['success'];
 		return [
-			'bytes_est' => (int) ($result['jobbytes'] ?? '0'),
-			'bytes_corr' => (float) $result['corr_jobbytes'],
-			'files_est' => (int) ($result['jobfiles'] ?? '0'),
-			'files_corr' => (float) $result['corr_jobfiles'],
-			'job_count' => (int) $result['nb_jobs'],
-			'avg_duration' => (int) ($duration['duration'] ?? '0'),
-			'avg_objects' => (int) ($objects['objects'] ?? '0'),
-			'success_perc' => (int) ($success['success'] ?? '0')
+			'bytes_est' => max($bytes_est, 0),
+			'bytes_corr' => $corr_jobbytes,
+			'files_est' => max($files_est, 0),
+			'files_corr' => $corr_jobfiles,
+			'job_count' => $nb_jobs,
+			'avg_duration' => $avg_duration,
+			'avg_objects' => $avg_objects,
+			'success_perc' => $success_perc
 		];
 	}
 
