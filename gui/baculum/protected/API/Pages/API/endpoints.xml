@@ -139,6 +139,9 @@
 	<url ServiceParameter="PluginM365ListLoggedUsers" pattern="api/v2/plugins/m365/{id}/{tenantid}/users/" parameters.id="\d+" parameters.tenantid="[a-zA-Z0-9:.\-_ ]+" />
 	<url ServiceParameter="PluginM365EmailList" pattern="api/v2/plugins/m365/{id}/{tenantid}/emails/" parameters.id="\d+" parameters.tenantid="[a-zA-Z0-9:.\-_ ]+" />
 	<url ServiceParameter="PluginM365EmailAttachmentList" pattern="api/v2/plugins/m365/{id}/{tenantid}/emails/attachments/" parameters.id="\d+" parameters.tenantid="[a-zA-Z0-9:.\-_ ]+" />
+	<!-- vSphere Plugin -->
+	<url ServiceParameter="PluginVSphereListServers" pattern="api/v2/plugins/vsphere/{id}/servers" parameters.id="\d+" />
+
 
 	<!-- OLD API v1 -->
 	<!-- general endpoint -->

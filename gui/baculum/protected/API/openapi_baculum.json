@@ -8178,6 +8178,50 @@
 				]
 			}
 		},
+		"/api/v2/plugins/vsphere/{clientid}/servers": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "VMware vSphere server list",
+				"description": "VMware vSphere server list.",
+				"responses": {
+					"200": {
+						"description": "List of VMware vSphere servers",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"server": {
+													"type": "array",
+													"description": "VMware vSphere server list. Note, server property is returned only if there exists at least one server. ",
+													"items": {
+														"description": "VMware vSphere server",
+														"type": "string"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 150, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					}
+				]
+			}
+		},
 		"/api/v2/search": {
 			"get": {
 				"tags": ["tools"],

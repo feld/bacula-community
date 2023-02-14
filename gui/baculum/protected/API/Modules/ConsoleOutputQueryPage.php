@@ -3,7 +3,7 @@
  * Bacula(R) - The Network Backup Solution
  * Baculum   - Bacula web interface
  *
- * Copyright (C) 2013-2022 Kern Sibbald
+ * Copyright (C) 2013-2023 Kern Sibbald
  *
  * The main author of Baculum is Marcin Haba.
  * The original author of Bacula is Kern Sibbald, with contributions
@@ -41,7 +41,22 @@ abstract class ConsoleOutputQueryPage extends ConsoleOutputPage {
 		$ret = [];
 		for ($i = 0; $i < count($output); $i++) {
 			if (preg_match('/(?P<key>\w+)=(?P<value>.*?)$/i', $output[$i], $matches) === 1) {
-				$ret[$matches['key']] = $matches['value'];
+				if (key_exists($matches['key'], $ret)) {
+					// more items with the same key
+					if (!is_array($ret[$matches['key']])) {
+						// create array of items
+						$ret[$matches['key']] = [
+							$ret[$matches['key']], // original item
+							$matches['value']      // new item
+						];
+					} else {
+						// add item to existing array
+						$ret[$matches['key']][] = $matches['value'];
+					}
+				} else {
+					// single key item
+					$ret[$matches['key']] = $matches['value'];
+				}
 			}
 		}
 		return $ret;
