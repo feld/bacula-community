@@ -1,4 +1,59 @@
 
+               Release Notes for Baculum 13.0.2
+
+This is a new feature release. All changes are for the API part.
+It extends the API capabilities for new functions.
+
+New changes and fixes:
+
+ - Add offset parameter to messages endpoint
+ - Add offset parameter to event and pool list endpoint
+ - Add offset parameter to storage and client list endpoint
+ - Fix using multiple job statuses in list jobs jobstatus filter
+ - Add new job, fileset and media properties support
+ - Add dedupengine output type to status storage
+ - Add option to enable/disable audit log
+ - Add documentation for component actions
+ - Add documentation to new jobids parameter in job list endpoint
+ - Add patch for offset parameter support in SQL queries
+ - Fix OFFSET parameter in PHP framework
+ - Add multiple jobids filter to jobs endpoint
+ - Add offset parameter to jobs, objects and volumes endpoints
+ - Fix sources endpoint double results
+ - Add new filters to object category sum endpoint
+ - Add age parameter to jobs and objects endpoints
+ - Add group_limit, order_by and order_direction parameters to objects endpoint
+ - Add job sum statistics endpoint
+ - Add sources endpoint
+ - Fix time range filter for job and object endpoints
+ - Add time range parameters to objects endpoint
+ - Add groupby parameter to object list endpoint
+ - Fix using operators for SQL queries
+ - Add documentation to new job sort parameters
+ - Add to jobs endpoint parameters to sort property and sort order
+ - Add time range parameters to jobs endpoint
+ - Add new fileindex property to objects
+ - Add jobids parameter to Bvfs update endpoint
+ - Adapt job record to version 16.0
+ - Add restore plugin option fields endpoint
+ - Add restore plugin options endpoint
+ - Add capability to restore using plugin
+ - Add search Bacula items endpoint
+ - Add Microsoft 365 plugin endpoint for listing logged in users for given tenant
+ - Add Microsoft 365 email attachment list endpoint
+ - Add Microsoft 365 email list endpoints
+ - Add event list and single event record endpoints
+ - Add object category status endpoint
+ - Add object versions endpoint
+ - Add object size statistics endpoint
+ - Add missing objectid parameter to API documentation
+ - Add object category stats endpoint
+ - Add single object record endpoint
+ - Add query command support, object endpoint and m365 user list endpoint
+
+Bugs fixed/closed since last release:
+-
+
                Release Notes for Baculum 13.0.1
 
 This is a minor bug fix and new feature release. The main change is better
