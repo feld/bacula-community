@@ -38,6 +38,82 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
+Release 13.0.2 / 16 February 2023
+----------------------------------------------------------------
+
+13.0.2 is a minor bug fix release.
+
+ - Fix #9535 avoid "Will not descend from / to /good_dir"
+ - Fix #9568 About "cancel inactive" command Storage Daemon selection
+ - Fix #9614 Re-create Jobs with bscan only if the bootstrap is matching
+ - Fix #9686 Grant PROCESS privilege to bacula user to allow catalog backup
+ - Fix #9876 Update information printed during file restore error
+ - Fix #9882 About tapealert script issue on rhel8
+ - Fix Cython detection on python >= 3.8
+ - Fix bconsole command issue after a first error
+ - Fix errors in update_bacula_tables
+ - Fix org#2577 Remove -f option from MySQL update scripts to detect errors properly
+ - Fix org#2628 About improving the update_bacula_tables script on up to date catalogs
+ - Fix org#2665 About memory leak on FreeBSD with extended attributes
+ - Fix org#2666 About fixing getaddrinfo check in ./configure
+
+ - baculum: Add afterjobid parameter to job list endpoint
+ - baculum: Add jobids parameter to objects endpoint
+ - baculum: Add plugin column
+ - baculum: Add age parameter to jobs and objects endpoints
+ - baculum: Add capability to restore using plugin
+ - baculum: Add dedupengine output type to status storage
+ - baculum: Add documentation for component actions
+ - baculum: Add documentation to new job sort parameters
+ - baculum: Add documentation to new jobids parameter in job list endpoint
+ - baculum: Add event list and single event record endpoints
+ - baculum: Add group_limit, order_by and order_direction parameters to objects endpoint
+ - baculum: Add groupby parameter to object list endpoint
+ - baculum: Add job sum statistics endpoint
+ - baculum: Add jobids parameter to Bvfs update endpoint
+ - baculum: Add missing objectid parameter to API documentation
+ - baculum: Add multiple jobids filter to jobs endpoint
+ - baculum: Add new fileindex property to objects
+ - baculum: Add new filters to object category sum endpoint
+ - baculum: Add new job, fileset and media properties support
+ - baculum: Add object category stats endpoint
+ - baculum: Add object category status endpoint
+ - baculum: Add object size statistics endpoint
+ - baculum: Add object versions endpoint
+ - baculum: Add offset parameter to event and pool list endpoint
+ - baculum: Add offset parameter to jobs, objects and volumes endpoints
+ - baculum: Add offset parameter to messages endpoint
+ - baculum: Add offset parameter to storage and client list endpoint
+ - baculum: Add option to enable/disable audit log
+ - baculum: Add patch for offset parameter support in SQL queries
+ - baculum: Add query command support, object endpoint and m365 user list endpoint
+ - baculum: Add restore plugin option fields endpoint
+ - baculum: Add restore plugin options endpoint
+ - baculum: Add search Bacula items endpoint
+ - baculum: Add single object record endpoint
+ - baculum: Add sources endpoint
+ - baculum: Add time range parameters to jobs endpoint
+ - baculum: Add time range parameters to objects endpoint
+ - baculum: Add to jobs endpoint parameters to sort property and sort order
+ - baculum: Fix OFFSET parameter in PHP framework
+ - baculum: Fix sources endpoint double results
+ - baculum: Fix time range filter for job and object endpoints
+ - baculum: Fix using multiple job statuses in list jobs jobstatus filter
+ - baculum: Fix using operators for SQL queries
+
+ - cloud: Fix #8351 Catalog part number correction notification goes debug
+ - cloud: Fix #9508 transfer remove dcr use for JobId
+ - cloud: Fix #9606 Rearange POOLMEM usage in cb functions
+
+ - k8s: Add support for Python3.10
+
+ - win32: Fix org#2667 enable sockaddress_storage for windows
+ - win32: Switch to openssl 1.1.1t
+
+Bugs fixed/closed since last release:
+ 8351 9508 9535 9568 9606 9614 9686 9876 9882
+
+
 Release 13.0.1 / 05 August 2022
 
 13.0.1 is a minor bug fix release.

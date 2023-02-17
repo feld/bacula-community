@@ -1,3 +1,92 @@
+        ChangeLog for Bacula Enterprise version 13.0.2
+
+16Feb23
+ - Fix #9882 About tapealert script issue on rhel8
+ - win32: Switch to openssl 1.1.1t
+
+15Feb23
+ - Fix #9876 Update information printed during file restore error
+
+19Jan23
+ - win32: Switch to openssl 1.1.1s
+ - win32: Fix org#2667 enable sockaddress_storage for windows
+
+10Jan23
+ - Fix org#2666 About fixing getaddrinfo check in ./configure
+
+23Dec22
+ - baculum: Add offset parameter to messages endpoint
+
+22Dec22
+ - baculum: Add offset parameter to event and pool list endpoint
+ - baculum: Add offset parameter to storage and client list endpoint
+
+20Dec22
+ - baculum: Fix using multiple job statuses in list jobs jobstatus filter
+
+15Dec22
+ - baculum: Add new job, fileset and media properties support
+ - baculum: Add dedupengine output type to status storage
+
+13Dec22
+ - baculum: Add option to enable/disable audit log
+
+12Dec22
+ - Add afterjobid parameter to job list endpoint
+
+09Dec22
+ - baculum: Add documentation for component actions
+ - baculum: Add documentation to new jobids parameter in job list endpoint
+ - baculum: Add patch for offset parameter support in SQL queries
+ - baculum: Fix OFFSET parameter in PHP framework
+ - baculum: Add multiple jobids filter to jobs endpoint
+ - baculum: Add offset parameter to jobs, objects and volumes endpoints
+ - baculum: Fix sources endpoint double results
+
+06Dec22
+ - baculum: Add new filters to object category sum endpoint
+
+05Dec22
+ - Fix #9686 Grant PROCESS privilege to bacula user to allow catalog backup
+ - baculum: Add age parameter to jobs and objects endpoints
+ - baculum: Add group_limit, order_by and order_direction parameters to objects 
+  endpoint
+ - baculum: Add job sum statistics endpoint
+
+01Dec22
+ - baculum: Add sources endpoint
+
+22Nov22
+ - baculum: Fix time range filter for job and object endpoints
+
+10Nov22
+ - Fix bconsole command issue after a first error
+
+04Nov22
+ - Fix #9614 Re-create Jobs with bscan only if the bootstrap is matching
+
+26Oct22
+ - cloud: Fix #8351 Catalog part number correction notification goes debug
+
+25Oct22
+ - generic_cloud: Fix #9606 Rearange POOLMEM usage in cb functions
+
+06Oct22
+ - Fix #9568 About "cancel inactive" command Storage Daemon selection
+
+27Sep22
+ - Fix #9535 avoid "Will not descend from / to /good_dir"
+
+23Sep22
+ - Fix Cython detection on python >= 3.8
+ - k8s: Add support for Python3.10
+
+21Sep22
+ - cloud: Fix #9508 transfer remove dcr use for JobId
+
+Bugs fixed/closed since last release:
+2666 2667 8351 9508 9535 9568 9606 9614 9686 9876 9882
+
         ChangeLog for Bacula Enterprise version 13.0.1
 
 
