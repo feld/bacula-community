@@ -24140,8 +24140,13 @@ if test $? = 0; then
       PYTHON=python
       CYTHON="$CYTHON -2"
    fi
-   CYTHON_LIBS=`${PYTHON}-config --libs 2>/dev/null`
-   CYTHON_INC=`${PYTHON}-config --includes 2>/dev/null`
+   # Thanks to Python, in 3.8 the new --embed flag is necessary
+   # but it break any previous version. So, let's do it 2 times
+   CYTHON_LIBS=`${PYTHON}-config --ldflags --embed 2>/dev/null`
+   if test $? != 0; then
+      CYTHON_LIBS=`${PYTHON}-config --ldflags 2>/dev/null`
+   fi
+   CYTHON_INC=`${PYTHON}-config --cflags 2>/dev/null`
 else
    CYTHON=
 fi
