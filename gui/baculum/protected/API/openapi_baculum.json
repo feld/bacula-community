@@ -8218,6 +8218,9 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
 					}
 				]
 			}
@@ -8265,6 +8268,59 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
+		"/api/v2/plugins/vsphere/{clientid}/datastores": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "VMware vSphere datastore list",
+				"description": "VMware vSphere datastore list.",
+				"responses": {
+					"200": {
+						"description": "List of VMware vSphere datastores",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"datastore": {
+														"description": "VMware vSphere datastores",
+														"type": "array",
+														"items": {
+															"description": "VMware vSphere datastores",
+															"type": "string"
+														}
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 150, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
 					}
 				]
 			}

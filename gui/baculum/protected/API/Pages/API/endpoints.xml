@@ -142,6 +142,7 @@
 	<!-- vSphere Plugin -->
 	<url ServiceParameter="PluginVSphereListServers" pattern="api/v2/plugins/vsphere/{id}/servers" parameters.id="\d+" />
 	<url ServiceParameter="PluginVSphereListHosts" pattern="api/v2/plugins/vsphere/{id}/hosts" parameters.id="\d+" />
+	<url ServiceParameter="PluginVSphereListDatastores" pattern="api/v2/plugins/vsphere/{id}/datastores" parameters.id="\d+" />
 
 
 	<!-- OLD API v1 -->
