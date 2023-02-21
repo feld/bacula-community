@@ -161,6 +161,9 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 %define rhel8 0
 %{?build_rhel8:%define rhel8 1}
 %{?build_el8:%define rhel8 1}
+%define rhel9 0
+%{?build_rhel9:%define rhel9 1}
+%{?build_el9:%define rhel9 1}
 # CentOS build
 %define centos3 0
 %{?build_centos3:%define centos3 1}
@@ -218,7 +221,7 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 # if the platform is using systemd
 %define usesystemd 0
 
-%if %{rhel7} || %{rhel8} || %{fc22}|| %{fc25} || %{fc26} || %{fc27} || %{fc31} || %{centos7}
+%if %{rhel7} || %{rhel8} || %{rhel9} || %{fc22}|| %{fc25} || %{fc26} || %{fc27} || %{fc31} || %{centos7}
 %define usesystemd 1
 %endif
 
@@ -245,7 +248,7 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 %define suse 1
 %endif
 %define rhel 0
-%if %{rhel3} || %{rhel4} || %{rhel5} || %{rhel6} || %{rhel7} || %{rhel8} || %{centos3} || %{centos4} || %{centos5} || %{centos6} || %{centos7}
+%if %{rhel3} || %{rhel4} || %{rhel5} || %{rhel6} || %{rhel7} || %{rhel8} || %{rhel9} || %{centos3} || %{centos4} || %{centos5} || %{centos6} || %{centos7}
 %define rhel 1
 %endif
 %define scil 0
@@ -324,7 +327,7 @@ BuildRequires: openldap-devel
 %{?build_tcpwrappers:%define tcpwrappers 1}
 
 # should we enable tcp wrappers support
-%if %{rhel8} || %{fc31}
+%if %{rhel8} || %{rhel9} || %{fc31}
 %define tcpwrappers 0
 %else
 %define tcpwrappers 1
@@ -589,7 +592,7 @@ cd ${cwd}
 %endif
 
 ## Do not build lzo on rhel8/centos8
-%if ! ( %{rhel8} ||  %{fc31})
+%if ! ( %{rhel8} || %{rhel9} ||  %{fc31})
 cd %{depkgs}
 make lzo
 export LDFLAGS="${LDFLAGS} -L${PWD}/lzo/lib"
