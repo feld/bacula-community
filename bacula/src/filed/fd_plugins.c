@@ -39,9 +39,9 @@ const char *plugin_type = "-fd.dll";
 const char *plugin_type = "-fd.so";
 #endif
 
-extern bool save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
+extern int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
 extern bool check_changes(JCR *jcr, FF_PKT *ff_pkt);
-extern int metadata_save(JCR *jcr, const plugin_metadata *plug_meta);
+extern bool metadata_save(JCR *jcr, const plugin_metadata *plug_meta);
 
 /* Function pointers to be set here */
 extern DLL_IMP_EXP int     (*plugin_bopen)(BFILE *bfd, const char *fname, uint64_t flags, mode_t mode);

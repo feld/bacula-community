@@ -96,8 +96,8 @@ static bool dot_help_cmd(UAContext *ua, const char *cmd);
 static bool dot_add_events(UAContext *ua, const char *cmd);
 static int one_handler(void *ctx, int num_field, char **row);
 
-struct cmdstruct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help;const bool use_in_rs;};
-static struct cmdstruct commands[] = { /* help */  /* can be used in runscript */
+struct dcmd_struct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help;const bool use_in_rs;};
+static struct dcmd_struct commands[] = { /* help */  /* can be used in runscript */
  { NT_(".api"),        api_cmd,                  NULL,       false},
  { NT_(".backups"),    backupscmd,               NULL,       false},
  { NT_(".clients"),    clientscmd,               NULL,       true},
@@ -149,7 +149,7 @@ static struct cmdstruct commands[] = { /* help */  /* can be used in runscript *
  { NT_(".query"),     dot_querycmd,              NULL,       false},
  { NT_(".tags"),      tagscmd,                   NULL,       false}
 };
-#define comsize ((int)(sizeof(commands)/sizeof(struct cmdstruct)))
+#define comsize ((int)(sizeof(commands)/sizeof(struct dcmd_struct)))
 
 /*
  * Execute a command from the UA

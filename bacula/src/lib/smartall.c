@@ -76,7 +76,7 @@ extern char my_name[];                /* daemon name */
 
 /*  Memory allocation control structures and storage.  */
 
-struct abufhead {
+struct sm_abufhead {
    struct b_queue abq;         /* Links on allocated queue */
    uint32_t ablen;             /* Buffer length in bytes */
    const char *abfname;        /* File name pointer */
@@ -91,7 +91,7 @@ static struct b_queue abqueue = {    /* Allocated buffer queue */
 
 static bool bufimode = false;   /* Buffers not tracked when True */
 
-#define HEAD_SIZE BALIGN(sizeof(struct abufhead))
+#define HEAD_SIZE BALIGN(sizeof(struct sm_abufhead))
 
 
 /*  SMALLOC  --  Allocate buffer, enqueing on the orphaned buffer
@@ -116,7 +116,7 @@ static void *smalloc(const char *fname, int lineno, unsigned int nbytes)
 
    nbytes += HEAD_SIZE + 1;
    if ((buf = (char *)malloc(nbytes)) != NULL) {
-      struct abufhead *head = (struct abufhead *)buf;
+      struct sm_abufhead *head = (struct sm_abufhead *)buf;
       P(mutex);
       /* Enqueue buffer on allocated list */
       qinsert(&abqueue, (struct b_queue *) buf);
@@ -154,9 +154,9 @@ void sm_new_owner(const char *fname, int lineno, char *buf)
 {
    buf -= HEAD_SIZE;  /* Decrement to header */
    P(mutex);
-   ((struct abufhead *)buf)->abfname = bufimode ? NULL : fname;
-   ((struct abufhead *)buf)->ablineno = (uint32_t) lineno;
-   ((struct abufhead *)buf)->abin_use = true;
+   ((struct sm_abufhead *)buf)->abfname = bufimode ? NULL : fname;
+   ((struct sm_abufhead *)buf)->ablineno = (uint32_t) lineno;
+   ((struct sm_abufhead *)buf)->abin_use = true;
    V(mutex);
    return;
 }
@@ -165,7 +165,7 @@ void sm_new_owner(const char *fname, int lineno, char *buf)
 void sm_get_owner(int64_t dbglvl, char *buf)
 {
    /* Decrement to header */
-   struct abufhead *h = (struct abufhead *) (buf - HEAD_SIZE);
+   struct sm_abufhead *h = (struct sm_abufhead *) (buf - HEAD_SIZE);
    Dmsg3(dbglvl, "%p from %s:%d\n",
          buf + HEAD_SIZE, 
          NPRT(h->abfname),
@@ -189,7 +189,7 @@ void sm_free(const char *file, int line, void *fp)
 
    cp -= HEAD_SIZE;
    qp = (struct b_queue *)cp;
-   struct abufhead *head = (struct abufhead *)cp;
+   struct sm_abufhead *head = (struct sm_abufhead *)cp;
 
    P(mutex);
    Dmsg4(DT_MEMORY|1050, "sm_free %d at %p from %s:%d\n",
@@ -314,7 +314,7 @@ void *sm_realloc(const char *fname, int lineno, void *ptr, unsigned int size)
    /* If the old and new sizes are the same, be a nice guy and just
       return the buffer passed in.  */
    cp -= HEAD_SIZE;
-   struct abufhead *head = (struct abufhead *)cp;
+   struct sm_abufhead *head = (struct sm_abufhead *)cp;
    osize = head->ablen - (HEAD_SIZE + 1);
    if (size == osize) {
       return ptr;
@@ -392,13 +392,13 @@ void actuallyfree(void *cp)
  */
 void sm_dump(bool bufdump, bool in_use)
 {
-   struct abufhead *ap;
+   struct sm_abufhead *ap;
 
    P(mutex);
 
-   ap = (struct abufhead *)abqueue.qnext;
+   ap = (struct sm_abufhead *)abqueue.qnext;
 
-   while (ap != (struct abufhead *) &abqueue) {
+   while (ap != (struct sm_abufhead *) &abqueue) {
 
       if ((ap == NULL) ||
           (ap->abq.qnext->qprev != (struct b_queue *) ap) ||
@@ -439,7 +439,7 @@ void sm_dump(bool bufdump, bool in_use)
             Pmsg1(0, "%s\n", errmsg);
          }
       }
-      ap = (struct abufhead *) ap->abq.qnext;
+      ap = (struct sm_abufhead *) ap->abq.qnext;
    }
    V(mutex);
 }
@@ -458,12 +458,12 @@ void sm_check(const char *fname, int lineno, bool bufdump)
 /*  SM_CHECK_RTN -- Check the buffers and return 1 if OK otherwise 0 */
 int sm_check_rtn(const char *fname, int lineno, bool bufdump)
 {
-   struct abufhead *ap;
+   struct sm_abufhead *ap;
    int bad, badbuf = 0;
 
    P(mutex);
-   ap = (struct abufhead *) abqueue.qnext;
-   while (ap != (struct abufhead *)&abqueue) {
+   ap = (struct sm_abufhead *) abqueue.qnext;
+   while (ap != (struct sm_abufhead *)&abqueue) {
       bad = 0;
       if (ap != NULL) {
          if (ap->abq.qnext->qprev != (struct b_queue *)ap) {
@@ -472,7 +472,7 @@ int sm_check_rtn(const char *fname, int lineno, bool bufdump)
          if (ap->abq.qprev->qnext != (struct b_queue *)ap) {
             bad |= 0x2;
          }
-         if (((unsigned char *) ap)[((struct abufhead *)ap)->ablen - 1] !=
+         if (((unsigned char *) ap)[((struct sm_abufhead *)ap)->ablen - 1] !=
               ((((intptr_t) ap) & 0xFF) ^ 0xC5)) {
             bad |= 0x4;
          }
@@ -536,7 +536,7 @@ int sm_check_rtn(const char *fname, int lineno, bool bufdump)
             }
          }
       }
-      ap = (struct abufhead *)ap->abq.qnext;
+      ap = (struct sm_abufhead *)ap->abq.qnext;
    }
 get_out:
    V(mutex);

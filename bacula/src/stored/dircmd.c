@@ -107,7 +107,7 @@ static char OKstore[] = "2000 OK storage\n";
 /* Commands received from director that need scanning */
 static char storaddr[] = "storage address=%s port=%d ssl=%d Job=%127s Authentication=%127s";
 
-struct s_cmds {
+struct dir_cmds {
    const char *cmd;
    bool (*func)(JCR *jcr);
    bool monitoraccess;                      /* set if monitors can access this cmd */
@@ -116,7 +116,7 @@ struct s_cmds {
 /*
  * The following are the recognized commands from the Director.
  */
-static struct s_cmds cmds[] = {
+static struct dir_cmds cmds[] = {
    {"JobId=",      job_cmd,         0},     /* start Job */
    {"autochanger", changer_cmd,     0},
    {"bootstrap",   bootstrap_cmd,   0},

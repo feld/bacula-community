@@ -62,7 +62,7 @@ static bool sd_testnetwork_cmd(JCR *jcr);
 /* Exported function */
 bool get_bootstrap_file(JCR *jcr, BSOCK *bs);
 
-struct s_cmds {
+struct fd_cmds {
    const char *cmd;
    bool (*func)(JCR *jcr);
 };
@@ -70,7 +70,7 @@ struct s_cmds {
 /*
  * The following are the recognized commands from the File daemon
  */
-static struct s_cmds fd_cmds[] = {
+static struct fd_cmds fd_cmds[] = {
    {"append open",  append_open_session},
    {"append data",  append_data_cmd},
    {"append end",   append_end_session},
