@@ -20,7 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\Common\Modules\Errors\JobError;
 
 /**
@@ -30,11 +30,15 @@ use Baculum\Common\Modules\Errors\JobError;
  * @category API
  * @package Baculum API
  */
-class JobRun extends BaculumAPIServer {
+class JobRun extends ConsoleOutputPage {
 
 	public function create($params) {
 		$misc = $this->getModule('misc');
 		$bconsole = $this->getModule('bconsole');
+		$out_format = parent::OUTPUT_FORMAT_RAW; // default output format
+		if ($this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output'])) {
+			$out_format = $this->Request['output'];
+		}
 		$job = null;
 		if (property_exists($params, 'id')) {
 			$jobid = intval($params->id);
@@ -157,7 +161,7 @@ class JobRun extends BaculumAPIServer {
 		}
 
 		$joblevels  = $misc->getJobLevels();
-		$command = array(
+		$command = [
 			'run',
 			'job="' . $job . '"',
 			'level="' . $joblevels[$level] . '"',
@@ -167,7 +171,7 @@ class JobRun extends BaculumAPIServer {
 			'pool="' . $pool . '"' ,
 			'priority="' . $priority . '"',
 			'accurate="' . $accurate . '"'
-		);
+		];
 		if (is_int($jobid)) {
 			$command[] = 'jobid="' . $jobid . '"';
 		}
@@ -179,8 +183,63 @@ class JobRun extends BaculumAPIServer {
 		}
 		$command[] = 'yes';
 		$run = $bconsole->bconsoleCommand($this->director, $command);
-		$this->output = $run->output;
-		$this->error = $run->exitcode;
+
+		if ($run->exitcode == 0) {
+			// exit code OK, check output
+			$queued_jobid = $this->getModule('misc')->findJobIdStartedJob($run->output);
+			if (is_null($queued_jobid)) {
+				// new jobid is not detected, error
+				$this->error = JobError::ERROR_INVALID_PROPERTY;
+				$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
+			} else {
+				// new jobid is detected, check output format
+				if ($out_format == parent::OUTPUT_FORMAT_JSON) {
+					// JSON format, return output and new jobid
+					$this->output = $this->getJSONOutput([
+						'output' => $run->output,
+						'queued_jobid' => $queued_jobid
+					]);
+				} elseif ($out_format == parent::OUTPUT_FORMAT_RAW) {
+					// RAW format, return output
+					$this->output = $this->getRawOutput([
+						'output' => $run->output
+					]);
+				}
+				$this->error = JobError::ERROR_NO_ERRORS;
+			}
+		} else {
+			// exit code WRONG
+			$this->output = $run->output;
+			$this->error = JobError::ERROR_WRONG_EXITCODE . ' Exitcode => ' . $run->exitcode;
+		}
+	}
+
+	/**
+	 * Get raw output from run job command.
+	 * This method will not be called without param.
+	 *
+	 * @param array output parameter
+	 * @return array run job command output
+	 */
+	protected function getRawOutput($params = []) {
+		// Not too much to do here. Required by abstract method.
+		return $params['output'];
+	}
+
+	/**
+	 * Get parsed JSON output from run job command.
+	 * This method will not be called without params.
+	 *
+	 * @param array output parameter and queued jobid
+	 * @return array output and jobid queued job
+	 */
+	protected function getJSONOutput($params = []) {
+		$output = implode(PHP_EOL, $params['output']);
+		$jobid = (int) $params['queued_jobid'];
+		return [
+			'output' => $output,
+			'jobid' => $jobid
+		];
 	}
 }
 
