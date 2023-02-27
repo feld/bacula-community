@@ -2296,6 +2296,15 @@
 							"type": "string",
 							"pattern": "[a-zA-Z0-9:.-_ ]+"
 						}
+					},
+					{
+						"name": "when",
+						"in": "body",
+						"description": "When run the new job. Date and time in YYYY-MM-DD HH:MM:SS format.",
+						"required":  false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
