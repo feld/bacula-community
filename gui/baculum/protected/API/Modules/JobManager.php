@@ -34,7 +34,126 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class JobManager extends APIModule {
 
-	public function getJobs($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'JobId', $sort_order = 'ASC', $overview = false) {
+	/**
+	 * SQL query builder.
+	 *
+	 * @var TDbCommandBuilder command builder
+	 */
+	private static $query_builder;
+
+	/**
+	 * Job statuses in some parts are not compatible with rest of the API.
+	 * NOTE: Used here are also internal job statuses that are not used in the Catalog
+	 * but they are used internally by Bacula.
+	 */
+	private $js_successful = ['T'];
+	private $js_unsuccessful = ['A', 'E', 'f'];
+	private $js_warning = ['I', 'e'];
+	private $js_running = ['C', 'B', 'D', 'F', 'L', 'M', 'R', 'S', 'a', 'c', 'd', 'i', 'j', 'l', 'm', 'p', 'q', 's', 't'];
+
+	/**
+	 * Job result in job and object endpoint can be displayed in on of the two views:
+	 *  - basic - display only base job and object properties
+	 *  - full - display all properties
+	 * Here are job properties for basic view.
+	 */
+	private $basic_mode_job_props = [
+		'Job.JobId',
+		'Job.Job',
+		'Job.Name',
+		'Job.Type',
+		'Job.Level',
+		'Job.JobStatus',
+		'Job.SchedTime',
+		'Job.RealEndTime',
+		'Job.JobFiles',
+		'Job.JobBytes',
+		'Job.JobErrors',
+		'Job.Reviewed',
+		'Job.Comment',
+		'Job.RealStartTime',
+		'Job.IsVirtualFull',
+		'Job.CompressRatio',
+		'Job.Rate',
+		'Job.StatusInfo',
+		'Job.Encrypted',
+		'Fileset.Content'
+	];
+
+	/**
+	 * Job statuses.
+	 * @see JobManager::getJobsObjectsOverview()
+	 */
+	const JS_GROUP_SUCCESSFUL = 'successful';
+	const JS_GROUP_UNSUCCESSFUL = 'unsuccessful';
+	const JS_GROUP_WARNING = 'warning';
+	const JS_GROUP_RUNNING = 'running';
+	const JS_GROUP_ALL_TERMINATED = 'all_terminated';
+
+	/**
+	 * Job result modes.
+	 * Modes:
+	 *  - normal - job record list without any additional data
+	 *  - overview - job record list with some summary (successful, unsuccessful, warning...)
+	 *  - group - job record list with grouped by jobid (jobids as keys)
+	 */
+	const JOB_RESULT_MODE_NORMAL = 'normal';
+	const JOB_RESULT_MODE_OVERVIEW = 'overview';
+	const JOB_RESULT_MODE_GROUP = 'group';
+
+	/**
+	 * Job result record view.
+	 * Views:
+	 *  - basic - list only limited record properties
+	 *  - full - list all record properties
+	 */
+	const JOB_RESULT_VIEW_BASIC = 'basic';
+	const JOB_RESULT_VIEW_FULL = 'full';
+
+	/**
+	 * Get the SQL query builder instance.
+	 * Note: Singleton
+	 *
+	 * @return TDbCommandBuilder command builder
+	 */
+	private function getQueryBuilder() {
+		if (is_null(self::$query_builder)) {
+			$record = JobRecord::finder();
+			$connection = $record->getDbConnection();
+			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
+			self::$query_builder = $tableInfo->createCommandBuilder($connection);
+		}
+		return self::$query_builder;
+	}
+
+	/**
+	 * Get job status groups.
+	 *
+	 * @return array job status groups
+	 */
+	private function getJSGroups() {
+		return [
+			self::JS_GROUP_SUCCESSFUL,
+			self::JS_GROUP_UNSUCCESSFUL,
+			self::JS_GROUP_WARNING,
+			self::JS_GROUP_RUNNING,
+			self::JS_GROUP_ALL_TERMINATED
+		];
+	}
+
+	/**
+	 * Get job list.
+	 *
+	 * @param array $criteria SQL criteria to get job list
+	 * @param mixed $limit_val result limit value
+	 * @param int $offset_val result offset value
+	 * @param string $sort_col sort by selected SQL column (default: JobId)
+	 * @param string $sort_order sort order:'ASC' or 'DESC' (default: ASC, ascending)
+	 * @param string $mode job result mode (normal, overview, group)
+	 * @param string $view job records view (basic, full)
+	 * @return array job list records or empty list if no job found
+	 */
+	public function getJobs($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'JobId', $sort_order = 'ASC', $mode = self::JOB_RESULT_MODE_NORMAL, $view = self::JOB_RESULT_VIEW_FULL) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -51,7 +170,12 @@ class JobManager extends APIModule {
 
 		$where = Database::getWhere($criteria);
 
-		$sql = 'SELECT Job.*, 
+		$job_record = 'Job.*,';
+		if ($view == self::JOB_RESULT_VIEW_BASIC) {
+			$job_record = implode(',', $this->basic_mode_job_props) . ',';
+		}
+
+		$sql = 'SELECT ' .  $job_record . ' 
 Client.Name as client, 
 Pool.Name as pool, 
 FileSet.FileSet as fileset 
@@ -61,40 +185,230 @@ LEFT JOIN Pool USING (PoolId)
 LEFT JOIN FileSet USING (FilesetId)'
 . $where['where'] . $order . $limit . $offset;
 
-		$result = JobRecord::finder()->findAllBySql($sql, $where['params']);
-		if ($overview) {
-			/**
-			 * Job statuses in some parts are not compatible with rest of the API.
-			 * NOTE: Used here are also internal job statuses that are not used in the Catalog
-			 * but they are used internally by Bacula.
-			 */
-			$successful = ['T'];
-			$unsuccessful = ['A', 'E', 'f'];
-			$warning = ['I', 'e'];
-			$running = ['C', 'B', 'D', 'F', 'L', 'M', 'R', 'S', 'a', 'c', 'd', 'i', 'j', 'l', 'm', 'p', 'q', 's', 't'];
-			$sql = 'SELECT
-				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $successful) . '\') AND Job.JobErrors = 0) AS successful,
-				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $unsuccessful) . '\')) AS unsuccessful,
-				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND (Job.JobStatus IN (\'' . implode('\',\'', $warning) . '\') OR (Job.JobStatus IN (\'' . implode('\',\'', $successful) . '\') AND JobErrors > 0))) AS warning,
-				(SELECT COUNT(1) FROM Job ' . $where['where'] . ' AND Job.JobStatus IN (\'' . implode('\',\'', $running) . '\')) AS running,
-				(SELECT COUNT(1) FROM Job ' . $where['where'] . ') AS all
-			';
-
-			$record = JobRecord::finder();
-			$connection = $record->getDbConnection();
-			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
-			$builder = $tableInfo->createCommandBuilder($connection);
-			$command = $builder->applyCriterias($sql, $where['params']);
-			$res = $command->query();
-			$ov = $res->read();
+		$builder = $this->getQueryBuilder();
+		$command = $builder->applyCriterias($sql, $where['params']);
+		$statement = $command->getPdoStatement();
+		$command->query();
+		$result = [];
+		if ($mode == self::JOB_RESULT_MODE_OVERVIEW) {
+			// Overview mode.
+			$result = $statement->fetchAll(\PDO::FETCH_OBJ);
 			$result = [
 				'jobs' => $result,
-				'overview' => $ov
+				'overview' => $this->getJobCountByJSGroup($criteria)
 			];
+		} elseif ($mode == self::JOB_RESULT_MODE_GROUP) {
+			// Group mode.
+			$result = $statement->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_OBJ);
+		} else {
+			// Normal mode.
+			$result = $statement->fetchAll(\PDO::FETCH_OBJ);
 		}
 		return $result;
 	}
 
+	/**
+	 * Get job records with objects in one of the two flavours: normal or overview.
+	 *
+	 * @param array $criteria SQL criteria to get job list
+	 * @param mixed $limit_val result limit value
+	 * @param int $offset_val result offset value
+	 * @param string $sort_col sort by selected SQL column (default: JobId)
+	 * @param string $sort_order sort order:'ASC' or 'DESC' (default: ASC, ascending)
+	 * @param mixed $object_limit limit for object results
+	 * @param bool $overview if true, results are displayed in overview mode, otherwise normal mode
+	 * @param string $view job records view (basic, full)
+	 * @return array job record list with objects or empty list if no job found
+	 */
+	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'Job.JobId', $sort_order = 'ASC', $object_limit = null, $overview = false, $view = self::JOB_RESULT_VIEW_FULL) {
+
+		// First get total job count by job status group
+		$job_count_by_js_group_criteria = [];
+		if (key_exists('Job.Name', $criteria)) {
+			$job_count_by_js_group_criteria = [
+				'Job.Name' => $criteria['Job.Name']
+			];
+		}
+		$job_count_by_js_group = $this->getJobCountByJSGroup(
+			$job_count_by_js_group_criteria
+		);
+
+
+		// Then get job list
+		$job_list_result = $this->getJobs(
+			$criteria,
+			$limit_val,
+			$offset_val,
+			$sort_col,
+			$sort_order,
+			self::JOB_RESULT_MODE_GROUP,
+			$view
+		);
+
+		// Prepare job identifiers and job records
+		$jobids = array_keys($job_list_result);
+		$job_list = array_values($job_list_result);
+
+		$obj_criteria = $criteria; // we use the same criteria as for jobs plus limit jobids
+		if (count($jobids) > 0) {
+			// Prepare object criteria
+			$obj_criteria['Job.JobId'] = [];
+			$obj_criteria['Job.JobId'][] = [
+				'operator' => 'IN',
+				'vals' => $jobids
+			];
+		}
+
+		// Get objects
+		$obj = $this->getModule('object');
+		$object_list = $obj->getObjects(
+			$obj_criteria,
+			null,
+			0,
+			'ObjectId',
+			'ASC',
+			'jobid',
+			false,
+			$view
+		);
+
+		// Get object categories for jobs
+		$ocs = $obj->getObjectCategories(
+			$criteria
+		);
+		$ocs_count = count($ocs);
+
+		$out = [];
+		$ovw = [];
+		$js_groups = [];
+
+		if ($overview) {
+			$js_groups = $this->getJSGroups();
+
+			// Init overview results
+			for ($i = 0; $i < count($js_groups); $i++) {
+				$ovw[$js_groups[$i]] = ['count' => 0, 'jobs' => []];
+			}
+		}
+
+		$job_list_count = count($job_list);
+		for ($i = 0; $i < $job_list_count; $i++) {
+			$jobid = $jobids[$i];
+			$job_list[$i][0]->jobid = $jobid;
+			$job_obj_list = key_exists($jobid, $object_list) ? $object_list[$jobid] : [];
+			$job = [
+				'job' => $job_list[$i][0],
+				'objects' => [
+					'overview' => [],
+					'totalcount' => count($job_obj_list)
+				]
+			];
+			for ($j = 0; $j < $ocs_count; $j++) {
+				// current object category
+				$objectcategory = $ocs[$j]['objectcategory'];
+
+				// Take only objects from current category
+				$job_obj_cat_list = array_filter($job_obj_list, function ($item) use ($objectcategory) {
+					return ($item->objectcategory == $objectcategory);
+				});
+				$job_obj_cat_count = count($job_obj_cat_list);
+				if ($job_obj_cat_count == 0) {
+					// empty categories are not listed
+					continue;
+				}
+
+				// Prepare object slice if limit used, otherwise take all objects
+				$job_obj_cat_list_f = is_int($object_limit) && $object_limit > 0 ? array_slice($job_obj_cat_list, 0, $object_limit) : $job_obj_cat_list;
+
+				$job['objects']['overview'][$objectcategory] = [
+					'count' => $job_obj_cat_count,
+					'objects' => $job_obj_cat_list_f 
+				];
+			}
+			if ($overview) {
+				// Overview mode.
+				// Put jobs to specific categories
+				if (in_array($job['job']->jobstatus, $this->js_successful) && $job['job']->joberrors == 0) {
+					$ovw[self::JS_GROUP_SUCCESSFUL]['jobs'][] = $job;
+				} elseif (in_array($job['job']->jobstatus, $this->js_unsuccessful)) {
+					$ovw[self::JS_GROUP_UNSUCCESSFUL]['jobs'][] = $job;
+				} elseif (in_array($job['job']->jobstatus, $this->js_warning) || (in_array($job['job']->jobstatus, $this->js_successful) && $job['job']->joberrors > 0)) {
+					$ovw[self::JS_GROUP_WARNING]['jobs'][] = $job;
+				} elseif (in_array($job['job']->jobstatus, $this->js_running)) {
+					$ovw[self::JS_GROUP_RUNNING]['jobs'][] = $job;
+				}
+				if (!in_array($job['job']->jobstatus, $this->js_running)) {
+					$ovw[self::JS_GROUP_ALL_TERMINATED]['jobs'][] = $job;
+				}
+
+			} else {
+				// Normal mode.
+				$out[$i] = $job;
+			}
+		}
+
+		if ($overview) {
+			// Overview mode.
+			for ($i = 0; $i < count($js_groups); $i++) {
+				// Set all job count
+				$ovw[$js_groups[$i]]['count'] = $job_count_by_js_group[$js_groups[$i]];
+
+				if (is_int($limit_val) && $limit_val > 0) {
+					// If limit used, prepare a slice of jobs
+					$ovw[$js_groups[$i]]['jobs'] = array_slice($ovw[$js_groups[$i]]['jobs'], 0, $limit_val);
+				}
+			}
+		}
+		return ($overview ? $ovw : $out);
+	}
+
+	/**
+	 * Get job count by job status group.
+	 *
+	 * @param array $criteria SQL criteria
+	 * @return array job count by job status group
+	 */
+	public function getJobCountByJSGroup($criteria = []) {
+		$where = Database::getWhere($criteria, true);
+		$cond = '';
+		if (!empty($where['where'])) {
+			$cond = $where['where'] . ' AND ';
+		}
+		$sql = 'SELECT 
+(SELECT COUNT(1) FROM Job WHERE ' . $cond . ' Job.JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND Job.JobErrors = 0) AS successful,
+(SELECT COUNT(1) FROM Job WHERE ' . $cond . ' Job.JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\')) AS unsuccessful,
+(SELECT COUNT(1) FROM Job WHERE ' . $cond . ' (Job.JobStatus IN (\'' . implode('\',\'', $this->js_warning) . '\') OR (Job.JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND Job.JobErrors > 0))) AS warning,
+(SELECT COUNT(1) FROM Job WHERE ' . $cond . ' Job.JobStatus IN (\'' . implode('\',\'', $this->js_running) . '\')) AS running,
+(SELECT COUNT(1) FROM Job WHERE ' . $cond . ' Job.JobStatus NOT IN (\'' . implode('\',\'', $this->js_running) . '\')) AS all_terminated,
+(SELECT COUNT(1) FROM Job ' . (!empty($where['where']) ? ' WHERE ' . $where['where'] : '') . ') AS all
+		';
+
+		$builder = $this->getQueryBuilder();
+		if (count($where['params']) == 0) {
+			/**
+			 * Please note that in case no params the TDbCommandBuilder::applyCriterias()
+			 * returns empty the PDO statement handler. From this reason here
+			 * the query is called directly by PDO.
+			 */
+			$connection = JobRecord::finder()->getDbConnection();
+			$connection->setActive(true);
+			$pdo = $connection->getPdoInstance();
+			$statement = $pdo->query($sql);
+
+		} else {
+			$command = $builder->applyCriterias($sql, $where['params']);
+			$statement = $command->getPdoStatement();
+			$command->query();
+		}
+		return $statement->fetch(\PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Get job record by job identifier.
+	 *
+	 * @param integer job identifier
+	 * @return JobRecord|false job record or false is no job record found
+	 */
 	public function getJobById($jobid) {
 		$job = $this->getJobs(array(
 			'Job.JobId' => [[
@@ -104,6 +418,8 @@ LEFT JOIN FileSet USING (FilesetId)'
 		), 1);
 		if (is_array($job) && count($job) > 0) {
 			$job = array_shift($job);
+		} else {
+			$job = false;
 		}
 		return $job;
 	}

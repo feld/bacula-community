@@ -85,6 +85,7 @@
 	<url ServiceParameter="LlistPluginRestoreConf" pattern="api/v2/jobs/restore/plugin/config" />
 	<url ServiceParameter="LlistPluginRestoreConfFields" pattern="api/v2/jobs/restore/plugin/config/fields" />
 	<url ServiceParameter="JobStatsJobSum" pattern="api/v2/jobs/stats/type-sum/" />
+	<url ServiceParameter="JobsObjects" pattern="api/v2/jobs/objects/" />
 	<!-- bvfs endpoints-->
 	<url ServiceParameter="BVFSUpdate" pattern="api/v2/bvfs/update/" />
 	<url ServiceParameter="BVFSLsDirs" pattern="api/v2/bvfs/lsdirs/" />

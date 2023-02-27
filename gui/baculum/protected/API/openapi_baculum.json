@@ -959,6 +959,24 @@
 						}
 					},
 					{
+						"name": "realstarttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Real start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realstarttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Real start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
 						"name": "endtime_from",
 						"in": "query",
 						"required": false,
@@ -1808,6 +1826,297 @@
 						"schema": {
 							"type": "string",
 							"enum": ["F","I", "D"]
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/jobs/objects": {
+			"get": {
+				"tags": ["jobs"],
+				"summary": "Get jobs together with objects",
+				"description": "Get jobs together with objects.",
+				"responses": {
+					"200": {
+						"description": "Jobs with objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"job": {
+														"$ref": "#/components/schemas/Jobs"
+													},
+													"objects": {
+														"type": "object",
+														"properties": {
+															"overview": {
+																"type": "object",
+																"properties": {
+																	"objectcategory": {
+																		"type": "object",
+																		"properties": {
+																			"count": {
+																				"type": "integer",
+																				"description": "Total number of objects given category"
+																			},
+																			"objects": {
+																				"$ref": "#/components/schemas/Objects"
+																			}
+																		}
+																	}
+																}
+															},
+															"totalcount": {
+																"type": "integer",
+																"description": "Total number of objects"
+															}
+														}
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "object_limit",
+						"in": "query",
+						"description": "Object item limit",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": false,
+						"description": "Job name",
+						"schema": {
+							"type": "string",
+							"pattern": "[a-zA-Z0-9:.-_ ]+"
+						}
+					},
+					{
+						"name": "jobids",
+						"in": "query",
+						"required": false,
+						"description": "Comma separated job identifiers. Using this filter causes that all other filters are ignored. Sorting is possible.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "afterjobid",
+						"in": "query",
+						"required": false,
+						"description": "Displays jobs after given job identifier with excluding the given jobid.",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "jobstatus",
+						"in": "query",
+						"required": false,
+						"description": "Job status letter(s). Possible multiple values like 'Ef' or 'Tef'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "clientid",
+						"in": "query",
+						"required": false,
+						"description": "Client identifier",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "client",
+						"in": "query",
+						"required": false,
+						"description": "Client name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "type",
+						"in": "query",
+						"required": false,
+						"description": "Job type letter",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "level",
+						"in": "query",
+						"required": false,
+						"description": "Job level letter",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "schedtime_from",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "schedtime_to",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realstarttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Real start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realstarttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Real start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_from",
+						"in": "query",
+						"required": false,
+						"description": "End time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_to",
+						"in": "query",
+						"required": false,
+						"description": "End time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_from",
+						"in": "query",
+						"required": false,
+						"description": "Real end time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_to",
+						"in": "query",
+						"required": false,
+						"description": "Real end time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+
+						"name": "age",
+						"in": "query",
+						"required": false,
+						"description": "Job age in seconds (used is start time). starttime_from and starttime_to take precedence over this parameter.",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected job property (default jobid). There can be any job property (jobid, job, clientid ...etc.) except client, fileset and pool.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
+						"name": "overview",
+						"in": "query",
+						"required": false,
+						"description": "If set, it puts jobs (and objects) in job status groups (successful, unsuccessful, running, all). NOTE: Offset and limit parameters do not apply to overview counts.",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"name": "view",
+						"in": "query",
+						"required": false,
+						"description": "Set result view type: full (default) - display all job and object properties, basic - display only base properties",
+						"schema": {
+							"type": "string",
+							"enum": ["basic", "full"]
 						}
 					}
 				]

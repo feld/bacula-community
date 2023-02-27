@@ -311,6 +311,11 @@ class Miscellaneous extends TModule {
 		return (preg_match('/^(asc|desc)$/i', $order) === 1);
 	}
 
+	public function isValidResultView($view) {
+		return (preg_match('/^(basic|full)$/', $view) === 1);
+	}
+
+
 	public function escapeCharsToConsole($path) {
 		return preg_replace('/([$])/', '\\\${1}', $path);
 	}

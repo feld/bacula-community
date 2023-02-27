@@ -3,7 +3,7 @@
  * Bacula(R) - The Network Backup Solution
  * Baculum   - Bacula web interface
  *
- * Copyright (C) 2013-2019 Kern Sibbald
+ * Copyright (C) 2013-2023 Kern Sibbald
  *
  * The main author of Baculum is Marcin Haba.
  * The original author of Bacula is Kern Sibbald, with contributions
@@ -20,25 +20,27 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
-use Baculum\API\Modules\BaculumAPIServer;
-use Baculum\API\Modules\JobRecord;
+use Baculum\API\Modules\ConsoleOutputPage;
+use Baculum\API\Modules\ConsoleOutputQueryPage;
 use Baculum\API\Modules\JobManager;
-use Baculum\Common\Modules\Errors\JobError;
+use Baculum\Common\Modules\Logging;
+use Baculum\Common\Modules\Errors\{BconsoleError,ClientError,JobError,PluginVSphereError};
 
 /**
- * Jobs endpoint.
+ * List jobs with objects.
  *
  * @author Marcin Haba <marcin.haba@bacula.pl>
  * @category API
  * @package Baculum API
  */
-class Jobs extends BaculumAPIServer {
+class JobsObjects extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? $this->Request['jobids'] : '';
 		$afterjobid = $this->Request->contains('afterjobid') && $misc->isValidInteger($this->Request['afterjobid']) ? $this->Request['afterjobid'] : 0;
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$object_limit = $this->Request->contains('object_limit') && $misc->isValidInteger($this->Request['object_limit']) ? (int)$this->Request['object_limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$jobstatus = $this->Request->contains('jobstatus') ? $this->Request['jobstatus'] : '';
 		$level = $this->Request->contains('level') && $misc->isValidJobLevel($this->Request['level']) ? $this->Request['level'] : '';
@@ -58,7 +60,8 @@ class Jobs extends BaculumAPIServer {
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'JobId';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
-		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? JobManager::JOB_RESULT_MODE_OVERVIEW : JobManager::JOB_RESULT_MODE_NORMAL;
+		$overview = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']));
+		$view = ($this->Request->contains('view') && $misc->isValidResultView($this->Request['view'])) ? $this->Request['view'] : JobManager::JOB_RESULT_VIEW_FULL;
 
 		if (!empty($jobids)) {
 			/**
@@ -66,15 +69,18 @@ class Jobs extends BaculumAPIServer {
 			 */
 			$params['Job.JobId'] = [];
 			$params['Job.JobId'][] = [
-				'operator' => 'OR',
+				'operator' => 'IN',
 				'vals' => explode(',', $jobids)
 			];
-			$result = $this->getModule('job')->getJobs(
+			$result = $this->getModule('job')->getJobsObjectsOverview(
 				$params,
 				null,
 				0,
 				$order_by,
-				$order_direction
+				$order_direction,
+				$object_limit,
+				$overview,
+				$view
 			);
 			$this->output = $result;
 			$this->error = JobError::ERROR_NO_ERRORS;
@@ -95,6 +101,11 @@ class Jobs extends BaculumAPIServer {
 		}
 		$jr = new \ReflectionClass('Baculum\API\Modules\JobRecord');
 		$sort_cols = $jr->getProperties();
+		if (strpos($order_by, '.') !== false) {
+			$order_by_ex = explode('.', $order_by);
+			$order_by =  array_shift($order_by_ex);
+
+		}
 		$order_by_lc = strtolower($order_by);
 		$cols_excl = ['client', 'fileset', 'pool'];
 		$columns = [];
@@ -264,7 +275,7 @@ class Jobs extends BaculumAPIServer {
 
 			$params['Job.Name'] = [];
 			$params['Job.Name'][] = [
-				'operator' => 'OR',
+				'operator' => 'IN',
 				'vals' => $vals
 			];
 
@@ -299,13 +310,15 @@ class Jobs extends BaculumAPIServer {
 			}
 
 			if ($error === false) {
-				$result = $this->getModule('job')->getJobs(
+				$result = $this->getModule('job')->getJobsObjectsOverview(
 					$params,
 					$limit,
 					$offset,
 					$order_by,
 					$order_direction,
-					$mode
+					$object_limit,
+					$overview,
+					$view
 				);
 				$this->output = $result;
 				$this->error = JobError::ERROR_NO_ERRORS;
@@ -316,4 +329,3 @@ class Jobs extends BaculumAPIServer {
 		}
 	}
 }
-?>

@@ -31,6 +31,56 @@ namespace Baculum\API\Modules;
  */
 class ObjectManager extends APIModule
 {
+	/**
+	 * Object result in job and object endpoint can be displayed in on of the two views:
+	 *  - basic - display only base job and object properties
+	 *  - full - display all properties
+	 * Here are object properties for basic view.
+	 */
+	private $basic_mode_obj_props = [
+		'ObjectId',
+		'JobId',
+		'ObjectCategory',
+		'ObjectType',
+		'ObjectName',
+		'ObjectSource',
+		'ObjectSize',
+		'ObjectStatus',
+		'ObjectCount'
+	];
+
+	/**
+	 * SQL query builder.
+	 *
+	 * @var TDbCommandBuilder command builder
+	 */
+	private static $query_builder;
+
+	/**
+	 * Object result record view.
+	 * Views:
+	 *  - basic - list only limited record properties
+	 *  - full - list all record properties
+	 */
+	const OBJ_RESULT_VIEW_BASIC = 'basic';
+	const OBJ_RESULT_VIEW_FULL = 'full';
+
+
+	/**
+	 * Get the SQL query builder instance.
+	 * Note: Singleton
+	 *
+	 * @return TDbCommandBuilder command builder
+	 */
+	private static function getQueryBuilder() {
+		if (is_null(self::$query_builder)) {
+			$record = ObjectRecord::finder();
+			$connection = $record->getDbConnection();
+			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
+			self::$query_builder = $tableInfo->createCommandBuilder($connection);
+		}
+		return self::$query_builder;
+	}
 
 	/**
 	 * Get objects.
@@ -42,9 +92,10 @@ class ObjectManager extends APIModule
 	 * @param string $sort_order sort order (asc - ascending, desc - descending)
 	 * @param string $group_by column to group
 	 * @param integer $group_limit maximum number of elements in one group
+	 * @param string $view job records view (basic, full)
 	 * @return array object list
 	 */
-	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0) {
+	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $view = self::OBJ_RESULT_VIEW_FULL) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -71,15 +122,42 @@ class ObjectManager extends APIModule
 
 		$where = Database::getWhere($criteria);
 
-		$sql = 'SELECT Object.*, 
-Job.Name as jobname 
+		$obj_record = 'Object.*, Job.Name as jobname ';
+		if ($view == self::OBJ_RESULT_VIEW_BASIC) {
+			$obj_record = implode(',', $this->basic_mode_obj_props);
+		}
+		$sql = 'SELECT ' . $obj_record . ' 
 FROM Object 
 LEFT JOIN Job USING (JobId) '
 . $where['where'] . $order . $limit . $offset;
 
-		$result = ObjectRecord::finder()->findAllBySql($sql, $where['params']);
+		$builder = $this->getQueryBuilder();
+		$command = $builder->applyCriterias($sql, $where['params']);
+		$statement = $command->getPdoStatement();
+		$command->query();
+		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
 		Database::groupBy($group_by, $result, $group_limit);
 		return $result;
+	}
+
+	/**
+	 * Get object categories based on criterias.
+	 *
+	 * @param array $criteria SQL criteria to get job list
+	 * @return array category list or empty list if no category found
+	 */
+	public function getObjectCategories($criteria = []) {
+		$where = Database::getWhere($criteria);
+
+		$sql = 'SELECT DISTINCT ObjectCategory as objectcategory
+FROM Object 
+JOIN Job USING (JobId) '
+. $where['where'];
+		$builder = $this->getQueryBuilder();
+		$command = $builder->applyCriterias($sql, $where['params']);
+		$statement = $command->getPdoStatement();
+		$command->query();
+		return $statement->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
 	public function getObjectById($objectid) {

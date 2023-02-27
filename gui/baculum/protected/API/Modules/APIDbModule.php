@@ -38,6 +38,11 @@ use Prado\Data\TDbConnection;
 class APIDbModule extends TActiveRecord {
 
 	/**
+	 * API database connection handler.
+	 */
+	private static $db_connection;
+
+	/**
 	 * Get Data Source Name (DSN).
 	 * 
 	 * For SQLite params are:
@@ -87,28 +92,28 @@ class APIDbModule extends TActiveRecord {
 	 * @throws BCatalogException if cataloga access is not supported
 	 */
 	public static function getAPIDbConnection(array $db_params, $force = false) {
-		$db_connection = null;
 		if ((array_key_exists('enabled', $db_params) && $db_params['enabled'] === '1') || $force === true) {
-			$dsn = self::getDsn($db_params);
-			$db_connection = null;
-			if (array_key_exists('login', $db_params) && array_key_exists('password', $db_params)) {
-				$db_connection = new TDbConnection($dsn, $db_params['login'], $db_params['password']);
-			} else {
-				$db_connection = new TDbConnection($dsn);
+			if (is_null(self::$db_connection)) {
+				$dsn = self::getDsn($db_params);
+				if (array_key_exists('login', $db_params) && array_key_exists('password', $db_params)) {
+					self::$db_connection = new TDbConnection($dsn, $db_params['login'], $db_params['password']);
+				} else {
+					self::$db_connection = new TDbConnection($dsn);
+				}
+				self::$db_connection->setActive(true);
+				if ($db_params['type'] === Database::MYSQL_TYPE) {
+					self::$db_connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+				}
+				self::$db_connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+				self::$db_connection->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
 			}
-			$db_connection->setActive(true);
-			if ($db_params['type'] === Database::MYSQL_TYPE) {
-				$db_connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-			}
-			$db_connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			$db_connection->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
 		} else {
 			throw new BCatalogException(
 				DatabaseError::MSG_ERROR_DATABASE_ACCESS_NOT_SUPPORTED,
 				DatabaseError::ERROR_DATABASE_ACCESS_NOT_SUPPORTED
 			);
 		}
-		return $db_connection;
+		return self::$db_connection;
 	}
 
 	public function getColumnValue($column_name) {
