@@ -102,6 +102,7 @@ JCR *new_control_jcr(const char *base_name, int job_type)
    LockRes();
    jcr->job = (JOB *)GetNextRes(R_JOB, NULL);
    set_jcr_defaults(jcr, jcr->job);
+   init_msg(jcr, jcr->messages, job_code_callback_director);
    /* We use a resource, so we should count in the reload */
    jcr->setJobType(job_type);
    UnlockRes();

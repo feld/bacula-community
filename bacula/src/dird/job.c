@@ -268,7 +268,7 @@ static bool setup_resume_job(JCR *jcr, JOB_DBR *jr)
    int errstat;
    jcr->lock();
    Dsm_check(100);
-   init_msg(jcr, jcr->messages);
+   init_msg(jcr, jcr->messages, job_code_callback_director);
 
    /* Initialize termination condition variable */
    if ((errstat = pthread_cond_init(&jcr->term_wait, NULL)) != 0) {
