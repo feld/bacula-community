@@ -38,6 +38,7 @@ class BVFSError extends GenericError {
 	const ERROR_INVALID_DIRID_LIST = 76;
 	const ERROR_INVALID_CLIENT = 77;
 	const ERROR_INVALID_JOBID = 78;
+	const ERROR_INVALID_OBJECTID_LIST = 79;
 
 	const MSG_ERROR_INVALID_RPATH = 'Inputted path for restore is invalid. Proper format is b2[0-9]+.';
 	const MSG_ERROR_INVALID_RESTORE_PATH = 'Inputted BVFS path param is invalid.';
@@ -47,4 +48,5 @@ class BVFSError extends GenericError {
 	const MSG_ERROR_INVALID_DIRID_LIST = 'Invalid dirid list.';
 	const MSG_ERROR_INVALID_CLIENT = 'Invalid client name.';
 	const MSG_ERROR_INVALID_JOBID = 'Invalid jobid.';
+	const MSG_ERROR_INVALID_OBJECTID_LIST = 'Invalid objectid list.';
 }

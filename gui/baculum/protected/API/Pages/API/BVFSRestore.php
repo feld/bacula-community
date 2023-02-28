@@ -38,6 +38,7 @@ class BVFSRestore extends BaculumAPIServer {
 		$fileids = property_exists($params, 'fileid') ? $params->fileid : null;
 		$dirids = property_exists($params, 'dirid') ? $params->dirid : null;
 		$findexes = property_exists($params, 'findex') ? $params->findex : null;
+		$objectids = property_exists($params, 'objectid') ? $params->objectid : null;
 		$path = property_exists($params, 'path') ? $params->path : null;
 
 		if (!is_null($jobids) && !$misc->isValidIdsList($jobids)) {
@@ -60,6 +61,11 @@ class BVFSRestore extends BaculumAPIServer {
 			$this->error = BVFSError::ERROR_INVALID_FILEINDEX_LIST;
 			return;
 		}
+		if (!is_null($objectids) && !$misc->isValidIdsList($objectids)) {
+			$this->output = BVFSError::MSG_ERROR_INVALID_OBJECTID_LIST;
+			$this->error = BVFSError::ERROR_INVALID_OBJECTID_LIST;
+			return;
+		}
 
 		if (!is_null($path) && !$misc->isValidBvfsPath($path)) {
 			$this->output = BVFSError::MSG_ERROR_INVALID_RPATH;
@@ -76,6 +82,9 @@ class BVFSRestore extends BaculumAPIServer {
 		}
 		if (is_string($findexes)) {
 			array_push($cmd, 'hardlink="' . $findexes . '"');
+		}
+		if (is_string($objectids)) {
+			array_push($cmd, 'objectid="' . $objectids . '"');
 		}
 
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, $cmd);

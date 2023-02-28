@@ -5285,7 +5285,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 71, 73, 74, 75, 76, 1000]
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 71, 73, 74, 75, 76, 79, 1000]
 										}
 									}
 								}
@@ -5334,6 +5334,15 @@
 						"name": "findex",
 						"in": "body",
 						"description": "Comma seprated directory file indexes",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectid",
+						"in": "body",
+						"description": "Comma seprated object identifiers",
 						"required": false,
 						"schema": {
 							"type": "string"
