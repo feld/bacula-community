@@ -458,6 +458,14 @@
 					},
 					{
 						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "plugin",
+						"in": "query",
+						"description": "List clients that contain given plugin. Note, it searches by &midast;keyword&midast; so for PostgreSQL plugin both 'postgre' and 'postgresql' will work.",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}

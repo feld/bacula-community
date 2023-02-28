@@ -36,9 +36,22 @@ class Clients extends BaculumAPIServer {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
+		$plugin = $this->Request->contains('plugin') && $misc->isValidAlphaNumeric($this->Request['plugin']) ? $this->Request['plugin'] : '';
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {
-			$clients = $this->getModule('client')->getClients($limit, $offset);
+			$params = [];
+			if (!empty($plugin)) {
+				$params['Plugins'] = [];
+				$params['Plugins'][] = [
+					'operator' => 'LIKE',
+					'vals' => "%{$plugin}%"
+				];
+			}
+			$clients = $this->getModule('client')->getClients(
+				$limit,
+				$offset,
+				$params
+			);
 			array_shift($result->output);
 			$clients_output = array();
 			foreach($clients as $client) {

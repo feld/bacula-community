@@ -194,6 +194,10 @@ class Database extends APIModule {
 					} elseif (in_array($value[$i]['operator'], ['IS', 'IS NOT'])) {
 						$cond[] = "{$key} {$value[$i]['operator']} {$value[$i]['vals']}";
 						$value[$i]['operator'] = '';
+					} elseif ($value[$i]['operator'] == 'LIKE') {
+						$cond[] = "{$key} {$value[$i]['operator']} :{$kval}{$i}";
+						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
+						$value[$i]['operator'] = '';
 					} else {
 						$cond[] = "$key = :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
