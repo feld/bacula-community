@@ -23,7 +23,9 @@
 use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\ConsoleOutputQueryPage;
 use Baculum\Common\Modules\Logging;
-use Baculum\Common\Modules\Errors\{BconsoleError,ClientError,PluginVSphereError};
+use Baculum\Common\Modules\Errors\BconsoleError;
+use Baculum\Common\Modules\Errors\ClientError;
+use Baculum\Common\Modules\Errors\PluginVSphereError;
 
 /**
  * List vSphere plugin hosts.
@@ -122,7 +124,7 @@ class PluginVSphereListHosts extends ConsoleOutputQueryPage {
 	protected function getJSONOutput($params = []) {
 		$result = $this->getRawOutput($params);
 		if ($result->exitcode === 0) {
-			$rows = iterator_to_array($this->getHostRows($result->output));
+			$rows = $this->getHostRows($result->output);
 			$result->output = [];
 			for ($i = 0; $i < count($rows); $i++) {
 				$result->output[] = $this->parseOutputKeyValue($rows[$i]);
@@ -135,16 +137,18 @@ class PluginVSphereListHosts extends ConsoleOutputQueryPage {
 	 * Filter rows with host and moref items.
 	 *
 	 * @param array $output dot query command output
-	 * @return none
+	 * @return array
 	 */
 	private function getHostRows(array $output) {
+		$out = [];
 		for ($i = 0; $i < count($output); $i++) {
 			if (preg_match('/^host=/', $output[$i]) === 1 && isset($output[$i+1])) {
-				yield [
+				$out[] = [
 					$output[$i],
 					$output[$i+1]
 				];
 			}
 		}
+		return $out;
 	}
 }

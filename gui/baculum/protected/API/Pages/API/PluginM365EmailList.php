@@ -22,7 +22,9 @@
 
 use Baculum\API\Modules\ConsoleOutputJSONPage;
 use Baculum\Common\Modules\Logging;
-use Baculum\Common\Modules\Errors\{ClientError,PluginError,PluginM365Error};
+use Baculum\Common\Modules\Errors\ClientError;
+use Baculum\Common\Modules\Errors\PluginError;
+use Baculum\Common\Modules\Errors\PluginM365Error;
 
 /**
  * List emails backed up using Microsoft 365 plugin.

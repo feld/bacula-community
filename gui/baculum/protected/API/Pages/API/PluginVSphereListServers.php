@@ -23,7 +23,9 @@
 use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\ConsoleOutputQueryPage;
 use Baculum\Common\Modules\Logging;
-use Baculum\Common\Modules\Errors\{BconsoleError,ClientError,PluginVSphereError};
+use Baculum\Common\Modules\Errors\BconsoleError;
+use Baculum\Common\Modules\Errors\ClientError;
+use Baculum\Common\Modules\Errors\PluginVSphereError;
 
 /**
  * List vSphere plugin servers.
@@ -122,7 +124,7 @@ class PluginVSphereListServers extends ConsoleOutputQueryPage {
 	protected function getJSONOutput($params = []) {
 		$result = $this->getRawOutput($params);
 		if ($result->exitcode === 0) {
-			$result->output = iterator_to_array($this->getServerRows($result->output));
+			$result->output = $this->getServerRows($result->output);
 			$result->output = $this->parseOutputKeyValue($result->output);
 		}
 		return $result;
@@ -132,13 +134,15 @@ class PluginVSphereListServers extends ConsoleOutputQueryPage {
 	 * Filter rows with server items.
 	 *
 	 * @param array $output dot query command output
-	 * @return none
+	 * @return array
 	 */
 	private function getServerRows(array $output) {
+		$out = [];
 		for ($i = 0; $i < count($output); $i++) {
 			if (preg_match('/^server=/', $output[$i]) === 1) {
-				yield $output[$i];
+				$out[] = $output[$i];
 			}
 		}
+		return $out;
 	}
 }

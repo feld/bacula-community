@@ -24,7 +24,7 @@ use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\ConsoleOutputQueryPage;
 use Baculum\API\Modules\JobManager;
 use Baculum\Common\Modules\Logging;
-use Baculum\Common\Modules\Errors\{BconsoleError,ClientError,JobError,PluginVSphereError};
+use Baculum\Common\Modules\Errors\JobError;
 
 /**
  * List jobs with objects.

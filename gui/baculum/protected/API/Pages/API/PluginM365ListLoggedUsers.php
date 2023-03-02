@@ -23,7 +23,9 @@
 use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\ConsoleOutputQueryPage;
 use Baculum\Common\Modules\Logging;
-use Baculum\Common\Modules\Errors\{BconsoleError,ClientError,PluginError,PluginM365Error};
+use Baculum\Common\Modules\Errors\ClientError;
+use Baculum\Common\Modules\Errors\PluginError;
+use Baculum\Common\Modules\Errors\PluginM365Error;
 
 /**
  * List logged in M365 plugin users.
@@ -134,7 +136,7 @@ class PluginM365ListLoggedUsers extends ConsoleOutputQueryPage {
 			]
 		);
 		if ($ret->exitcode === 0) {
-			$ret->output = iterator_to_array($this->getUserRows($ret->output));
+			$ret->output = $this->getUserRows($ret->output);
 		} else {
 			$ret->output = []; // don't provide errors to output, only in logs
 			$this->getModule('logging')->log(
@@ -162,7 +164,7 @@ class PluginM365ListLoggedUsers extends ConsoleOutputQueryPage {
 			]
 		);
 		if ($ret->exitcode === 0) {
-			$users = iterator_to_array($this->getUserJSON($ret->output));
+			$users = $this->getUserJSON($ret->output);
 			if (count($users) === 1) {
 				$ret->output = json_decode($users[0]);
 			} else {
@@ -177,18 +179,22 @@ class PluginM365ListLoggedUsers extends ConsoleOutputQueryPage {
 	}
 
 	private function getUserRows(array $output) {
+		$out = [];
 		for ($i = 0; $i < count($output); $i++) {
 			if (preg_match('/^user=/', $output[$i]) === 1) {
-				yield $output[$i];
+				$out[] = $output[$i];
 			}
 		}
+		return $out;
 	}
 
 	private function getUserJSON(array $output) {
+		$out = [];
 		for ($i = 0; $i < count($output); $i++) {
 			if (preg_match('/^=?\[/', $output[$i]) === 1) {
-				yield ltrim($output[$i], '=');
+				$out[] = ltrim($output[$i], '=');
 			}
 		}
+		return $out;
 	}
 }
