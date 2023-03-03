@@ -37,7 +37,12 @@ class BVFSRestore extends BaculumAPIServer {
 		$jobids = property_exists($params, 'jobids') ? $params->jobids : null;
 		$fileids = property_exists($params, 'fileid') ? $params->fileid : null;
 		$dirids = property_exists($params, 'dirid') ? $params->dirid : null;
+		/**
+		 * Name for findex is wrong. In the next version of API change it
+		 * from 'findex' into 'hardlink'.
+		 */
 		$findexes = property_exists($params, 'findex') ? $params->findex : null;
+		$fileindexes = property_exists($params, 'fileindex') ? $params->fileindex : null;
 		$objectids = property_exists($params, 'objectid') ? $params->objectid : null;
 		$path = property_exists($params, 'path') ? $params->path : null;
 
@@ -82,6 +87,9 @@ class BVFSRestore extends BaculumAPIServer {
 		}
 		if (is_string($findexes)) {
 			array_push($cmd, 'hardlink="' . $findexes . '"');
+		}
+		if (is_string($fileindexes)) {
+			array_push($cmd, 'fileindex="' . $fileindexes . '"');
 		}
 		if (is_string($objectids)) {
 			array_push($cmd, 'objectid="' . $objectids . '"');

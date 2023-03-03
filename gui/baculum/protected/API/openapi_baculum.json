@@ -5352,7 +5352,16 @@
 					{
 						"name": "findex",
 						"in": "body",
-						"description": "Comma seprated directory file indexes",
+						"description": "For using restore with preserved hardlink. Comma seprated file indexes together with corresponding jobids in form jobid1,fileindex1,jobid2,fileindex2...etc.",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "fileindex",
+						"in": "body",
+						"description": "For restoring by file index. Comma seprated file indexes together with corresponding jobids in form jobid1,fileindex1,jobid2,fileindex2...etc.",
 						"required": false,
 						"schema": {
 							"type": "string"
