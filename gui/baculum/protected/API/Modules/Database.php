@@ -24,6 +24,7 @@ namespace Baculum\API\Modules;
 
 use Baculum\Common\Modules\Logging;
 use Baculum\Common\Modules\Errors\DatabaseError;
+use Baculum\API\Modules\JobRecord;
 use Prado\Data\TDbConnection;
 use Prado\Exceptions\TDbException;
 
@@ -44,6 +45,13 @@ class Database extends APIModule {
 	const PGSQL_TYPE = 'pgsql';
 	const MYSQL_TYPE = 'mysql';
 	const SQLITE_TYPE = 'sqlite';
+
+	/**
+	 * SQL query builder.
+	 *
+	 * @var TDbCommandBuilder command builder
+	 */
+	private static $query_builder;
 
 	/**
 	 * Check/test connection to database.
@@ -245,6 +253,51 @@ class Database extends APIModule {
 			}
 			$result = $new_result;
 		}
+	}
+
+	/**
+	 * Get the SQL query builder instance.
+	 * Note: Singleton
+	 *
+	 * @param object $record Active Record object
+	 * @return TDbCommandBuilder command builder
+	 */
+	private static function getQueryBuilder() {
+		if (is_null(self::$query_builder)) {
+			$record = JobRecord::finder();
+			$connection = $record->getDbConnection();
+			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
+			self::$query_builder = $tableInfo->createCommandBuilder($connection);
+		}
+		return self::$query_builder;
+	}
+
+	/**
+	 * Run query and get SQL query statement.
+	 *
+	 * @param string $sql SQL query
+	 * @param array $params SQL query params
+	 * @return PDO statement.
+	 */
+	public static function runQuery($sql, $params = []) {
+		$builder = self::getQueryBuilder();
+		if (count($params) == 0) {
+			/**
+			 * Please note that in case no params the TDbCommandBuilder::applyCriterias()
+			 * returns empty the PDO statement handler. From this reason here
+			 * the query is called directly by PDO.
+			 */
+			$connection = JobRecord::finder()->getDbConnection();
+			$connection->setActive(true);
+			$pdo = $connection->getPdoInstance();
+			$statement = $pdo->query($sql);
+
+		} else {
+			$command = $builder->applyCriterias($sql, $params);
+			$statement = $command->getPdoStatement();
+			$command->query();
+		}
+		return $statement;
 	}
 }
 ?>

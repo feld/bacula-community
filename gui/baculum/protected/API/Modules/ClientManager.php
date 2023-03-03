@@ -34,29 +34,6 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
 class ClientManager extends APIModule {
 
 	/**
-	 * SQL query builder.
-	 *
-	 * @var TDbCommandBuilder command builder
-	 */
-	private static $query_builder;
-
-	/**
-	 * Get the SQL query builder instance.
-	 * Note: Singleton
-	 *
-	 * @return TDbCommandBuilder command builder
-	 */
-	private function getQueryBuilder() {
-		if (is_null(self::$query_builder)) {
-			$record = ClientRecord::finder();
-			$connection = $record->getDbConnection();
-			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
-			self::$query_builder = $tableInfo->createCommandBuilder($connection);
-		}
-		return self::$query_builder;
-	}
-
-	/**
 	 * Get client list.
 	 *
 	 * @param mixed $limit_val result limit value
@@ -79,23 +56,7 @@ class ClientManager extends APIModule {
 FROM Client 
 ' . $where['where'] . $offset . $limit;
 
-		$builder = $this->getQueryBuilder();
-		if (count($where['params']) == 0) {
-			/**
-			 * Please note that in case no params the TDbCommandBuilder::applyCriterias()
-			 * returns empty the PDO statement handler. From this reason here
-			 * the query is called directly by PDO.
-			 */
-			$connection = JobRecord::finder()->getDbConnection();
-			$connection->setActive(true);
-			$pdo = $connection->getPdoInstance();
-			$statement = $pdo->query($sql);
-
-		} else {
-			$command = $builder->applyCriterias($sql, $where['params']);
-			$statement = $command->getPdoStatement();
-			$command->query();
-		}
+		$statement = Database::runQuery($sql, $where['params']);
 		return $statement->fetchAll(\PDO::FETCH_OBJ);
 	}
 

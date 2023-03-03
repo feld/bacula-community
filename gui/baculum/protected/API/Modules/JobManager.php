@@ -35,13 +35,6 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
 class JobManager extends APIModule {
 
 	/**
-	 * SQL query builder.
-	 *
-	 * @var TDbCommandBuilder command builder
-	 */
-	private static $query_builder;
-
-	/**
 	 * Job statuses in some parts are not compatible with rest of the API.
 	 * NOTE: Used here are also internal job statuses that are not used in the Catalog
 	 * but they are used internally by Bacula.
@@ -111,22 +104,6 @@ class JobManager extends APIModule {
 	const JOB_RESULT_VIEW_FULL = 'full';
 
 	/**
-	 * Get the SQL query builder instance.
-	 * Note: Singleton
-	 *
-	 * @return TDbCommandBuilder command builder
-	 */
-	private function getQueryBuilder() {
-		if (is_null(self::$query_builder)) {
-			$record = JobRecord::finder();
-			$connection = $record->getDbConnection();
-			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
-			self::$query_builder = $tableInfo->createCommandBuilder($connection);
-		}
-		return self::$query_builder;
-	}
-
-	/**
 	 * Get job status groups.
 	 *
 	 * @return array job status groups
@@ -185,10 +162,7 @@ LEFT JOIN Pool USING (PoolId)
 LEFT JOIN FileSet USING (FilesetId)'
 . $where['where'] . $order . $limit . $offset;
 
-		$builder = $this->getQueryBuilder();
-		$command = $builder->applyCriterias($sql, $where['params']);
-		$statement = $command->getPdoStatement();
-		$command->query();
+		$statement = Database::runQuery($sql, $where['params']);
 		$result = [];
 		if ($mode == self::JOB_RESULT_MODE_OVERVIEW) {
 			// Overview mode.
@@ -383,23 +357,7 @@ LEFT JOIN FileSet USING (FilesetId)'
 (SELECT COUNT(1) FROM Job ' . (!empty($where['where']) ? ' WHERE ' . $where['where'] : '') . ') AS all
 		';
 
-		$builder = $this->getQueryBuilder();
-		if (count($where['params']) == 0) {
-			/**
-			 * Please note that in case no params the TDbCommandBuilder::applyCriterias()
-			 * returns empty the PDO statement handler. From this reason here
-			 * the query is called directly by PDO.
-			 */
-			$connection = JobRecord::finder()->getDbConnection();
-			$connection->setActive(true);
-			$pdo = $connection->getPdoInstance();
-			$statement = $pdo->query($sql);
-
-		} else {
-			$command = $builder->applyCriterias($sql, $where['params']);
-			$statement = $command->getPdoStatement();
-			$command->query();
-		}
+		$statement = Database::runQuery($sql, $where['params']);
 		return $statement->fetch(\PDO::FETCH_ASSOC);
 	}
 

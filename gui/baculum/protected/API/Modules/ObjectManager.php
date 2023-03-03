@@ -22,6 +22,8 @@
 
 namespace Baculum\API\Modules;
 
+use Baculum\API\Modules\Database;
+
 /**
  * Object manager module.
  *
@@ -50,13 +52,6 @@ class ObjectManager extends APIModule
 	];
 
 	/**
-	 * SQL query builder.
-	 *
-	 * @var TDbCommandBuilder command builder
-	 */
-	private static $query_builder;
-
-	/**
 	 * Object result record view.
 	 * Views:
 	 *  - basic - list only limited record properties
@@ -64,23 +59,6 @@ class ObjectManager extends APIModule
 	 */
 	const OBJ_RESULT_VIEW_BASIC = 'basic';
 	const OBJ_RESULT_VIEW_FULL = 'full';
-
-
-	/**
-	 * Get the SQL query builder instance.
-	 * Note: Singleton
-	 *
-	 * @return TDbCommandBuilder command builder
-	 */
-	private static function getQueryBuilder() {
-		if (is_null(self::$query_builder)) {
-			$record = ObjectRecord::finder();
-			$connection = $record->getDbConnection();
-			$tableInfo = $record->getRecordGateway()->getRecordTableInfo($record);
-			self::$query_builder = $tableInfo->createCommandBuilder($connection);
-		}
-		return self::$query_builder;
-	}
 
 	/**
 	 * Get objects.
@@ -130,11 +108,7 @@ class ObjectManager extends APIModule
 FROM Object 
 LEFT JOIN Job USING (JobId) '
 . $where['where'] . $order . $limit . $offset;
-
-		$builder = $this->getQueryBuilder();
-		$command = $builder->applyCriterias($sql, $where['params']);
-		$statement = $command->getPdoStatement();
-		$command->query();
+		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
 		Database::groupBy($group_by, $result, $group_limit);
 		return $result;
@@ -153,10 +127,7 @@ LEFT JOIN Job USING (JobId) '
 FROM Object 
 JOIN Job USING (JobId) '
 . $where['where'];
-		$builder = $this->getQueryBuilder();
-		$command = $builder->applyCriterias($sql, $where['params']);
-		$statement = $command->getPdoStatement();
-		$command->query();
+		$statement = Database::runQuery($sql, $where['params']);
 		return $statement->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
