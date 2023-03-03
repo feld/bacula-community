@@ -1534,6 +1534,17 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "type",
+						"in": "query",
+						"description": "Job type letter",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"description": "Job type letter",
+							"enum": ["B", "M", "V", "R", "I", "D", "A", "C", "c", "g"]
+						}
 					}
 				]
 			}
