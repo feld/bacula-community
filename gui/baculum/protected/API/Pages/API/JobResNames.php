@@ -62,6 +62,9 @@ class JobResNames extends BaculumAPIServer {
 			}
 			$jobs[$directors->output[$i]] = [];
 			for ($j = 0; $j < count($job_list->output); $j++) {
+				if (empty($job_list->output[$j])) {
+					continue;
+				}
 				$jobs[$directors->output[$i]][] = $job_list->output[$j];
 
 				// limit per director, not for entire elements
