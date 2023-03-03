@@ -22,8 +22,6 @@
 
 namespace Baculum\API\Modules;
 
-use Baculum\API\Modules\Database;
-
 /**
  * Object manager module.
  *
