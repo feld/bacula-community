@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\Common\Modules\Errors\JobError;
 use Baculum\Common\Modules\Logging;
@@ -32,11 +33,15 @@ use Prado\Prado;
  * @category API
  * @package Baculum API
  */
-class RestoreRun extends BaculumAPIServer {
+class RestoreRun extends ConsoleOutputPage {
 
 	public function create($params) {
 		$misc = $this->getModule('misc');
 		$jobid = property_exists($params, 'id') && $misc->isValidInteger($params->id) ? intval($params->id) : null;
+		$out_format = parent::OUTPUT_FORMAT_RAW; // default output format
+		if ($this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output'])) {
+			$out_format = $this->Request['output'];
+		}
 		$client = null;
 		if (property_exists($params, 'clientid')) {
 			$clientid = intval($params->clientid);
@@ -180,6 +185,35 @@ class RestoreRun extends BaculumAPIServer {
 
 		$restore = $this->getModule('bconsole')->bconsoleCommand($this->director, $command);
 
+		if ($restore->exitcode == 0) {
+			// exit code OK, check output
+			$queued_jobid = $this->getModule('misc')->findJobIdStartedJob($restore->output);
+			if (is_null($queued_jobid)) {
+				// new jobid is not detected, error
+				$this->error = JobError::ERROR_INVALID_PROPERTY;
+				$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
+			} else {
+				// new jobid is detected, check output format
+				if ($out_format == parent::OUTPUT_FORMAT_JSON) {
+					// JSON format, return output and new jobid
+					$this->output = $this->getJSONOutput([
+						'output' => $restore->output,
+						'queued_jobid' => $queued_jobid
+					]);
+				} elseif ($out_format == parent::OUTPUT_FORMAT_RAW) {
+					// RAW format, return output
+					$this->output = $this->getRawOutput([
+						'output' => $restore->output
+					]);
+				}
+				$this->error = JobError::ERROR_NO_ERRORS;
+			}
+		} else {
+			// exit code WRONG
+			$this->output = implode(PHP_EOL, $restore->output) . ' Exitcode => ' . $restore->exitcode;
+			$this->error = JobError::ERROR_WRONG_EXITCODE;
+		}
+
 		// remove temporary plugin files
 		for ($i = 0; $i < count($plugin_files); $i++) {
 			if (!unlink($plugin_files[$i])) {
@@ -189,9 +223,34 @@ class RestoreRun extends BaculumAPIServer {
 				);
 			}
 		}
+	}
 
-		$this->output = $restore->output;
-		$this->error = $restore->exitcode;
+	/**
+	 * Get raw output from restore run command.
+	 * This method will not be called without param.
+	 *
+	 * @param array output parameter
+	 * @return array restore command output
+	 */
+	protected function getRawOutput($params = []) {
+		// Not too much to do here. Required by abstract method.
+		return $params['output'];
+	}
+
+	/**
+	 * Get parsed JSON output from run restore run command.
+	 * This method will not be called without params.
+	 *
+	 * @param array output parameter and queued jobid
+	 * @return array output and jobid queued job
+	 */
+	protected function getJSONOutput($params = []) {
+		$output = implode(PHP_EOL, $params['output']);
+		$jobid = (int) $params['queued_jobid'];
+		return [
+			'output' => $output,
+			'jobid' => $jobid
+		];
 	}
 }
 ?>

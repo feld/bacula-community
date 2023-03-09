@@ -2452,6 +2452,9 @@
 				},
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/Output"
+					},
+					{
 						"name": "id",
 						"in": "body",
 						"description": "Job identifier (for full restore)",
