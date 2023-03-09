@@ -171,6 +171,11 @@ class Bconsole extends APIModule {
 	private function prepareResult(array $output, $exitcode, $bconsole_command) {
 		array_pop($output); // deleted 'quit' bconsole command
 		$out = $output;
+		if (strpos($bconsole_command, PHP_EOL) !== false) {
+			// for multiline commands take the first command line
+			$bc = explode(PHP_EOL, $bconsole_command);
+			$bconsole_command = $bc[0];
+		}
 		for($i = 0; $i < count($out); $i++) {
 			if(strstr($out[$i], $bconsole_command) == false) {
 				unset($output[$i]);
