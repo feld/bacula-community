@@ -209,8 +209,8 @@ class JobRun extends ConsoleOutputPage {
 			}
 		} else {
 			// exit code WRONG
-			$this->output = $run->output;
-			$this->error = JobError::ERROR_WRONG_EXITCODE . ' Exitcode => ' . $run->exitcode;
+			$this->output = implode(PHP_EOL, $run->output) . ' Exitcode => ' . $run->exitcode;
+			$this->error = JobError::ERROR_WRONG_EXITCODE;
 		}
 	}
 
