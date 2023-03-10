@@ -61,5 +61,22 @@ abstract class ConsoleOutputQueryPage extends ConsoleOutputPage {
 		}
 		return $ret;
 	}
+
+	/**
+	 * Analyze the query command output for errors.
+	 *
+	 * @param array $output query command raw output
+	 * @return bool true if error found, otherwise false
+	 */
+	protected function isError(array $output) {
+		$error = false;
+		while (count($output) > 0 && preg_match('/^[\w\d]+=/', $output[0]) === 0  && strpos($output[0], '[DE') === false) {
+			array_shift($output);
+		}
+		if (count($output) > 0 && (stripos($output[0], 'error') !== false || strpos($output[0], '[DE') !== false)) {
+			$error = true;
+		}
+		return $error;
+	}
 }
 ?>

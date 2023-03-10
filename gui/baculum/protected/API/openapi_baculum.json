@@ -8632,6 +8632,15 @@
 					},
 					{
 						"$ref": "#/components/parameters/Output"
+					},
+					{
+						"name": "server",
+						"in": "query",
+						"required": true,
+						"description": "VMware server name",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -8682,6 +8691,61 @@
 					},
 					{
 						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
+		"/api/v2/plugins/vsphere/{clientid}/restore-hosts": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "VMware vSphere restore host list",
+				"description": "VMware vSphere restore host list.",
+				"responses": {
+					"200": {
+						"description": "List of VMware vSphere restore hosts",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"restore_host": {
+														"description": "VMware vSphere restore host",
+														"type": "string"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 150, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					},
+					{
+						"name": "server",
+						"in": "query",
+						"required": true,
+						"description": "VMware server name",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
