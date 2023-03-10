@@ -81,11 +81,12 @@ class PluginVSphereListRestoreHosts extends ConsoleOutputQueryPage {
 		}
 
 		if ($out->exitcode !== 0) {
+			$output = implode(PHP_EOL, $out->output);
 			$out->error = PluginVSphereError::ERROR_EXECUTING_PLUGIN_QUERY_COMMAND;
-			$out->output = PluginVSphereError::MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND . implode(PHP_EOL, $out->output);
+			$out->output = PluginVSphereError::MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND . $output;
 			$this->getModule('logging')->log(
 				Logging::CATEGORY_EXECUTE,
-				$out->output . ", Error={$out->error}"
+				$output . ", Error={$out->error}"
 			);
 		} else {
 			$out->error = BconsoleError::ERROR_NO_ERRORS;
