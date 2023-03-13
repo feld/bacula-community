@@ -111,6 +111,8 @@ class PluginVSphereListServers extends ConsoleOutputQueryPage {
 				'Wrong output from vSphere RAW server list: ' . implode(PHP_EOL, $ret->output)
 			);
 			$ret->output = []; // don't provide errors to output, only in logs
+		} elseif ($this->isError($ret->output)) {
+			$ret->exitcode = PluginVSphereError::ERROR_EXECUTING_PLUGIN_QUERY_COMMAND;
 		}
 		return $ret;
 	}
