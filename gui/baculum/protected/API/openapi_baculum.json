@@ -8691,6 +8691,15 @@
 					},
 					{
 						"$ref": "#/components/parameters/Output"
+					},
+					{
+						"name": "restore_host",
+						"in": "query",
+						"required": false,
+						"description": "VMware restore host",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
