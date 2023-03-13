@@ -60,12 +60,17 @@ class PluginVSphereListHosts extends ConsoleOutputQueryPage {
 			return;
 		}
 
+		$misc = $this->getModule('misc');
 		$out_format = ConsoleOutputPage::OUTPUT_FORMAT_RAW;
 		if ($this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output'])) {
 			$out_format = $this->Request['output'];
 		}
+		$server = $this->Request->contains('server') && $misc->isValidName($this->Request['server'])? $this->Request['server'] : '';
 
-		$plugin = 'vsphere: ';
+		$plugin = 'vsphere:';
+		if (!empty($server)) {
+			$plugin .= ' server="' . $server . '"';
+		}
 		$out = new \StdClass;
 		$out->output = [];
 		$params = ['client' => $client, 'plugin' => $plugin];
@@ -77,7 +82,7 @@ class PluginVSphereListHosts extends ConsoleOutputQueryPage {
 
 		if ($out->exitcode !== 0) {
 			$out->error = PluginVSphereError::ERROR_EXECUTING_PLUGIN_QUERY_COMMAND;
-			$out->output = PluginVSphereError::MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND . $out->output;
+			$out->output = PluginVSphereError::MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND . implode(PHP_EOL, $out->output);
 			$this->getModule('logging')->log(
 				Logging::CATEGORY_EXECUTE,
 				$out->output . ", Error={$out->error}"
@@ -144,8 +149,8 @@ class PluginVSphereListHosts extends ConsoleOutputQueryPage {
 		for ($i = 0; $i < count($output); $i++) {
 			if (preg_match('/^host=/', $output[$i]) === 1 && isset($output[$i+1])) {
 				$out[] = [
-					$output[$i],
-					$output[$i+1]
+					$output[$i],   // vm
+					$output[$i+1]  // moref
 				];
 			}
 		}
