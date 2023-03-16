@@ -81,6 +81,7 @@ BDB *db_init_database(JCR *jcr, const char *db_driver, const char *db_name,
         if (mdb)  mdb->bdb_thread_cleanup()
 
 /* sql.c */
+int db_jobids_handler(void *ctx, int num_fields, char **row);
 int db_mint64_handler(void *ctx, int num_fields, char **row);
 int db_int64_handler(void *ctx, int num_fields, char **row);
 int db_strtime_handler(void *ctx, int num_fields, char **row);
@@ -108,6 +109,9 @@ void bdb_disable_batch_insert(bool disable);
 void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
 #define db_get_client_pool(jcr, mdb, results)    \
    mdb->bdb_get_client_pool(jcr, results)
+
+#define db_get_jobids(jcr, mdb, jobids, ret, append)   \
+           mdb->bdb_get_jobids(jobids, ret, append)
 
 /* sql_create.c */
 #define db_create_log_record(jcr, mdb, jobid, mtime, msg)        \
@@ -263,6 +267,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
 #define db_get_job_statistics(jcr, mdb, jr)      \
            mdb->bdb_get_job_statistics(jcr, jr)
 /* sql_list.c */
+#define db_list_jobs_for_file(jcr, mdb, cli, fname, result_handler, ctx, type) \
+           mdb->bdb_list_jobs_for_file(jcr, cli, fname, result_handler, ctx, type)
 #define db_list_pool_records(jcr, mdb, pr, sendit, ctx, type) \
            mdb->bdb_list_pool_records(jcr, pr, sendit, ctx, type)
 #define db_list_job_records(jcr, mdb, jr, sendit, ctx, type) \

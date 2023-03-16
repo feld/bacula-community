@@ -775,10 +775,10 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
 
          if (jcr->job->PurgeMigrateJob) {
             /* Purge old Job record */
-            purge_jobs_from_catalog(ua, old_jobid);
+            purge_jobs_from_catalog(ua, old_jobid); // JobId is safe
          } else {
             /* Purge all old file records, but leave Job record */
-            purge_files_from_jobs(ua, old_jobid);
+            purge_files_from_jobs(ua, old_jobid); // JobId is safe
          }
 
          free_ua_context(ua);

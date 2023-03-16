@@ -797,6 +797,13 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
              "FROM Job %s %s ORDER BY StartTime %s,JobId %s %s",
            join, where, order, order, limit);
       break;
+   case LAST_JOBS:
+      Mmsg(cmd,
+           "SELECT JobId,Client1.Name as Client,Job.Name as Name,StartTime,Level as "
+           "JobLevel,JobFiles,JobBytes "
+           "FROM Client AS Client1 JOIN Job USING (ClientId) %s %s AND JobStatus IN ('T','W') "
+           "ORDER BY StartTime %s %s", join, where, order, limit);
+
    default:
       break;
    }
@@ -1132,6 +1139,57 @@ void BDB::bdb_list_tag_records(JCR *jcr, TAG_DBR *tag, DB_LIST_HANDLER *result_h
       Dmsg1(DT_SQL|50, "q=%s\n", tmp.c_str());
       bdb_list_sql_query(jcr, "tag", tmp.c_str(), result_handler, ctx, 0, type);
    }
+   bdb_unlock();
+}
+
+/* List all file records from a job
+ * "deleted" values are described just below
+ */
+void BDB::bdb_list_jobs_for_file(JCR *jcr, const char *client, const char *fname, DB_LIST_HANDLER *sendit, void *ctx,  e_list_type type)
+{
+   if (!client || !*client || !fname || !*fname) {
+      return;
+   }
+   const char *concat="Path.Path||File.Filename";
+
+   if (bdb_get_type_index() == SQL_TYPE_MYSQL) {
+      concat = " CONCAT(Path.Path,File.Filename) ";
+   }
+
+   bdb_lock();
+   /* Get optional filters for the SQL query */
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                DB_ACL_BIT(DB_ACL_CLIENT) |
+                                DB_ACL_BIT(DB_ACL_FILESET), false);
+
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_FILESET)) : "";
+   
+   int len = strlen(fname);
+   char *esc = (char *)malloc(len * 2 + 1);
+   bdb_escape_string(jcr, esc, (char *)fname, len);
+
+   len = strlen(client);
+   char *esc2 = (char *)malloc(len * 2 + 1);
+   bdb_escape_string(jcr, esc2, (char *)client, len);
+
+   Mmsg(cmd,    "SELECT Job.JobId as JobId,"
+        "%s as Name, "          // Concat of the filename
+        "StartTime, Type as JobType, JobStatus,JobFiles,JobBytes "
+        "FROM Client JOIN Job USING (ClientId) JOIN File USING (JobId) JOIN Path USING (PathId) %s "
+        "WHERE Client.Name = '%s' "
+        "AND File.FileIndex > 0 "
+        "AND File.Filename='%s' %s ORDER BY StartTime DESC LIMIT 20", concat, join, esc2, esc, where);
+
+   free(esc);
+   free(esc2);
+   Dmsg1(DT_SQL|50, "q=%s\n", cmd);
+   if (!QueryDB(jcr, cmd)) {
+      goto bail_out;
+   }
+
+   list_result(jcr, this, "job", sendit, ctx, HORZ_LIST);
+bail_out:
+   sql_free_result();
    bdb_unlock();
 }
 

@@ -57,9 +57,9 @@ dbid_list::~dbid_list()
    free(DBId); 
 } 
  
-/* 
- * Called here to retrieve an resource name (e.g. Storage name) from the database 
- */ 
+/*
+ * Called here to retrieve a resource name (e.g. Storage name) from the database
+ */
 int db_name_handler(void *ctx, int num_fields, char **row) 
 {
    char *name = (char *)ctx;
@@ -71,6 +71,21 @@ int db_name_handler(void *ctx, int num_fields, char **row)
 
    bstrncpy(name, row[0], MAX_NAME_LENGTH);
 
+   return 0;
+}
+
+/*
+ * Called here to retrieve a list of jobid x,y,z from the database
+ */
+int db_jobids_handler(void *ctx, int num_fields, char **row) 
+{
+   POOLMEM **ret = (POOLMEM **)ctx;
+   if (row[0]) {
+      if (**ret) {
+         pm_strcat(ret, ",");
+      }
+      pm_strcat(ret, row[0]);
+   }
    return 0;
 }
 
@@ -226,7 +241,6 @@ BDB::~BDB()
  */
 char *BDB::get_acls(int tables, bool where /* use WHERE or AND */)
 {
-   POOL_MEM tmp;
    pm_strcpy(acl_where, "");
 
    for (int i=0 ;  i < DB_ACL_LAST; i++) {
@@ -236,6 +250,58 @@ char *BDB::get_acls(int tables, bool where /* use WHERE or AND */)
       }
    }
    return acl_where;
+}
+
+char *BDB::bdb_get_jobids(const char *jobids, POOLMEM **ret, bool append)
+{
+   if (!ret || !*ret) {
+      return NULL;
+   }
+   
+   if (!append) {     // Return empty list if append = false
+      pm_strcpy(ret, "");
+   }
+
+   if (!jobids || !*jobids || !is_a_number_list(jobids)) {
+      return *ret;
+   }
+
+   bdb_lock();
+   /* Get optional filters for the SQL query */
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                DB_ACL_BIT(DB_ACL_CLIENT) |
+                                DB_ACL_BIT(DB_ACL_FILESET), false);
+
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                                   DB_ACL_BIT(DB_ACL_FILESET)) : "";
+   /* No filters, no need to run the query */
+   if (!*where && !*join) {
+      if (*ret[0]) {
+         pm_strcat(ret, ",");
+      }
+      pm_strcat(ret, jobids);
+      goto bail_out;
+   }
+   Mmsg(cmd, "SELECT Job.JobId as JobId "
+        "FROM Job %s WHERE JobId IN (%s%s%s) %s ORDER BY JobTDate ASC",
+        join,
+        *ret /* previous list */,
+        *ret[0] ? "," : "" /* comma to separate from the new list */,
+        jobids,
+        where);
+
+   /* We start from a fresh list, previous entries will be listed */
+   pm_strcpy(ret, "");
+
+   Dmsg1(50|DT_SQL, "q=%s\n", cmd);
+   if(!bdb_sql_query(cmd, db_jobids_handler, ret)) {
+      goto bail_out;
+   }
+
+bail_out:
+   sql_free_result();
+   bdb_unlock();
+   return *ret;
 }
 
 /* Create the JOIN string that will help to filter queries results */

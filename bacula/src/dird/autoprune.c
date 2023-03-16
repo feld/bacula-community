@@ -181,7 +181,7 @@ void prune_volumes(JCR *jcr, bool InChanger, MEDIA_DBR *mr,
          count = get_prune_list_for_volume(ua, &lmr, &prune_list);
          Dmsg1(100, "Num pruned = %d\n", count);
          if (count != 0) {
-            purge_job_list_from_catalog(ua, prune_list);
+            purge_job_list_from_catalog(ua, prune_list); /* JobId list not coming from outside */
             prune_list.num_ids = 0;             /* reset count */
          }
          if (!is_volume_purged(ua, &lmr)) {

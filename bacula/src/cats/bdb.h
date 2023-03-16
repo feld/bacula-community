@@ -214,6 +214,7 @@ public:
    bool bdb_create_batch_file_attributes_record(JCR *jcr, ATTR_DBR *ar);
 
    /* sql_get.c */
+   char *bdb_get_jobids(const char *jobids, POOLMEM **ret, bool append);
    bool bdb_get_file_record(JCR *jcr, JOB_DBR *jr, FILE_DBR *fdbr);
    bool bdb_get_snapshot_record(JCR *jcr, SNAPSHOT_DBR *snap);
    bool bdb_get_volume_jobids(JCR *jcr,
@@ -256,6 +257,7 @@ public:
 /* sql_list.c */
    void bdb_list_pool_records(JCR *jcr, POOL_DBR *pr, DB_LIST_HANDLER sendit, void *ctx, e_list_type type);
    alist *bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER sendit, void *ctx, e_list_type type);
+   void bdb_list_jobs_for_file(JCR *jcr, const char *client, const char *fname, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER sendit, void *ctx);
    void bdb_list_files_for_job(JCR *jcr, uint32_t jobid, int deleted, DB_LIST_HANDLER sendit, void *ctx);
    void bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);

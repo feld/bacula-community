@@ -730,10 +730,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          if (!has_value(ua, i)) {
             return 0;
          }
-         if (*rx->JobIds != 0) {
-            pm_strcat(rx->JobIds, ",");
-         }
-         pm_strcat(rx->JobIds, ua->argv[i]);
+         db_get_jobids(ua->jcr, ua->db, ua->argv[i], &rx->JobIds, true  /* append the result */);
          done = true;
          break;
       case 1:                            /* current */
@@ -825,7 +822,6 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
 
    /* If choice not already made above, prompt */
    for ( ; !done; ) {
-      char *fname;
       int len;
       bool gui_save;
       db_list_ctx jobids;
@@ -843,11 +839,18 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             ua->error_msg(_("SQL query not authorized.\n"));
             return 0;
          }
-         gui_save = ua->jcr->gui;
-         ua->jcr->gui = true;
-         db_list_sql_query(ua->jcr, ua->db, "job", uar_list_jobs, prtit, ua, 1, HORZ_LIST);
-         ua->jcr->gui = gui_save;
-         done = false;
+         {
+            memset(&jr, 0, sizeof(jr));
+            jr.limit=20;
+            jr.JobType = 'B';
+            jr.order = 1;       // DESC
+            gui_save = ua->jcr->gui;
+            ua->jcr->gui = true;
+            /* db_list_job_records() has builtin console filters */
+            db_list_job_records(ua->jcr, ua->db, &jr, prtit, ua, LAST_JOBS);
+            ua->jcr->gui = gui_save;
+            done = false;
+         }
          break;
       case 1:                         /* list where a file is saved */
          if (!get_client_name(ua, rx)) {
@@ -856,14 +859,9 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          if (!get_cmd(ua, _("Enter Filename (no path):"))) {
             return 0;
          }
-         len = strlen(ua->cmd);
-         fname = (char *)malloc(len * 2 + 1);
-         db_escape_string(ua->jcr, ua->db, fname, ua->cmd, len);
-         Mmsg(rx->query, uar_file[db_get_type_index(ua->db)], rx->ClientName, fname);
-         free(fname);
          gui_save = ua->jcr->gui;
          ua->jcr->gui = true;
-         db_list_sql_query(ua->jcr, ua->db, "job", rx->query, prtit, ua, 1, HORZ_LIST);
+         db_list_jobs_for_file(ua->jcr, ua->db, rx->ClientName, ua->cmd, prtit, ua, HORZ_LIST);
          ua->jcr->gui = gui_save;
          done = false;
          break;
@@ -871,7 +869,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          if (!get_cmd(ua, _("Enter JobId(s), comma separated, to restore: "))) {
             return 0;
          }
-         pm_strcpy(rx->JobIds, ua->cmd);
+         db_get_jobids(ua->jcr, ua->db, ua->cmd, &rx->JobIds, false /* clear */);
          break;
       case 3:                         /* Enter an SQL list command */
          if (!acl_access_ok(ua, Command_ACL, NT_("sqlquery"), 8)) {
@@ -923,6 +921,9 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             if (len == 0) {
                break;
             }
+            if (ua->cmd[0] == '?') {
+               continue;        // We do not want to accept a SQL table here
+            }
             insert_one_file_or_dir(ua, rx, date, false);
          }
          return 2;
@@ -945,6 +946,9 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             len = strlen(ua->cmd);
             if (len == 0) {
                break;
+            }
+            if (ua->cmd[0] == '?') {
+               continue;        // We do not want to accept a SQL table here
             }
             insert_one_file_or_dir(ua, rx, date, false);
          }
@@ -976,15 +980,19 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
          if (*rx->JobIds != 0) {
             ua->send_msg(_("You have already selected the following JobIds: %s\n"),
                rx->JobIds);
+
          } else if (get_cmd(ua, _("Enter JobId(s), comma separated, to restore: "))) {
-            if (*rx->JobIds != 0 && *ua->cmd) {
-               pm_strcat(rx->JobIds, ",");
+            if (*ua->cmd == '.') {
+               *rx->JobIds = 0;
+               return 0;                 /* nothing entered, return */
             }
-            pm_strcat(rx->JobIds, ua->cmd);
-         }
-         if (*rx->JobIds == 0 || *rx->JobIds == '.') {
-            *rx->JobIds = 0;
-            return 0;                 /* nothing entered, return */
+            db_get_jobids(ua->jcr, ua->db, ua->cmd, &rx->JobIds, false /* clear */);
+            if (*rx->JobIds == 0) {
+               ua->error_msg(_("No JobId selected\n"));
+               return 0;                 /* nothing entered, return */
+            }
+            ua->send_msg(_("You have selected the following JobIds: %s\n"),
+                         rx->JobIds);
          }
          if (!have_date) {
             bstrutime(date, sizeof(date), now);
@@ -1006,6 +1014,9 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             /* Add trailing slash to end of directory names */
             if (ua->cmd[0] != '<' && !IsPathSeparator(ua->cmd[len-1])) {
                strcat(ua->cmd, "/");
+            }
+            if (ua->cmd[0] == '?') {
+               continue;        // We do not want to accept a SQL table here
             }
             insert_one_file_or_dir(ua, rx, date, true);
          }
@@ -1113,7 +1124,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             }
 
             //TODO Validation if id entered matches one from list above would be nice...
-            if (!get_pint(ua, "Enter ID of Object to be restored: ")) {
+            if (!get_pint(ua, _("Enter ID of Object to be restored: "))) {
                ua->info_msg(_("Selection aborted, nothing done.\n"));
                break;
             }
@@ -1350,14 +1361,32 @@ bool insert_table_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *table)
 {
    component_file_ctx ctx;
    strip_trailing_junk(table);
-   Mmsg(rx->query, uar_jobid_fileindex_from_table, table);
+   if (strcasecmp(table, "file") == 0 || !is_name_valid(table, NULL, "")) {
+      ua->error_msg(_("Incorrect table name\n"));
+      return false;
+   }
+   bool ret;
+   db_lock(ua->db);
+   {
+      /* Get optional filters for the SQL query */
+      const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                           DB_ACL_BIT(DB_ACL_CLIENT) |
+                                           DB_ACL_BIT(DB_ACL_FILESET), true);
 
-   rx->found = false;
+      const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
+                                                              DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                                              DB_ACL_BIT(DB_ACL_FILESET)) : "";
 
-   /* Find and insert jobid and File Index. The JobIds are stored in rx->JobIds */
-   if (!db_sql_query(ua->db, rx->query, jobid_fileindex_handler, (void *)rx)) {
+      Mmsg(rx->query, uar_jobid_fileindex_from_table, table, join, where);
+      rx->found = false;
+
+      /* Find and insert jobid and File Index. The JobIds are stored in rx->JobIds */
+      ret = db_sql_query(ua->db, rx->query, jobid_fileindex_handler, (void *)rx);
+   }
+   db_unlock(ua->db);
+   if (!ret) {
       ua->error_msg(_("Query failed: %s. ERR=%s\n"),
-         rx->query, db_strerror(ua->db));
+                    rx->query, db_strerror(ua->db));
    }
    if (!rx->found) {
       ua->error_msg(_("No table found: %s\n"), table);

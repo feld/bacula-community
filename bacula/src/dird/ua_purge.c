@@ -37,13 +37,13 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char *job);
 int truncate_cmd(UAContext *ua, const char *cmd);
 
 static const char *select_jobsfiles_from_client =
-   "SELECT JobId FROM Job "
-   "WHERE ClientId=%s "
+   "SELECT JobId FROM Job %s "
+   "WHERE ClientId=%s %s "
    "AND PurgedFiles=0";
 
 static const char *select_jobs_from_client =
-   "SELECT JobId, PurgedFiles FROM Job "
-   "WHERE ClientId=%s";
+   "SELECT JobId, PurgedFiles FROM Job %s "
+   "WHERE ClientId=%s %s";
 
 /*
  *   Purge records from database
@@ -105,9 +105,11 @@ int purge_cmd(UAContext *ua, const char *cmd)
       case 0:                         /* Job */
       case 1:                         /* JobId */
          if (get_job_dbr(ua, &jr)) {
-            char jobid[50];
-            edit_int64(jr.JobId, jobid);
-            purge_files_from_jobs(ua, jobid);
+            if (acl_access_ok(ua, Job_ACL, jr.Name)) {
+               char jobid[50];
+               edit_int64(jr.JobId, jobid);
+               purge_files_from_jobs(ua, jobid);
+            }
          }
          return 1;
       case 2:                         /* client */
@@ -233,9 +235,22 @@ static int purge_files_from_client(UAContext *ua, CLIENT *client)
    ua->send_events("DC0001", EVENTS_TYPE_COMMAND, "purge files client=%s", cr.Name);
    ua->info_msg(_("Begin purging files for Client \"%s\"\n"), cr.Name);
 
-   Mmsg(query, select_jobsfiles_from_client, edit_int64(cr.ClientId, ed1));
-   Dmsg1(050, "select sql=%s\n", query.c_str());
-   db_sql_query(ua->db, query.c_str(), file_delete_handler, (void *)&del);
+   db_lock(ua->db);
+   {
+      /* Get optional filters for the SQL query */
+      const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                           DB_ACL_BIT(DB_ACL_CLIENT) |
+                                           DB_ACL_BIT(DB_ACL_FILESET), false);
+
+      const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
+                                                              DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                                              DB_ACL_BIT(DB_ACL_FILESET)) : "";
+
+      Mmsg(query, select_jobsfiles_from_client, join, edit_int64(cr.ClientId, ed1), where);
+      Dmsg1(050, "select sql=%s\n", query.c_str());
+      db_sql_query(ua->db, query.c_str(), file_delete_handler, (void *)&del);
+   }
+   db_unlock(ua->db);
 
    purge_files_from_job_list(ua, del);
 
@@ -283,24 +298,40 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char* job)
    del.JobId = (JobId_t *)malloc(sizeof(JobId_t) * del.max_ids);
    del.PurgedFiles = (char *)malloc(del.max_ids);
 
+   /* We filter the JobId list with ACL console if any */
+   db_lock(ua->db);
+   {
+      /* Get optional filters for the SQL query */
+      const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                           DB_ACL_BIT(DB_ACL_CLIENT) |
+                                           DB_ACL_BIT(DB_ACL_FILESET), false);
+
+      const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                                              DB_ACL_BIT(DB_ACL_FILESET)) : "";
+
+      if (job) {
+         /* Limit purged jobs to specified job's name */
+         char esc[MAX_ESCAPE_NAME_LENGTH];
+         db_escape_string(ua->jcr, ua->jcr->db, esc, job, strlen(job));
+         Mmsg(query, "SELECT JobId,PurgedFiles FROM Job %s WHERE ClientId=%s AND Name='%s' %s",
+              join, edit_int64(cr.ClientId, ed1), esc, where);
+
+      } else {
+         Mmsg(query, select_jobs_from_client, join, edit_int64(cr.ClientId, ed1), where);
+      }
+   }
+   db_unlock(ua->db);
 
    if (job) {
-      /* Limit purged jobs to specified job's name */
-      char esc[MAX_ESCAPE_NAME_LENGTH];
-      db_escape_string(ua->jcr, ua->jcr->db, esc, job, strlen(job));
-      Mmsg(query, "SELECT JobId,PurgedFiles FROM Job WHERE ClientId=%s AND Name='%s'",
-           edit_int64(cr.ClientId, ed1), esc);
       ua->info_msg(_("Begin purging jobs \"%s\" from Client \"%s\"\n"), job, cr.Name);
-
    } else {
-      Mmsg(query, select_jobs_from_client, edit_int64(cr.ClientId, ed1));
       ua->info_msg(_("Begin purging jobs from Client \"%s\"\n"), cr.Name);
    }
-
+   
    Dmsg1(150, "select sql=%s\n", query.c_str());
    db_sql_query(ua->db, query.c_str(), job_delete_handler, (void *)&del);
 
-   purge_job_list_from_catalog(ua, del);
+   purge_job_list_from_catalog(ua, del); /* JobId list secured */
 
    if (del.num_del == 0) {
       ua->warning_msg(_("No Jobs found for client %s to purge from %s catalog.\n"),
@@ -319,9 +350,8 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char* job)
    return 1;
 }
 
-
 /*
- * Remove File records from a list of JobIds
+ * Remove File records from a list of JobIds. Jobs must be secured.
  */
 void purge_files_from_jobs(UAContext *ua, char *jobs)
 {
@@ -361,6 +391,7 @@ void purge_files_from_jobs(UAContext *ua, char *jobs)
 /*
  * Delete jobs (all records) from the catalog in groups of 1000
  *  at a time.
+ * The JobId list must be secured when entering here
  */
 void purge_job_list_from_catalog(UAContext *ua, del_ctx &del)
 {
@@ -471,6 +502,8 @@ void upgrade_copies(UAContext *ua, char *jobs)
 
 /*
  * Remove all records from catalog for a list of JobIds
+ * The code in tools/dbcheck.c has to be updated as well
+ * jobs must be secured.
  */
 void purge_jobs_from_catalog(UAContext *ua, char *jobs)
 {
@@ -571,13 +604,24 @@ bool purge_jobs_from_volume(UAContext *ua, MEDIA_DBR *mr, bool force)
       jobids = lst.list;
    }
 
+   /* We filter out the list of JobId using the one we are allowed by ACL */
+   jobids = db_get_jobids(ua->jcr, ua->db, jobids, query.handle(), false);
+
+   /* Get the right count of job (count the number of , + 1) */
+   i = (*jobids == 0) ? 1 : 0;
+   for (char *p = jobids; *p ; p++) {
+      if (*p == ',') {
+         i++;
+      }
+   }
+   
    if (*jobids) {
       /* Keep track of this important event */
       ua->send_events("DC0003", EVENTS_TYPE_COMMAND, "purge volume=%s", mr->VolumeName);
 
-      purge_jobs_from_catalog(ua, jobids);
+      purge_jobs_from_catalog(ua, jobids); /* JobId list secured */
       ua->info_msg(_("%d Job%s on Volume \"%s\" purged from catalog.\n"),
-                   lst.count, lst.count<=1?"":"s", mr->VolumeName);
+                   i, i<=1?"":"s", mr->VolumeName);
    }
    purged = is_volume_purged(ua, mr, force);
 

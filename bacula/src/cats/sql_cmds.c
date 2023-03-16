@@ -101,13 +101,6 @@ const char *create_delindex = "CREATE INDEX DelInx1 ON DelCandidates (JobId)";
 const char *uar_count_files =
    "SELECT JobFiles FROM Job WHERE JobId=%s";
 
-/* List last 20 Jobs */
-const char *uar_list_jobs =
-   "SELECT JobId,Client.Name as Client,Job.Name as Name,StartTime,Level as "
-   "JobLevel,JobFiles,JobBytes "
-   "FROM Client,Job WHERE Client.ClientId=Job.ClientId AND JobStatus IN ('T','W') "
-   "AND Type='B' ORDER BY StartTime DESC LIMIT 20";
-
 const char *uar_print_jobs = 
    "SELECT DISTINCT JobId,Level,JobFiles,JobBytes,StartTime,VolumeName"
    " FROM Job JOIN JobMedia USING (JobId) JOIN Media USING (MediaId) "
@@ -248,9 +241,11 @@ const char *uar_jobids_fileindex =
    "AND Path.PathId=File.PathId "
    "ORDER BY Job.StartTime DESC LIMIT 1";
 
-/* Query to get list of files from table -- presuably built by an external program */
+/* Query to get list of files from table -- presuably built by an external program
+ * we expect filters on join and where
+ */
 const char *uar_jobid_fileindex_from_table = 
-   "SELECT JobId, FileIndex FROM %s ORDER BY JobId, FileIndex ASC";
+   "SELECT JobId, FileIndex FROM %s %s %s ORDER BY JobId, FileIndex ASC"; 
 
 /* Get the list of the last recent version per Delta with a given
  *  jobid list. This is a tricky part because with SQL the result of:
@@ -553,40 +548,6 @@ const char *uap_upgrade_copies_oldest_job[] =
  
 /* ======= ua_restore.c ====== */
 
-/* List Jobs where a particular file is saved */
-const char *uar_file[] =
-{
-   /* MySQL */
-   "SELECT Job.JobId as JobId,"
-   "CONCAT(Path.Path,File.Filename) as Name, "
-   "StartTime,Type as JobType,JobStatus,JobFiles,JobBytes "
-   "FROM Client,Job,File,Path WHERE Client.Name='%s' "
-   "AND Client.ClientId=Job.ClientId "
-   "AND Job.JobId=File.JobId AND File.FileIndex > 0 "
-   "AND Path.PathId=File.PathId "
-   "AND File.Filename='%s' ORDER BY StartTime DESC LIMIT 20",
- 
-   /* PostgreSQL */
-   "SELECT Job.JobId as JobId,"
-   "Path.Path||File.Filename as Name, "
-   "StartTime,Type as JobType,JobStatus,JobFiles,JobBytes "
-   "FROM Client,Job,File,Path WHERE Client.Name='%s' "
-   "AND Client.ClientId=Job.ClientId "
-   "AND Job.JobId=File.JobId AND File.FileIndex > 0 "
-   "AND Path.PathId=File.PathId "
-   "AND File.Filename='%s' ORDER BY StartTime DESC LIMIT 20",
- 
-   /* SQLite */
-   "SELECT Job.JobId as JobId,"
-   "Path.Path||File.Filename as Name, "
-   "StartTime,Type as JobType,JobStatus,JobFiles,JobBytes "
-   "FROM Client,Job,File,Path WHERE Client.Name='%s' "
-   "AND Client.ClientId=Job.ClientId "
-   "AND Job.JobId=File.JobId AND File.FileIndex > 0 "
-   "AND Path.PathId=File.PathId "
-   "AND File.Filename='%s' ORDER BY StartTime DESC LIMIT 20"
-}; 
- 
 const char *uar_create_temp[] =
 {
    /* MySQL */

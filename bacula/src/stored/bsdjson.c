@@ -343,6 +343,7 @@ static void display_transfer_priority(HPKT &hpkt)
       }
    }
 }
+
 /*
  * Dump out all resources in json format.
  * Note!!!! This routine must be in this file rather

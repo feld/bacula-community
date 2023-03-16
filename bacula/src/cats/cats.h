@@ -676,7 +676,8 @@ enum e_list_type {
    ARG_LIST,                    /* key1=v1 key2=v2 key3=v3 */
    JSON_LIST,
    FAILED_JOBS,
-   INCOMPLETE_JOBS
+   INCOMPLETE_JOBS,
+   LAST_JOBS
 };
  
 #include "bdb.h"
