@@ -77,6 +77,21 @@ Job {
 # SpoolData=yes
 }
 
+Job {
+  Name = "Slow"
+  Type = Backup
+  Client=@hostname@-fd 
+  FileSet="SimpleSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Maximum Concurrent Jobs = 10
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+  Max Run Time = 30min
+  RunBeforeJob = "sleep 5"
+# SpoolData=yes
+}
+
 
 Job {
   Name = "MonsterSave"

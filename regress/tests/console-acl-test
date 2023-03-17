@@ -1168,5 +1168,57 @@ if ! grep uk.po $fn-after > /dev/null; then
     estat=1
 fi
 
+################
+fn=$tmp/cmd6.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+run job=Slow yes
+run job=Slow yes
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-after
+cancel jobid=10 yes
+cancel all yes
+cancel
+1
+yes
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+wait
+messages
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+if ! grep "None of your jobs are running" $fn-after > /dev/null; then
+    print_debug "ERROR: Should not be able to see jobs in $fn-after"
+    estat=1
+fi
+
+if ! grep "Unauthorized command from this console for JobId=10" $fn-after > /dev/null; then
+    print_debug "ERROR: Should find Unauthorized message in $fn-after"
+    estat=1
+fi
+
+nb=`grep "Backup OK" $fn | wc -l`
+
+if [ $nb -ne 2 ]; then
+    print_debug "ERROR: Should not find canceled jobs in $fn"
+    estat=1
+fi
+
 stop_bacula
 end_test
