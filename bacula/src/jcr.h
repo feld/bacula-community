@@ -217,6 +217,16 @@ public:
    int32_t getJobType() const { return m_JobType; };
    int32_t getJobLevel() const { return m_JobLevel; };
    int32_t getJobStatus() const { return JobStatus; };
+   bool use_client() const {
+      switch (m_JobType) {
+      case JT_BACKUP:
+      case JT_RESTORE:
+      case JT_VERIFY:
+         return true;
+      default:
+         return false;
+      }
+   };
    bool no_client_used() const {
       return (m_JobLevel == L_VIRTUAL_FULL);
    };
