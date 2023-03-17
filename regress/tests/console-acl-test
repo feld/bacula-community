@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Copyright (C) 2000-2022 Kern Sibbald
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # Run a couple of tests with bconsole and console ACL
@@ -202,6 +203,7 @@ llist files jobid=1
 @$out $tmp/bvfs-$i-get_jobids.out
 .bvfs_get_jobids jobid=3
 messages
+quit
 EOF
     $bin/bconsole -c $tmp/bconsole.conf.$i < $tmp/bconcmds
 done
@@ -415,6 +417,7 @@ messages
 list jobs
 .bvfs_get_jobs client=test-bkp-fd
 messages
+quit
 EOF
 
 $bin/bconsole -c $tmp/bconsole.conf.bvfs1 < $tmp/bconcmds
@@ -452,6 +455,552 @@ if [ $? = 0 ]; then
     estat=1
 fi
 
+################################################################
+# Test restore command with different ACL
+
+fn=$tmp/restore1-org.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+1
+.
+quit
+EOF
+
+$bin/bconsole -c $bin/bconsole.conf.old < $tmp/bconcmds
+
+if ! grep Simple $fn > /dev/null
+then
+    print_debug "ERROR: Should find Simple job in $fn"
+    estat=1
+fi
+
+if ! grep test-bkp-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find test-bkp-fd job in $fn"
+    estat=1
+fi
+
+if ! grep test1-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find test1-fd job in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore1.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+1
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if grep Simple $fn > /dev/null
+then
+    print_debug "ERROR: Should not find Simple job in $fn"
+    estat=1
+fi
+
+if ! grep test-bkp-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find test-bkp-fd job in $fn"
+    estat=1
+fi
+
+if ! grep test1-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find test1-fd job in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore2.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+1
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if ! grep Simple $fn > /dev/null
+then
+    print_debug "ERROR: Should find Simple job in $fn"
+    estat=1
+fi
+
+if ! grep $HOST-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find $HOST-fd job in $fn"
+    estat=1
+fi
+
+if grep test1-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should not find test1-fd job in $fn"
+    estat=1
+fi
+
+################################################################
+# Test restore command with different ACL
+
+fn=$tmp/restore3-org.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+2
+1
+uk.po
+.
+quit
+EOF
+
+$bin/bconsole -c $bin/bconsole.conf.old < $tmp/bconcmds
+
+nb=`grep po/uk.po $fn | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Should find uk.po 2 time in $fn, not $nb"
+    estat=1
+fi
+
+if ! grep $HOST-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find $HOST-fd job in $fn"
+    estat=1
+fi
+
+# Here we have multiple clients, and we have one jobs visible for
+# the file on the default client
+fn=$tmp/restore3.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+2
+1
+uk.po
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+nb=`grep po/uk.po $fn | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Should find uk.po 1 time in $fn, not $nb"
+    estat=1
+fi
+
+if ! grep $HOST-fd $fn > /dev/null
+then
+    print_debug "ERROR: Should find $HOST-fd job in $fn"
+    estat=1
+fi
+
+################################################################
+# Here we test item 3 with custom jobid list for restore
+
+fn=$tmp/restore4-org.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+3
+1,2,3,4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+if ! grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore4.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+3
+1,2,3,4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+if ! grep "JobIds: 2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+# Here the client is automatically selected, and we have other jobs
+# the file
+fn=$tmp/restore5.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+3
+1,2,3,4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+if ! grep -E 'JobIds: 1,2$' $fn > /dev/null; then
+    print_debug "ERROR: Should  find job list in $fn"
+    estat=1
+fi
+
+
+##
+
+################################################################
+# Here we test command line option jobid= with custom jobid list for restore
+fn=$tmp/restore6-org.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore jobid=1,2,3,4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+if ! grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should find full job list in $fn"
+    estat=1
+fi
+
+################################################################
+# Here we test command line option jobid= with custom jobid list for restore
+fn=$tmp/restore6.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore jobid=1,2,3,4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+if ! grep -E 'JobIds: 2,3,4,6,7' $fn > /dev/null; then
+    print_debug "ERROR: Should not find job list in $fn"
+    estat=1
+fi
+
+# Here the client is automatically selected, and we have other jobs
+# the file
+fn=$tmp/restore7.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore jobid=1,2,3,4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+if ! grep -E 'JobIds: 1,2$' $fn > /dev/null; then
+    print_debug "ERROR: Should  find an error in $fn"
+    estat=1
+fi
+
+##
+
+################################################################
+# Here we test restore command option 11
+fn=$tmp/restore8.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+11
+test1
+/etc/
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if ! grep "No JobId selected" $fn > /dev/null; then
+    print_debug "ERROR: Should find selection list error in $fn"
+    estat=1
+fi
+
+# Here the client is automatically selected, and we have other jobs
+# the file
+fn=$tmp/restore9.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore
+11
+1,2,3,4,6,7
+$cwd/build/po/
+
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should not find full job list in $fn"
+    estat=1
+fi
+
+if ! grep -E 'JobIds: 1,2$' $fn > /dev/null; then
+    print_debug "ERROR: Should  find an error in $fn"
+    estat=1
+fi
+
+################################################################
+# Test the jobid from the command line
+fn=$tmp/restore10-org.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore jobid=1 jobid=2,3 jobid=4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+if ! grep "JobIds: 1,2,3,4,6,7" $fn > /dev/null; then
+    print_debug "ERROR: Should find full job list in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore10.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore jobid=1 jobid=2,3 jobid=4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if ! grep -E "JobIds: 1,2$" $fn > /dev/null; then
+    print_debug "ERROR: Should find small job list in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore11.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore jobid=1 jobid=2,3 jobid=4,6,7
+done
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if ! grep -E "JobIds: 2,3,4,6,7$" $fn > /dev/null; then
+    print_debug "ERROR: Should find small job list in $fn"
+    estat=1
+fi
+
+##
+
+################################################################
+# Test the jobid from the command line
+fn=$tmp/restore12-org.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+sql
+CREATE TABLE f1 AS (SELECT JobId, FileIndex FROM File);
+
+restore file=?f1 client=$HOST-fd
+no
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+nb_max=`awk '/[0-9]+ files selected to be restored./ { print $1}' $fn`
+
+if [ "$nb_max" = "" ]; then
+    print_debug "ERROR: Unable to start restore with full file table $fn"
+    estat=1
+fi
+
+# Test the jobid from the command line
+fn=$tmp/restore12-err1.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore file="?(SELECT 1, 1)" client=$HOST-fd
+no
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+nb=`awk '/[0-9]+ files selected to be restored./ { print $1}' $fn`
+
+if [ "$nb" != "" ]; then
+    print_debug "ERROR: Should not be able to start restore with bad table $fn"
+    estat=1
+fi
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Test the jobid from the command line
+fn=$tmp/restore12-err2.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore file="?file" client=$HOST-fd
+no
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+nb=`awk '/[0-9]+ files selected to be restored./ { print $1}' $fn`
+
+if [ "$nb" != "" ]; then
+    print_debug "ERROR: Should not be able to start restore with bad table $nb $fn"
+    estat=1
+fi
+
+fn=$tmp/restore12.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore file=?f1 client=$HOST-fd
+no
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+nb=`awk '/files selected to be restored./ { print $1}' $fn`
+
+if [ $nb = $nb_max ]; then
+    print_debug "ERROR: Should not be able to start restore with full table $fn"
+    estat=1
+fi
+
+fn=$tmp/restore13.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+restore file=?f1 client=$HOST-fd
+no
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+nb=`awk '/files selected to be restored./ { print $1}' $fn`
+
+if [ $nb = $nb_max ]; then
+    print_debug "ERROR: Should not be able to start restore with full table $fn"
+    estat=1
+fi
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+sql
+DROP TABLE f1;
+
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+################################################################
+
+fn=$tmp/cmd1.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobid=1
+
+purge files jobid=1 yes
+purge jobs jobid=1 yes
+delete jobid=1 yes
+purge volume=TestVolume001 yes
+purge volume=TestVolume002 yes
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@output $fn
+list jobid=1
+list files jobid=1
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Check if the job is still here
+if ! grep Simple $fn > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn"
+    estat=1
+fi
+
+# Check if the files are still here
+if ! grep uk.po $fn > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn"
+    estat=1
+fi
 
 stop_bacula
 end_test
