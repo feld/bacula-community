@@ -408,6 +408,7 @@ public:
    DBId_t MediaId;                    /* Unique volume id */
    char VolumeName[MAX_NAME_LENGTH];  /* Volume name */
    char MediaType[MAX_NAME_LENGTH];   /* Media type */
+   char Pool[MAX_NAME_LENGTH];        /* Pool name directly available */
    DBId_t PoolId;                     /* Pool id */
    time_t   FirstWritten;             /* Time Volume first written this usage */
    time_t   LastWritten;              /* Time Volume last written */
