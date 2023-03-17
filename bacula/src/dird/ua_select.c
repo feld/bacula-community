@@ -745,7 +745,10 @@ int select_media_dbr(UAContext *ua, MEDIA_DBR *mr)
       pm_strcpy(err, db_strerror(ua->db));
       goto bail_out;
    }
-   ret = 1;
+
+   if (acl_access_ok(ua, Pool_ACL, mr->Pool)) {
+      ret = 1;
+   }
 
 bail_out:
    if (!ret && *err) {
