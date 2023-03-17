@@ -27,6 +27,10 @@ echo "$cwd/build/po" > $tmp/file-list
 export JobName HOST tmp conf
 change_jobname NightlySave $JobName
 
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Autoprune", "no", "Director")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "File Retention", "2s", "Client")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "File Retention", "2s", "Pool")'
+
 $rscripts/setup_rconsole
 
 start_test
@@ -963,16 +967,177 @@ EOF
 $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
 
 ################################################################
-
+# Check prune, purge, delete commands
 fn=$tmp/cmd1.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-before
+list jobs
+@output $fn-before
+list files jobid=1
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
 cat <<EOF > $tmp/bconcmds
 @##############################################
 @$out $fn
 list jobid=1
-
 purge files jobid=1 yes
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+fn=$tmp/cmd1.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-after
+list jobid=1
+@output $fn-after
+list files jobid=1
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Check if the job was here
+if ! grep Simple $fn-before > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn-before"
+    estat=1
+fi
+
+# Check if the files was here
+if ! grep uk.po $fn-before > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn-before"
+    estat=1
+fi
+
+# Check if the job is still here
+if ! grep Simple $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn-after"
+    estat=1
+fi
+
+# Check if the files are still here
+if ! grep uk.po $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn-after"
+    estat=1
+fi
+
+################
+fn=$tmp/cmd2.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobid=1
 purge jobs jobid=1 yes
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-after
+list jobid=1
+@output $fn-after
+list files jobid=1
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Check if the job is still here
+if ! grep Simple $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn-after"
+    estat=1
+fi
+
+# Check if the files are still here
+if ! grep uk.po $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn-after"
+    estat=1
+fi
+
+################
+fn=$tmp/cmd3.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobid=1
 delete jobid=1 yes
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-after
+list jobid=1
+@output $fn-after
+list files jobid=1
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Check if the job is still here
+if ! grep Simple $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn-after"
+    estat=1
+fi
+
+# Check if the files are still here
+if ! grep uk.po $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn-after"
+    estat=1
+fi
+
+################
+fn=$tmp/cmd4.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobid=1
+prune volume=TestVolume001 yes
+prune volume=TestVolume002 yes
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-after
+list jobid=1
+@output $fn-after
+list files jobid=1
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Check if the job is still here
+if ! grep Simple $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn-after"
+    estat=1
+fi
+
+# Check if the files are still here
+if ! grep uk.po $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn-after"
+    estat=1
+fi
+
+################
+fn=$tmp/cmd5.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobid=1
 purge volume=TestVolume001 yes
 purge volume=TestVolume002 yes
 quit
@@ -982,8 +1147,9 @@ $bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
 
 cat <<EOF > $tmp/bconcmds
 @##############################################
-@output $fn
+@$out $fn-after
 list jobid=1
+@output $fn-after
 list files jobid=1
 quit
 EOF
@@ -991,14 +1157,14 @@ EOF
 $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
 
 # Check if the job is still here
-if ! grep Simple $fn > /dev/null; then
-    print_debug "ERROR: Should find the job Simple in $fn"
+if ! grep Simple $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the job Simple in $fn-after"
     estat=1
 fi
 
 # Check if the files are still here
-if ! grep uk.po $fn > /dev/null; then
-    print_debug "ERROR: Should find the files in $fn"
+if ! grep uk.po $fn-after > /dev/null; then
+    print_debug "ERROR: Should find the files in $fn-after"
     estat=1
 fi
 
