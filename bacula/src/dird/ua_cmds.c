@@ -2146,6 +2146,7 @@ static void delete_job(UAContext *ua)
    int JobId;               /* not JobId_t because it's unsigned and not compatible with sellist */
    char buf[256];
    sellist sl;
+   POOL_MEM lst;
 
    int i = find_arg_with_value(ua, NT_("jobid"));
    if (i >= 0) {
@@ -2162,6 +2163,9 @@ static void delete_job(UAContext *ua)
          }
       }
 
+      db_get_jobids(ua->jcr, ua->db, sl.get_expanded_list(), lst.handle(), false);
+      sl.set_string(lst.c_str(), true);
+
       foreach_sellist(JobId, &sl) {
          do_job_delete(ua, JobId);
       }
@@ -2170,8 +2174,9 @@ static void delete_job(UAContext *ua)
       return;
 
    } else {
-      JobId = ua->int64_val;
-      do_job_delete(ua, JobId);
+      db_get_jobids(ua->jcr, ua->db, edit_uint64(ua->int64_val, buf), lst.handle(), false);
+      JobId = str_to_uint64(lst.c_str());
+      do_job_delete(ua, JobId); /* JobId is safe */
    }
 }
 
@@ -2183,6 +2188,11 @@ static void do_job_delete(UAContext *ua, JobId_t JobId)
    char ed1[50];
    edit_int64(JobId, ed1);
    bool skip_job = false;
+
+   if (!JobId) {
+      ua->send_msg(_("Invalid JobId, Job may not exist or be accessible\n"));
+      return;
+   }
 
    JCR *jcr;
    foreach_jcr(jcr) {
@@ -2196,7 +2206,7 @@ static void do_job_delete(UAContext *ua, JobId_t JobId)
    if (skip_job) {
       ua->send_msg(_("Skipping JobId=%s, job is still running!\n"), ed1);
    } else {
-      purge_jobs_from_catalog(ua, ed1);
+      purge_jobs_from_catalog(ua, ed1); /* JobId is safe */
       ua->send_msg(_("JobId=%s and associated records deleted from the catalog.\n"), ed1);
    }
 }
