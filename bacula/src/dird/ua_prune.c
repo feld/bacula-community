@@ -410,6 +410,7 @@ int prune_files(UAContext *ua, CLIENT *client, POOL *pool)
    POOL_MEM sql_where(PM_MESSAGE);
    POOL_MEM sql_from(PM_MESSAGE);
    utime_t period;
+   int table = 0;
    char ed1[50];
 
    memset(&del, 0, sizeof(del));
@@ -424,7 +425,22 @@ int prune_files(UAContext *ua, CLIENT *client, POOL *pool)
       return false;
    }
 
+   if (!client) {
+      table |= DB_ACL_BIT(DB_ACL_CLIENT);
+   }
+   if (!pool) {
+      table |= DB_ACL_BIT(DB_ACL_POOL);
+   }
+
    db_lock(ua->db);
+   /* Get optional filters for the SQL query */
+   const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB)  |
+                                        DB_ACL_BIT(DB_ACL_POOL) |
+                                        DB_ACL_BIT(DB_ACL_CLIENT), false);
+
+   /* The join can be added by prune_set_filter() */
+   const char *join = (*where && table) ? ua->db->get_acl_join_filter(table) : "";
+
    /* Specify JobTDate and Pool.Name= and/or Client.Name= in the query */
    if (!prune_set_filter(ua, client, pool, period, &sql_from, &sql_where)) {
       goto bail_out;
@@ -437,8 +453,8 @@ int prune_files(UAContext *ua, CLIENT *client, POOL *pool)
    }
    /* Select Jobs -- for counting */
    Mmsg(query,
-        "SELECT COUNT(1) FROM Job %s WHERE PurgedFiles=0 %s",
-        sql_from.c_str(), sql_where.c_str());
+        "SELECT COUNT(1) FROM Job %s %s WHERE PurgedFiles=0 %s %s",
+        sql_from.c_str(), join, sql_where.c_str(), where);
    Dmsg1(100, "select sql=%s\n", query.c_str());
    cnt.count = 0;
    if (!db_sql_query(ua->db, query.c_str(), del_count_handler, (void *)&cnt)) {
@@ -464,12 +480,12 @@ int prune_files(UAContext *ua, CLIENT *client, POOL *pool)
    del.JobId = (JobId_t *)malloc(sizeof(JobId_t) * del.max_ids);
 
    /* Now process same set but making a delete list */
-   Mmsg(query, "SELECT JobId FROM Job %s WHERE PurgedFiles=0 %s",
-        sql_from.c_str(), sql_where.c_str());
+   Mmsg(query, "SELECT JobId FROM Job %s %s WHERE PurgedFiles=0 %s %s",
+        sql_from.c_str(), join, sql_where.c_str(), where);
    Dmsg1(100, "select sql=%s\n", query.c_str());
    db_sql_query(ua->db, query.c_str(), file_delete_handler, (void *)&del);
 
-   purge_files_from_job_list(ua, del);
+   purge_files_from_job_list(ua, del); // JobId is safe
 
    edit_uint64_with_commas(del.num_del, ed1);
    ua->info_msg(_("Pruned Files from %s Jobs for client %s from catalog.\n"),
