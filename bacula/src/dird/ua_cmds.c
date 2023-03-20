@@ -3304,6 +3304,11 @@ bool open_db(UAContext *ua)
       ua->db->set_acl(ua->jcr, DB_ACL_BCLIENT,
                       ua->cons->ACL_lists[Client_ACL],
                       ua->cons->ACL_lists[BackupClient_ACL]);
+
+      ua->db->set_acl(ua->jcr, DB_ACL_RBCLIENT,
+                      ua->cons->ACL_lists[Client_ACL],
+                      ua->cons->ACL_lists[BackupClient_ACL],
+                      ua->cons->ACL_lists[RestoreClient_ACL]);
    }
    if (!ua->api) {
       ua->send_msg(_("Using Catalog \"%s\"\n"), ua->catalog->name());

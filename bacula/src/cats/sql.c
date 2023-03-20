@@ -252,6 +252,9 @@ char *BDB::get_acls(int tables, bool where /* use WHERE or AND */)
    return acl_where;
 }
 
+/* Get the list of the JobId that are accessible for this console
+ * Usually, this function is called in a restore context
+ */
 char *BDB::bdb_get_jobids(const char *jobids, POOLMEM **ret, bool append)
 {
    if (!ret || !*ret) {
@@ -269,10 +272,10 @@ char *BDB::bdb_get_jobids(const char *jobids, POOLMEM **ret, bool append)
    bdb_lock();
    /* Get optional filters for the SQL query */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                DB_ACL_BIT(DB_ACL_CLIENT) |
+                                DB_ACL_BIT(DB_ACL_RCLIENT) | // Clients where we can restore
                                 DB_ACL_BIT(DB_ACL_FILESET), false);
 
-   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_RCLIENT)  |
                                                    DB_ACL_BIT(DB_ACL_FILESET)) : "";
    /* No filters, no need to run the query */
    if (!*where && !*join) {
@@ -314,7 +317,11 @@ char *BDB::get_acl_join_filter(int tables)
       Mmsg(tmp, " JOIN Job USING (JobId) ");
       pm_strcat(acl_join, tmp);
    }
-   if (tables & (DB_ACL_BIT(DB_ACL_CLIENT) | DB_ACL_BIT(DB_ACL_RCLIENT) | DB_ACL_BIT(DB_ACL_BCLIENT))) {
+   if (tables & (DB_ACL_BIT(DB_ACL_CLIENT)  |
+                 DB_ACL_BIT(DB_ACL_RCLIENT) |
+                 DB_ACL_BIT(DB_ACL_BCLIENT) |
+                 DB_ACL_BIT(DB_ACL_RBCLIENT)))
+   {
       Mmsg(tmp, " JOIN Client USING (ClientId) ");
       pm_strcat(acl_join, tmp);
    }
@@ -365,7 +372,7 @@ const char *BDB::get_acl(DB_ACL_t type, bool where /* display WHERE or AND */)
 }
 
 /* Keep UAContext ACLs in our structure for further SQL queries */
-void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2)
+void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2, alist *list3)
 {
    const char *key=NULL;
    const char *keyid=NULL;
@@ -377,6 +384,11 @@ void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2)
 
    /* If the list is present, but we authorize everything */
    if (list2 && list2->size() == 1 && strcasecmp((char*)list2->get(0), "*all*") == 0) {
+      return;
+   }
+
+   /* If the list is present, but we authorize everything */
+   if (list3 && list3->size() == 1 && strcasecmp((char*)list3->get(0), "*all*") == 0) {
       return;
    }
 
@@ -394,6 +406,7 @@ void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2)
    case DB_ACL_BCLIENT:
    case DB_ACL_CLIENT:
    case DB_ACL_RCLIENT:
+   case DB_ACL_RBCLIENT:
       key = "Client.Name";
       break;
 
@@ -421,6 +434,11 @@ void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2)
    }
    if (list2) {
       foreach_alist(elt, list2) {
+         merged_list->append(elt);
+      }
+   }
+   if (list3) {
+      foreach_alist(elt, list3) {
          merged_list->append(elt);
       }
    }

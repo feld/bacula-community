@@ -39,6 +39,7 @@ typedef enum
    DB_ACL_FILESET,
    DB_ACL_RCLIENT,
    DB_ACL_BCLIENT,
+   DB_ACL_RBCLIENT,
    DB_ACL_PATH,
    DB_ACL_LOG,
    DB_ACL_LAST                  /* Keep last */
@@ -157,7 +158,7 @@ public:
    /* Used during the initialization, the UA code can call this function
     * foreach kind of ACL
     */
-   void  set_acl(JCR *jcr, DB_ACL_t type, alist *l, alist *l2=NULL); 
+   void  set_acl(JCR *jcr, DB_ACL_t type, alist *l, alist *l2=NULL, alist *l3=NULL); 
 
    /* Get the SQL string that corresponds to the Console ACL for Pool, Job,
     * Client, ... 
