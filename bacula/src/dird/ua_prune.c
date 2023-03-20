@@ -426,7 +426,7 @@ int prune_files(UAContext *ua, CLIENT *client, POOL *pool)
    }
 
    if (!client) {
-      table |= DB_ACL_BIT(DB_ACL_CLIENT);
+      table |= DB_ACL_BIT(DB_ACL_BCLIENT);
    }
    if (!pool) {
       table |= DB_ACL_BIT(DB_ACL_POOL);
@@ -436,7 +436,7 @@ int prune_files(UAContext *ua, CLIENT *client, POOL *pool)
    /* Get optional filters for the SQL query */
    const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB)  |
                                         DB_ACL_BIT(DB_ACL_POOL) |
-                                        DB_ACL_BIT(DB_ACL_CLIENT), false);
+                                        DB_ACL_BIT(DB_ACL_BCLIENT), false);
 
    /* The join can be added by prune_set_filter() */
    const char *join = (*where && table) ? ua->db->get_acl_join_filter(table) : "";

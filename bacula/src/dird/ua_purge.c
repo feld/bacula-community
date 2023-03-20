@@ -239,11 +239,11 @@ static int purge_files_from_client(UAContext *ua, CLIENT *client)
    {
       /* Get optional filters for the SQL query */
       const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                           DB_ACL_BIT(DB_ACL_CLIENT) |
+                                           DB_ACL_BIT(DB_ACL_BCLIENT) |
                                            DB_ACL_BIT(DB_ACL_FILESET), false);
 
       const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
-                                                              DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                                              DB_ACL_BIT(DB_ACL_BCLIENT)  |
                                                               DB_ACL_BIT(DB_ACL_FILESET)) : "";
 
       Mmsg(query, select_jobsfiles_from_client, join, edit_int64(cr.ClientId, ed1), where);
@@ -303,10 +303,10 @@ static int purge_jobs_from_client(UAContext *ua, CLIENT *client, char* job)
    {
       /* Get optional filters for the SQL query */
       const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                           DB_ACL_BIT(DB_ACL_CLIENT) |
+                                           DB_ACL_BIT(DB_ACL_BCLIENT) |
                                            DB_ACL_BIT(DB_ACL_FILESET), false);
 
-      const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
+      const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)  |
                                                               DB_ACL_BIT(DB_ACL_FILESET)) : "";
 
       if (job) {

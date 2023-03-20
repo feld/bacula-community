@@ -112,10 +112,10 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
    if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
          "JobRetention "
-           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_CLIENT, true));
+           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_BCLIENT, true));
    } else {
       Mmsg(cmd, "SELECT ClientId,Name,FileRetention,JobRetention "
-           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_CLIENT, true));
+           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_BCLIENT, true));
    }
    if (!QueryDB(jcr, cmd)) {
       bdb_unlock();
@@ -401,11 +401,11 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
    /* Get some extra SQL parameters if needed */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_CLIENT), true);
+                                DB_ACL_BIT(DB_ACL_BCLIENT), true);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
-                                                   DB_ACL_BIT(DB_ACL_CLIENT)) : "";
+                                                   DB_ACL_BIT(DB_ACL_BCLIENT)) : "";
 
    if (*where) {
       where_and = "AND";
@@ -490,7 +490,6 @@ void BDB::bdb_list_filemedia_records(JCR *jcr, uint32_t JobId, uint32_t FileInde
    bdb_unlock();
 }
 
-
 void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
                             DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
@@ -507,8 +506,8 @@ void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
    }
 
    bdb_lock();
-   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) | DB_ACL_BIT(DB_ACL_CLIENT), false);
-   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) | DB_ACL_BIT(DB_ACL_BCLIENT), false);
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)) : "";
 
    Mmsg(cmd,
    "SELECT DISTINCT Job.PriorJobId AS JobId, Job.Job, "
@@ -650,7 +649,9 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
 
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_CLIENT), false);
+                                DB_ACL_BIT(DB_ACL_BCLIENT) |
+                                DB_ACL_BIT(DB_ACL_RCLIENT)
+                                , false);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
@@ -773,7 +774,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    pm_strcat(where, where_tmp);
 
    if (*where_tmp) {
-      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
+      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)  |
                                  DB_ACL_BIT(DB_ACL_FILESET));
    }
 
@@ -844,8 +845,8 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
 void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, void *ctx)
 {
    bdb_lock();
-   const char *where = get_acls(DB_ACL_BIT(DB_ACL_CLIENT) | DB_ACL_BIT(DB_ACL_JOB), true);
-   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_BCLIENT) | DB_ACL_BIT(DB_ACL_JOB), true);
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)) : "";
 
    /* List by Job */
    Mmsg(cmd, "SELECT  count(*) AS Jobs,sum(JobFiles) "
@@ -901,11 +902,11 @@ void BDB::bdb_list_files_for_job(JCR *jcr, JobId_t jobid, int deleted, DB_LIST_H
    bdb_lock();
    /* Get optional filters for the SQL query */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                DB_ACL_BIT(DB_ACL_CLIENT) |
+                                DB_ACL_BIT(DB_ACL_BCLIENT) |
                                 DB_ACL_BIT(DB_ACL_FILESET), true);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
-                                                   DB_ACL_BIT(DB_ACL_CLIENT) |
+                                                   DB_ACL_BIT(DB_ACL_BCLIENT) |
                                                    DB_ACL_BIT(DB_ACL_FILESET)) : "";
 
    /*
@@ -990,7 +991,7 @@ void BDB::bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
    char ed1[50];
 
    bdb_lock();
-   const char *where = get_acl(DB_ACL_CLIENT, false);
+   const char *where = get_acl(DB_ACL_BCLIENT, false);
 
    *filter = 0;
    if (sdbr->Name[0]) {
@@ -1164,7 +1165,7 @@ void BDB::bdb_list_jobs_for_file(JCR *jcr, const char *client, const char *fname
    bdb_lock();
    /* Get optional filters for the SQL query */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                DB_ACL_BIT(DB_ACL_CLIENT) |
+                                DB_ACL_BIT(DB_ACL_BCLIENT) |
                                 DB_ACL_BIT(DB_ACL_FILESET), false);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_FILESET)) : "";
