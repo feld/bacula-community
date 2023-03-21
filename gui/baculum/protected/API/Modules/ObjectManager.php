@@ -37,7 +37,7 @@ class ObjectManager extends APIModule
 	 *  - full - display all properties
 	 * Here are object properties for basic view.
 	 */
-	private $basic_mode_obj_props = [
+	public static $basic_mode_obj_props = [
 		'ObjectId',
 		'JobId',
 		'ObjectCategory',
@@ -104,7 +104,7 @@ class ObjectManager extends APIModule
 		}
 		$sql = 'SELECT ' . $obj_record . ' 
 FROM Object 
-LEFT JOIN Job USING (JobId) '
+JOIN Job USING (JobId) '
 . $where['where'] . $order . $limit . $offset;
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);

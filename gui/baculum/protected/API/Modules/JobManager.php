@@ -22,6 +22,8 @@
 
 namespace Baculum\API\Modules;
 
+use Baculum\Common\Modules\Logging;
+use Baculum\API\Modules\ObjectManager;
 use PDO;
 use Prado\Data\ActiveRecord\TActiveRecordCriteria;
 
@@ -41,7 +43,7 @@ class JobManager extends APIModule {
 	 */
 	private $js_successful = ['T'];
 	private $js_unsuccessful = ['A', 'E', 'f'];
-	private $js_warning = ['I', 'e'];
+	private $js_warning = ['I', 'e', 'W'];
 	private $js_running = ['C', 'B', 'D', 'F', 'L', 'M', 'R', 'S', 'a', 'c', 'd', 'i', 'j', 'l', 'm', 'p', 'q', 's', 't'];
 
 	/**
@@ -69,8 +71,7 @@ class JobManager extends APIModule {
 		'Job.CompressRatio',
 		'Job.Rate',
 		'Job.StatusInfo',
-		'Job.Encrypted',
-		'Fileset.Content'
+		'Job.Encrypted'
 	];
 
 	/**
@@ -137,7 +138,7 @@ class JobManager extends APIModule {
 		}
 		$order = ' ORDER BY ' . $sort_col . ' ' . strtoupper($sort_order);
 		$limit = '';
-		if(is_int($limit_val) && $limit_val > 0) {
+		if (is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
 		}
 		$offset = '';
@@ -157,9 +158,9 @@ Client.Name as client,
 Pool.Name as pool, 
 FileSet.FileSet as fileset 
 FROM Job 
-LEFT JOIN Client USING (ClientId) 
-LEFT JOIN Pool USING (PoolId) 
-LEFT JOIN FileSet USING (FilesetId)'
+JOIN Client USING (ClientId) 
+JOIN Pool USING (PoolId) 
+JOIN FileSet USING (FilesetId)'
 . $where['where'] . $order . $limit . $offset;
 
 		$statement = Database::runQuery($sql, $where['params']);
@@ -196,144 +197,181 @@ LEFT JOIN FileSet USING (FilesetId)'
 	 */
 	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'Job.JobId', $sort_order = 'ASC', $object_limit = null, $overview = false, $view = self::JOB_RESULT_VIEW_FULL) {
 
-		// First get total job count by job status group
-		$job_count_by_js_group_criteria = [];
-		if (key_exists('Job.Name', $criteria)) {
-			$job_count_by_js_group_criteria = [
-				'Job.Name' => $criteria['Job.Name']
-			];
-		}
-		$job_count_by_js_group = $this->getJobCountByJSGroup(
-			$job_count_by_js_group_criteria
-		);
+		$connection = JobRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
 
+		$result = [];
+		try {
+			// start transaction
+			$pdo->beginTransaction();
 
-		// Then get job list
-		$job_list_result = $this->getJobs(
-			$criteria,
-			$limit_val,
-			$offset_val,
-			$sort_col,
-			$sort_order,
-			self::JOB_RESULT_MODE_GROUP,
-			$view
-		);
-
-		// Prepare job identifiers and job records
-		$jobids = array_keys($job_list_result);
-		$job_list = array_values($job_list_result);
-
-		$obj_criteria = $criteria; // we use the same criteria as for jobs plus limit jobids
-		if (count($jobids) > 0) {
-			// Prepare object criteria
-			$obj_criteria['Job.JobId'] = [];
-			$obj_criteria['Job.JobId'][] = [
-				'operator' => 'IN',
-				'vals' => $jobids
-			];
-		}
-
-		// Get objects
-		$obj = $this->getModule('object');
-		$object_list = $obj->getObjects(
-			$obj_criteria,
-			null,
-			0,
-			'ObjectId',
-			'ASC',
-			'jobid',
-			false,
-			$view
-		);
-
-		// Get object categories for jobs
-		$ocs = $obj->getObjectCategories(
-			$criteria
-		);
-		$ocs_count = count($ocs);
-
-		$out = [];
-		$ovw = [];
-		$js_groups = [];
-
-		if ($overview) {
-			$js_groups = $this->getJSGroups();
-
-			// Init overview results
-			for ($i = 0; $i < count($js_groups); $i++) {
-				$ovw[$js_groups[$i]] = ['count' => 0, 'jobs' => []];
+			// create temporary table
+			$jobid_jobstatus_tname = 'jobid_jobstatus_' . getmypid();
+			$db_params = $this->getModule('api_config')->getConfig('db');
+			$table_type = '';
+			if ($db_params['type'] === Database::PGSQL_TYPE) {
+				/**
+				 * For PostgreSQL there is used temporary table. For MySQL using temporary
+				 * tables is impossible because of problems with support:
+				 * @see https://dev.mysql.com/doc/refman/8.0/en/temporary-table-problems.html
+				 */
+				$table_type = 'TEMPORARY';
 			}
-		}
+			$where = Database::getWhere($criteria);
+			$sql = 'CREATE ' . $table_type . ' TABLE ' . $jobid_jobstatus_tname . ' AS
+				SELECT JobId, JobStatus, JobErrors
+				FROM Job
+				' . $where['where'];
 
-		$job_list_count = count($job_list);
-		for ($i = 0; $i < $job_list_count; $i++) {
-			$jobid = $jobids[$i];
-			$job_list[$i][0]->jobid = $jobid;
-			$job_obj_list = key_exists($jobid, $object_list) ? $object_list[$jobid] : [];
-			$job = [
-				'job' => $job_list[$i][0],
-				'objects' => [
-					'overview' => [],
-					'totalcount' => count($job_obj_list)
+			Database::execute($sql, $where['params']);
+
+			// get job status count
+			$sql = 'SELECT 
+				CASE
+					WHEN JobErrors > 0 AND JobStatus = \'T\' THEN \'W\'
+					WHEN JobErrors = 0 AND JobStatus = \'T\' THEN \'T\'
+					WHEN JobStatus != \'T\' THEN JobStatus
+				END Status,
+				COUNT(1) AS count
+				FROM ' . $jobid_jobstatus_tname . ' GROUP BY Status';
+
+			$statement = Database::runQuery($sql);
+			$jobstatus_count = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			// get all objects
+			$jlimit = is_int($limit_val) && $limit_val > 0 ? ' LIMIT ' . $limit_val : '';
+			$olimit = is_int($object_limit) && $object_limit > 0 ? ' LIMIT ' . $object_limit : '';
+			$job_record = 'Job.*';
+			$obj_record = 'Object.*';
+			if ($view == self::JOB_RESULT_VIEW_BASIC) {
+				$job_record = implode(',', $this->basic_mode_job_props);
+				$obj_record = implode(',', ObjectManager::$basic_mode_obj_props);
+			}
+			$sql = 'SELECT JobId, ' . $obj_record . ' 
+				FROM Object
+				JOIN ' . $jobid_jobstatus_tname . ' USING (JobId)
+				WHERE JobId IN
+				(
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\') ORDER BY JobId DESC ' . $jlimit . ')
+					UNION
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0 ORDER BY JobId DESC ' . $jlimit . ')
+					UNION
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0 ORDER BY JobId DESC ' . $jlimit . ')
+				)';
+			$statement = Database::runQuery($sql);
+			$all_objects = $statement->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_GROUP);
+
+
+			// get running jobs
+			$sql = 'SELECT ' . $job_record . ' 
+				FROM ' . $jobid_jobstatus_tname . '
+				JOIN Job USING (JobId) 
+				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_running) . '\') ' . $jlimit;
+
+			$statement = Database::runQuery($sql);
+			$running_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			// get failed jobs
+			$sql = 'SELECT ' . $job_record . ' 
+				FROM ' . $jobid_jobstatus_tname . '
+				JOIN Job USING (JobId) 
+				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\')
+				ORDER BY Job.EndTime DESC ' . $jlimit;
+
+			$statement = Database::runQuery($sql);
+			$unsuccessful_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			// get warning jobs
+			$sql = 'SELECT ' . $job_record . ' 
+				FROM ' . $jobid_jobstatus_tname .'
+				JOIN Job USING (JobId) 
+				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0
+				ORDER BY Job.EndTime DESC ' . $jlimit;
+
+			$statement = Database::runQuery($sql);
+			$warning_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			// get successful jobs
+			$sql = 'SELECT ' . $job_record . ' 
+				FROM ' . $jobid_jobstatus_tname .'
+				JOIN Job USING (JobId) 
+				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0
+				ORDER BY Job.EndTime DESC ' . $jlimit;
+
+			$statement = Database::runQuery($sql);
+			$successful_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			// get all terminated jobs
+			$sql = 'SELECT ' . $job_record . ' 
+				FROM ' . $jobid_jobstatus_tname . '
+				JOIN Job USING (JobId) 
+				WHERE ' . $jobid_jobstatus_tname . '.JobStatus NOT IN (\'' . implode('\',\'', $this->js_running) . '\')
+				ORDER BY Job.StartTime DESC' . $jlimit;
+
+			$statement = Database::runQuery($sql);
+			$all_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			// drop temporary table
+			$sql = 'DROP TABLE ' . $jobid_jobstatus_tname;
+
+			Database::execute($sql);
+
+			$result = [
+				'overview' => []
+			];
+
+			$succesful_count = $unsuccesful_count = $warning_count = $running_count = 0;
+			for ($i = 0; $i < count($jobstatus_count); $i++) {
+				$jobstatus = $jobstatus_count[$i]['status'];
+				$count = $jobstatus_count[$i]['count'];
+				if (in_array($jobstatus, $this->js_successful)) {
+					$succesful_count += $count;
+				} elseif (in_array($jobstatus, $this->js_unsuccessful)) {
+					$unsuccesful_count += $count;
+				} elseif (in_array($jobstatus, $this->js_warning)) {
+					$warning_count += $count;
+				} elseif (in_array($jobstatus, $this->js_running)) {
+					$running_count += $count;
+				}
+			}
+			$count_all = $succesful_count + $unsuccesful_count + $warning_count;
+			$result['overview'] = [
+				self::JS_GROUP_SUCCESSFUL => [
+					'count' => $succesful_count,
+					'jobs' => $successful_jobs
+				],
+				self::JS_GROUP_UNSUCCESSFUL => [
+					'count' => $unsuccesful_count,
+					'jobs' => $unsuccessful_jobs
+				],
+				self::JS_GROUP_WARNING => [
+					'count' => $warning_count,
+					'jobs' => $warning_jobs
+				],
+				self::JS_GROUP_RUNNING => [
+					'count' => $running_count,
+					'jobs' => $running_jobs
+				],
+				self::JS_GROUP_ALL_TERMINATED => [
+					'count' => $count_all,
+					'jobs' => $all_jobs
 				]
 			];
-			for ($j = 0; $j < $ocs_count; $j++) {
-				// current object category
-				$objectcategory = $ocs[$j]['objectcategory'];
+			$result['objects'] = $all_objects;
+		} catch(\PDOException $e) {
+			// rollback the transaction
+			$pdo->rollBack();
 
-				// Take only objects from current category
-				$job_obj_cat_list = array_filter($job_obj_list, function ($item) use ($objectcategory) {
-					return ($item->objectcategory == $objectcategory);
-				});
-				$job_obj_cat_count = count($job_obj_cat_list);
-				if ($job_obj_cat_count == 0) {
-					// empty categories are not listed
-					continue;
-				}
-
-				// Prepare object slice if limit used, otherwise take all objects
-				$job_obj_cat_list_f = is_int($object_limit) && $object_limit > 0 ? array_slice($job_obj_cat_list, 0, $object_limit) : $job_obj_cat_list;
-
-				$job['objects']['overview'][$objectcategory] = [
-					'count' => $job_obj_cat_count,
-					'objects' => $job_obj_cat_list_f 
-				];
-			}
-			if ($overview) {
-				// Overview mode.
-				// Put jobs to specific categories
-				if (in_array($job['job']->jobstatus, $this->js_successful) && $job['job']->joberrors == 0) {
-					$ovw[self::JS_GROUP_SUCCESSFUL]['jobs'][] = $job;
-				} elseif (in_array($job['job']->jobstatus, $this->js_unsuccessful)) {
-					$ovw[self::JS_GROUP_UNSUCCESSFUL]['jobs'][] = $job;
-				} elseif (in_array($job['job']->jobstatus, $this->js_warning) || (in_array($job['job']->jobstatus, $this->js_successful) && $job['job']->joberrors > 0)) {
-					$ovw[self::JS_GROUP_WARNING]['jobs'][] = $job;
-				} elseif (in_array($job['job']->jobstatus, $this->js_running)) {
-					$ovw[self::JS_GROUP_RUNNING]['jobs'][] = $job;
-				}
-				if (!in_array($job['job']->jobstatus, $this->js_running)) {
-					$ovw[self::JS_GROUP_ALL_TERMINATED]['jobs'][] = $job;
-				}
-
-			} else {
-				// Normal mode.
-				$out[$i] = $job;
-			}
+			// show the error message
+			$msg = 'SQL transation commit error: ' . $e->getMessage();
+			$this->getModule('logging')->log(
+				Logging::CATEGORY_EXECUTE,
+				$msg
+			);
 		}
 
-		if ($overview) {
-			// Overview mode.
-			for ($i = 0; $i < count($js_groups); $i++) {
-				// Set all job count
-				$ovw[$js_groups[$i]]['count'] = $job_count_by_js_group[$js_groups[$i]];
-
-				if (is_int($limit_val) && $limit_val > 0) {
-					// If limit used, prepare a slice of jobs
-					$ovw[$js_groups[$i]]['jobs'] = array_slice($ovw[$js_groups[$i]]['jobs'], 0, $limit_val);
-				}
-			}
-		}
-		return ($overview ? $ovw : $out);
+		return $result;
 	}
 
 	/**
