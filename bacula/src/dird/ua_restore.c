@@ -573,22 +573,12 @@ static int select_files_from_plugin_obj(UAContext *ua, OBJECT_DBR *obj_r, RESTOR
    }
 
    if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
-      ua->error_msg(_("Access to JobId=%d (Job \"%s\") not authorized.\n"),
-            jr.JobId, jr.Name);
+      ua->error_msg(_("Access to Job \"%s\" not authorized.\n"), jr.Name);
       return 0;
    }
 
-   CLIENT_DBR cr;
-   cr.ClientId = jr.ClientId;
-   if (!db_get_client_record(ua->jcr, ua->db, &cr)) {
-      ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
-                    ua->cmd, db_strerror(ua->db));
-      return 0;
-   }
-
-   if (!acl_access_ok(ua, Client_ACL, cr.Name)) {
-      ua->error_msg(_("Access to ClientId=%d not authorized.\n"),
-            jr.ClientId);
+   if (!acl_access_ok(ua, Client_ACL, jr.Client)) {
+      ua->error_msg(_("Access to Client not authorized.\n"));
       return 0;
    }
 
@@ -1036,13 +1026,18 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
                           ua->cmd, db_strerror(ua->db));
             return 0;
          }
-         ua->send_msg(_("Selecting jobs to build the Full state at %s\n"),
-                      jr.cStartTime);
          jr.JobLevel = L_INCREMENTAL; /* Take Full+Diff+Incr */
          if (!db_get_accurate_jobids(ua->jcr, ua->db, &jr, &jobids)) {
             return 0;
          }
-         pm_strcpy(rx->JobIds, jobids.list);
+         /* Apply ACL filters to the JobId list we got */
+         db_get_jobids(ua->jcr, ua->db, jobids.list, &rx->JobIds, false);
+         if(*rx->JobIds == 0) {
+            ua->error_msg(_("Unable to get Job record for JobId=%s\n"), ua->cmd);
+            return 0;
+         }
+         ua->send_msg(_("Selecting jobs to build the Full state at %s\n"),
+                      jr.cStartTime);
          Dmsg1(30, "Item 12: jobids = %s\n", rx->JobIds);
          break;
 
@@ -1080,20 +1075,32 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             POOL_MEM esc_cat, esc_type;
             char *cat = (char*)types[0].get(idx);
             char *type = (char*)types[1].get(idx);
+            const char *join, *where;
             esc_cat.check_size(strlen(cat)*2+1);
             esc_type.check_size(strlen(type)*2+1);
 
-            /* TODO: Check if we need db_lock() */
+            db_lock(ua->db);
             db_escape_string(ua->jcr, ua->db, esc_cat.c_str(), cat, strlen(cat));
             db_escape_string(ua->jcr, ua->db, esc_type.c_str(), type, strlen(type));
 
-            Mmsg(query, "SELECT DISTINCT ObjectName FROM Object WHERE ObjectCategory='%s' AND ObjectType='%s' ORDER BY ObjectName ASC",
-                 esc_cat.c_str(), esc_type.c_str());
+            /* Get optional filters for the SQL query */
+            where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                     DB_ACL_BIT(DB_ACL_BCLIENT) |
+                                     DB_ACL_BIT(DB_ACL_FILESET), false);
+
+            join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
+                                                        DB_ACL_BIT(DB_ACL_BCLIENT)  |
+                                                        DB_ACL_BIT(DB_ACL_FILESET)) : "";
+
+            Mmsg(query, "SELECT DISTINCT ObjectName FROM Object %s WHERE ObjectCategory='%s' AND ObjectType='%s' %s ORDER BY ObjectName ASC",
+                 join, esc_cat.c_str(), esc_type.c_str(), where);
 
             if (!db_sql_query(ua->db, query.c_str(), db_string_list_handler, &alist_ptr)) {
                ua->error_msg(_("SQL Query failed: %s\n"), db_strerror(ua->db));
+               db_unlock(ua->db);
                return 0;
             }
+            db_unlock(ua->db);
 
             Mmsg(tmp, "List of the %s %s Objects:\n", types[1].get(idx), types[0].get(idx));
             start_prompt(ua, tmp.c_str());
@@ -1108,20 +1115,33 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
 
             ua->info_msg(_("Objects available:\n"));
             esc.check_size(strlen((char*)object_list.get(idx))*2+1);
+
+            db_lock(ua->db);
+
+            /* Get optional filters for the SQL query */
+            where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                     DB_ACL_BIT(DB_ACL_BCLIENT) |
+                                     DB_ACL_BIT(DB_ACL_FILESET), false);
+
+            join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_FILESET)) : "";
+
             db_escape_string(ua->jcr, ua->db, esc.c_str(),
                              (char*)object_list.get(idx), strlen((char*)object_list.get(idx)));
+
             Mmsg(query, "SELECT Object.ObjectId AS ObjectId, Object.ObjectName AS ObjectName, Client.Name as Client, "
                                 "Object.ObjectSource AS ObjectSource, "
                                "Job.StartTime AS StartTime, Object.ObjectSize AS ObjectSize "
                         "FROM Object JOIN Job USING (JobId) "
-                        "JOIN Client ON (Job.ClientId = Client.ClientId) "
-                        "WHERE Object.ObjectName='%s' AND Object.ObjectCategory='%s' AND Object.ObjectType='%s'",
-                 esc.c_str(), esc_cat.c_str(), esc_type.c_str());
+                        "JOIN Client ON (Job.ClientId = Client.ClientId) %s "
+                        "WHERE Object.ObjectName='%s' AND Object.ObjectCategory='%s' AND Object.ObjectType='%s' %s",
+                 join, esc.c_str(), esc_cat.c_str(), esc_type.c_str(), where);
 
             if (!db_list_sql_query(ua->jcr, ua->db, "object", query.c_str(), prtit, ua, 0, HORZ_LIST)) {
                ua->error_msg(_("SQL Query failed: %s\n"), db_strerror(ua->db));
+               db_unlock(ua->db);
                return 0;
             }
+            db_unlock(ua->db);
 
             //TODO Validation if id entered matches one from list above would be nice...
             if (!get_pint(ua, _("Enter ID of Object to be restored: "))) {
@@ -1282,12 +1302,16 @@ static bool insert_file_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *f
 {
    strip_trailing_newline(file);
    split_path_and_filename(ua, rx, file);
+
+   db_lock(ua->db);
+   /* Client is fixed */
+   const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB), false);
    if (*rx->JobIds == 0) {
       Mmsg(rx->query, uar_jobid_fileindex, date, rx->path, rx->fname,
-           rx->ClientName);
+           rx->ClientName, where);
    } else {
       Mmsg(rx->query, uar_jobids_fileindex, rx->JobIds, date,
-           rx->path, rx->fname, rx->ClientName);
+           rx->path, rx->fname, rx->ClientName, where);
       /*
        * Note: we have just edited the JobIds into the query, so
        *  we need to clear JobIds, or they will be added
@@ -1303,9 +1327,9 @@ static bool insert_file_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *f
       ua->error_msg(_("Query failed: %s. ERR=%s\n"),
          rx->query, db_strerror(ua->db));
    }
+   db_unlock(ua->db);
    if (!rx->found) {
       ua->error_msg(_("No database record found\n"));
-//    ua->error_msg("Query=%s\n", rx->query);
       return false;
    }
    return true;
@@ -1318,13 +1342,19 @@ static bool insert_file_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *f
 static bool insert_dir_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *dir,
                                         char *date)
 {
+   int ret = false;
    strip_trailing_junk(dir);
    if (*rx->JobIds == 0) {
       ua->error_msg(_("No JobId specified cannot continue.\n"));
       return false;
-   } else {
-      Mmsg(rx->query, uar_jobid_fileindex_from_dir[db_get_type_index(ua->db)], rx->JobIds, dir, rx->ClientName);
    }
+
+   db_lock(ua->db);
+   /* Client is fixed */
+   const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB), false);
+
+   Mmsg(rx->query, uar_jobid_fileindex_from_dir[db_get_type_index(ua->db)],
+        rx->JobIds, dir, rx->ClientName, where);
    rx->found = false;
 
    /* Find and insert jobid and File Index */
@@ -1334,9 +1364,12 @@ static bool insert_dir_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *di
    }
    if (!rx->found) {
       ua->error_msg(_("No database record found\n"));
-      return false;
+
+   } else {
+      ret = true;
    }
-   return true;
+   db_unlock(ua->db);
+   return ret;
 }
 
 struct component_file_ctx
@@ -1370,11 +1403,11 @@ bool insert_table_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *table)
    {
       /* Get optional filters for the SQL query */
       const char *where = ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                           DB_ACL_BIT(DB_ACL_CLIENT) |
+                                           DB_ACL_BIT(DB_ACL_BCLIENT) |
                                            DB_ACL_BIT(DB_ACL_FILESET), true);
 
       const char *join = *where ? ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
-                                                              DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                                              DB_ACL_BIT(DB_ACL_BCLIENT)  |
                                                               DB_ACL_BIT(DB_ACL_FILESET)) : "";
 
       Mmsg(rx->query, uar_jobid_fileindex_from_table, table, join, where);
@@ -1755,25 +1788,15 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
    char fileset_name[MAX_NAME_LENGTH];
    char ed1[50], ed2[50];
    char pool_select[MAX_NAME_LENGTH];
+   POOL_MEM where, join;
    int i;
 
-   /* Create temp tables */
-   db_sql_query(ua->db, uar_del_temp, NULL, NULL);
-   db_sql_query(ua->db, uar_del_temp1, NULL, NULL);
-   if (!db_sql_query(ua->db, uar_create_temp[db_get_type_index(ua->db)], NULL, NULL)) {
-      ua->error_msg("%s\n", db_strerror(ua->db));
-      goto bail_out;
-   }
-   if (!db_sql_query(ua->db, uar_create_temp1[db_get_type_index(ua->db)], NULL, NULL)) {
-      ua->error_msg("%s\n", db_strerror(ua->db));
-      goto bail_out;
-   }
    /*
     * Select Client from the Catalog
     */
    memset(&cr, 0, sizeof(cr));
    if (!get_client_dbr(ua, &cr, JT_BACKUP_RESTORE)) {
-      goto bail_out;
+      return false;
    }
    bstrncpy(rx->ClientName, cr.Name, sizeof(rx->ClientName));
 
@@ -1784,6 +1807,9 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
    i = find_arg_with_value(ua, "FileSet");
 
    if (i >= 0 && is_name_valid(ua->argv[i], &ua->errmsg)) {
+      if (!acl_access_ok(ua, FileSet_ACL, ua->argv[i])) {
+         return false;
+      }
       bstrncpy(fsr.FileSet, ua->argv[i], sizeof(fsr.FileSet));
       if (!db_get_fileset_record(ua->jcr, ua->db, &fsr)) {
          ua->error_msg(_("Error getting FileSet \"%s\": ERR=%s\n"), fsr.FileSet,
@@ -1792,14 +1818,27 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
       }
    } else if (i >= 0) {         /* name is invalid */
       ua->error_msg(_("FileSet argument: %s\n"), ua->errmsg);
-      goto bail_out;
+      return false;
    }
+
+   /* ACL checks, keep a local copy to not hold the lock too much */
+   db_lock(ua->db);
+   {
+      pm_strcpy(where, ua->db->get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                        DB_ACL_BIT(DB_ACL_BCLIENT) |
+                                        DB_ACL_BIT(DB_ACL_FILESET), false));
+
+      if (*where.c_str()) {
+         pm_strcpy(join, ua->db->get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)));
+      }
+   }
+   db_unlock(ua->db);
 
    if (i < 0) {                       /* fileset not found */
       edit_int64(cr.ClientId, ed1);
-      Mmsg(rx->query, uar_sel_fileset, ed1, ed1);
+      Mmsg(rx->query, uar_sel_fileset, ed1, where.c_str());
       start_prompt(ua, _("The defined FileSet resources are:\n"));
-      if (!db_sql_query(ua->db, rx->query, fileset_handler, (void *)ua)) {
+      if (!db_sql_query(ua->db, rx->query, fileset_handler, (void *)ua)) { // ACL checked
          ua->error_msg("%s\n", db_strerror(ua->db));
          goto bail_out;
       }
@@ -1819,7 +1858,7 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
 
    /* If Pool specified, add PoolId specification */
    pool_select[0] = 0;
-   if (rx->pool) {
+   if (rx->pool) {              // PoolACL is checked with where/join
       POOL_DBR pr;
       bmemset(&pr, 0, sizeof(pr));
       bstrncpy(pr.Name, rx->pool->name(), sizeof(pr.Name));
@@ -1831,10 +1870,25 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
       }
    }
 
+   db_lock(ua->db);
+   /* Cleanup any orphan temp table */
+   db_sql_query(ua->db, uar_del_temp, NULL, NULL);
+   db_sql_query(ua->db, uar_del_temp1, NULL, NULL);
+
+   /* Create temp tables */
+   if (!db_sql_query(ua->db, uar_create_temp[db_get_type_index(ua->db)], NULL, NULL)) {
+      ua->error_msg("%s\n", db_strerror(ua->db));
+      goto bail_out;
+   }
+   if (!db_sql_query(ua->db, uar_create_temp1[db_get_type_index(ua->db)], NULL, NULL)) {
+      ua->error_msg("%s\n", db_strerror(ua->db));
+      goto bail_out;
+   }
+
    /* Find JobId of last Full backup for this client, fileset */
    edit_int64(cr.ClientId, ed1);
-   Mmsg(rx->query, uar_last_full, ed1, ed1, date, fsr.FileSet,
-         pool_select);
+   Mmsg(rx->query, uar_last_full, ed1, date, fsr.FileSet,
+        pool_select, where.c_str());
    if (!db_sql_query(ua->db, rx->query, NULL, NULL)) {
       ua->error_msg("%s\n", db_strerror(ua->db));
       goto bail_out;
@@ -1859,8 +1913,8 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
    }
 
    /* Now find most recent Differental Job after Full save, if any */
-   Mmsg(rx->query, uar_dif, edit_uint64(rx->JobTDate, ed1), date,
-        edit_int64(cr.ClientId, ed2), fsr.FileSet, pool_select);
+   Mmsg(rx->query, uar_dif, join.c_str(), edit_uint64(rx->JobTDate, ed1), date,
+        edit_int64(cr.ClientId, ed2), fsr.FileSet, pool_select, where.c_str());
    if (!db_sql_query(ua->db, rx->query, NULL, NULL)) {
       ua->warning_msg("%s\n", db_strerror(ua->db));
    }
@@ -1875,8 +1929,8 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
    }
 
    /* Now find all Incremental Jobs after Full/dif save */
-   Mmsg(rx->query, uar_inc, edit_uint64(rx->JobTDate, ed1), date,
-        edit_int64(cr.ClientId, ed2), fsr.FileSet, pool_select);
+   Mmsg(rx->query, uar_inc, join.c_str(), edit_uint64(rx->JobTDate, ed1), date,
+        edit_int64(cr.ClientId, ed2), fsr.FileSet, pool_select, where.c_str());
    if (!db_sql_query(ua->db, rx->query, NULL, NULL)) {
       ua->warning_msg("%s\n", db_strerror(ua->db));
    }
@@ -1899,6 +1953,7 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
 bail_out:
   db_sql_query(ua->db, uar_del_temp, NULL, NULL);
   db_sql_query(ua->db, uar_del_temp1, NULL, NULL);
+  db_unlock(ua->db);
    return ok;
 }
 
@@ -1978,9 +2033,12 @@ static int last_full_handler(void *ctx, int num_fields, char **row)
  */
 static int fileset_handler(void *ctx, int num_fields, char **row)
 {
+   UAContext *ua = (UAContext *) ctx;
    /* row[0] = FileSet (name) */
    if (row[0]) {
-      add_prompt((UAContext *)ctx, row[0]);
+      if (acl_access_ok(ua, FileSet_ACL, row[0])) {
+         add_prompt((UAContext *)ctx, row[0]);
+      }
    }
    return 0;
 }

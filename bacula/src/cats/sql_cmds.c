@@ -121,16 +121,14 @@ const char *uar_del_temp1 = "DROP TABLE IF EXISTS temp1";
 
 const char *uar_last_full =
    "INSERT INTO temp1(JobId,JobTDate) SELECT Job.JobId,JobTdate "
-   "FROM Client,Job,JobMedia,Media,FileSet WHERE Client.ClientId=%s "
-   "AND Job.ClientId=%s "
+   "FROM Client JOIN Job USING (ClientId) JOIN JobMedia USING (JobId) JOIN Media USING (MediaId) JOIN FileSet USING (FileSetId) "
+   "WHERE Client.ClientId=%s "
    "AND Job.StartTime < '%s' "
    "AND Level='F' AND JobStatus IN ('T','W') AND Type='B' "
-   "AND JobMedia.JobId=Job.JobId "
    "AND Media.Enabled=1 "
-   "AND JobMedia.MediaId=Media.MediaId "
-   "AND Job.FileSetId=FileSet.FileSetId "
    "AND FileSet.FileSet='%s' "
-   "%s"
+   " %s "                       // Pool select
+   " %s "                       // ACL restriction
    "ORDER BY Job.JobTDate DESC LIMIT 1";
 
 const char *uar_full =
@@ -151,16 +149,14 @@ const char *uar_dif =
    "Job.Level,Job.JobFiles,Job.JobBytes,"
    "Job.StartTime,Media.VolumeName,JobMedia.StartFile,"
    "Job.VolSessionId,Job.VolSessionTime "
-   "FROM Job,JobMedia,Media,FileSet "
+   "FROM Job JOIN JobMedia USING (JobId) JOIN Media USING (MediaId) JOIN FileSet USING (FileSetId) %s "
    "WHERE Job.JobTDate>%s AND Job.StartTime<'%s' "
    "AND Job.ClientId=%s "
-   "AND JobMedia.JobId=Job.JobId "
    "AND Media.Enabled=1 "
-   "AND JobMedia.MediaId=Media.MediaId "
    "AND Job.Level='D' AND JobStatus IN ('T','W') AND Type='B' "
-   "AND Job.FileSetId=FileSet.FileSetId "
    "AND FileSet.FileSet='%s' "
-   "%s"
+   " %s "                       // POOL select
+   " %s "                       // ACL restriction
    "ORDER BY Job.JobTDate DESC LIMIT 1";
 
 const char *uar_inc =
@@ -169,16 +165,15 @@ const char *uar_inc =
    "Job.Level,Job.JobFiles,Job.JobBytes,"
    "Job.StartTime,Media.VolumeName,JobMedia.StartFile,"
    "Job.VolSessionId,Job.VolSessionTime "
-   "FROM Job,JobMedia,Media,FileSet "
+   "FROM Job JOIN JobMedia USING (JobId) JOIN Media USING (MediaId) JOIN FileSet USING (FileSetId) %s "
    "WHERE Job.JobTDate>%s AND Job.StartTime<'%s' "
    "AND Job.ClientId=%s "
    "AND Media.Enabled=1 "
-   "AND JobMedia.JobId=Job.JobId "
-   "AND JobMedia.MediaId=Media.MediaId "
    "AND Job.Level='I' AND JobStatus IN ('T','W') AND Type='B' "
-   "AND Job.FileSetId=FileSet.FileSetId "
    "AND FileSet.FileSet='%s' "
-   "%s";
+   " %s "                       // Pool select
+   " %s "                       // ACL
+   ;
 
 const char *uar_list_temp =
    "SELECT DISTINCT JobId,Level,JobFiles,JobBytes,StartTime,VolumeName"
@@ -197,9 +192,8 @@ const char *uar_sel_all_temp = "SELECT * FROM temp";
 
 /* Select FileSet names for this Client */
 const char *uar_sel_fileset =
-   "SELECT DISTINCT FileSet.FileSet FROM Job,"
-   "Client,FileSet WHERE Job.FileSetId=FileSet.FileSetId "
-   "AND Job.ClientId=%s AND Client.ClientId=%s "
+   "SELECT DISTINCT FileSet.FileSet FROM Job JOIN Client USING (ClientId) JOIN FileSet USING (FileSetId) "
+   "WHERE Client.ClientId=%s %s "
    "ORDER BY FileSet.FileSet";
 
 /* Select all different FileSet for this client
@@ -218,27 +212,25 @@ const char *uar_sel_filesetid =
  *  for use when inserting individual files into the tree.
  */
 const char *uar_jobid_fileindex =
-   "SELECT Job.JobId,File.FileIndex FROM Job,File,Path,Client "
-   "WHERE Job.JobId=File.JobId "
-   "AND Job.StartTime<='%s' "
+   "SELECT Job.JobId,File.FileIndex "
+   "FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) JOIN Client USING (ClientId) "
+   "WHERE Job.StartTime<='%s' "
    "AND Path.Path='%s' "
    "AND File.Filename='%s' "
    "AND Client.Name='%s' "
-   "AND Job.ClientId=Client.ClientId "
-   "AND Path.PathId=File.PathId "
    "AND JobStatus IN ('T','W') AND Type='B' "
+   " %s "                       // ACL
    "ORDER BY Job.StartTime DESC LIMIT 1";
 
 const char *uar_jobids_fileindex =
-   "SELECT Job.JobId,File.FileIndex FROM Job,File,Path,Client "
+   "SELECT Job.JobId,File.FileIndex "
+   "FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) JOIN Client USING (ClientId) "
    "WHERE Job.JobId IN (%s) "
-   "AND Job.JobId=File.JobId "
    "AND Job.StartTime<='%s' "
    "AND Path.Path='%s' "
    "AND File.Filename='%s' "
    "AND Client.Name='%s' "
-   "AND Job.ClientId=Client.ClientId "
-   "AND Path.PathId=File.PathId "
+   " %s " // ACL
    "ORDER BY Job.StartTime DESC LIMIT 1";
 
 /* Query to get list of files from table -- presuably built by an external program
@@ -621,32 +613,27 @@ const char *uar_create_temp1[] =
 const char *uar_jobid_fileindex_from_dir[] =
 {
    /* MySQL */
-   "SELECT Job.JobId,File.FileIndex FROM Job,File,Path,Client "
+   "SELECT Job.JobId,File.FileIndex FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) JOIN Client USING (ClientId) "
    "WHERE Job.JobId IN (%s) "
-   "AND Job.JobId=File.JobId "
    "AND Path.Path='%s' "
    "AND Client.Name='%s' "
-   "AND Job.ClientId=Client.ClientId "
-   "AND Path.PathId=File.Pathid "
+   " %s "
    "GROUP BY File.FileIndex ORDER BY Job.StartTime",
  
    /* PostgreSQL */
-   "SELECT Job.JobId,File.FileIndex FROM Job,File,Path,Client "
+   "SELECT Job.JobId,File.FileIndex FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) JOIN Client USING (ClientId) "
    "WHERE Job.JobId IN (%s) "
-   "AND Job.JobId=File.JobId "
    "AND Path.Path='%s' "
    "AND Client.Name='%s' "
-   "AND Job.ClientId=Client.ClientId "
-   "AND Path.PathId=File.Pathid ORDER BY Job.StartTime ",
+   " %s "
+   "ORDER BY Job.StartTime ",
  
    /* SQLite */
-   "SELECT Job.JobId,File.FileIndex FROM Job,File,Path,Client "
+   "SELECT Job.JobId,File.FileIndex FROM Job JOIN File USING (JobId) JOIN Path USING (PathId) JOIN Client USING (ClientId) "
    "WHERE Job.JobId IN (%s) "
-   "AND Job.JobId=File.JobId "
    "AND Path.Path='%s' "
    "AND Client.Name='%s' "
-   "AND Job.ClientId=Client.ClientId "
-   "AND Path.PathId=File.Pathid "
+   " %s "
    "GROUP BY File.FileIndex ORDER BY Job.StartTime "
 }; 
  

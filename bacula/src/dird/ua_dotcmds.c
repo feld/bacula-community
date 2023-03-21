@@ -1536,6 +1536,7 @@ static bool dot_bvfs_get_jobids(UAContext *ua, const char *cmd)
       edit_int64(jr.ClientId, ed1);
       Mmsg(query, uar_sel_filesetid, ed1);
       db_get_query_dbids(ua->jcr, ua->db, query, ids);
+
    } else {
       ids.num_ids = 1;
       ids.DBId[0] = jr.FileSetId;

@@ -2001,7 +2001,7 @@ bool BDB::bdb_get_client_pool(JCR *jcr, alist *results)
    bdb_lock();
 
    /* Build the WHERE part with the current ACLs if any */
-   pm_strcpy(where, get_acls(DB_ACL_BIT(DB_ACL_CLIENT)  |
+   pm_strcpy(where, get_acls(DB_ACL_BIT(DB_ACL_CLIENT)  | // TODO: See if we let Backup Client here (for pruning)
                              DB_ACL_BIT(DB_ACL_JOB)     |
                              DB_ACL_BIT(DB_ACL_POOL),
                              true));

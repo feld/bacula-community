@@ -1399,6 +1399,7 @@ int select_running_jobs(UAContext *ua, alist *jcrs, const char *reason)
          }
          foreach_sellist(JobId, &sl) {
             jcr = get_jcr_by_id(JobId);
+            /* TODO: check for client? */
             if (jcr && jcr->job && acl_access_ok(ua, Job_ACL, jcr->job->name())) {
                jcrs->append(jcr);
             } else if (jcr) {

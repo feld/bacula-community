@@ -2239,6 +2239,7 @@ static int delete_a_volume(UAContext *ua, MEDIA_DBR *mr)
 
    /* If not purged, do it */
    if (strcmp(mr->VolStatus, "Purged") != 0) {
+      /* We don't filter here because we need to know the complete jobid list as well */
       if (!db_get_volume_jobids(ua->jcr, ua->db, mr, &lst)) {
          ua->error_msg(_("Can't list jobs on this volume\n"));
          return 1;

@@ -112,10 +112,10 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
    if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
          "JobRetention "
-           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_BCLIENT, true));
+           "FROM Client %s ORDER BY ClientId", get_acls(DB_ACL_BIT(DB_ACL_RBCLIENT), true));
    } else {
       Mmsg(cmd, "SELECT ClientId,Name,FileRetention,JobRetention "
-           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_BCLIENT, true));
+           "FROM Client %s ORDER BY ClientId", get_acls(DB_ACL_BIT(DB_ACL_RBCLIENT), true));
    }
    if (!QueryDB(jcr, cmd)) {
       bdb_unlock();
@@ -649,14 +649,13 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
 
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_BCLIENT) |
-                                DB_ACL_BIT(DB_ACL_RCLIENT)
+                                DB_ACL_BIT(DB_ACL_RBCLIENT) 
                                 , false);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
-                                                   DB_ACL_BIT(DB_ACL_CLIENT)) : "";
-
+                                                   DB_ACL_BIT(DB_ACL_RBCLIENT)) : "";
+   
    if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT Time,LogText FROM Log %s "
            "WHERE Log.JobId=%s %s ORDER BY LogId ASC",
@@ -774,7 +773,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    pm_strcat(where, where_tmp);
 
    if (*where_tmp) {
-      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)  |
+      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_RBCLIENT)  |
                                  DB_ACL_BIT(DB_ACL_FILESET));
    }
 
