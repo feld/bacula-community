@@ -242,6 +242,7 @@ JOIN FileSet USING (FilesetId)'
 			// get all objects
 			$jlimit = is_int($limit_val) && $limit_val > 0 ? ' LIMIT ' . $limit_val : '';
 			$olimit = is_int($object_limit) && $object_limit > 0 ? ' LIMIT ' . $object_limit : '';
+			$offset = is_int($offset_val) && $offset_val > 0 ? ' OFFSET ' . $offset_val : '';
 			$job_record = 'Job.*';
 			$obj_record = 'Object.*';
 			if ($view == self::JOB_RESULT_VIEW_BASIC) {
@@ -253,11 +254,11 @@ JOIN FileSet USING (FilesetId)'
 				JOIN ' . $jobid_jobstatus_tname . ' USING (JobId)
 				WHERE JobId IN
 				(
-					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\') ORDER BY JobId DESC ' . $jlimit . ')
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\') ORDER BY JobId DESC ' . $jlimit . $offset . ')
 					UNION
-					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0 ORDER BY JobId DESC ' . $jlimit . ')
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0 ORDER BY JobId DESC ' . $jlimit . $offset . ')
 					UNION
-					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0 ORDER BY JobId DESC ' . $jlimit . ')
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0 ORDER BY JobId DESC ' . $jlimit . $offset . ')
 				)';
 			$statement = Database::runQuery($sql);
 			$all_objects = $statement->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_GROUP);
@@ -267,7 +268,7 @@ JOIN FileSet USING (FilesetId)'
 			$sql = 'SELECT ' . $job_record . ' 
 				FROM ' . $jobid_jobstatus_tname . '
 				JOIN Job USING (JobId) 
-				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_running) . '\') ' . $jlimit;
+				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_running) . '\') ' . $jlimit . $offset;
 
 			$statement = Database::runQuery($sql);
 			$running_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -277,7 +278,7 @@ JOIN FileSet USING (FilesetId)'
 				FROM ' . $jobid_jobstatus_tname . '
 				JOIN Job USING (JobId) 
 				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\')
-				ORDER BY Job.EndTime DESC ' . $jlimit;
+				ORDER BY Job.EndTime DESC ' . $jlimit . $offset;
 
 			$statement = Database::runQuery($sql);
 			$unsuccessful_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -287,7 +288,7 @@ JOIN FileSet USING (FilesetId)'
 				FROM ' . $jobid_jobstatus_tname .'
 				JOIN Job USING (JobId) 
 				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0
-				ORDER BY Job.EndTime DESC ' . $jlimit;
+				ORDER BY Job.EndTime DESC ' . $jlimit . $offset;
 
 			$statement = Database::runQuery($sql);
 			$warning_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -297,7 +298,7 @@ JOIN FileSet USING (FilesetId)'
 				FROM ' . $jobid_jobstatus_tname .'
 				JOIN Job USING (JobId) 
 				WHERE ' . $jobid_jobstatus_tname . '.JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0
-				ORDER BY Job.EndTime DESC ' . $jlimit;
+				ORDER BY Job.EndTime DESC ' . $jlimit . $offset;
 
 			$statement = Database::runQuery($sql);
 			$successful_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -307,7 +308,7 @@ JOIN FileSet USING (FilesetId)'
 				FROM ' . $jobid_jobstatus_tname . '
 				JOIN Job USING (JobId) 
 				WHERE ' . $jobid_jobstatus_tname . '.JobStatus NOT IN (\'' . implode('\',\'', $this->js_running) . '\')
-				ORDER BY Job.StartTime DESC' . $jlimit;
+				ORDER BY Job.StartTime DESC' . $jlimit . $offset;
 
 			$statement = Database::runQuery($sql);
 			$all_jobs = $statement->fetchAll(PDO::FETCH_ASSOC);
