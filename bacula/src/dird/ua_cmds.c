@@ -2245,7 +2245,26 @@ static int delete_a_volume(UAContext *ua, MEDIA_DBR *mr)
          return 1;
       }
       if (lst.count) {
-         purge_jobs_from_catalog(ua, lst.list);
+         POOL_MEM tmp;
+         db_get_jobids(ua->jcr, ua->db, lst.list, tmp.handle(), false);
+         purge_jobs_from_catalog(ua, tmp.c_str());
+
+         /* We use ACLs filtering, so in this case we cannot delete blindly
+          * the jobs from the volume, we delete what we can, and if some
+          * records are still on the volume, we cannot delete it
+          */
+         if (strcmp(tmp.c_str(), lst.list) != 0) {
+            /* Not the same list, do extra check */
+            lst.count = 0;
+            if (!db_get_volume_jobids(ua->jcr, ua->db, mr, &lst)) {
+               ua->error_msg(_("Can't list jobs on this volume\n"));
+               return 1;
+            }
+            if (lst.count > 0) {
+               ua->error_msg(_("Can't purge all jobs from this volume\n"));
+               return 1;
+            }
+         }
       }
    }
 
