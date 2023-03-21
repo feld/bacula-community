@@ -78,6 +78,7 @@ messages
 run job=$JobName level=full client=test-bkp-fd yes
 wait
 messages
+list jobs client=test-bkp-fd
 restore select all done yes where=$tmp/test-bkp-fd-restore client=test-bkp-fd
 wait
 @$out $tmp/test-rst-fd.out
@@ -803,6 +804,206 @@ if ! grep -E 'JobIds: 1,2$' $fn > /dev/null; then
 fi
 
 ################################################################
+# Here we test restore command option 9
+fn=$tmp/restore90.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+restore client=test-bkp-fd
+9
+.
+restore client=$HOST-fd
+9
+.
+restore
+9
+1
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if grep "No FileSet found" $fn > /dev/null; then
+    print_debug "ERROR: Should find selection list error in $fn"
+    estat=1
+fi
+
+# We have the list and two menu
+nb=`grep " 2 " $fn | wc -l`
+if [ $nb != 3 ]; then
+    print_debug "ERROR: Should find selection for jobid 2 ($nb) list in $fn"
+    estat=1
+fi
+
+# We have the list and the last full
+nb=`grep " 7 " $fn | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Should find selection for jobid 7 ($nb) list in $fn"
+    estat=1
+fi
+
+# Here the client is automatically selected, and we have other jobs
+# the file
+fn=$tmp/restore91.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+@exec "touch $cwd/build/po/fr.po"
+run job=Simple level=differential yes
+wait
+@exec "touch $cwd/build/po/fr.po"
+run job=Simple level=incremental yes
+wait
+@exec "touch $cwd/build/po/fr.po"
+run job=Simple level=incremental yes
+wait
+messages
+restore
+9
+2
+.
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if ! grep "SimpleSet" $fn > /dev/null; then
+    print_debug "ERROR: Should job list for SimpleSet in $fn"
+    estat=1
+fi
+
+# We should find Full, Diff, Incr, Incr
+if ! grep  ' 1 ' $fn > /dev/null; then
+    print_debug "ERROR: Should find jobid 11 in $fn"
+    estat=1
+fi
+
+if ! grep  ' 10 ' $fn > /dev/null; then
+    print_debug "ERROR: Should find jobid 13 in $fn"
+    estat=1
+fi
+
+if ! grep  ' 11 ' $fn > /dev/null; then
+    print_debug "ERROR: Should find jobid 14 in $fn"
+    estat=1
+fi
+
+if ! grep  ' 12 ' $fn > /dev/null; then
+    print_debug "ERROR: Should find jobid 15 in $fn"
+    estat=1
+fi
+
+################################################################
+# Here we test restore command option 8
+fn=$tmp/restore80.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+restore client=test-bkp-fd
+8
+`date "+%Y-%m-%d %H:%M:%S"`
+1
+$build/po/
+
+no
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if ! grep "No files selected to be restored." $fn > /dev/null; then
+    print_debug "ERROR: Should not find restore list in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore81.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+restore client=test-bkp-fd
+8
+`date "+%Y-%m-%d %H:%M:%S"`
+1
+$build/po/
+
+no
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+if ! grep "selected to be restored" $fn > /dev/null; then
+    print_debug "ERROR: Should find restore list in $fn"
+    estat=1
+fi
+
+################################################################
+# Here we test restore command option 12
+fn=$tmp/restore120.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+restore
+12
+11
+m *
+done
+no
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.client < $tmp/bconcmds
+
+if ! grep "files selected to be restored" $fn > /dev/null; then
+    print_debug "ERROR: Should find restore list in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore121.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+restore
+12
+11
+m *
+done
+no
+quit
+EOF
+
+$bin/bconsole -c $bin/bconsole.conf.old < $tmp/bconcmds
+
+if ! grep "selected to be restored" $fn > /dev/null; then
+    print_debug "ERROR: Should find restore list in $fn"
+    estat=1
+fi
+
+fn=$tmp/restore122.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+restore
+12
+11
+quit
+EOF
+
+$bin/bconsole -c $bin/bconsole.conf < $tmp/bconcmds
+
+if ! grep "Unable to get Job record" $fn > /dev/null; then
+    print_debug "ERROR: Should not find restore list in $fn"
+    estat=1
+fi
+
+################################################################
 # Test the jobid from the command line
 fn=$tmp/restore10-org.out
 cat <<EOF > $tmp/bconcmds
@@ -901,7 +1102,7 @@ fi
 
 $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
 
-# Test the jobid from the command line
+# Test the file argument from the command line
 fn=$tmp/restore12-err2.out
 cat <<EOF > $tmp/bconcmds
 @##############################################
@@ -1175,6 +1376,7 @@ cat <<EOF > $tmp/bconcmds
 @$out $fn
 run job=Slow yes
 run job=Slow yes
+.status dir running
 quit
 EOF
 
@@ -1183,19 +1385,16 @@ $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
 cat <<EOF > $tmp/bconcmds
 @##############################################
 @$out $fn-after
-cancel jobid=10 yes
+cancel jobid=13 yes
 cancel all yes
-cancel
-1
-yes
 quit
 EOF
 
 $bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
 
 cat <<EOF > $tmp/bconcmds
-@##############################################
 @$out $fn
+@##############################################
 wait
 messages
 quit
@@ -1203,12 +1402,12 @@ EOF
 
 $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
 
-if ! grep "None of your jobs are running" $fn-after > /dev/null; then
+if grep "Confirm cancel" $fn-after > /dev/null; then
     print_debug "ERROR: Should not be able to see jobs in $fn-after"
     estat=1
 fi
 
-if ! grep "Unauthorized command from this console for JobId=10" $fn-after > /dev/null; then
+if ! grep "Unauthorized command from this console for JobId" $fn-after > /dev/null; then
     print_debug "ERROR: Should find Unauthorized message in $fn-after"
     estat=1
 fi
@@ -1218,6 +1417,65 @@ nb=`grep "Backup OK" $fn | wc -l`
 if [ $nb -ne 2 ]; then
     print_debug "ERROR: Should not find canceled jobs in $fn"
     estat=1
+fi
+
+if [ -f build/src/plugins/fd/postgresql-fd.c ]; then
+    make -C build/src/plugins/fd/ install-postgresql
+    $bin/bacula-ctl-fd restart
+    cat <<EOF >> $conf/bacula-dir.conf
+FileSet {
+        Name = pgbackup
+        Include   {
+                  Plugin = "postgresql: use_sudo"
+        }
+}
+EOF
+    fn=$tmp/pg1.out
+    cat <<EOF > $tmp/bconcmds
+@$out $fn
+reload
+run job=Simple fileset=pgbackup yes
+wait
+message
+list objects jobid=15
+restore
+13
+1
+1
+1
+no
+quit
+EOF
+    $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds    
+    
+    if ! grep postgres $fn > /dev/null; then
+        print_debug "ERROR: Should find a postgres database in $fn"
+        estat=1
+    fi
+    if ! grep "files selected to be restored" $fn > /dev/null; then
+        print_debug "ERROR: Should find a restore started in $fn"
+        estat=1
+    fi
+
+    fn=$tmp/pg2.out
+    cat <<EOF > $tmp/bconcmds
+@$out $fn
+list objects jobid=15
+restore
+13
+quit
+EOF
+    $bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds   
+
+    if grep "PostgreSQL | postgres" $fn > /dev/null; then
+        print_debug "ERROR: Should not find object in $fn"
+        estat=1
+    fi
+
+    if ! grep "is empty" $fn > /dev/null; then
+        print_debug "ERROR: Should not find object in $fn"
+        estat=1
+    fi
 fi
 
 stop_bacula
