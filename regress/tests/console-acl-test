@@ -1478,5 +1478,84 @@ EOF
     fi
 fi
 
+################
+fn=$tmp/delete1.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+update volume=TestVolume001 volstatus=Used
+update volume=TestVolume002 volstatus=Used
+label volume=TestVolume003 pool=Default storage=File slot=0 index=0 yes
+run job=Simple level=full yes
+wait
+message
+list jobmedia volume=TestVolume003
+delete volume=TestVolume003 yes
+@exec "rm -f $tmp/TestVolume003"
+@$out $fn-delete
+list volumes
+list jobmedia volume=TestVolume003
+label volume=TestVolume003 pool=Default storage=File slot=0 index=0 yes
+@$out $fn-recreate
+run job=Simple level=full yes
+wait
+message
+list jobmedia volume=TestVolume003
+list volumes
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Here everything should work
+
+if grep "TestVolume003 | Append" $fn-delete > /dev/null; then
+    print_debug "ERROR: Should not find TestVolume003 in $fn-delete"
+    estat=1
+fi
+
+if ! grep "TestVolume003 | Append" $fn-recreate > /dev/null; then
+    print_debug "ERROR: Should find TestVolume003 in $fn-recreate"
+    estat=1
+fi
+
+if ! grep "17 | TestVolume003" $fn-recreate > /dev/null; then
+    print_debug "ERROR: Should find TestVolume003 in $fn-recreate"
+    estat=1
+fi
+
+fn=$tmp/delete2.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+list jobs
+list volumes
+list jobmedia volume=TestVolume003
+delete volume=TestVolume003 yes
+list volumes
+list jobmedia volume=TestVolume003
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
+
+# Here the command should not work and the volume
+# and the jobs should still be present
+
+if ! grep "TestVolume003 | Append" $fn > /dev/null; then
+    print_debug "ERROR: Should find TestVolume003 in $fn-delete"
+    estat=1
+fi
+
+if ! grep "TestVolume003 | Append" $fn > /dev/null; then
+    print_debug "ERROR: Should find TestVolume003 in $fn"
+    estat=1
+fi
+
+if grep "17 | TestVolume003" $fn > /dev/null; then
+    print_debug "ERROR: Should not  find TestVolume003 jobmedia in $fn"
+    estat=1
+fi
+
 stop_bacula
 end_test
