@@ -280,7 +280,6 @@ class Database extends APIModule {
 	 * @return PDO statement.
 	 */
 	public static function runQuery($sql, $params = []) {
-		$builder = self::getQueryBuilder();
 		if (count($params) == 0) {
 			/**
 			 * Please note that in case no params the TDbCommandBuilder::applyCriterias()
@@ -293,9 +292,38 @@ class Database extends APIModule {
 			$statement = $pdo->query($sql);
 
 		} else {
+			$builder = self::getQueryBuilder();
 			$command = $builder->applyCriterias($sql, $params);
 			$statement = $command->getPdoStatement();
 			$command->query();
+		}
+		return $statement;
+	}
+
+	/**
+	 * Execute SQL query.
+	 *
+	 * @param string $sql SQL query
+	 * @param array $params SQL query params
+	 * @return PDO statement.
+	 */
+	public static function execute($sql, $params = []) {
+		if (count($params) == 0) {
+			/**
+			 * Please note that in case no params the TDbCommandBuilder::applyCriterias()
+			 * returns empty the PDO statement handler. From this reason here
+			 * the query is called directly by PDO.
+			 */
+			$connection = JobRecord::finder()->getDbConnection();
+			$connection->setActive(true);
+			$pdo = $connection->getPdoInstance();
+			$statement = $pdo->exec($sql);
+
+		} else {
+			$builder = self::getQueryBuilder();
+			$command = $builder->applyCriterias($sql, $params);
+			$statement = $command->getPdoStatement();
+			$command->execute();
 		}
 		return $statement;
 	}
