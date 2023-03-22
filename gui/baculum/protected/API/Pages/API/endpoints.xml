@@ -54,6 +54,7 @@
 	<url ServiceParameter="VolumePurge" pattern="api/v2/volumes/{id}/purge/" parameters.id="\d+" />
 	<url ServiceParameter="VolumesRequired" pattern="api/v2/volumes/required/{jobid}/{fileid}/" parameters.jobid="\d+" parameters.fileid="\d+" />
 	<url ServiceParameter="JobsOnVolume" pattern="api/v2/volumes/{id}/jobs/" parameters.id="\d+" />
+	<url ServiceParameter="VolumesOverview" pattern="api/v2/volumes/overview/" />
 	<url ServiceParameter="VolumeLabel" pattern="api/v2/volumes/label/" />
 	<url ServiceParameter="VolumeLabelBarcodes" pattern="api/v2/volumes/label/barcodes/" />
 	<url ServiceParameter="SlotsUpdate" pattern="api/v2/volumes/update/" />

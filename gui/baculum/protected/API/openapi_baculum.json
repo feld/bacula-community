@@ -167,6 +167,9 @@
 			},
 			"PluginM365EmailAttachment": {
 				"$ref": "#/definitions/PluginM365EmailAttachment"
+			},
+			"VolumeOverview": {
+				"$ref": "#/definitions/VolumeOverview"
 			}
 		},
 		"parameters": {
@@ -4012,6 +4015,90 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/MediaId"
+					}
+				]
+			}
+		},
+		"/api/v2/volumes/overview": {
+			"get": {
+				"tags": ["volumes"],
+				"summary": "Get volumes overview.",
+				"description": "Get volumes overview.",
+				"responses": {
+					"200": { 
+						"description": "Volumes overview.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"disk": {
+													"type": "object",
+													"properties": {
+														"media": {
+															"type": "array",
+															"items": {
+																"$ref": "#/components/schemas/VolumeOverview"
+															}
+														},
+														"count": {
+															"type": "integer",
+															"description": "Disk media count"
+														}
+													}
+												},
+												"tape": {
+													"type": "object",
+													"properties": {
+														"media": {
+															"type": "array",
+															"items": {
+																"$ref": "#/components/schemas/VolumeOverview"
+															}
+														},
+														"count": {
+															"type": "integer",
+															"description": "Tape media count"
+														}
+													}
+												},
+												"cloud": {
+													"type": "object",
+													"properties": {
+														"media": {
+															"type": "array",
+															"items": {
+																"$ref": "#/components/schemas/VolumeOverview"
+															}
+														},
+														"count": {
+															"type": "integer",
+															"description": "Cloud media count"
+														}
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 40, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
 					}
 				]
 			}
@@ -9453,6 +9540,43 @@
 				"whenexpire": {
 					"description": "Expiration date and time",
 					"type": "string"
+				}
+			}
+		},
+		"VolumeOverview": {
+			"type": "object",
+			"properties": {
+				"volumename": {
+					"type": "string",
+					"description": "Volume name"
+				},
+				"pool": {
+					"type": "string",
+					"description": "Pool name"
+				},
+				"storage": {
+					"type": "string",
+					"description": "Storage name"
+				},
+				"volbytes": {
+					"type": "integer",
+					"description": "Volume bytes"
+				},
+				"volabytes": {
+					"type": "integer",
+					"description": "Volume compressed bytes"
+				},
+				"inchanger": {
+					"type": "integer",
+					"description": "InChanger flag"
+				},
+				"slot": {
+					"type": "integer",
+					"description": "Slot number"
+				},
+				"expiresin": {
+					"type": "integer",
+					"description": "When volume expire in UNIX timestamp form"
 				}
 			}
 		},
