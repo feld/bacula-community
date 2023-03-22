@@ -1577,6 +1577,9 @@ $bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
 cat <<EOF > $tmp/bconcmds
 @##############################################
 @$out $fn-purge
+restart jobid=18
+wait
+message
 list files jobid=18
 purge files jobid=18 yes
 list files jobid=18
@@ -1593,6 +1596,11 @@ if grep " 18 " $fn-purge; then
     estat=1
 fi
 
+if ! grep 'No authorization. Job "Simple"' $fn-purge > /dev/null; then
+    print_debug "ERROR: Should find issue with restart in $fn-purge"
+    estat=1
+fi
+
 nb=`grep uk.po $fn-purge | wc -l`
 if [ $nb != 0 ]; then
     print_debug "ERROR: Should not find uk.po file in $fn-purge"
@@ -1603,6 +1611,9 @@ fi
 cat <<EOF > $tmp/bconcmds
 @##############################################
 @$out $fn-after-purge
+restart jobid=18
+wait
+message
 list files jobid=18
 purge files jobid=18 yes
 list files jobid=18
@@ -1627,6 +1638,10 @@ if [ $nb != 1 ]; then
     estat=1
 fi
 
+if ! grep "Backup OK" $fn-after-purge > /dev/null; then
+    print_debug "ERROR: Should find restart job $fn-after-purge"
+    estat=1
+fi
 
 stop_bacula
 end_test
