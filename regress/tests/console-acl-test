@@ -1557,5 +1557,76 @@ if grep "17 | TestVolume003" $fn > /dev/null; then
     estat=1
 fi
 
+################
+fn=$tmp/purge-jobid.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+update volume=TestVolume001 volstatus=Append
+update volume=TestVolume002 volstatus=Append
+run job=Simple client=test1-fd level=full yes
+wait
+message
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+# Here everything should work
+
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-purge
+list files jobid=18
+purge files jobid=18 yes
+list files jobid=18
+list jobs
+purge jobs name=Simple client=test1-fd yes
+list jobs
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.job-client < $tmp/bconcmds
+
+if grep " 18 " $fn-purge; then
+    print_debug "ERROR: Should not even find jobid 18 in $fn-purge"
+    estat=1
+fi
+
+nb=`grep uk.po $fn-purge | wc -l`
+if [ $nb != 0 ]; then
+    print_debug "ERROR: Should not find uk.po file in $fn-purge"
+    estat=1
+fi
+
+# Try to purge jobid 18
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn-after-purge
+list files jobid=18
+purge files jobid=18 yes
+list files jobid=18
+
+list jobs
+purge jobs name=Simple client=test1-fd yes
+list jobs
+quit
+EOF
+
+$bin/bconsole -c $conf/bconsole.conf.old < $tmp/bconcmds
+
+nb=`grep " 18 " $fn-after-purge | wc -l`
+if [ $nb != 3 ]; then
+    print_debug "ERROR: Should find 3 times jobid 18 in $fn-after-purge"
+    estat=1
+fi
+
+nb=`grep uk.po $fn-after-purge | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Should find 1 time the uk.po file in $fn-after-purge"
+    estat=1
+fi
+
+
 stop_bacula
 end_test
