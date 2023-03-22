@@ -183,19 +183,15 @@ JOIN FileSet USING (FilesetId)'
 	}
 
 	/**
-	 * Get job records with objects in one of the two flavours: normal or overview.
+	 * Get job records with objects.
 	 *
 	 * @param array $criteria SQL criteria to get job list
 	 * @param mixed $limit_val result limit value
 	 * @param int $offset_val result offset value
-	 * @param string $sort_col sort by selected SQL column (default: JobId)
-	 * @param string $sort_order sort order:'ASC' or 'DESC' (default: ASC, ascending)
-	 * @param mixed $object_limit limit for object results
-	 * @param bool $overview if true, results are displayed in overview mode, otherwise normal mode
 	 * @param string $view job records view (basic, full)
 	 * @return array job record list with objects or empty list if no job found
 	 */
-	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'Job.JobId', $sort_order = 'ASC', $object_limit = null, $overview = false, $view = self::JOB_RESULT_VIEW_FULL) {
+	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $view = self::JOB_RESULT_VIEW_FULL) {
 
 		$connection = JobRecord::finder()->getDbConnection();
 		$connection->setActive(true);
@@ -241,7 +237,6 @@ JOIN FileSet USING (FilesetId)'
 
 			// get all objects
 			$jlimit = is_int($limit_val) && $limit_val > 0 ? ' LIMIT ' . $limit_val : '';
-			$olimit = is_int($object_limit) && $object_limit > 0 ? ' LIMIT ' . $object_limit : '';
 			$offset = is_int($offset_val) && $offset_val > 0 ? ' OFFSET ' . $offset_val : '';
 			$job_record = 'Job.*';
 			$obj_record = 'Object.*';

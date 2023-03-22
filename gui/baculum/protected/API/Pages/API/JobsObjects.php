@@ -40,7 +40,6 @@ class JobsObjects extends BaculumAPIServer {
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? $this->Request['jobids'] : '';
 		$afterjobid = $this->Request->contains('afterjobid') && $misc->isValidInteger($this->Request['afterjobid']) ? $this->Request['afterjobid'] : 0;
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
-		$object_limit = $this->Request->contains('object_limit') && $misc->isValidInteger($this->Request['object_limit']) ? (int)$this->Request['object_limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$jobstatus = $this->Request->contains('jobstatus') ? $this->Request['jobstatus'] : '';
 		$level = $this->Request->contains('level') && $misc->isValidJobLevel($this->Request['level']) ? $this->Request['level'] : '';
@@ -58,9 +57,6 @@ class JobsObjects extends BaculumAPIServer {
 		$realendtime_from = $this->Request->contains('realendtime_from') && $misc->isValidInteger($this->Request['realendtime_from']) ? (int)$this->Request['realendtime_from'] : null;
 		$realendtime_to = $this->Request->contains('realendtime_to') && $misc->isValidInteger($this->Request['realendtime_to']) ? (int)$this->Request['realendtime_to'] : null;
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
-		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'JobId';
-		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
-		$overview = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']));
 		$view = ($this->Request->contains('view') && $misc->isValidResultView($this->Request['view'])) ? $this->Request['view'] : JobManager::JOB_RESULT_VIEW_FULL;
 
 		if (!empty($jobids)) {
@@ -76,10 +72,6 @@ class JobsObjects extends BaculumAPIServer {
 				$params,
 				null,
 				0,
-				$order_by,
-				$order_direction,
-				$object_limit,
-				$overview,
 				$view
 			);
 			$this->output = $result;
@@ -99,30 +91,6 @@ class JobsObjects extends BaculumAPIServer {
 			$this->error = JobError::ERROR_CLIENT_DOES_NOT_EXISTS;
 			return;
 		}
-		$jr = new \ReflectionClass('Baculum\API\Modules\JobRecord');
-		$sort_cols = $jr->getProperties();
-		if (strpos($order_by, '.') !== false) {
-			$order_by_ex = explode('.', $order_by);
-			$order_by =  array_shift($order_by_ex);
-
-		}
-		$order_by_lc = strtolower($order_by);
-		$cols_excl = ['client', 'fileset', 'pool'];
-		$columns = [];
-		foreach ($sort_cols as $cols) {
-			$name = $cols->getName();
-			// skip columns not existing in the catalog
-			if (in_array($name, $cols_excl)) {
-				continue;
-			}
-			$columns[] = $name;
-		}
-		if (!in_array($order_by_lc, $columns)) {
-			$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
-			$this->error = JobError::ERROR_INVALID_PROPERTY;
-			return;
-		}
-
 
 		$params = [];
 
@@ -314,10 +282,6 @@ class JobsObjects extends BaculumAPIServer {
 					$params,
 					$limit,
 					$offset,
-					$order_by,
-					$order_direction,
-					$object_limit,
-					$overview,
 					$view
 				);
 				$this->output = $result;
