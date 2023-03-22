@@ -105,10 +105,14 @@ int purge_cmd(UAContext *ua, const char *cmd)
       case 0:                         /* Job */
       case 1:                         /* JobId */
          if (get_job_dbr(ua, &jr)) {
-            if (acl_access_ok(ua, Job_ACL, jr.Name)) {
+            if (acl_access_ok(ua, Job_ACL, jr.Name) &&
+                acl_access_ok(ua, Client_ACL, jr.Client))
+            {
                char jobid[50];
                edit_int64(jr.JobId, jobid);
                purge_files_from_jobs(ua, jobid);
+            } else {
+               ua->error_msg(_("Invalid jobid\n"));
             }
          }
          return 1;
