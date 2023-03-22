@@ -9566,6 +9566,10 @@
 					"type": "integer",
 					"description": "Volume compressed bytes"
 				},
+				"volstatus": {
+					"description": "Volume status",
+					"type": "integer"
+				},
 				"inchanger": {
 					"type": "integer",
 					"description": "InChanger flag"

@@ -178,13 +178,14 @@ LEFT JOIN Storage USING (StorageId)
 		// get disk volume types (file, dedup and alighed together)
 		$vt_disk = $this->getDiskVolTypes();
 		$sql = 'SELECT
-				VolumeName   AS volumename,
-				Pool.Name    AS pool,
-				Storage.Name AS storage,
-				VolBytes     AS volbytes,
-				VolABytes    AS volabytes,
-				InChanger    AS inchanger,
-				Slot         AS slot,
+				VolumeName      AS volumename,
+				Pool.Name       AS pool,
+				Storage.Name    AS storage,
+				VolBytes        AS volbytes,
+				VolABytes       AS volabytes,
+				Media.VolStatus AS volstatus,
+				InChanger       AS inchanger,
+				Slot            AS slot,
 				CASE 
 					WHEN Media.VolStatus IN (\'Full\', \'Used\') THEN ' . $expire_query . '
 					ELSE 0
@@ -201,13 +202,14 @@ LEFT JOIN Storage USING (StorageId)
 		// get tape volume types
 		$vt_tape = $this->getTapeVolTypes();
 		$sql = 'SELECT
-				VolumeName   AS volumename,
-				Pool.Name    AS pool,
-				Storage.Name AS storage,
-				VolBytes     AS volbytes,
-				VolABytes    AS volabytes,
-				InChanger    AS inchanger,
-				Slot         AS slot,
+				VolumeName      AS volumename,
+				Pool.Name       AS pool,
+				Storage.Name    AS storage,
+				VolBytes        AS volbytes,
+				VolABytes       AS volabytes,
+				Media.VolStatus AS volstatus,
+				InChanger       AS inchanger,
+				Slot            AS slot,
 				CASE 
 					WHEN Media.VolStatus IN (\'Full\', \'Used\') THEN ' . $expire_query . '
 					ELSE 0
@@ -224,13 +226,14 @@ LEFT JOIN Storage USING (StorageId)
 		// get cloud volume types
 		$vt_cloud = $this->getCloudVolTypes();
 		$sql = 'SELECT
-				VolumeName   AS volumename,
-				Pool.Name    AS pool,
-				Storage.Name AS storage,
-				VolBytes     AS volbytes,
-				VolABytes    AS volabytes,
-				InChanger    AS inchanger,
-				Slot         AS slot,
+				VolumeName      AS volumename,
+				Pool.Name       AS pool,
+				Storage.Name    AS storage,
+				VolBytes        AS volbytes,
+				VolABytes       AS volabytes,
+				Media.VolStatus AS volstatus,
+				InChanger       AS inchanger,
+				Slot            AS slot,
 				CASE 
 					WHEN Media.VolStatus IN (\'Full\', \'Used\') THEN ' . $expire_query . '
 					ELSE 0
