@@ -146,7 +146,8 @@ struct JOB_DBR {
    uint64_t ReadBytes;
    int PurgedFiles;
    int HasBase;
-   int Reviewed;
+   int Reviewed;                /* In list, values are 0 (unset), 1 and 2 */
+   char Client[MAX_NAME_LENGTH]; /* Set in db_get_job_record() */
 
    /* Note, FirstIndex, LastIndex, Start/End File and Block
     * are only used in the JobMedia record.

@@ -255,29 +255,36 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
          bdb_escape_string(jcr, esc, jr->Job, strlen(jr->Job));
          Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
-"Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,RealEndTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed "
-"FROM Job WHERE Job='%s'", esc);
+"Type,Level,ClientId,Job.Name,PriorJobId,RealEndTime,JobId,FileSetId,"
+"SchedTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
+"Reviewed, Client.Name AS Client "
+"FROM Job JOIN Client USING (ClientId) WHERE Job='%s'", esc);
 
       } else if (jr->PriorJob[0]) {
          bdb_escape_string(jcr, esc, jr->PriorJob, strlen(jr->PriorJob));
          Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
-"Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,RealEndTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed "
-"FROM Job WHERE PriorJob='%s' ORDER BY Type ASC LIMIT 1", esc);
+"Type,Level,ClientId,Job.Name AS Name,PriorJobId,RealEndTime,JobId,FileSetId,"
+"SchedTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
+"Reviewed, Client.Name AS Client "
+"FROM Job JOIN CLient USING (ClientId) WHERE PriorJob='%s' ORDER BY Type ASC LIMIT 1", esc);
       } else {
          Mmsg0(errmsg, _("No Job found\n"));
          bdb_unlock();
          return false;                   /* failed */
       }
 
-   } else {
+   } else { //                0            1
       Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
+// 2      3         4        5       6       7        8    9           
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
-"Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,RealEndTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed "
-"FROM Job WHERE JobId=%s",
+// 10  11    12       13                 14          15       16      17
+"Type,Level,ClientId,Job.Name AS Name,PriorJobId,RealEndTime,JobId,FileSetId,"
+// 18       19         20       21          22      23           
+"SchedTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
+// 24          25
+"Reviewed, Client.Name AS Client "
+"FROM Job JOIN Client USING (ClientId) WHERE JobId=%s",
           edit_int64(jr->JobId, ed1));
    }
 
@@ -320,17 +327,17 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
    }
    jr->FileSetId = str_to_int64(row[17]);
    bstrncpy(jr->cSchedTime, row[18]!=NULL?row[18]:"", sizeof(jr->cSchedTime));
-   bstrncpy(jr->cRealEndTime, row[19]!=NULL?row[19]:"", sizeof(jr->cRealEndTime));
-   jr->ReadBytes = str_to_int64(row[20]);
+   jr->ReadBytes = str_to_int64(row[19]);
    jr->StartTime = str_to_utime(jr->cStartTime);
    jr->SchedTime = str_to_utime(jr->cSchedTime);
    jr->EndTime = str_to_utime(jr->cEndTime);
    jr->RealEndTime = str_to_utime(jr->cRealEndTime);
-   jr->HasBase = str_to_int64(row[21]);
-   jr->PurgedFiles = str_to_int64(row[22]);
-   bstrncpy(jr->PriorJob, NPRTB(row[23]), sizeof(jr->PriorJob));
-   bstrncpy(jr->Comment, NPRTB(row[24]), sizeof(jr->Comment));
-   jr->Reviewed = str_to_int64(row[25]);
+   jr->HasBase = str_to_int64(row[20]);
+   jr->PurgedFiles = str_to_int64(row[21]);
+   bstrncpy(jr->PriorJob, NPRTB(row[22]), sizeof(jr->PriorJob));
+   bstrncpy(jr->Comment, NPRTB(row[23]), sizeof(jr->Comment));
+   jr->Reviewed = str_to_int64(row[24]);
+   bstrncpy(jr->Client, NPRTB(row[25]), sizeof(jr->Client));
    sql_free_result();
 
    bdb_unlock();
