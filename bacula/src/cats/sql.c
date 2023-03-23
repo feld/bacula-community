@@ -347,6 +347,7 @@ char *BDB::get_acl_join_filter(int tables)
 /* Intialize the ACL list */
 void BDB::init_acl()
 {
+   use_acls = false;
    for(int i=0; i < DB_ACL_LAST; i++) {
       acls[i] = NULL;
    }
@@ -358,6 +359,7 @@ void BDB::free_acl()
    for(int i=0; i < DB_ACL_LAST; i++) {
       free_and_null_pool_memory(acls[i]);
    }
+   use_acls = false;
 }
 
 /* Get ACL for a given type */
@@ -366,6 +368,9 @@ const char *BDB::get_acl(DB_ACL_t type, bool where /* display WHERE or AND */)
    if (!acls[type]) {
       return "";
    }
+   /* The acls[type] list of string allowed has a prefix, and we can overwrite
+    * it with the where parameter
+    */
    strcpy(acls[type], where?" WHERE ":"   AND ");
    acls[type][7] = ' ' ;        /* replace \0 by ' ' */
    return acls[type];
@@ -377,6 +382,9 @@ void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2, alist *lis
    const char *key=NULL;
    const char *keyid=NULL;
 
+   /* We are in a restricted console mode */
+   use_acls = true;
+   
    /* If the list is present, but we authorize everything */
    if (list && list->size() == 1 && strcasecmp((char*)list->get(0), "*all*") == 0) {
       return;
@@ -424,7 +432,7 @@ void BDB::set_acl(JCR *jcr, DB_ACL_t type, alist *list, alist *list2, alist *lis
       break;
    }
 
-   /* For clients, we can have up to 2 lists */
+   /* For clients, we can have up to 3 lists */
    char *elt;
    alist *merged_list = New(alist(5, not_owned_by_alist));
    if (list) {
@@ -613,14 +621,23 @@ bool BDB::bdb_check_version(JCR *jcr)
 bool BDB::QueryDB(JCR *jcr, char *cmd, const char *file, int line) 
 { 
    sql_free_result(); 
-   if (!sql_query(cmd, QF_STORE_RESULT)) { 
-      m_msg(file, line, &errmsg, _("query %s failed:\n%s\n"), cmd, sql_strerror()); 
+   if (!sql_query(cmd, QF_STORE_RESULT)) {
+      if (use_acls) {
+         Dmsg2(DT_SQL, "query %s failed:\n%s\n", cmd, sql_strerror()); 
+
+         /* The restricted console we get a basic message */
+         m_msg(file, line, &errmsg, _("query failed\n"));
+
+      } else {
+         /* Complete message for non restricted console */
+         m_msg(file, line, &errmsg, _("query %s failed:\n%s\n"), cmd, sql_strerror()); 
+      }
       if (use_fatal_jmsg()) { 
          j_msg(file, line, jcr, M_FATAL, 0, "%s", errmsg); 
       } 
-      if (verbose) { 
+      if (verbose && !use_acls) { 
          j_msg(file, line, jcr, M_INFO, 0, "%s\n", cmd); 
-      } 
+      }
       return false; 
    } 
  
@@ -635,11 +652,17 @@ bool BDB::QueryDB(JCR *jcr, char *cmd, const char *file, int line)
 bool BDB::InsertDB(JCR *jcr, char *cmd, const char *file, int line) 
 { 
    if (!sql_query(cmd)) { 
-      m_msg(file, line, &errmsg,  _("insert %s failed:\n%s\n"), cmd, sql_strerror()); 
+      if (use_acls) {
+         Dmsg2(DT_SQL,  _("insert %s failed:\n%s\n"), cmd, sql_strerror());
+         m_msg(file, line, &errmsg, _("insert failed\n"));
+
+      } else {
+         m_msg(file, line, &errmsg,  _("insert %s failed:\n%s\n"), cmd, sql_strerror());
+      }
       if (use_fatal_jmsg()) { 
          j_msg(file, line, jcr, M_FATAL, 0, "%s", errmsg); 
       } 
-      if (verbose) { 
+      if (verbose && !use_acls) { 
          j_msg(file, line, jcr, M_INFO, 0, "%s\n", cmd); 
       } 
       return false; 
@@ -668,20 +691,35 @@ bool BDB::InsertDB(JCR *jcr, char *cmd, const char *file, int line)
 bool BDB::UpdateDB(JCR *jcr, char *cmd, bool can_be_empty,
                    const char *file, int line) 
 { 
-   if (!sql_query(cmd)) { 
-      m_msg(file, line, &errmsg, _("update %s failed:\n%s\n"), cmd, sql_strerror()); 
+   if (!sql_query(cmd)) {
+      if (use_acls) {
+         Dmsg2(DT_SQL, _("update %s failed:\n%s\n"), cmd, sql_strerror());
+         m_msg(file, line, &errmsg, _("update failed:\n")); 
+
+      } else {
+         m_msg(file, line, &errmsg, _("update %s failed:\n%s\n"), cmd, sql_strerror()); 
+      }
       j_msg(file, line, jcr, M_ERROR, 0, "%s", errmsg); 
-      if (verbose) { 
+      if (verbose && !use_acls) { 
          j_msg(file, line, jcr, M_INFO, 0, "%s\n", cmd); 
       } 
       return false; 
    } 
    int num_rows = sql_affected_rows(); 
    if ((num_rows == 0 && !can_be_empty) || num_rows < 0) { 
-      char ed1[30]; 
-      m_msg(file, line, &errmsg, _("Update failed: affected_rows=%s for %s\n"), 
-         edit_uint64(num_rows, ed1), cmd); 
-      if (verbose) { 
+      char ed1[30];
+      Dmsg2(DT_SQL, _("Update failed: affected_rows=%s for %s\n"), 
+            edit_uint64(num_rows, ed1), cmd);
+      if (use_acls) {
+         m_msg(file, line, &errmsg, _("Update failed: affected_rows=%s\n"), 
+               edit_uint64(num_rows, ed1)); 
+
+      } else {
+         m_msg(file, line, &errmsg, _("Update failed: affected_rows=%s for %s\n"), 
+               edit_uint64(num_rows, ed1), cmd); 
+      }
+
+      if (verbose && !use_acls) { 
 //       j_msg(file, line, jcr, M_INFO, 0, "%s\n", cmd); 
       } 
       return false; 
@@ -698,12 +736,19 @@ bool BDB::UpdateDB(JCR *jcr, char *cmd, bool can_be_empty,
 int BDB::DeleteDB(JCR *jcr, char *cmd, const char *file, int line) 
 { 
  
-   if (!sql_query(cmd)) { 
-      m_msg(file, line, &errmsg, _("delete %s failed:\n%s\n"), cmd, sql_strerror()); 
+   if (!sql_query(cmd)) {
+      if (use_acls) {
+         Dmsg2(DT_SQL, _("delete %s failed:\n%s\n"), cmd, sql_strerror());
+         m_msg(file, line, &errmsg, _("delete failed:\n"));
+
+      } else {
+         m_msg(file, line, &errmsg, _("delete %s failed:\n%s\n"), cmd, sql_strerror());
+      }
+
       j_msg(file, line, jcr, M_ERROR, 0, "%s", errmsg); 
-      if (verbose) { 
+      if (verbose && !use_acls) { 
          j_msg(file, line, jcr, M_INFO, 0, "%s\n", cmd); 
-      } 
+      }
       return -1; 
    } 
    changes++; 

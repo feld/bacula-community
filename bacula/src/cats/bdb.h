@@ -114,6 +114,7 @@ public:
    int fnl;                           /* file name length */
    int pnl;                           /* path name length */
 
+   bool use_acls;                     /* Use ACLs or not, ie restricted console or not */
    POOLMEM *acls[DB_ACL_LAST];        /* ACLs */
 
    /* methods */
