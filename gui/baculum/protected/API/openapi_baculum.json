@@ -2543,7 +2543,7 @@
 					{
 						"name": "plugin_options",
 						"in": "body",
-						"description": "Pluging options in JSON form: {objectid1: {option1: value1, option2: value2}, objectid2: {option3: value3}...}",
+						"description": "Pluging options in JSON form: {restoreobjectid1: {option1: value1, option2: value2}, restoreobjectid2: {option3: value3}...}",
 						"required": false,
 						"schema": {
 							"type": "object"
