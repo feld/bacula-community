@@ -82,7 +82,7 @@ class PluginVSphereListDatastores extends ConsoleOutputQueryPage {
 
 		if ($out->exitcode !== 0) {
 			$out->error = PluginVSphereError::ERROR_EXECUTING_PLUGIN_QUERY_COMMAND;
-			$out->output = PluginVSphereError::MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND . $out->output;
+			$out->output = PluginVSphereError::MSG_ERROR_EXECUTING_PLUGIN_QUERY_COMMAND . implode(PHP_EOL, $out->output);
 			$this->getModule('logging')->log(
 				Logging::CATEGORY_EXECUTE,
 				$out->output . ", Error={$out->error}"
