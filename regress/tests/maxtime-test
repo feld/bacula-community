@@ -20,7 +20,7 @@ WHEN=`date '+%Y-%m-%d %H:%M:%S'`
 echo "${cwd}/build/po" >${cwd}/tmp/file-list
 
 if [ "$FORCE_DEDUP" = yes ]; then
-    $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Maximum Volume Bytes", 5000, "Pool", "Default");'
+    $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Maximum Volume Bytes", "1MB", "Pool", "Default");'
 fi
 
 start_test
