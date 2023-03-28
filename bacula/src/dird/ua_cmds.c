@@ -829,7 +829,7 @@ static int setbwlimit_cmd(UAContext *ua, const char *cmd)
          setbwlimit_client(ua, client, Job, limit);
          free_jcr(jcr);
       }
-
+      delete jcrs;
    } else {
       client = get_client_resource(ua, JT_BACKUP_RESTORE);
       if (client) {
