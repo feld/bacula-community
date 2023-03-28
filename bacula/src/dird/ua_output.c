@@ -286,14 +286,21 @@ bool acl_access_jobid_ok(UAContext *ua, const char *jobids)
       jr.JobId = jid;
 
       if (db_get_job_record(ua->jcr, ua->db, &jr)) {
+         ret = false;
          for (int i=0; i<list->size(); i++) {
             if (strcasecmp(jr.Name, (char *)list->get(i)) == 0) {
                Dmsg3(1400, "ACL found %s in %d %s\n", jr.Name,
                      Job_ACL, (char *)list->get(i));
                ret = true;
-               goto bail_out;
+               break;
             }
          }
+         if (ret && !acl_access_client_ok(ua, jr.Client, JT_BACKUP)) {
+            ret = false;
+         }
+      }
+      if (!ret) {
+         goto bail_out;
       }
    }
 
