@@ -159,8 +159,8 @@ Pool.Name as pool,
 FileSet.FileSet as fileset 
 FROM Job 
 JOIN Client USING (ClientId) 
-JOIN Pool USING (PoolId) 
-JOIN FileSet USING (FilesetId)'
+LEFT JOIN Pool USING (PoolId) 
+LEFT JOIN FileSet USING (FilesetId)'
 . $where['where'] . $order . $limit . $offset;
 
 		$statement = Database::runQuery($sql, $where['params']);
