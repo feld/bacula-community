@@ -191,7 +191,7 @@ class RestoreRun extends ConsoleOutputPage {
 			if (is_null($queued_jobid)) {
 				// new jobid is not detected, error
 				$this->error = JobError::ERROR_INVALID_PROPERTY;
-				$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
+				$this->output = JobError::MSG_ERROR_INVALID_PROPERTY . implode(PHP_EOL, $restore->output);
 			} else {
 				// new jobid is detected, check output format
 				if ($out_format == parent::OUTPUT_FORMAT_JSON) {
