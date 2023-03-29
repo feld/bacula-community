@@ -59,5 +59,7 @@
 		<module id="changer_command" class="Baculum\API\Modules\ChangerCommand" />
 		<!-- plugin modules -->
 		<module id="fd_plugin_cfg" class="Baculum\API\Modules\PluginFDConfig" />
+		<!-- M365 modules -->
+		<module id="m365" class="Baculum\API\Modules\PluginM365Manager" />
 	</modules>
 </configuration>

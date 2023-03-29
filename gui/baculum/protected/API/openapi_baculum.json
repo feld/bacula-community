@@ -8589,6 +8589,81 @@
 				]
 			}
 		},
+		"/api/v2/plugins/m365/{clientid}/{tenantid}/jobs": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin job list for specific email account.",
+				"description": "Get Microsoft 365 plugin job list for specific email account.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 jobs for given email",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"jobid": {
+														"type": "integer",
+														"description": "Job identifier"
+													},
+													"name": {
+														"type": "string",
+														"description": "Job name"
+													},
+													"starttime": {
+														"type": "string",
+														"description": "Start time"
+													},
+													"endtime": {
+														"type": "string",
+														"description": "Start time"
+													},
+													"jobfiles": {
+														"type": "integer",
+														"description": "Job files"
+													},
+													"jobbytes": {
+														"type": "integer",
+														"description": "Job bytes"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 160, 161, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					},
+					{
+						"$ref": "#/components/parameters/TenantId"
+					},
+					{
+						"name": "emailowner",
+						"in": "query",
+						"required": true,
+						"description": "Email to get jobs",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/vsphere/{clientid}/servers": {
 			"get": {
 				"tags": ["plugins"],

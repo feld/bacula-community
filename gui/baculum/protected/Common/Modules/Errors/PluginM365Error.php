@@ -31,6 +31,8 @@ namespace Baculum\Common\Modules\Errors;
  */
 class PluginM365Error extends PluginError {
 	const ERROR_TENANT_DOES_NOT_EXISTS = 160;
+	const ERROR_EMAIL_DOES_NOT_EXISTS = 161;
 
 	const MSG_ERROR_TENANT_DOES_NOT_EXISTS = 'Tenant does not exist.';
+	const MSG_ERROR_EMAIL_DOES_NOT_EXISTS = 'Email does not exist.';
 }
