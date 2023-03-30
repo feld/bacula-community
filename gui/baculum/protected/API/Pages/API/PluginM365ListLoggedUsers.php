@@ -23,6 +23,7 @@
 use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\ConsoleOutputQueryPage;
 use Baculum\Common\Modules\Logging;
+use Baculum\Common\Modules\Errors\BconsoleError;
 use Baculum\Common\Modules\Errors\ClientError;
 use Baculum\Common\Modules\Errors\PluginError;
 use Baculum\Common\Modules\Errors\PluginM365Error;
