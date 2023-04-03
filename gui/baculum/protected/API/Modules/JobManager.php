@@ -216,8 +216,17 @@ LEFT JOIN FileSet USING (FilesetId)'
 			}
 			$where = Database::getWhere($criteria);
 			$sql = 'CREATE ' . $table_type . ' TABLE ' . $jobid_jobstatus_tname . ' AS
-				SELECT JobId, JobStatus, JobErrors
+				SELECT  Job.JobId,
+					Job.JobStatus,
+					Job.JobErrors,
+					Client.Name AS client,
+					Pool.Name AS pool,
+					FileSet.FileSet AS fileset,
+					FileSet.Content AS content
 				FROM Job
+				JOIN Client USING (ClientId)
+				LEFT JOIN Pool USING (PoolId)
+				LEFT JOIN FileSet USING (FilesetId)
 				' . $where['where'];
 
 			Database::execute($sql, $where['params']);
@@ -244,6 +253,7 @@ LEFT JOIN FileSet USING (FilesetId)'
 				$job_record = implode(',', $this->basic_mode_job_props);
 				$obj_record = implode(',', ObjectManager::$basic_mode_obj_props);
 			}
+			$job_record .= ',' . $jobid_jobstatus_tname . '.client, ' . $jobid_jobstatus_tname . '.pool, ' . $jobid_jobstatus_tname . '.fileset, ' . $jobid_jobstatus_tname . '.content';
 			$sql = 'SELECT JobId, ' . $obj_record . ' 
 				FROM Object
 				JOIN ' . $jobid_jobstatus_tname . ' USING (JobId)
