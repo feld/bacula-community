@@ -1840,12 +1840,12 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
       start_prompt(ua, _("The defined FileSet resources are:\n"));
       if (!db_sql_query(ua->db, rx->query, fileset_handler, (void *)ua)) { // ACL checked
          ua->error_msg("%s\n", db_strerror(ua->db));
-         goto bail_out;
+         goto bail_out_unlocked;
       }
       if (do_prompt(ua, _("FileSet"), _("Select FileSet resource"),
                  fileset_name, sizeof(fileset_name)) < 0) {
          ua->error_msg(_("No FileSet found for client \"%s\".\n"), cr.Name);
-         goto bail_out;
+         goto bail_out_unlocked;
       }
 
       bstrncpy(fsr.FileSet, fileset_name, sizeof(fsr.FileSet));
@@ -1954,7 +1954,8 @@ bail_out:
   db_sql_query(ua->db, uar_del_temp, NULL, NULL);
   db_sql_query(ua->db, uar_del_temp1, NULL, NULL);
   db_unlock(ua->db);
-   return ok;
+bail_out_unlocked:
+  return ok;
 }
 
 static int restore_count_handler(void *ctx, int num_fields, char **row)
