@@ -1,4 +1,43 @@
 
+               Release Notes for Baculum 13.0.3
+
+This is a new feature release. All changes are for the API part.
+It extends the API capabilities for new functions.
+
+New changes and fixes:
+ - Disable querying API for seeing which authentication methods are supported
+ - Tweak fix list restore hosts output value
+ - Add VMware vSphere restore host list endpoint
+ - Tweak fix error message for wrong exit code
+ - Add output parameter to run restore endpoint
+ - Add displaying bconsole command output if command is multiline
+ - Tweak import
+ - Add fileindex parameter to bvfs restore endpoint
+ - Change a way of executing SQL queries
+ - Add to documentation missing type parameter to job resnames endpoint
+ - Tweak fix displaying empty job resource
+ - Fix compatibility with PHP 5.4
+ - Add support for plugin filter in client list endpoint
+ - Add objectid parameter to Bvfs restore endpoint
+ - Add output parameter to run job endpoint
+ - Add when parameter to run job endpoint
+ - Add a new endpoint to list jobs together with objects
+ - Add VMware vSphere datastore list endpoint
+ - Add VMware vSphere host list endpoint
+ - Add VMware vSphere server list endpoint
+ - Fix support for PHP 5
+ - Add voltype property support in bvfs output parser
+ - Add offset and limit parameters to bvfs versions endpoint
+ - Add to estimated job values endpoint average number of backed up objects
+ - Add estimated job values endpoint that uses job historical data for estimation
+ - Make show command output parser more accurate
+ - Add support for cloud storage commands
+ - Improve job statuses for job overview purpose
+ - Fix example values in OpenAPI documentation
+ - Add overview parameter to job list endpoint
+ - Add endtime property and filters to source list endpoint
+
+
                Release Notes for Baculum 13.0.2
 
 This is a new feature release. All changes are for the API part.
