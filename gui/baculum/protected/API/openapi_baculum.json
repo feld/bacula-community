@@ -4803,9 +4803,14 @@
 						}
 					}
 				},
-				"parameters": [{
-					"$ref": "#/components/parameters/Limit"
-				}]
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					}
+				]
 			}
 		},
 		"/api/v2/filesets/{filesetid}": {
@@ -8025,6 +8030,9 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
 					},
 					{
 						"name": "job",
