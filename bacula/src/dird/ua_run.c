@@ -1301,6 +1301,10 @@ int modify_job_parameters(UAContext *ua, JCR *jcr, run_ctx &rc)
          }
          goto try_again;
       case 7:
+         if (ua->cons) {
+            ua->error_msg(_("Selection of bootstrap file is not allowed for restricted Console\n"));
+            break;
+         }
          /* Pool or Bootstrap depending on JobType */
          if (jcr->getJobType() == JT_BACKUP ||
              jcr->getJobType() == JT_COPY ||
