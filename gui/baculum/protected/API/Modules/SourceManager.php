@@ -42,7 +42,7 @@ class SourceManager extends APIModule {
 		}
 		$where = Database::getWhere($criteria, true);
 		$sql = 'SELECT DISTINCT 
-	sres.fileset, sres.client, sres.job, jres.starttime, jres.endtime, ores.jobid, jres.jobstatus
+	sres.fileset, sres.client, sres.job, jres.starttime, jres.endtime, ores.jobid, jres.jobstatus, jres.joberrors
 	FROM Job AS jres,
 	(
 		SELECT DISTINCT
