@@ -191,7 +191,7 @@ LEFT JOIN FileSet USING (FilesetId)'
 	 * @param string $view job records view (basic, full)
 	 * @return array job record list with objects or empty list if no job found
 	 */
-	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'Job.EndTime', $sort_order = 'DESC', $view = self::JOB_RESULT_VIEW_FULL) {
+	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'EndTime', $sort_order = 'DESC', $view = self::JOB_RESULT_VIEW_FULL) {
 
 		$connection = JobRecord::finder()->getDbConnection();
 		$connection->setActive(true);
