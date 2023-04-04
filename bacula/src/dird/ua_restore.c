@@ -132,6 +132,7 @@ int restore_cmd(UAContext *ua, const char *cmd)
    RESTORE_CTX rx;                    /* restore context */
    POOL_MEM buf;
    JOB *job;
+   FILESET *fs;
    int i;
    JCR *jcr = ua->jcr;
    char *escaped_bsr_name = NULL;
@@ -304,6 +305,21 @@ int restore_cmd(UAContext *ua, const char *cmd)
       goto bail_out;
    }
 
+   /* Check if the fileset is authorized, it's not really needed by a restore job */
+   fs = job->fileset;
+   if (!acl_access_ok(ua, FileSet_ACL, fs->name())) {
+      /* Take the first one that is authorized */
+      foreach_res(fs, R_FILESET) {
+         if (acl_access_ok(ua, FileSet_ACL, fs->name())) {
+            break;
+         }
+      }
+      if (!fs) {
+         ua->error_msg(_("No FileSet resource found!\n"));
+         goto bail_out;
+      }
+   }
+
    get_client_name(ua, &rx);
    if (!rx.ClientName[0]) {
       ua->error_msg(_("No Client resource found!\n"));
@@ -315,11 +331,11 @@ int restore_cmd(UAContext *ua, const char *cmd)
 
    Mmsg(ua->cmd,
         "run job=\"%s\" client=\"%s\" restoreclient=\"%s\" storage=\"%s\""
-        " bootstrap=\"%s\" files=%u catalog=\"%s\"",
+        " bootstrap=\"%s\" files=%u catalog=\"%s\" fileset=\"%s\"",
         job->name(), rx.ClientName, rx.RestoreClientName,
         rx.store?rx.store->name():"",
         escaped_bsr_name ? escaped_bsr_name : jcr->RestoreBootstrap,
-        rx.selected_files, ua->catalog->name());
+        rx.selected_files, ua->catalog->name(), fs->name());
 
    /* Build run command */
    pm_strcpy(buf, "");
