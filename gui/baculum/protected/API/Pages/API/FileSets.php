@@ -33,30 +33,35 @@ use Baculum\Common\Modules\Errors\FileSetError;
 class FileSets extends BaculumAPIServer {
 
 	public function get() {
-		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
-		$filesets = $this->getModule('fileset')->getFileSets($limit);
+		$misc = $this->getModule('misc');
+		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
-			array('.fileset')
+			['.fileset']
 		);
 		if ($result->exitcode === 0) {
 			array_shift($result->output);
-			if (is_array($filesets)) {
-				$fs = array();
-				for ($i = 0; $i < count($filesets); $i++) {
-					if(in_array($filesets[$i]->fileset, $result->output)) {
-						$fs[] = $filesets[$i];
-					}
-				}
-				$this->output = $fs;
+			$vals = array_filter($result->output);
+			if (count($vals) == 0) {
+				// no $vals criteria means that user has no fileset resource assigned.
+				$this->output = [];
 				$this->error = FileSetError::ERROR_NO_ERRORS;
-			} else {
-				$this->output = FileSetError::MSG_ERROR_FILESET_DOES_NOT_EXISTS;
-				$this->error = FileSetError::ERROR_FILESET_DOES_NOT_EXISTS;
+				return;
 			}
+
+			$params['FileSet.FileSet'] = [];
+			$params['FileSet.FileSet'][] = [
+				'operator' => 'IN',
+				'vals' => $vals
+			];
+
+			$filesets = $this->getModule('fileset')->getFileSets($params, $limit, $offset);
+			$this->output = $filesets;
+			$this->error = FileSetError::ERROR_NO_ERRORS;
 		} else {
-			$this->output = $result->output;
-			$this->error = $result->exitcode;
+			$this->output = FileSetError::MSG_ERROR_WRONG_EXITCODE . 'ErrorCode=' . $result->exitcode . ' Output=' . implode(PHP_EOL, $result->output);
+			$this->error = FileSetError::ERROR_WRONG_EXITCODE;
 		}
 	}
 }

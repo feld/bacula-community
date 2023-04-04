@@ -22,7 +22,7 @@
 
 namespace Baculum\API\Modules;
 
-use Prado\Data\ActiveRecord\TActiveRecordCriteria;
+use PDO;
 
 /**
  * FileSet manager module.
@@ -33,12 +33,23 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class FileSetManager extends APIModule {
 
-	public function getFileSets($limit) {
-		$criteria = new TActiveRecordCriteria;
-		if(is_int($limit) && $limit > 0) {
-			$criteria->Limit = $limit;
+	public function getFileSets($criteria, $limit_val = 0, $offset_val = 0) {
+		$limit = '';
+		if (is_int($limit_val) && $limit_val > 0) {
+			$limit = ' LIMIT ' . $limit_val;
 		}
-		return FileSetRecord::finder()->findAll($criteria);
+		$offset = '';
+		if (is_int($offset_val) && $offset_val > 0) {
+			$offset = ' OFFSET ' . $offset_val;
+		}
+		$where = Database::getWhere($criteria);
+
+		$sql = 'SELECT FileSet.* 
+FROM FileSet '
+. $where['where'] . $limit . $offset;
+
+		$statement = Database::runQuery($sql, $where['params']);
+		return $statement->fetchAll(PDO::FETCH_OBJ);
 	}
 
 	public function getFileSetById($id) {
