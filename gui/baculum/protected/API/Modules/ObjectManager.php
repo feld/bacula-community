@@ -98,7 +98,7 @@ class ObjectManager extends APIModule
 
 		$where = Database::getWhere($criteria);
 
-		$obj_record = 'Object.*, Job.Name as jobname ';
+		$obj_record = 'Object.*, Job.Name AS jobname, Job.JobErrors AS joberrors ';
 		if ($view == self::OBJ_RESULT_VIEW_BASIC) {
 			$obj_record = implode(',', $this->basic_mode_obj_props);
 		}
