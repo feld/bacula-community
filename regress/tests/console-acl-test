@@ -30,6 +30,7 @@ change_jobname NightlySave $JobName
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Autoprune", "no", "Director")'
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "File Retention", "2s", "Client")'
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "File Retention", "2s", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "empty", "Job", "RestoreFiles")'
 
 $rscripts/setup_rconsole
 
@@ -761,11 +762,23 @@ cat <<EOF > $tmp/bconcmds
 @##############################################
 @$out $fn
 restore
+1
+.
+restore
+11
+.
+restore
 11
 test1
+restore
+11
+1,2,3,4
+1
+test1
 /etc/
-done
-.
+</etc/passwd
+$cwd/build/po/
+
 quit
 EOF
 
@@ -773,6 +786,21 @@ $bin/bconsole -c $tmp/bconsole.conf.job < $tmp/bconcmds
 
 if ! grep "No JobId selected" $fn > /dev/null; then
     print_debug "ERROR: Should find selection list error in $fn"
+    estat=1
+fi
+
+if ! grep "Job not run" $fn > /dev/null; then
+    print_debug "ERROR: Should find that job did not run in $fn"
+    estat=1
+fi
+
+if ! grep "Operation not allowed" $fn > /dev/null; then
+    print_debug "ERROR: Should find a message about < input in $fn"
+    estat=1
+fi
+
+if ! grep "Bootstrap records written" $fn > /dev/null; then
+    print_debug "ERROR: Should find that the restore wrote a bootstrap in $fn"
     estat=1
 fi
 
@@ -1640,6 +1668,34 @@ fi
 
 if ! grep "Backup OK" $fn-after-purge > /dev/null; then
     print_debug "ERROR: Should find restart job $fn-after-purge"
+    estat=1
+fi
+
+# Try to restore without the fileset configured
+fn=$tmp/restore.out
+cat <<EOF > $tmp/bconcmds
+@##############################################
+@$out $fn
+.fileset
+run job=backup level=full yes
+wait
+message
+restore client=$HOST-fd
+5
+m *
+done
+yes
+wait
+message
+quit
+EOF
+
+$bin/bconsole -c $tmp/bconsole.conf.fileset < $tmp/bconcmds
+
+# It should select a different fileset by default
+# as "empty" is not available for this console
+if grep empty $fn; then
+    print_debug "ERROR: Should not find the empty fileset in $fn"
     estat=1
 fi
 

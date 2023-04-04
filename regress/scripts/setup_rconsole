@@ -12,6 +12,9 @@ sed "s/$HOST-fd/test-rst-fd/" $tmp/1 >> $conf/bacula-dir.conf
 sed "s/$HOST-fd/test-bkp-fd/" $tmp/1 >> $conf/bacula-dir.conf
 
 cat <<EOF >> $conf/bacula-dir.conf
+FileSet {
+  Name = empty
+}
 Pool {
   Name = Test
   Pool Type = Backup
