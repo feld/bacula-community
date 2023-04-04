@@ -1256,6 +1256,10 @@ static void insert_one_file_or_dir(UAContext *ua, RESTORE_CTX *rx, char *date, b
 
    switch (*p) {
    case '<':
+      if (ua->cons) { /* Do not open local files from a restricted console */
+         ua->error_msg(_("Operation not allowed for restricted console\n"));
+         break;
+      }
       p++;
       if ((ffd = bfopen(p, "rb")) == NULL) {
          berrno be;
