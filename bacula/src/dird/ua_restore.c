@@ -972,10 +972,6 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
                rx->JobIds);
 
          } else if (get_cmd(ua, _("Enter JobId(s), comma separated, to restore: "))) {
-            if (*ua->cmd == '.') {
-               *rx->JobIds = 0;
-               return 0;                 /* nothing entered, return */
-            }
             db_get_jobids(ua->jcr, ua->db, ua->cmd, &rx->JobIds, false /* clear */);
             if (*rx->JobIds == 0) {
                ua->error_msg(_("No JobId selected\n"));
@@ -983,6 +979,9 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             }
             ua->send_msg(_("You have selected the following JobIds: %s\n"),
                          rx->JobIds);
+         } else {
+            *rx->JobIds = 0;
+            return 0;
          }
          if (!have_date) {
             bstrutime(date, sizeof(date), now);
