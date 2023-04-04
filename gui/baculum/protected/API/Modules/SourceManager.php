@@ -31,10 +31,14 @@ namespace Baculum\API\Modules;
  */
 class SourceManager extends APIModule {
 
-	public function getSources($criteria = [], $limit_val = null) {
+	public function getSources($criteria = [], $limit_val = null, $offset_val = 0) {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
+		}
+		$offset = '';
+		if (is_int($offset_val) && $offset_val > 0) {
+			$offset = ' OFFSET ' . $offset_val;
 		}
 		$where = Database::getWhere($criteria, true);
 		$sql = 'SELECT DISTINCT 
@@ -67,7 +71,7 @@ class SourceManager extends APIModule {
 		AND sres.fileset = ores.fileset
 		AND jres.Type = \'B\'
 		' . (!empty($where['where']) ? ' AND ' .  $where['where']  : '') . '
-	ORDER BY sres.fileset ASC, sres.client ASC, sres.job ASC, jres.starttime ASC ' . $limit;
+	ORDER BY sres.fileset ASC, sres.client ASC, sres.job ASC, jres.starttime ASC ' . $limit . $offset;
 
 		$connection = SourceRecord::finder()->getDbConnection();
 		$connection->setActive(true);

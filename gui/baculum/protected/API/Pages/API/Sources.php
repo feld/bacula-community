@@ -34,7 +34,8 @@ class Sources extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
-		$limit = $this->Request->contains('limit') ? (int)$this->Request['limit'] : 0;
+		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$job = $this->Request->contains('job') && $misc->isValidName($this->Request['job']) ? $this->Request['job'] : '';
 		$client = $this->Request->contains('client') && $misc->isValidName($this->Request['client']) ? $this->Request['client'] : '';
 		$fileset = $this->Request->contains('fileset') && $misc->isValidName($this->Request['fileset']) ? $this->Request['fileset'] : '';
@@ -115,7 +116,7 @@ class Sources extends BaculumAPIServer {
 			}
 		}
 
-		$sources = $this->getModule('source')->getSources($params, $limit);
+		$sources = $this->getModule('source')->getSources($params, $limit, $offset);
 		$this->output = $sources;
 		$this->error = SourceError::ERROR_NO_ERRORS;
 	}
