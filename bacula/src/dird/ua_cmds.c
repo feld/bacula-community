@@ -1512,9 +1512,17 @@ static int estimate_cmd(UAContext *ua, const char *cmd)
    jcr->job = job;
    if (!client) {
       client = job->client;
+      if (client && !acl_access_client_ok(ua, client->name(), JT_BACKUP)) {
+         ua->error_msg(_("No authorization for Job's Client\n"));
+         return 1;
+      }
    }
    if (!fileset) {
       fileset = job->fileset;
+      if (fileset && !acl_access_ok(ua, FileSet_ACL, fileset->name())) {
+         ua->error_msg(_("No authorization for Job's Fileset\n"));
+         return 1;
+      }
    }
    jcr->client = client;
    jcr->fileset = fileset;
