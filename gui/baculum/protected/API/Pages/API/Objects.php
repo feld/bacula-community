@@ -22,6 +22,7 @@
 
 use Baculum\Common\Modules\Errors\ObjectError;
 use Baculum\API\Modules\ObjectRecord;
+use Baculum\API\Modules\ObjectManager;
 
 /**
  * Objects endpoint.
@@ -57,6 +58,7 @@ class Objects extends BaculumAPIServer {
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'ObjectId';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
+		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? ObjectManager::OBJECT_RESULT_MODE_OVERVIEW : ObjectManager::OBJECT_RESULT_MODE_NORMAL;
 
 		$or = new \ReflectionClass('Baculum\API\Modules\ObjectRecord');
 		$prop_cols = $or->getProperties();
@@ -229,7 +231,9 @@ class Objects extends BaculumAPIServer {
 			$order_by_lc,
 			$order_direction,
 			$group_by,
-			$group_limit
+			$group_limit,
+			ObjectManager::OBJ_RESULT_VIEW_FULL,
+			$mode
 		);
 		$this->output = $objects;
 		$this->error = ObjectError::ERROR_NO_ERRORS;

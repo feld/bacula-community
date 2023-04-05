@@ -50,6 +50,15 @@ class ObjectManager extends APIModule
 	];
 
 	/**
+	 * Object result modes.
+	 * Modes:
+	 *  - normal - record list without any additional data
+	 *  - overview - record list with some summary count (files, vSphere, MySQL, PostgreSQL...)
+	 */
+	const OBJECT_RESULT_MODE_NORMAL = 'normal';
+	const OBJECT_RESULT_MODE_OVERVIEW = 'overview';
+
+	/**
 	 * Object result record view.
 	 * Views:
 	 *  - basic - list only limited record properties
@@ -71,7 +80,7 @@ class ObjectManager extends APIModule
 	 * @param string $view job records view (basic, full)
 	 * @return array object list
 	 */
-	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $view = self::OBJ_RESULT_VIEW_FULL) {
+	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $view = self::OBJ_RESULT_VIEW_FULL, $mode = self::OBJECT_RESULT_MODE_NORMAL) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -109,6 +118,13 @@ JOIN Job USING (JobId) '
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
 		Database::groupBy($group_by, $result, $group_limit);
+		if ($mode == self::OBJECT_RESULT_MODE_OVERVIEW) {
+			// Overview mode.
+			$result = [
+				'objects' => $result,
+				'overview' => $this->getObjectCountByObjectType($criteria)
+			];
+		}
 		return $result;
 	}
 
@@ -327,5 +343,24 @@ JOIN Job USING (JobId) '
 		$sth = $pdo->prepare($sql);
 		$sth->execute($where['params']);
 		return $sth->fetchAll(\PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Get object count by object type.
+	 * NOTE: It accepts the same criteria as ObjectManager::getObjects().
+	 *
+	 * @param array $criteria SQL criteria
+	 * @return array object type counts
+	 */
+	public function getObjectCountByObjectType($criteria) {
+		$where = Database::getWhere($criteria);
+		$sql = 'SELECT DISTINCT ObjectType as objecttype,
+					COUNT(1) AS count
+			FROM Object
+			JOIN Job USING (JobId)
+			' . $where['where'] . '
+			GROUP BY objecttype';
+		$statement = Database::runQuery($sql, $where['params']);
+		return $statement->fetchAll(\PDO::FETCH_ASSOC);
 	}
 }

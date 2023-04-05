@@ -7607,6 +7607,15 @@
 						"schema": {
 							"type": "integer"
 						}
+					},
+					{
+						"name": "overview",
+						"in": "query",
+						"required": false,
+						"description": "If set, it puts objects in 'objects' property and adds the 'overview' property with the object count by object type (PostgreSQL, MySQL, vSphere ...etc.)  NOTE: Offset and limit parameters do not apply to overview counts.",
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				]
 			}
