@@ -42,8 +42,9 @@ class SourceManager extends APIModule {
 		}
 		$where = Database::getWhere($criteria, true);
 		$sql = 'SELECT DISTINCT 
-	sres.fileset, sres.client, sres.job, jres.starttime, jres.endtime, ores.jobid, jres.jobstatus, jres.joberrors
+	sres.fileset, sres.client, sres.job, jres.StartTime, jres.EndTime, ores.jobid, fres.Content, jres.JobStatus, jres.JobErrors
 	FROM Job AS jres,
+	     FileSet AS fres,
 	(
 		SELECT DISTINCT
 			FileSet.FileSet AS fileset,
@@ -66,6 +67,7 @@ class SourceManager extends APIModule {
 	LEFT JOIN Object USING (JobId)
 	WHERE
 		jres.JobId = ores.jobid
+		AND jres.FileSetId = fres.FileSetId
 		AND sres.job = ores.job
 		AND sres.client = ores.client
 		AND sres.fileset = ores.fileset
