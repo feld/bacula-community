@@ -249,7 +249,7 @@ class Miscellaneous extends TModule {
 	}
 
 	public function isValidId($id) {
-		return (preg_match('/^\d+$/', $id) === 1);
+		return ((preg_match('/^\d+$/', $id) === 1) && $id > 0);
 	}
 
 	public function isValidPath($path) {
