@@ -1977,6 +1977,24 @@
 						}
 					},
 					{
+						"name": "filesetid",
+						"in": "query",
+						"required": false,
+						"description": "FileSet identifier",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "fileset",
+						"in": "query",
+						"required": false,
+						"description": "FileSet name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "type",
 						"in": "query",
 						"required": false,

@@ -46,7 +46,10 @@ class JobsObjects extends BaculumAPIServer {
 		$level = $this->Request->contains('level') && $misc->isValidJobLevel($this->Request['level']) ? $this->Request['level'] : '';
 		$type = $this->Request->contains('type') && $misc->isValidJobType($this->Request['type']) ? $this->Request['type'] : '';
 		$jobname = $this->Request->contains('name') && $misc->isValidName($this->Request['name']) ? $this->Request['name'] : '';
-		$clientid = $this->Request->contains('clientid') ? $this->Request['clientid'] : '';
+		$filesetid = $this->Request->contains('filesetid') ? $this->Request['filesetid'] : null;
+		$fileset = $this->Request->contains('fileset') ? $this->Request['fileset'] : null;
+		$clientid = $this->Request->contains('clientid') ? $this->Request['clientid'] : null;
+		$client = $this->Request->contains('client') ? $this->Request['client'] : null;
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
 		$schedtime_to = $this->Request->contains('schedtime_to') && $misc->isValidInteger($this->Request['schedtime_to']) ? (int)$this->Request['schedtime_to'] : null;
 		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
@@ -98,14 +101,25 @@ class JobsObjects extends BaculumAPIServer {
 			return;
 		}
 
-		if (!empty($clientid) && !$misc->isValidId($clientid)) {
+		if (!is_null($filesetid) && !$misc->isValidId($filesetid)) {
+			$this->output = JobError::MSG_ERROR_FILESET_DOES_NOT_EXISTS;
+			$this->error = JobError::ERROR_FILESET_DOES_NOT_EXISTS;
+			return;
+		}
+
+		if (!is_null($fileset) && !$misc->isValidName($fileset)) {
+			$this->output = JobError::MSG_ERROR_FILESET_DOES_NOT_EXISTS;
+			$this->error = JobError::ERROR_FILESET_DOES_NOT_EXISTS;
+			return;
+		}
+
+		if (!is_null($clientid) && !$misc->isValidId($clientid)) {
 			$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
 			$this->error = JobError::ERROR_CLIENT_DOES_NOT_EXISTS;
 			return;
 		}
 
-		$client = $this->Request->contains('client') ? $this->Request['client'] : '';
-		if (!empty($client) && !$misc->isValidName($client)) {
+		if (!is_null($client) && !$misc->isValidName($client)) {
 			$this->output = JobError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
 			$this->error = JobError::ERROR_CLIENT_DOES_NOT_EXISTS;
 			return;
@@ -268,14 +282,14 @@ class JobsObjects extends BaculumAPIServer {
 
 			$error = false;
 			// Client name and clientid filter
-			if (!empty($client) || !empty($clientid)) {
+			if (!is_null($client) || !is_null($clientid)) {
 				$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 				if ($result->exitcode === 0) {
 					array_shift($result->output);
 					$cli = null;
-					if (!empty($client)) {
+					if (!is_null($client)) {
 						$cli = $this->getModule('client')->getClientByName($client);
-					} elseif (!empty($clientid)) {
+					} elseif (!is_null($clientid)) {
 						$cli = $this->getModule('client')->getClientById($clientid);
 					}
 					if (is_object($cli) && in_array($cli->name, $result->output)) {
@@ -291,8 +305,44 @@ class JobsObjects extends BaculumAPIServer {
 					}
 				} else {
 					$error = true;
-					$this->output = $result->output;
-					$this->error = $result->exitcode;
+					$this->output = JobError::MSG_ERROR_WRONG_EXITCODE . 'ErrorCode=>' . $result->exitcode . ' Output=>' . implode(PHP_EOL, $result->output);
+					$this->error = JobError::ERROR_WRONG_EXITCODE;
+				}
+			}
+
+			// Fileset name and filesetid filter
+			if (!is_null($fileset) || !is_null($filesetid)) {
+				$result = $this->getModule('bconsole')->bconsoleCommand(
+					$this->director,
+					['.fileset']
+				);
+				if ($result->exitcode === 0) {
+					array_shift($result->output);
+					$result->output = array_filter($result->output);
+					$fs = null;
+					if (!is_null($fileset)) {
+						$fs = $fileset;
+					} elseif (!is_null($filesetid)) {
+						$fso = $this->getModule('fileset')->getFileSetById($filesetid);
+						if (is_object($fso)) {
+							$fs = $fso->fileset;
+						}
+					}
+
+					if (!is_null($fs) && in_array($fs, $result->output)) {
+						$params['FileSet.FileSet'] = [];
+						$params['FileSet.FileSet'][] = [
+							'vals' => $fs
+						];
+					} else {
+						$error = true;
+						$this->output = JobError::MSG_ERROR_FILESET_DOES_NOT_EXISTS;
+						$this->error = JobError::ERROR_FILESET_DOES_NOT_EXISTS;
+					}
+				} else {
+					$error = true;
+					$this->output = JobError::MSG_ERROR_WRONG_EXITCODE . 'ErrorCode=>' . $result->exitcode . ' Output=>' . implode(PHP_EOL, $result->output);
+					$this->error = JobError::ERROR_WRONG_EXITCODE;
 				}
 			}
 
