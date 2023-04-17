@@ -21,6 +21,7 @@
  */
 
 use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\SourceManager;
 use Baculum\Common\Modules\Errors\SourceError;
 
 /**
@@ -36,33 +37,30 @@ class Sources extends BaculumAPIServer {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
-		$job = $this->Request->contains('job') && $misc->isValidName($this->Request['job']) ? $this->Request['job'] : '';
-		$client = $this->Request->contains('client') && $misc->isValidName($this->Request['client']) ? $this->Request['client'] : '';
-		$fileset = $this->Request->contains('fileset') && $misc->isValidName($this->Request['fileset']) ? $this->Request['fileset'] : '';
+		$job = $this->Request->contains('job') && $misc->isValidName($this->Request['job']) ? $this->Request['job'] : null;
+		$client = $this->Request->contains('client') && $misc->isValidName($this->Request['client']) ? $this->Request['client'] : null;
+		$fileset = $this->Request->contains('fileset') && $misc->isValidName($this->Request['fileset']) ? $this->Request['fileset'] : null;
 		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
 		$starttime_to = $this->Request->contains('starttime_to') && $misc->isValidInteger($this->Request['starttime_to']) ? (int)$this->Request['starttime_to'] : null;
 		$endtime_from = $this->Request->contains('endtime_from') && $misc->isValidInteger($this->Request['endtime_from']) ? (int)$this->Request['endtime_from'] : null;
 		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
 		$jobstatus = $this->Request->contains('jobstatus') && $misc->isValidState($this->Request['jobstatus']) ? $this->Request['jobstatus'] : '';
 		$hasobject = $this->Request->contains('hasobject') && $misc->isValidBoolean($this->Request['hasobject']) ? $this->Request['hasobject'] : null;
+		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? SourceManager::SOURCE_RESULT_MODE_OVERVIEW : SourceManager::SOURCE_RESULT_MODE_NORMAL;
 
-		// @TODO: Fix using sres and jres in this place. It can lead to a problem when sres or jres will be changed in manager.
+		$props = [];
+		if (!is_null($job)) {
+			$props['job'] = $job;
+		}
+		if (!is_null($client)) {
+			$props['client'] = $client;
+		}
+		if (!is_null($fileset)) {
+			$props['fileset'] = $fileset;
+		}
+
+		// @TODO: Fix using jres in this place. It can lead to a problem when sres or jres will be changed in manager.
 		$params = [];
-		if (!empty($job)) {
-			$params['sres.job'] = [[
-				'vals' => $job
-			]];
-		}
-		if (!empty($client)) {
-			$params['sres.client'] = [[
-				'vals' => $client
-			]];
-		}
-		if (!empty($fileset)) {
-			$params['sres.fileset'] = [[
-				'vals' => $fileset
-			]];
-		}
 		if (!empty($jobstatus)) {
 			$params['jres.jobstatus'] = [[
 				'vals' => $jobstatus
@@ -116,7 +114,13 @@ class Sources extends BaculumAPIServer {
 			}
 		}
 
-		$sources = $this->getModule('source')->getSources($params, $limit, $offset);
+		$sources = $this->getModule('source')->getSources(
+			$params,
+			$props,
+			$limit,
+			$offset,
+			$mode
+		);
 		$this->output = $sources;
 		$this->error = SourceError::ERROR_NO_ERRORS;
 	}
