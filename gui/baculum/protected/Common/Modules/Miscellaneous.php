@@ -36,6 +36,12 @@ class Miscellaneous extends TModule {
 
 	const RPATH_PATTERN = '/^b2\d+$/';
 
+	/**
+	 * Order directions.
+	 */
+	const ORDER_DIRECTION_ASC = 'asc';
+	const ORDER_DIRECTION_DESC = 'desc';
+
 	public $job_types = array(
 		'B' => 'Backup',
 		'M' => 'Migrated',
@@ -334,6 +340,19 @@ class Miscellaneous extends TModule {
 			}
 		}
 		return $jobid;
+	}
+
+	public function sortResultsByField(&$result, $order_by, $order_direction) {
+		$order_by = strtolower($order_by);
+		$order_direction = strtolower($order_direction);
+		$sort_by_func = function($a, $b) use ($order_by, $order_direction) {
+			$cmp = strnatcasecmp($a[$order_by], $b[$order_by]);
+			if ($order_direction === self::ORDER_DIRECTION_DESC) {
+				$cmp = -$cmp;
+			}
+			return $cmp;
+		};
+		usort($result, $sort_by_func);
 	}
 }
 ?>

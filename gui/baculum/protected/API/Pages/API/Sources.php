@@ -46,7 +46,16 @@ class Sources extends BaculumAPIServer {
 		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
 		$jobstatus = $this->Request->contains('jobstatus') && $misc->isValidState($this->Request['jobstatus']) ? $this->Request['jobstatus'] : '';
 		$hasobject = $this->Request->contains('hasobject') && $misc->isValidBoolean($this->Request['hasobject']) ? $this->Request['hasobject'] : null;
+		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: null;
+		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? SourceManager::SOURCE_RESULT_MODE_OVERVIEW : SourceManager::SOURCE_RESULT_MODE_NORMAL;
+
+		$allowed_sort_fields = ['job', 'client', 'fileset', 'starttime', 'endtime', 'jobid', 'content', 'type', 'jobstatus', 'joberrors'];
+		if (is_string($order_by) && !in_array($order_by, $allowed_sort_fields)) {
+			$this->output = SourceError::MSG_ERROR_INVALID_PROPERTY;
+			$this->error = SourceError::ERROR_INVALID_PROPERTY;
+			return;
+		}
 
 		$props = [];
 		if (!is_null($job)) {
@@ -119,6 +128,8 @@ class Sources extends BaculumAPIServer {
 			$props,
 			$limit,
 			$offset,
+			$order_by,
+			$order_direction,
 			$mode
 		);
 		$this->output = $sources;

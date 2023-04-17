@@ -45,7 +45,7 @@ class SourceManager extends APIModule {
 	const SOURCE_RESULT_MODE_NORMAL = 'normal';
 	const SOURCE_RESULT_MODE_OVERVIEW = 'overview';
 
-	public function getSources($criteria = [], $props = [], $limit_val = 0, $offset_val = 0, $mode = self::SOURCE_RESULT_MODE_NORMAL) {
+	public function getSources($criteria = [], $props = [], $limit_val = 0, $offset_val = 0, $order_by = null, $order_direction = 'DESC', $mode = self::SOURCE_RESULT_MODE_NORMAL) {
 		$jobs_show = new \JobsShow;
 		$config = $jobs_show->show(
 			ConsoleOutputPage::OUTPUT_FORMAT_JSON
@@ -193,6 +193,14 @@ class SourceManager extends APIModule {
 
 		// below work only with filtered jobs
 		$sources = $sources_ft;
+
+		$misc = $this->getModule('misc');
+
+		// Sort items if needed
+		if (is_string($order_by)) {
+			// Sort all items
+			$misc->sortResultsByField($sources, $order_by, $order_direction);
+		}
 
 		if ($mode == self::SOURCE_RESULT_MODE_OVERVIEW) {
 			// Overview mode.
