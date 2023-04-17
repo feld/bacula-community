@@ -75,10 +75,15 @@ abstract class ConsoleOutputShowPage extends ConsoleOutputPage {
 		$ret = $part = [];
 		$section = '';
 		for ($i = 0; $i < count($output); $i++) {
-			$scount = preg_match('/^[A-Za-z]+: name=.+/i', $output[$i], $match);
+			$scount = preg_match('/^[A-Za-z]+: name=.+/i', $output[$i]);
 			$mcount = preg_match_all('/(?<=\s)\w+=.*?(?=\s+\w+=.*?|$)/i', $output[$i], $matches);
+			$acount = preg_match('/^\s+-->\s+(\w+):\s+name=(.+?)(?=\s+\w+=.+|$)/i', $output[$i], $match);
 			if ($mcount == 0) {
 				continue;
+			}
+			if ($acount == 1) {
+				$key = strtolower($match[1]);
+				$part[$key] = $match[2];
 			}
 			for ($j = 0; $j < count($matches[0]); $j++) {
 				list($key, $value) = explode('=', $matches[0][$j], 2);
