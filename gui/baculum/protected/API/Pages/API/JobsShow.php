@@ -20,6 +20,8 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+namespace Baculum\API\Pages\API;
+
 use Baculum\API\Modules\ConsoleOutputPage;
 use Baculum\API\Modules\ConsoleOutputShowPage;
 use Baculum\Common\Modules\Errors\JobError;
@@ -35,6 +37,12 @@ class JobsShow extends ConsoleOutputShowPage {
 
 	public function get() {
 		$out_format = $this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output']) ? $this->Request['output'] : ConsoleOutputPage::OUTPUT_FORMAT_RAW;
+		$out = $this->show($out_format);
+		$this->output = $out->output;
+		$this->error = $out->exitcode;
+	}
+
+	public function show($out_format) {
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
 			['.jobs'],
@@ -71,8 +79,7 @@ class JobsShow extends ConsoleOutputShowPage {
 		} elseif($out_format === ConsoleOutputPage::OUTPUT_FORMAT_JSON) {
 			$out = $this->getJSONOutput($params);
 		}
-		$this->output = $out->output;
-		$this->error = $out->exitcode;
+		return $out;
 	}
 
 	/**
