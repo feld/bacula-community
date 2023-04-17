@@ -8652,6 +8652,52 @@
 				]
 			}
 		},
+		"/api/v2/plugins/m365/{clientid}/{tenantid}/mailboxes": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin mailbox list",
+				"description": "Get Microsoft 365 mailbox list.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 mailboxes",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"emailowner": {
+														"type": "string",
+														"description": "Mailbox"
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/{tenantid}/jobs": {
 			"get": {
 				"tags": ["plugins"],
