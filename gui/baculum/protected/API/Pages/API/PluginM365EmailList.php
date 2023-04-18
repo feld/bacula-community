@@ -79,6 +79,9 @@ class PluginM365EmailList extends ConsoleOutputJSONPage {
 		if ($this->Request->contains('mailbox_pattern') && $misc->isValidEmail($this->Request['mailbox_pattern'])) {
 			$params['mailbox_pattern'] = $this->Request['mailbox_pattern'];
 		}
+		if ($this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset'])) {
+			$params['offset'] = (int)$this->Request['offset'];
+		}
 		if ($this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit'])) {
 			$params['limit'] = (int)$this->Request['limit'];
 		}
@@ -145,6 +148,9 @@ class PluginM365EmailList extends ConsoleOutputJSONPage {
 		}
 		if (key_exists('mailbox_pattern', $params)) {
 			$cmd[] ='owner="' .  $params['mailbox_pattern'] . '%"';
+		}
+		if (key_exists('offset', $params)) {
+			$cmd[] ='offset="' .  $params['offset'] . '"';
 		}
 		if (key_exists('limit', $params)) {
 			$cmd[] ='limit="' .  $params['limit'] . '"';
