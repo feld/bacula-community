@@ -178,6 +178,7 @@ LEFT JOIN Storage USING (StorageId)
 		// get disk volume types (file, dedup and alighed together)
 		$vt_disk = $this->getDiskVolTypes();
 		$sql = 'SELECT
+				MediaId		AS mediaid,
 				VolumeName      AS volumename,
 				Pool.Name       AS pool,
 				Storage.Name    AS storage,
@@ -202,6 +203,7 @@ LEFT JOIN Storage USING (StorageId)
 		// get tape volume types
 		$vt_tape = $this->getTapeVolTypes();
 		$sql = 'SELECT
+				MediaId		AS mediaid,
 				VolumeName      AS volumename,
 				Pool.Name       AS pool,
 				Storage.Name    AS storage,
@@ -226,6 +228,7 @@ LEFT JOIN Storage USING (StorageId)
 		// get cloud volume types
 		$vt_cloud = $this->getCloudVolTypes();
 		$sql = 'SELECT
+				MediaId		AS mediaid,
 				VolumeName      AS volumename,
 				Pool.Name       AS pool,
 				Storage.Name    AS storage,

@@ -9696,6 +9696,10 @@
 		"VolumeOverview": {
 			"type": "object",
 			"properties": {
+				"mediaid": {
+					"type": "integer",
+					"description": "Volume identifier"
+				},
 				"volumename": {
 					"type": "string",
 					"description": "Volume name"
