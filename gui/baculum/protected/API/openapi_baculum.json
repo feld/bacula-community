@@ -3805,6 +3805,15 @@
 					},
 					{
 						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "voltype",
+						"in": "query",
+						"description": "Volume type name. Available types: 'disk', 'tape' and 'cloud'.",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}

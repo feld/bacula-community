@@ -35,7 +35,19 @@ class Volumes extends BaculumAPIServer {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
-		$result = $this->getModule('volume')->getVolumes(array(), $limit, $offset);
+		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
+
+		$props = [];
+		if (is_string($voltype)) {
+			$props['voltype'] = $voltype;
+		}
+
+		$result = $this->getModule('volume')->getVolumes(
+			[],
+			$props,
+			$limit,
+			$offset
+		);
 		$this->output = $result;
 		$this->error = VolumeError::ERROR_NO_ERRORS;
 	}

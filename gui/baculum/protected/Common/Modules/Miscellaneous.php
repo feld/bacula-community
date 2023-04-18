@@ -321,6 +321,10 @@ class Miscellaneous extends TModule {
 		return (preg_match('/^(basic|full)$/', $view) === 1);
 	}
 
+	public function isValidVolType($voltype) {
+		$voltypes = ['disk', 'tape', 'cloud'];
+		return in_array($voltype, $voltypes);
+	}
 
 	public function escapeCharsToConsole($path) {
 		return preg_replace('/([$])/', '\\\${1}', $path);

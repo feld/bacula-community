@@ -34,6 +34,13 @@ use PDO;
 class VolumeManager extends APIModule {
 
 	/**
+	 * Vol type groups
+	 */
+	const VOLTYPE_GROUP_DISK = 'disk';
+	const VOLTYPE_GROUP_TAPE = 'tape';
+	const VOLTYPE_GROUP_CLOUD = 'cloud';
+
+	/**
 	 * Volume types (voltype property)
 	 */
 	const VOLTYPE_FILE = 1;
@@ -96,7 +103,7 @@ class VolumeManager extends APIModule {
 		];
 	}
 
-	public function getVolumes($criteria = array(), $limit_val = 0, $offset_val = 0) {
+	public function getVolumes($criteria = array(), $props = [], $limit_val = 0, $offset_val = 0) {
 		$order_pool_id = 'PoolId';
 		$order_volume = 'VolumeName';
 		$db_params = $this->getModule('api_config')->getConfig('db');
@@ -105,6 +112,32 @@ class VolumeManager extends APIModule {
 		    $order_volume = strtolower($order_volume);
 		}
 		$order = " ORDER BY $order_pool_id ASC, $order_volume ASC ";
+		if (key_exists('voltype', $props)) {
+			$voltypes = [];
+			switch ($props['voltype']) {
+				case self::VOLTYPE_GROUP_DISK: {
+					$voltypes = $this->getDiskVolTypes();
+					break;
+				}
+				case self::VOLTYPE_GROUP_TAPE: {
+					$voltypes = $this->getTapeVolTypes();
+					break;
+				}
+				case self::VOLTYPE_GROUP_CLOUD: {
+					$voltypes = $this->getCloudVolTypes();
+					break;
+				}
+			}
+			if (count($voltypes) > 0) {
+				if (!key_exists('Media.VolType', $criteria)) {
+					$criteria['Media.VolType'] = [];
+				}
+				$criteria['Media.VolType'][] = [
+					'vals' => $voltypes,
+					'operator' => 'IN'
+				];
+			}
+		}
 
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
@@ -297,7 +330,7 @@ LEFT JOIN Storage USING (StorageId)
 				'vals' => [$poolid],
 				'operator' => 'AND'
 			]]
-		), 1);
+		), [], 1);
 		if (is_array($volume) && count($volume) > 0) {
 			$volume = array_shift($volume);
 		}
@@ -311,7 +344,7 @@ LEFT JOIN Storage USING (StorageId)
 				'vals' => [$volume_name],
 				'operator' => 'AND'
 			]]
-		), 1);
+		), [], 1);
 		if (is_array($volume) && count($volume) > 0) {
 			$volume = array_shift($volume);
 		}
