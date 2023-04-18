@@ -8304,6 +8304,44 @@
 				]
 			}
 		},
+		"/api/v2/plugins/m365/{clientid}/tenants": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Microsoft 365 plugin tenant identifier list",
+				"description": "Get Microsoft 365 tenant identifier list.",
+				"responses": {
+					"200": {
+						"description": "List of Microsoft 365 tenant identifiers.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Tenant identifier"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 10, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ClientId"
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/users": {
 			"get": {
 				"tags": ["plugins"],
@@ -8333,7 +8371,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 4, 5, 6, 7, 10, 11, 1000]
 										}
 									}
 								}
@@ -8389,7 +8427,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 4, 5, 6, 7, 10, 11, 1000]
 										}
 									}
 								}
@@ -8429,7 +8467,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 4, 5, 6, 7, 10, 11, 1000]
 										}
 									}
 								}
@@ -8580,7 +8618,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 4, 5, 6, 7, 10, 11, 1000]
 										}
 									}
 								}
@@ -8683,7 +8721,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 4, 5, 6, 7, 10, 11, 1000]
 										}
 									}
 								}
