@@ -8153,6 +8153,25 @@
 						}
 					},
 					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected property. There can be one of the properties: 'job', 'client', 'fileset', 'starttime', 'endtime', 'jobid', 'content', 'type', 'jobstatus', 'joberrors'.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
 						"name": "overview",
 						"in": "query",
 						"required": false,
@@ -9769,6 +9788,10 @@
 				},
 				"volstatus": {
 					"description": "Volume status",
+					"type": "integer"
+				},
+				"volerrors": {
+					"description": "Number volume errors",
 					"type": "integer"
 				},
 				"inchanger": {

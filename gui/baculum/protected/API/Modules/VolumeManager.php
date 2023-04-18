@@ -218,6 +218,7 @@ LEFT JOIN Storage USING (StorageId)
 				VolBytes        AS volbytes,
 				VolABytes       AS volabytes,
 				Media.VolStatus AS volstatus,
+				Media.VolErrors AS volerrors,
 				InChanger       AS inchanger,
 				Slot            AS slot,
 				CASE 
@@ -243,6 +244,7 @@ LEFT JOIN Storage USING (StorageId)
 				VolBytes        AS volbytes,
 				VolABytes       AS volabytes,
 				Media.VolStatus AS volstatus,
+				Media.VolErrors AS volerrors,
 				InChanger       AS inchanger,
 				Slot            AS slot,
 				CASE 
@@ -268,6 +270,7 @@ LEFT JOIN Storage USING (StorageId)
 				VolBytes        AS volbytes,
 				VolABytes       AS volabytes,
 				Media.VolStatus AS volstatus,
+				Media.VolErrors AS volerrors,
 				InChanger       AS inchanger,
 				Slot            AS slot,
 				CASE 
