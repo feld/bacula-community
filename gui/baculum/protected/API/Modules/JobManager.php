@@ -103,6 +103,7 @@ class JobManager extends APIModule {
 	 */
 	const JOB_RESULT_VIEW_BASIC = 'basic';
 	const JOB_RESULT_VIEW_FULL = 'full';
+	const JOB_RESULT_VIEW_ADVANCED = 'advanced';
 
 	/**
 	 * Get job status groups.
@@ -149,8 +150,12 @@ class JobManager extends APIModule {
 		$where = Database::getWhere($criteria);
 
 		$job_record = 'Job.*,';
+		$join = '';
 		if ($view == self::JOB_RESULT_VIEW_BASIC) {
 			$job_record = implode(',', $this->basic_mode_job_props) . ',';
+		} elseif ($view == self::JOB_RESULT_VIEW_ADVANCED) {
+			$job_record = 'Job.*, PriorJob.Name AS priorjobname,';
+			$join = ' LEFT JOIN Job AS PriorJob ON (Job.PriorJobId = PriorJob.JobId) ';
 		}
 
 		$sql = 'SELECT ' .  $job_record . ' 
@@ -161,7 +166,7 @@ FROM Job
 JOIN Client USING (ClientId) 
 LEFT JOIN Pool USING (PoolId) 
 LEFT JOIN FileSet USING (FilesetId)'
-. $where['where'] . $order . $limit . $offset;
+. $join . $where['where'] . $order . $limit . $offset;
 
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = [];

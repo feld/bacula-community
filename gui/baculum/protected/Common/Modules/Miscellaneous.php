@@ -318,7 +318,7 @@ class Miscellaneous extends TModule {
 	}
 
 	public function isValidResultView($view) {
-		return (preg_match('/^(basic|full)$/', $view) === 1);
+		return (preg_match('/^(basic|full|advanced)$/', $view) === 1);
 	}
 
 	public function isValidVolType($voltype) {
