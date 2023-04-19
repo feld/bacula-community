@@ -1060,6 +1060,26 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"name": "view",
+						"in": "query",
+						"required": false,
+						"description": "Set result view type: full (default) - display all job properties, basic - display only base properties, advanced - display all full view properties plus some special like 'priorjobname'.",
+						"schema": {
+							"type": "string",
+							"enum": ["basic", "full", "advanced"]
+						}
+					},
+					{
+						"name": "priorjobname",
+						"in": "query",
+						"required": false,
+						"description": "Prior job name. NOTE: It works only if 'view' parameter is set to 'advanced'.",
+						"schema": {
+							"type": "string",
+							"pattern": "[a-zA-Z0-9:.-_ ]+"
+						}
 					}
 				]
 			}

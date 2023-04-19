@@ -60,6 +60,7 @@ class Jobs extends BaculumAPIServer {
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? JobManager::JOB_RESULT_MODE_OVERVIEW : JobManager::JOB_RESULT_MODE_NORMAL;
 		$view = ($this->Request->contains('view') && $misc->isValidResultView($this->Request['view'])) ? $this->Request['view'] : JobManager::JOB_RESULT_VIEW_FULL;
+		$priorjobname = $this->Request->contains('priorjobname') && $misc->isValidName($this->Request['priorjobname']) ? $this->Request['priorjobname'] : '';
 
 		if (!empty($jobids)) {
 			/**
@@ -241,6 +242,13 @@ class Jobs extends BaculumAPIServer {
 					'vals' => date('Y-m-d H:i:s', $realendtime_to)
 				];
 			}
+		}
+
+		if ($view == JobManager::JOB_RESULT_VIEW_ADVANCED) {
+			$params['PriorJob.Name'] = [];
+			$params['PriorJob.Name'][] = [
+				'vals' => $priorjobname
+			];
 		}
 
 		$result = $this->getModule('bconsole')->bconsoleCommand(
