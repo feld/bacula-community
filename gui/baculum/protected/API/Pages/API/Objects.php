@@ -47,6 +47,8 @@ class Objects extends BaculumAPIServer {
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
 		$group_by = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
 		$group_limit = $this->Request->contains('group_limit') ? intval($this->Request['group_limit']) : 0;
+
+		// UNIX timestamp values
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
 		$schedtime_to = $this->Request->contains('schedtime_to') && $misc->isValidInteger($this->Request['schedtime_to']) ? (int)$this->Request['schedtime_to'] : null;
 		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
@@ -55,6 +57,21 @@ class Objects extends BaculumAPIServer {
 		$endtime_to = $this->Request->contains('endtime_to') && $misc->isValidInteger($this->Request['endtime_to']) ? (int)$this->Request['endtime_to'] : null;
 		$realendtime_from = $this->Request->contains('realendtime_from') && $misc->isValidInteger($this->Request['realendtime_from']) ? (int)$this->Request['realendtime_from'] : null;
 		$realendtime_to = $this->Request->contains('realendtime_to') && $misc->isValidInteger($this->Request['realendtime_to']) ? (int)$this->Request['realendtime_to'] : null;
+		$realstarttime_from = $this->Request->contains('realstarttime_from') && $misc->isValidInteger($this->Request['realstarttime_from']) ? (int)$this->Request['realstarttime_from'] : null;
+		$realstarttime_to = $this->Request->contains('realstarttime_to') && $misc->isValidInteger($this->Request['realstarttime_to']) ? (int)$this->Request['realstarttime_to'] : null;
+
+		// date/time values
+		$schedtime_from_date = $this->Request->contains('schedtime_from_date') && $misc->isValidBDateAndTime($this->Request['schedtime_from_date']) ? $this->Request['schedtime_from_date'] : null;
+		$schedtime_to_date = $this->Request->contains('schedtime_to_date') && $misc->isValidBDateAndTime($this->Request['schedtime_to_date']) ? $this->Request['schedtime_to_date'] : null;
+		$starttime_from_date = $this->Request->contains('starttime_from_date') && $misc->isValidBDateAndTime($this->Request['starttime_from_date']) ? $this->Request['starttime_from_date'] : null;
+		$starttime_to_date = $this->Request->contains('starttime_to_date') && $misc->isValidBDateAndTime($this->Request['starttime_to_date']) ? $this->Request['starttime_to_date'] : null;
+		$endtime_from_date = $this->Request->contains('endtime_from_date') && $misc->isValidBDateAndTime($this->Request['endtime_from_date']) ? $this->Request['endtime_from_date'] : null;
+		$endtime_to_date = $this->Request->contains('endtime_to_date') && $misc->isValidBDateAndTime($this->Request['endtime_to_date']) ? $this->Request['endtime_to_date'] : null;
+		$realstarttime_from_date = $this->Request->contains('realstarttime_from_date') && $misc->isValidBDateAndTime($this->Request['realstarttime_from_date']) ? $this->Request['realstarttime_from_date'] : null;
+		$realstarttime_to_date = $this->Request->contains('realstarttime_to_date') && $misc->isValidBDateAndTime($this->Request['realstarttime_to_date']) ? $this->Request['realstarttime_to_date'] : null;
+		$realendtime_from_date = $this->Request->contains('realendtime_from_date') && $misc->isValidBDateAndTime($this->Request['realendtime_from_date']) ? $this->Request['realendtime_from_date'] : null;
+		$realendtime_to_date = $this->Request->contains('realendtime_to_date') && $misc->isValidBDateAndTime($this->Request['realendtime_to_date']) ? $this->Request['realendtime_to_date'] : null;
+
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'ObjectId';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
@@ -151,35 +168,67 @@ class Objects extends BaculumAPIServer {
 		}
 
 		// Scheduled time range
-		if (!empty($schedtime_from) || !empty($schedtime_to)) {
+		if (!empty($schedtime_from) || !empty($schedtime_to) || !empty($schedtime_from_date) || !empty($schedtime_to_date)) {
 			$params['Job.SchedTime'] = [];
+
+			// Schedule time from
+			$sch_t_from = '';
 			if (!empty($schedtime_from)) {
+				$sch_t_from = date('Y-m-d H:i:s', $schedtime_from);
+			} elseif (!empty($schedtime_from_date)) {
+				$sch_t_from = $schedtime_from_date;
+			}
+			if (!empty($sch_t_from)) {
 				$params['Job.SchedTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:i:s', $schedtime_from)
+					'vals' => $sch_t_from
 				];
 			}
+
+			// Schedule time to
+			$sch_t_to = '';
 			if (!empty($schedtime_to)) {
+				$sch_t_to = date('Y-m-d H:i:s', $schedtime_to);
+			} elseif (!empty($schedtime_to_date)) {
+				$sch_t_to = $schedtime_to_date;
+			}
+			if (!empty($sch_t_to)) {
 				$params['Job.SchedTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:i:s', $schedtime_to)
+					'vals' => $sch_t_to
 				];
 			}
 		}
 
 		// Start time range
-		if (!empty($starttime_from) || !empty($starttime_to)) {
+		if (!empty($starttime_from) || !empty($starttime_to) || !empty($starttime_from_date) || !empty($starttime_to_date)) {
 			$params['Job.StartTime'] = [];
+
+			// Start time from
+			$sta_t_from = '';
 			if (!empty($starttime_from)) {
+				$sta_t_from = date('Y-m-d H:i:s', $starttime_from);
+			} elseif (!empty($starttime_from_date)) {
+				$sta_t_from = $starttime_from_date;
+			}
+			if (!empty($sta_t_from)) {
 				$params['Job.StartTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:i:s', $starttime_from)
+					'vals' => $sta_t_from
 				];
 			}
+
+			// Start time to
+			$sta_t_to = '';
 			if (!empty($starttime_to)) {
+				$sta_t_to = date('Y-m-d H:i:s', $starttime_to);
+			} elseif (!empty($starttime_to_date)) {
+				$sta_t_to = $starttime_to_date;
+			}
+			if (!empty($sta_t_to)) {
 				$params['Job.StartTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:i:s', $starttime_to)
+					'vals' => $sta_t_to
 				];
 			}
 		} elseif (!empty($age)) { // Job age (now() - age)
@@ -191,35 +240,100 @@ class Objects extends BaculumAPIServer {
 		}
 
 		// End time range
-		if (!empty($endtime_from) || !empty($endtime_to)) {
+		if (!empty($endtime_from) || !empty($endtime_to) || !empty($endtime_from_date) || !empty($endtime_to_date)) {
 			$params['Job.EndTime'] = [];
+
+			// End time from
+			$end_t_from = '';
 			if (!empty($endtime_from)) {
+				$end_t_from = date('Y-m-d H:i:s', $endtime_from);
+			} elseif (!empty($endtime_from_date)) {
+				$end_t_from = $endtime_from_date;
+			}
+			if (!empty($end_t_from)) {
 				$params['Job.EndTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:i:s', $endtime_from)
+					'vals' => $end_t_from
 				];
 			}
+
+			// End time to
+			$end_t_to = '';
 			if (!empty($endtime_to)) {
+				$end_t_to = date('Y-m-d H:i:s', $endtime_to);
+			} elseif (!empty($endtime_to_date)) {
+				$end_t_to = $endtime_to_date;
+			}
+			if (!empty($end_t_to)) {
 				$params['Job.EndTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:i:s', $endtime_to)
+					'vals' => $end_t_to
+				];
+			}
+		}
+
+		// Real start time range
+		if (!empty($realstarttime_from) || !empty($realstarttime_to) || !empty($realstarttime_from_date) || !empty($realstarttime_to_date)) {
+			$params['Job.RealStartTime'] = [];
+
+			// Realstart time from
+			$realstart_t_from = '';
+			if (!empty($realstarttime_from)) {
+				$realstart_t_from = date('Y-m-d H:i:s', $realstarttime_from);
+			} elseif (!empty($realstarttime_from_date)) {
+				$realstart_t_from = $realstarttime_from_date;
+			}
+			if (!empty($realstart_t_from)) {
+				$params['Job.RealStartTime'][] = [
+					'operator' => '>=',
+					'vals' => $realstart_t_from
+				];
+			}
+
+			// Realstart time to
+			$realstart_t_to = '';
+			if (!empty($realstarttime_to)) {
+				$realstart_t_to = date('Y-m-d H:i:s', $realstarttime_to);
+			} elseif (!empty($realstarttime_to_date)) {
+				$realstart_t_to = $realstarttime_to_date;
+			}
+			if (!empty($realstart_t_to)) {
+				$params['Job.RealStartTime'][] = [
+					'operator' => '<=',
+					'vals' => $realstart_t_to
 				];
 			}
 		}
 
 		// Real end time range
-		if (!empty($realendtime_from) || !empty($realendtime_to)) {
+		if (!empty($realendtime_from) || !empty($realendtime_to) || !empty($realendtime_from_date) || !empty($realendtime_to_date)) {
 			$params['Job.RealEndTime'] = [];
+
+			// Realend time from
+			$realend_t_from = '';
 			if (!empty($realendtime_from)) {
+				$realend_t_from = date('Y-m-d H:i:s', $realendtime_from);
+			} elseif (!empty($realendtime_from_date)) {
+				$realend_t_from = $realendtime_from_date;
+			}
+			if (!empty($realend_t_from)) {
 				$params['Job.RealEndTime'][] = [
 					'operator' => '>=',
-					'vals' => date('Y-m-d H:i:s', $realendtime_from)
+					'vals' => $realend_t_from
 				];
 			}
+
+			// Realend time to
+			$realend_t_to = '';
 			if (!empty($realendtime_to)) {
+				$realend_t_to = date('Y-m-d H:i:s', $realendtime_to);
+			} elseif (!empty($realendtime_to_date)) {
+				$realend_t_to = $realendtime_to_date;
+			}
+			if (!empty($realend_t_to)) {
 				$params['Job.RealEndTime'][] = [
 					'operator' => '<=',
-					'vals' => date('Y-m-d H:i:s', $realendtime_to)
+					'vals' => $realend_t_to
 				];
 			}
 		}
