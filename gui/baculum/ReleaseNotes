@@ -5,6 +5,49 @@ This is a new feature release. All changes are for the API part.
 It extends the API capabilities for new functions.
 
 New changes and fixes:
+ - Add to jobs endpoint time filters in date/time format
+ - Add priorjobname parameter to jobs endpoint
+ - Add priorjobname property to jobs endpoint
+ - Add volerrors property to volumes overview endpoint
+ - Add voltype parameter to volumes endpoint
+ - Add tenant indentifier list endpoint
+ - Add mediaid to volume overview endpoint
+ - Add offset parameter to m365 plugin email list endpoint
+ - Add new m365 plugin mailbox list endpoint
+ - Add order_by and order_direction parameters to sources endpoint
+ - Rework and improve sources endpoint
+ - Enable using show command output also for internal purposes
+ - Improve precision in show command output parser
+ - Add fileset and filesetid filters to jobs objects endpoint
+ - Improve identifier validator
+ - Add job type to sources endpoint
+ - Add overview parameter to objects endpoint
+ - Add fileset content property to sources endpoint output
+ - Add job status property to objects endpoint
+ - Tweak fix jobs objects endpoint
+ - Add job errors property to objects endpoint
+ - Update documentation
+ - Add job errors property to sources endpoint
+ - Add offset parameter to sources endpoint
+ - Add offset parameter to filesets endpoint
+ - Add order_by and order_direction params to jobs objects endpoint
+ - Add client, pool, fileset and fileset content properties to jobs objects endpoint
+ - Fix m365 user list endpoint
+ - Add more detailed output to restore endpoint
+ - Add endpoint to list m365 jobs by email
+ - Fix listing restore job in job endpoints
+ - Extend object name validation pattern
+ - Tweak cosmetic update API documentation
+ - Tweak fix error message
+ - Remove overview, order_by, order_direction and object_limit parameters from jobs objects endpoint
+ - Add volstatsu property to volumes overview endpoint
+ - Add volumes overview endpoint
+ - add offset parameter support in new job objects endpoint
+ - Improve jobs objects endpoint working
+ - Add method to execute SQL queries
+ - Add checking errors in output from vsphere plugin servers, hosts and datastores commands
+ - Add restore_host parameter to vsphere plugin datastores API endpoint
+ - Add server parameter to vsphere plugin hosts API endpoint
  - Disable querying API for seeing which authentication methods are supported
  - Tweak fix list restore hosts output value
  - Add VMware vSphere restore host list endpoint
