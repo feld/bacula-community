@@ -78,7 +78,10 @@ class BVFSRestore extends BaculumAPIServer {
 			return;
 		}
 
-		$cmd = array('.bvfs_restore', 'jobid="' .  $jobids . '"', 'path="' . $path . '"');
+		$cmd = array('.bvfs_restore', 'path="' . $path . '"');
+		if (is_string($jobids)) {
+			array_push($cmd, 'jobid="' . $jobids . '"');
+		}
 		if (is_string($fileids)) {
 			array_push($cmd, 'fileid="' . $fileids . '"');
 		}
