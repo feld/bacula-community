@@ -778,6 +778,44 @@
 				]
 			}
 		},
+		"/api/v2/clients/resnames": {
+			"get": {
+				"tags": ["clients"],
+				"summary": "Client resource names",
+				"description": "Get client resource names",
+				"responses": {
+					"200": {
+						"description": "List of client resource names",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "List client resource names per director",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
+			}
+		},
 		"/api/v2/clients/show": {
 			"get": {
 				"tags": ["clients"],

@@ -20,6 +20,7 @@
 	<!-- clients (file daemons) endpoints -->
 	<url ServiceParameter="Clients" pattern="api/v2/clients/" />
 	<url ServiceParameter="Client" pattern="api/v2/clients/{id}/" parameters.id="\d+" />
+	<url ServiceParameter="ClientResNames" pattern="api/v2/clients/resnames/" />
 	<url ServiceParameter="ClientsShow" pattern="api/v2/clients/show/" />
 	<url ServiceParameter="ClientShow" pattern="api/v2/clients/{id}/show/" parameters.id="\d+" />
 	<url ServiceParameter="ClientStatus" pattern="api/v2/clients/{id}/status/" parameters.id="\d+" />
