@@ -5,6 +5,8 @@ This is a new feature release. All changes are for the API part.
 It extends the API capabilities for new functions.
 
 New changes and fixes:
+ - Fix losing autochanger directive value in storage resource in director configuration
+ - Add to objects endpoint time filters in date/time format
  - Add to jobs endpoint time filters in date/time format
  - Add priorjobname parameter to jobs endpoint
  - Add priorjobname property to jobs endpoint
