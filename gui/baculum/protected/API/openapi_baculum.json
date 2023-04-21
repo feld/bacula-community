@@ -5630,7 +5630,7 @@
 						"name": "jobids",
 						"in": "body",
 						"description": "Comma separated job identifiers",
-						"required": true,
+						"required": false,
 						"schema": {
 							"type": "integer"
 						}
