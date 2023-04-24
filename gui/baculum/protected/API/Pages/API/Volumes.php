@@ -42,6 +42,7 @@ class Volumes extends BaculumAPIServer {
 		}
 		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
 		$pool = $this->Request->contains('pool') && $misc->isValidName($this->Request['pool']) ? $this->Request['pool'] : null;
+		$storage = $this->Request->contains('storage') && $misc->isValidName($this->Request['storage']) ? $this->Request['storage'] : null;
 
 		$params = $props = [];
 
@@ -63,6 +64,10 @@ class Volumes extends BaculumAPIServer {
 
 		if (is_string($pool)) {
 			$props['pool'] = $pool;
+		}
+
+		if (is_string($storage)) {
+			$props['storage'] = $storage;
 		}
 
 		$result = $this->getModule('volume')->getVolumes(

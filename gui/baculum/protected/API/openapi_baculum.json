@@ -3982,6 +3982,15 @@
 						}
 					},
 					{
+						"name": "storage",
+						"in": "query",
+						"description": "Volume storage name.",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "enabled",
 						"in": "query",
 						"description": "Volume enabled flag.",

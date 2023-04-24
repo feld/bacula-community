@@ -144,6 +144,12 @@ class VolumeManager extends APIModule {
 			];
 		}
 
+		if (key_exists('storage', $props)) {
+			$criteria['Storage.Name'][] = [
+				'vals' => $props['storage']
+			];
+		}
+
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = " LIMIT $limit_val ";
