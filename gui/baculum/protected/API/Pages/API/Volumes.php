@@ -40,6 +40,7 @@ class Volumes extends BaculumAPIServer {
 		if ($this->Request->contains('enabled') && $misc->isValidBoolean($this->Request['enabled'])) {
 			$enabled = $misc->isValidBooleanTrue($this->Request['enabled']) ? 1 : 0;
 		}
+		$volstatus = $this->Request->contains('volstatus') && $misc->isValidState($this->Request['volstatus']) ? $this->Request['volstatus'] : null;
 		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
 		$pool = $this->Request->contains('pool') && $misc->isValidName($this->Request['pool']) ? $this->Request['pool'] : null;
 		$storage = $this->Request->contains('storage') && $misc->isValidName($this->Request['storage']) ? $this->Request['storage'] : null;
@@ -55,6 +56,12 @@ class Volumes extends BaculumAPIServer {
 		if (is_int($enabled)) {
 			$params['Media.Enabled'][] = [
 				'vals' => $enabled
+			];
+		}
+
+		if (is_string($volstatus)) {
+			$params['Media.VolStatus'][] = [
+				'vals' => $volstatus
 			];
 		}
 

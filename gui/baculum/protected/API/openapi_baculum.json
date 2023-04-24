@@ -3998,6 +3998,16 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"name": "volstatus",
+						"in": "query",
+						"description": "Volume status.",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": ["Append", "Archive", "Disabled", "Full", "Used", "Cleaning", "Purged", "Recycle", "Read-Only", "Error"]
+						}
 					}
 				]
 			}
