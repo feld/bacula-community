@@ -138,6 +138,11 @@ class VolumeManager extends APIModule {
 				];
 			}
 		}
+		if (key_exists('pool', $props)) {
+			$criteria['pool1.Name'][] = [
+				'vals' => $props['pool']
+			];
+		}
 
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {

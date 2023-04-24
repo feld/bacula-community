@@ -4063,6 +4063,15 @@
 						}
 					},
 					{
+						"name": "pool",
+						"in": "query",
+						"description": "Volume pool name.",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "enabled",
 						"in": "query",
 						"description": "Volume enabled flag.",
