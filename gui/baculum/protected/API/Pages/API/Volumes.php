@@ -35,22 +35,29 @@ class Volumes extends BaculumAPIServer {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
-		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
+		$volumename = $this->Request->contains('volumename') && $misc->isValidName($this->Request['volumename']) ? $this->Request['volumename'] : null;
 		$enabled = null;
 		if ($this->Request->contains('enabled') && $misc->isValidBoolean($this->Request['enabled'])) {
 			$enabled = $misc->isValidBooleanTrue($this->Request['enabled']) ? 1 : 0;
 		}
+		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
 
 		$params = $props = [];
 
-		if (is_string($voltype)) {
-			$props['voltype'] = $voltype;
+		if (is_string($volumename)) {
+			$params['Media.VolumeName'][] = [
+				'vals' => $volumename
+			];
 		}
 
 		if (is_int($enabled)) {
 			$params['Media.Enabled'][] = [
-				'vals' => $enabled,
+				'vals' => $enabled
 			];
+		}
+
+		if (is_string($voltype)) {
+			$props['voltype'] = $voltype;
 		}
 
 		$result = $this->getModule('volume')->getVolumes(

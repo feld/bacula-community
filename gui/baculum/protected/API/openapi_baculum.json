@@ -4052,6 +4052,24 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "volumename",
+						"in": "query",
+						"description": "Volume name.",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "enabled",
+						"in": "query",
+						"description": "Volume enabled flag.",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				]
 			}
