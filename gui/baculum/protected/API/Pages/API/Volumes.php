@@ -36,14 +36,25 @@ class Volumes extends BaculumAPIServer {
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
+		$enabled = null;
+		if ($this->Request->contains('enabled') && $misc->isValidBoolean($this->Request['enabled'])) {
+			$enabled = $misc->isValidBooleanTrue($this->Request['enabled']) ? 1 : 0;
+		}
 
-		$props = [];
+		$params = $props = [];
+
 		if (is_string($voltype)) {
 			$props['voltype'] = $voltype;
 		}
 
+		if (is_int($enabled)) {
+			$params['Media.Enabled'][] = [
+				'vals' => $enabled,
+			];
+		}
+
 		$result = $this->getModule('volume')->getVolumes(
-			[],
+			$params,
 			$props,
 			$limit,
 			$offset
