@@ -44,6 +44,8 @@ class Volumes extends BaculumAPIServer {
 		$voltype = $this->Request->contains('voltype') && $misc->isValidVolType($this->Request['voltype']) ? $this->Request['voltype'] : null;
 		$pool = $this->Request->contains('pool') && $misc->isValidName($this->Request['pool']) ? $this->Request['pool'] : null;
 		$storage = $this->Request->contains('storage') && $misc->isValidName($this->Request['storage']) ? $this->Request['storage'] : null;
+		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: null;
+		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction'] : 'DESC';
 
 		$params = $props = [];
 
@@ -77,11 +79,34 @@ class Volumes extends BaculumAPIServer {
 			$props['storage'] = $storage;
 		}
 
+		if (is_string($order_by)) {
+			$jr = new \ReflectionClass('Baculum\API\Modules\VolumeRecord');
+			$sort_cols = $jr->getProperties();
+			$order_by_lc = strtolower($order_by);
+			$cols_excl = ['whenexpire'];
+			$columns = [];
+			foreach ($sort_cols as $cols) {
+				$name = $cols->getName();
+				// skip columns not existing in the catalog
+				if (in_array($name, $cols_excl)) {
+					continue;
+				}
+				$columns[] = $name;
+			}
+			if (!in_array($order_by_lc, $columns)) {
+				$this->output = VolumeError::MSG_ERROR_INVALID_PROPERTY;
+				$this->error = VolumeError::ERROR_INVALID_PROPERTY;
+				return;
+			}
+		}
+
 		$result = $this->getModule('volume')->getVolumes(
 			$params,
 			$props,
 			$limit,
-			$offset
+			$offset,
+			$order_by,
+			$order_direction
 		);
 		$this->output = $result;
 		$this->error = VolumeError::ERROR_NO_ERRORS;

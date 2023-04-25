@@ -4008,6 +4008,25 @@
 							"type": "string",
 							"enum": ["Append", "Archive", "Disabled", "Full", "Used", "Cleaning", "Purged", "Recycle", "Read-Only", "Error"]
 						}
+					},
+					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected volume property (default poolid ASC, volumename ASC). There can be any volume property (mediaid, volumename, slot ...etc.) except whenexpire.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
 					}
 				]
 			}

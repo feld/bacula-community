@@ -23,6 +23,7 @@
 namespace Baculum\API\Modules;
 
 use PDO;
+use Baculum\Common\Modules\Errors\VolumeError;
 
 /**
  * Volume manager module.
@@ -103,7 +104,7 @@ class VolumeManager extends APIModule {
 		];
 	}
 
-	public function getVolumes($criteria = array(), $props = [], $limit_val = 0, $offset_val = 0) {
+	public function getVolumes($criteria = array(), $props = [], $limit_val = 0, $offset_val = 0, $order_by = null, $order_direction = 'DESC') {
 		$order_pool_id = 'PoolId';
 		$order_volume = 'VolumeName';
 		$db_params = $this->getModule('api_config')->getConfig('db');
@@ -111,7 +112,15 @@ class VolumeManager extends APIModule {
 		    $order_pool_id = strtolower($order_pool_id);
 		    $order_volume = strtolower($order_volume);
 		}
+
+		// default sorting
 		$order = " ORDER BY $order_pool_id ASC, $order_volume ASC ";
+
+		// custom sorting
+		if (is_string($order_by)) {
+			$order = " ORDER BY $order_by $order_direction ";
+		}
+
 		if (key_exists('voltype', $props)) {
 			$voltypes = [];
 			switch ($props['voltype']) {
@@ -172,7 +181,8 @@ LEFT JOIN Pool AS pool2 ON Media.ScratchPoolId = pool2.PoolId
 LEFT JOIN Pool AS pool3 ON Media.RecyclePoolId = pool3.PoolId 
 LEFT JOIN Storage USING (StorageId) 
 ' . $where['where'] . $order . $limit . $offset;
-		$volumes = VolumeRecord::finder()->findAllBySql($sql, $where['params']);
+		$statement = Database::runQuery($sql, $where['params']);
+		$volumes = $statement->fetchAll(\PDO::FETCH_OBJ);
 		$this->setExtraVariables($volumes);
 		return $volumes;
 	}
