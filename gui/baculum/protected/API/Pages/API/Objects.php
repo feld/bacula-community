@@ -45,6 +45,7 @@ class Objects extends BaculumAPIServer {
 		$objectstatus = $this->Request->contains('objectstatus') && $misc->isValidState($this->Request['objectstatus']) ? $this->Request['objectstatus'] : null;
 		$jobname = $this->Request->contains('jobname') && $misc->isValidName($this->Request['jobname']) ? $this->Request['jobname'] : null;
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
+		$client = $this->Request->contains('client') && $misc->isValidName($this->Request['client']) ? $this->Request['client'] : '';
 		$joberrors = null;
 		if ($this->Request->contains('joberrors') && $misc->isValidBoolean($this->Request['joberrors'])) {
 			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
@@ -168,6 +169,12 @@ class Objects extends BaculumAPIServer {
 			$params['Job.JobId'][] = [
 				'operator' => 'IN',
 				'vals' => $jobids
+			];
+		}
+		if (!empty($client)) {
+			$params['Client.Name'] = [];
+			$params['Client.Name'][] = [
+				'vals' => $client
 			];
 		}
 		if (!is_null($joberrors)) {
