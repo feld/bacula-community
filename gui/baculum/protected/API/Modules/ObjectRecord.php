@@ -50,6 +50,8 @@ class ObjectRecord extends APIDbModule {
 
 	// external properties
 	public $jobname;
+	public $joberrors;
+	public $jobstatus;
 
 	public static function finder($className = __CLASS__) {
 		return parent::finder($className);
