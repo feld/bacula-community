@@ -107,13 +107,14 @@ class ObjectManager extends APIModule
 
 		$where = Database::getWhere($criteria);
 
-		$obj_record = 'Object.*, Job.Name AS jobname, Job.JobErrors AS joberrors, Job.JobStatus AS jobstatus ';
+		$obj_record = 'Object.*, Job.Name AS jobname, Job.JobErrors AS joberrors, Job.JobStatus AS jobstatus, Client.Name AS client';
 		if ($view == self::OBJ_RESULT_VIEW_BASIC) {
 			$obj_record = implode(',', $this->basic_mode_obj_props);
 		}
 		$sql = 'SELECT ' . $obj_record . ' 
 FROM Object 
-JOIN Job USING (JobId) '
+JOIN Job USING (JobId) 
+LEFT JOIN Client USING (ClientId) '
 . $where['where'] . $order . $limit . $offset;
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);

@@ -7964,6 +7964,15 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"name": "joberrors",
+						"in": "query",
+						"required": false,
+						"description": "Show objects from jobs that contain or that do not contain errors.",
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				]
 			}
@@ -10423,6 +10432,26 @@
 				"objectcount": {
 					"description": "Object count",
 					"type": "integer"
+				},
+				"fileindex": {
+					"description": "Object file index",
+					"type": "integer"
+				},
+				"jobname": {
+					"description": "Object job name",
+					"type": "string"
+				},
+				"joberrors": {
+					"description": "Object job errors",
+					"type": "integer"
+				},
+				"jobstatus": {
+					"description": "Object job status",
+					"type": "integer"
+				},
+				"client": {
+					"description": "Object job client",
+					"type": "string"
 				}
 			}
 		},
