@@ -45,6 +45,10 @@ class Objects extends BaculumAPIServer {
 		$objectstatus = $this->Request->contains('objectstatus') && $misc->isValidState($this->Request['objectstatus']) ? $this->Request['objectstatus'] : null;
 		$jobname = $this->Request->contains('jobname') && $misc->isValidName($this->Request['jobname']) ? $this->Request['jobname'] : null;
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
+		$joberrors = null;
+		if ($this->Request->contains('joberrors') && $misc->isValidBoolean($this->Request['joberrors'])) {
+			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
+		}
 		$group_by = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
 		$group_limit = $this->Request->contains('group_limit') ? intval($this->Request['group_limit']) : 0;
 
@@ -165,6 +169,20 @@ class Objects extends BaculumAPIServer {
 				'operator' => 'IN',
 				'vals' => $jobids
 			];
+		}
+		if (!is_null($joberrors)) {
+			if ($joberrors === true) {
+				$params['Job.JobErrors'] = [];
+				$params['Job.JobErrors'][] = [
+					'operator' => '>',
+					'vals' => 0
+				];
+			} elseif ($joberrors === false) {
+				$params['Job.JobErrors'] = [];
+				$params['Job.JobErrors'][] = [
+					'vals' => 0
+				];
+			}
 		}
 
 		// Scheduled time range
