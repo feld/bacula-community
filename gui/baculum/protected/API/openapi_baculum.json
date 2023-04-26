@@ -10549,6 +10549,10 @@
 					"description": "Object job name",
 					"type": "string"
 				},
+				"starttime": {
+					"description": "Start time (YYYY-MM-DD HH:M:SS)",
+					"type": "string"
+				},
 				"joberrors": {
 					"description": "Object job errors",
 					"type": "integer"
