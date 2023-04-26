@@ -239,6 +239,7 @@ LEFT JOIN FileSet USING (FilesetId)'
 				JOIN Client USING (ClientId)
 				LEFT JOIN Pool USING (PoolId)
 				LEFT JOIN FileSet USING (FilesetId)
+				LEFT JOIN Object USING (JobId)
 				' . $where['where'];
 
 			Database::execute($sql, $where['params']);

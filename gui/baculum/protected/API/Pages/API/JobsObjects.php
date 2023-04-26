@@ -50,6 +50,7 @@ class JobsObjects extends BaculumAPIServer {
 		$fileset = $this->Request->contains('fileset') ? $this->Request['fileset'] : null;
 		$clientid = $this->Request->contains('clientid') ? $this->Request['clientid'] : null;
 		$client = $this->Request->contains('client') ? $this->Request['client'] : null;
+		$objecttype = $this->Request->contains('objecttype') && $misc->isValidName($this->Request['objecttype']) ? $this->Request['objecttype'] : null;
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
 		$schedtime_to = $this->Request->contains('schedtime_to') && $misc->isValidInteger($this->Request['schedtime_to']) ? (int)$this->Request['schedtime_to'] : null;
 		$starttime_from = $this->Request->contains('starttime_from') && $misc->isValidInteger($this->Request['starttime_from']) ? (int)$this->Request['starttime_from'] : null;
@@ -77,6 +78,15 @@ class JobsObjects extends BaculumAPIServer {
 			$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
 			$this->error = JobError::ERROR_INVALID_PROPERTY;
 			return;
+		}
+
+		$params = [];
+
+		if (is_string($objecttype)) {
+			$params['Object.ObjectType'] = [];
+			$params['Object.ObjectType'][] = [
+				'vals' => $objecttype
+			];
 		}
 
 		if (!empty($jobids)) {
@@ -124,8 +134,6 @@ class JobsObjects extends BaculumAPIServer {
 			$this->error = JobError::ERROR_CLIENT_DOES_NOT_EXISTS;
 			return;
 		}
-
-		$params = [];
 
 		if ($afterjobid > 0) {
 			$params['Job.JobId'] = [];

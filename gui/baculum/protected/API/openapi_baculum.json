@@ -2161,6 +2161,15 @@
 						}
 					},
 					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Job object type (ex. PostgreSQL, m365...etc.)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "schedtime_from",
 						"in": "query",
 						"required": false,
