@@ -51,6 +51,10 @@ class JobsObjects extends BaculumAPIServer {
 		$clientid = $this->Request->contains('clientid') ? $this->Request['clientid'] : null;
 		$client = $this->Request->contains('client') ? $this->Request['client'] : null;
 		$objecttype = $this->Request->contains('objecttype') && $misc->isValidName($this->Request['objecttype']) ? $this->Request['objecttype'] : null;
+		$joberrors = null;
+		if ($this->Request->contains('joberrors') && $misc->isValidBoolean($this->Request['joberrors'])) {
+			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
+		}
 
 		// UNIX timestamp values
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
@@ -353,6 +357,20 @@ class JobsObjects extends BaculumAPIServer {
 				$params['Job.RealEndTime'][] = [
 					'operator' => '<=',
 					'vals' => $realend_t_to
+				];
+			}
+		}
+		if (!is_null($joberrors)) {
+			if ($joberrors === true) {
+				$params['Job.JobErrors'] = [];
+				$params['Job.JobErrors'][] = [
+					'operator' => '>',
+					'vals' => 0
+				];
+			} elseif ($joberrors === false) {
+				$params['Job.JobErrors'] = [];
+				$params['Job.JobErrors'][] = [
+					'vals' => 0
 				];
 			}
 		}

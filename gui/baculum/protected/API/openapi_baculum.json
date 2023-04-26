@@ -2387,6 +2387,15 @@
 							"type": "string",
 							"enum": ["basic", "full"]
 						}
+					},
+					{
+						"name": "joberrors",
+						"in": "query",
+						"required": false,
+						"description": "Show objects from jobs that contain or that do not contain errors.",
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				]
 			}
