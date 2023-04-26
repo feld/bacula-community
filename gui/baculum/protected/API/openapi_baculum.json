@@ -2179,12 +2179,30 @@
 						}
 					},
 					{
+						"name": "schedtime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "schedtime_to",
 						"in": "query",
 						"required": false,
 						"description": "Scheduled time to (UNIX timestamp format, seconds)",
 						"schema": {
 							"type": "integer"
+						}
+					},
+					{
+						"name": "schedtime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
 						}
 					},
 					{
@@ -2197,12 +2215,30 @@
 						}
 					},
 					{
+						"name": "starttime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "starttime_to",
 						"in": "query",
 						"required": false,
 						"description": "Start time to (UNIX timestamp format, seconds)",
 						"schema": {
 							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
 						}
 					},
 					{
@@ -2215,12 +2251,30 @@
 						}
 					},
 					{
+						"name": "realstarttime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Real start time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "realstarttime_to",
 						"in": "query",
 						"required": false,
 						"description": "Real start time to (UNIX timestamp format, seconds)",
 						"schema": {
 							"type": "integer"
+						}
+					},
+					{
+						"name": "realstarttime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Real start time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
 						}
 					},
 					{
@@ -2233,12 +2287,30 @@
 						}
 					},
 					{
+						"name": "endtime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "End time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "endtime_to",
 						"in": "query",
 						"required": false,
 						"description": "End time to (UNIX timestamp format, seconds)",
 						"schema": {
 							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "End time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
 						}
 					},
 					{
@@ -2251,12 +2323,30 @@
 						}
 					},
 					{
+						"name": "realendtime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Real end time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "realendtime_to",
 						"in": "query",
 						"required": false,
 						"description": "Real end time to (UNIX timestamp format, seconds)",
 						"schema": {
 							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Real end time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
 						}
 					},
 					{
