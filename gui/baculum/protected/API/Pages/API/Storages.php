@@ -34,9 +34,9 @@ class Storages extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
-		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
-		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
-		$storages = $this->getModule('storage')->getStorages($limit, $offset);
+		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : null;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : null;
+		$storages = $this->getModule('storage')->getStorages();
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
 			array('.storage')
@@ -49,6 +49,17 @@ class Storages extends BaculumAPIServer {
 					$storages_output[] = $storage;
 				}
 			}
+			if (!is_int($offset) || $offset < 0) {
+				$offset = 0;
+			}
+			if ($limit < 0) {
+				$limit = 0;
+			}
+			/**
+			 * Slice needs to be done here instead in the db because in the catalog can be storages
+			 * that do not longer exist in the configuration.
+			 */
+			$storages_output = array_slice($storages_output, $offset, $limit);
 			$this->output = $storages_output;
 			$this->error = StorageError::ERROR_NO_ERRORS;
 		} else {
