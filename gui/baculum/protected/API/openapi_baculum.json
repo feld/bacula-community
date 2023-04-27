@@ -8068,7 +8068,7 @@
 						"name": "overview",
 						"in": "query",
 						"required": false,
-						"description": "If set, it puts objects in 'objects' property and adds the 'overview' property with the object count by object type (PostgreSQL, MySQL, vSphere ...etc.)  NOTE: Offset and limit parameters do not apply to overview counts.",
+						"description": "If set, it puts objects in 'objects' property and adds the 'overview' property with the object count by object type (PostgreSQL, MySQL, vSphere ...etc.)  NOTE: Offset and limit parameters do apply to overview counts if used together 'groupby' parameter. With 'groupby' the counters behaviour is chanining and they display only count of currently listed objects.",
 						"schema": {
 							"type": "boolean"
 						}

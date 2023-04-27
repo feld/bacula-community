@@ -123,7 +123,7 @@ LEFT JOIN Client USING (ClientId) '
 			// Overview mode.
 			$result = [
 				'objects' => $result,
-				'overview' => $overview
+				'overview' => (is_string($group_by) ? $overview : $this->getObjectCountByObjectType($criteria))
 			];
 		}
 		return $result;
