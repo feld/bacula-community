@@ -232,8 +232,11 @@ class Database extends APIModule {
 	 * @param string $group_by column to use as group
 	 * @param array $result database results/records (please note - reference)
 	 * @param integer $group_limit group limit (zero means no limit)
+	 * @param string|null $overview_by prepare overview (counts) by given object output property
+	 * @param array overview array or empty array if no overview requested
 	 */
-	public static function groupBy($group_by, &$result, $group_limit = 0) {
+	public static function groupBy($group_by, &$result, $group_limit = 0, $overview_by = null) {
+		$overview = [];
 		if (is_string($group_by) && is_array($result)) {
 			// Group results
 			$new_result = [];
@@ -250,9 +253,19 @@ class Database extends APIModule {
 					continue;
 				}
 				$new_result[$result[$i]->{$group_by}][] = $result[$i];
+				if (!key_exists($result[$i]->{$overview_by}, $overview)) {
+					$overview[$result[$i]->{$overview_by}] = [
+						$overview_by => $result[$i]->{$overview_by},
+						'count' => 0
+					];
+				}
+				if (is_string($overview_by)) {
+					$overview[$result[$i]->{$overview_by}]['count']++;
+				}
 			}
 			$result = $new_result;
 		}
+		return array_values($overview);
 	}
 
 	/**

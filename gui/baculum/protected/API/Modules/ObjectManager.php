@@ -118,12 +118,12 @@ LEFT JOIN Client USING (ClientId) '
 . $where['where'] . $order . $limit . $offset;
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
-		Database::groupBy($group_by, $result, $group_limit);
+		$overview = Database::groupBy($group_by, $result, $group_limit, 'objecttype');
 		if ($mode == self::OBJECT_RESULT_MODE_OVERVIEW) {
 			// Overview mode.
 			$result = [
 				'objects' => $result,
-				'overview' => $this->getObjectCountByObjectType($criteria)
+				'overview' => $overview
 			];
 		}
 		return $result;
