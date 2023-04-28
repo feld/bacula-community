@@ -228,7 +228,7 @@ LEFT JOIN FileSet USING (FilesetId)'
 			}
 			$where = Database::getWhere($criteria);
 			$sql = 'CREATE ' . $table_type . ' TABLE ' . $jobid_jobstatus_tname . ' AS
-				SELECT  Job.JobId,
+				SELECT DISTINCT Job.JobId,
 					Job.JobStatus,
 					Job.JobErrors,
 					Client.Name AS client,
