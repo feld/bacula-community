@@ -261,6 +261,7 @@ var oJobHistoryList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar"><"#table_mode"><"#table_adv_filters">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],

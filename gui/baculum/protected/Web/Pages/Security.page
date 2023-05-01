@@ -1078,6 +1078,7 @@ var oUserList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],
@@ -1563,6 +1564,7 @@ var oRoleList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],
@@ -1988,6 +1990,7 @@ var oConsoleList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],
@@ -2265,6 +2268,7 @@ var oAPIBasicUserList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],
@@ -2681,6 +2685,7 @@ var oOAuth2ClientList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],
@@ -3105,6 +3110,7 @@ var oAPIHostList = {
 			deferRender: true,
 			dom: 'lB<"table_toolbar">frtip',
 			stateSave: true,
+			stateDuration: KEEP_TABLE_SETTINGS,
 			buttons: [
 				'copy', 'csv', 'colvis'
 			],

@@ -3969,3 +3969,21 @@ msgstr "Set age for jobs to display the job summary pie graph on the dashboard p
 
 msgid "last %time %unit"
 msgstr "last %time %unit"
+
+msgid "Keep custom table settings:"
+msgstr "Keep custom table settings:"
+
+msgid "No time limit (persistent settings)"
+msgstr "No time limit (persistent settings)"
+
+msgid "Until end of web browser session"
+msgstr "Until end of web browser session"
+
+msgid "For specific time"
+msgstr "For specific time"
+
+msgid "The value must be positive integer or zero."
+msgstr "The value must be positive integer or zero."
+
+msgid "Keep table settings for"
+msgstr "Keep table settings for"
