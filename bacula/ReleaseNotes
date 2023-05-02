@@ -38,6 +38,130 @@ database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
 
 ----------------------------------------------------------------
+Release 13.0.3 / 02 May 2023
+----------------------------------------------------------------
+
+13.0.3 is a minor bug fix release with several new features and a number of bug
+fixes.
+
+ - Fix #10030 About small issue while canceling the restore command
+
+ - Fix #9968 Enhance restricted Console support
+ - Fix #10032 Allow restore menu 1 to users without sqlquery command ACL
+ - Fix #10033 Add extra Client and FileSet ACL checks to the estimate command
+ - Fix #9907 About Director crash with Runscript Console
+ - Fix #9968 Adapt restore menu and add RBCLIENT/BCLIENT in some ACL SQL checking
+ - Fix small memory leak with setbandwidth command
+ - Adapt delete, prune, purge commands to work with restricted consoles
+ - Check ClientACL in acl_access_jobid_ok()
+ - Check Pool specific ACL in select_media_dbr()
+ - Disable Bootstrap manual selection in restore for Restricted Console
+ - Do not display specific SQL errors to restricted consoles
+ - Include BackupClient in list jobs, list jobmedia, list joblog
+ - Restrict the use of local files during the restore file selection process when using a Restricted Console
+ - Take the first valid FileSet for the restore Job with restricted consoles
+
+ - baculum: Add checking errors in output from vsphere plugin servers, hosts and datastores commands
+ - baculum: Add new m365 plugin mailbox list endpoint
+ - baculum: Add VMware vSphere datastore list endpoint
+ - baculum: Add VMware vSphere host list endpoint
+ - baculum: Add VMware vSphere restore host list endpoint
+ - baculum: Add VMware vSphere server list endpoint
+ - baculum: Add a new endpoint to list jobs together with objects
+ - baculum: Add client filter to objects endpoint
+ - baculum: Add client property to object and objects endpoint
+ - baculum: Add client resnames endpoint
+ - baculum: Add client, pool, fileset and fileset content properties to jobs objects endpoint
+ - baculum: Add displaying bconsole command output if command is multiline
+ - baculum: Add enabled flag filter to volumes endpoint
+ - baculum: Add endpoint to list m365 jobs by email
+ - baculum: Add endtime property and filters to source list endpoint
+ - baculum: Add estimated job values endpoint that uses job historical data for estimation
+ - baculum: Add fileindex parameter to bvfs restore endpoint
+ - baculum: Add fileset and filesetid filters to jobs objects endpoint
+ - baculum: Add fileset content property to sources endpoint output
+ - baculum: Add job errors property to objects endpoint
+ - baculum: Add job errors property to sources endpoint
+ - baculum: Add job status property to objects endpoint
+ - baculum: Add job type to sources endpoint
+ - baculum: Add joberrors filter to jobs objects endpoint
+ - baculum: Add joberrors filter to objects endpoint
+ - baculum: Add mediaid to volume overview endpoint
+ - baculum: Add method to execute SQL queries
+ - baculum: Add more detailed output to restore endpoint
+ - baculum: Add objectid parameter to Bvfs restore endpoint
+ - baculum: Add objecttype parameter to jobs objects endpoint
+ - baculum: Add offset and limit parameters to bvfs versions endpoint
+ - baculum: Add offset parameter to filesets endpoint
+ - baculum: Add offset parameter to m365 plugin email list endpoint
+ - baculum: Add offset parameter to sources endpoint
+ - baculum: Add options to configure preserving table settings
+ - baculum: Add order_by and order_direction parameters to sources endpoint
+ - baculum: Add order_by and order_direction parameters to volumes endpoint
+ - baculum: Add order_by and order_direction params to jobs objects endpoint
+ - baculum: Add output parameter to run job endpoint
+ - baculum: Add output parameter to run restore endpoint
+ - baculum: Add overview parameter to job list endpoint
+ - baculum: Add overview parameter to objects endpoint
+ - baculum: Add pool filter to volumes endpoint
+ - baculum: Add priorjobname parameter to jobs endpoint
+ - baculum: Add priorjobname property to jobs endpoint
+ - baculum: Add restore_host parameter to vsphere plugin datastores API endpoint
+ - baculum: Add server parameter to vsphere plugin hosts API endpoint
+ - baculum: Add sorting by jobstatus to objects endpoint
+ - baculum: Add starttime property to objects endpoint
+ - baculum: Add storage filter to volumes endpoint
+ - baculum: Add support for cloud storage commands
+ - baculum: Add support for plugin filter in client list endpoint
+ - baculum: Add tenant indentifier list endpoint
+ - baculum: Add to documentation missing type parameter to job resnames endpoint
+ - baculum: Add to estimated job values endpoint average number of backed up objects
+ - baculum: Add to jobs endpoint time filters in date/time format
+ - baculum: Add to jobs objects endpoint time filters in date/time format
+ - baculum: Add to objects endpoint capability to sort by client name
+ - baculum: Add to objects endpoint time filters in date/time format
+ - baculum: Add volerrors property to volumes overview endpoint
+ - baculum: Add volstatsu property to volumes overview endpoint
+ - baculum: Add volstatus filter to volumes endpoint
+ - baculum: Add voltype parameter to volumes endpoint
+ - baculum: Add voltype property support in bvfs output parser
+ - baculum: Add volumename filter to volumes endpoint
+ - baculum: Add volumes overview endpoint
+ - baculum: Add when parameter to run job endpoint
+ - baculum: Change a way of executing SQL queries
+ - baculum: Change a way of preparing overview with counters in objects endpoint
+ - baculum: Change overview behaviour in objects endpoint if used together with groupby parameter
+ - baculum: Disable querying API for seeing which authentication methods are supported
+ - baculum: Enhance validation in time period control
+ - baculum: Extend object name validation pattern
+ - baculum: Fix compatibility with PHP 5.4
+ - baculum: Fix documentation about jobids parameter in bvfs restore endpoint
+ - baculum: Fix documentation for date parameters
+ - baculum: Fix example values in OpenAPI documentation
+ - baculum: Fix listing restore job in job endpoints
+ - baculum: Fix losing autochanger directive value in storage resource in director configuration
+ - baculum: Fix m365 user list endpoint
+ - baculum: Fix offset and limit parameters for case when storage in catalog is inconsistent with configuration
+ - baculum: Fix problem with double jobids in jobs objects endpoint
+ - baculum: Fix support for PHP 5
+ - baculum: Improve identifier validator
+ - baculum: Improve job statuses for job overview purpose
+ - baculum: Improve jobs objects endpoint working
+ - baculum: Improve precision in show command output parser
+ - baculum: Make show command output parser more accurate
+ - baculum: Remove overview, order_by, order_direction and object_limit parameters from jobs objects endpoint
+ - baculum: Rework and improve sources endpoint
+ - baculum: Update documentation
+ - baculum: add offset parameter support in new job objects endpoint
+
+ - rpms: Add rhel9 target to spec file
+
+
+Bugs fixed/closed since last release:
+10030 10032 10033 9907 9968
+
+
+----------------------------------------------------------------
 Release 13.0.2 / 16 February 2023
 ----------------------------------------------------------------
 
