@@ -103,7 +103,7 @@ bRC_BXATTR BXATTR_FreeBSD::os_backup_xattr (JCR *jcr, FF_PKT *ff_pkt){
          case bRC_BXATTR_skip:
          case bRC_BXATTR_cont:
             /* no xattr available, so skip rest of it */
-            rc = bRC_XACL_ok;
+            rc = bRC_XATTR_ok;
             continue;
          default:
             goto bail_out;
